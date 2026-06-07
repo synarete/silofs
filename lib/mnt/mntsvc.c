@@ -844,8 +844,7 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 {
 	const struct silofs_mntrule *mrule   = nullptr;
 	const struct silofs_mntrules *mrules = nullptr;
-	const uid_t uid_none                 = (uid_t)(-1);
-	const uid_t uid_peer                 = msvc->ms_peer_ucred.uid;
+	uid_t uid_peer, uid_none = (uid_t)(-1);
 
 	mrules = msvc->ms_srv->ms_rules;
 	if (!mrules || !mrules->nrules) {
@@ -863,9 +862,10 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 		log_info("no rule with: '%s'", mntp->path);
 		return -SILOFS_EUMOUNT;
 	}
+	uid_peer = msvc->ms_peer_ucred.uid;
 	if ((mrule->uid != uid_none) && (mrule->uid != uid_peer)) {
-		log_info("not allowed to umount: uid=%ld '%s'", (long)uid_peer,
-		         mntp->path);
+		log_info("not allowed to umount: uid=%ld '%s'", //
+		         (long)uid_peer, mntp->path);
 		return -SILOFS_EUMOUNT;
 	}
 	return 0;
@@ -879,6 +879,7 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 {
 	constexpr uint64_t allowed_ms_flags = ALLOWED_MS_FLAGS;
 	const struct ucred *peer_cred       = &msvc->ms_peer_ucred;
+	size_t page_size;
 	int err;
 
 	if (mntp->flags & ~allowed_ms_flags) {
@@ -894,10 +895,11 @@ static int mntsvc_check_mount(const struct silofs_mntsvc *msvc,
 	    (mntp->group_id != peer_cred->gid)) {
 		return -SILOFS_EACCES;
 	}
-	if (mntp->max_read < (2 * msvc->ms_page_size)) {
+	page_size = msvc->ms_page_size;
+	if (mntp->max_read < (2 * page_size)) {
 		return -SILOFS_EINVAL;
 	}
-	if (mntp->max_read > (512 * msvc->ms_page_size)) {
+	if (mntp->max_read > (512 * page_size)) {
 		return -SILOFS_EINVAL;
 	}
 	if (mntp->path == nullptr) {

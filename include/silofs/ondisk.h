@@ -689,7 +689,7 @@ struct silofs_uber_node {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* number of sub-refs per each space-mapping node */
-#define SILOFS_SPNODE_NREFS (512)
+#define SILOFS_SPNODE_NREFS (512U)
 
 struct silofs_space_node {
 	struct silofs_header sp_hdr;

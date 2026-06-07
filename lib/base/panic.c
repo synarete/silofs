@@ -198,8 +198,11 @@ backtrace_addrs_to_str(char *buf, size_t bsz, void **bt_arr, int bt_len)
 			snprintf(buf + len, bsz - len,
 			         "addr2line -a -C -f -p -s -e %s ", fname);
 			len = strlen(buf);
-		} else if (strcmp(fname, dli.dli_fname)) {
-			break;
+		} else {
+			if (strcmp(fname, dli.dli_fname) != 0) {
+				break;
+			}
+			fname = dli.dli_fname;
 		}
 		if (!may_append(len, 0, bsz)) {
 			break;

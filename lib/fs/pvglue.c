@@ -178,3 +178,62 @@ int silofs_remove_symval_at(struct silofs_task_ctx *task,
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
 	return remove_vnode_at(task, vaddr);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_dtnode_info *vni_to_dti(struct silofs_vnode_info *vni)
+{
+	struct silofs_dtnode_info *dti = nullptr;
+
+	if (unlikely(dti == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	dti = silofs_dti_from_vni(vni);
+	if (unlikely(dti == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+	}
+	if (unlikely(dti->dtn == nullptr)) {
+		silofs_panic("missing symval: dti=%" PRIXPTR, (uintptr_t)dti);
+	}
+	return dti;
+}
+
+int silofs_stage_dtnode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_inode_info *pii,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_dtnode_info **out_dti)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
+	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_dti = vni_to_dti(vni);
+	return 0;
+}
+
+int silofs_spawn_dtnode(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *pii,
+                        struct silofs_dtnode_info **out_dti)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = spawn_vnode(task, pii, SILOFS_VTYPE_DTNODE, &vni);
+	if (err) {
+		return err;
+	}
+	*out_dti = vni_to_dti(vni);
+	return 0;
+}
+
+int silofs_remove_dtnode_at(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
+	return remove_vnode_at(task, vaddr);
+}

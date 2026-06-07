@@ -94,6 +94,19 @@ int silofs_spawn_symval(struct silofs_task_ctx     *task,
 int silofs_remove_symval_at(struct silofs_task_ctx    *task,
                             const struct silofs_vaddr *vaddr);
 
+int silofs_stage_dtnode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        struct silofs_inode_info     *pii,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_dtnode_info   **out_dti);
+
+int silofs_spawn_dtnode(struct silofs_task_ctx     *task,
+                        struct silofs_inode_info   *pii,
+                        struct silofs_dtnode_info **out_dti);
+
+int silofs_remove_dtnode_at(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *vaddr);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/inode.h>

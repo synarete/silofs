@@ -1520,7 +1520,7 @@ static void dni_del(struct silofs_dtnode_info *dni, struct silofs_alloc *alloc)
 	dni_fini_free(dni, alloc);
 }
 
-struct silofs_dtnode_info *silofs_dni_from_vni(struct silofs_vnode_info *vni)
+struct silofs_dtnode_info *silofs_dti_from_vni(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
 	silofs_assert(vni_has_vtype(vni, SILOFS_VTYPE_DTNODE));

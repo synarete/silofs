@@ -308,3 +308,47 @@ int silofs_remove_ftnode(struct silofs_task_ctx *task,
 	vaddr_of(&fti->ftn_vni, &vaddr);
 	return remove_vnode_at(task, &vaddr);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_ftleaf_info *vni_to_fli(struct silofs_vnode_info *vni)
+{
+	struct silofs_ftleaf_info *fli = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	fli = silofs_fli_from_vni(vni);
+	if (unlikely(fli == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	if (unlikely(fli->ftl.db == nullptr)) {
+		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fli);
+	}
+	return fli;
+}
+
+int silofs_stage_ftleaf(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_inode_info *pii,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_ftleaf_info **out_fli)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_fli = vni_to_fli(vni);
+	return 0;
+}
+
+int silofs_remove_ftleaf_at(struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return remove_vnode_at(task, vaddr);
+}

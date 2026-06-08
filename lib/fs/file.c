@@ -1452,7 +1452,7 @@ static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int filc_stage_fileaf(const struct silofs_file_ctx *f_ctx,
+static int filc_stage_ftleaf(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_vaddr *vaddr,
                              struct silofs_ftleaf_info **out_fli)
 {
@@ -1497,7 +1497,7 @@ static int filc_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
 	struct silofs_ftleaf_info *fli = nullptr;
 	int err;
 
-	err = filc_stage_fileaf(f_ctx, vaddr, &fli);
+	err = filc_stage_ftleaf(f_ctx, vaddr, &fli);
 	if (err) {
 		return err;
 	}
@@ -1924,7 +1924,7 @@ static int filc_stage_fileaf_by(const struct silofs_file_ctx *f_ctx,
 
 	*out_fli = nullptr;
 	if (flref->has_data) {
-		ret = filc_stage_fileaf(f_ctx, &flref->vaddr, out_fli);
+		ret = filc_stage_ftleaf(f_ctx, &flref->vaddr, out_fli);
 	}
 	return ret;
 }
@@ -2206,9 +2206,9 @@ filc_claim_vspace(const struct silofs_file_ctx *f_ctx, enum silofs_vtype vtype,
 	return silofs_claim_vspace(f_ctx->task, vtype, out_vaddr);
 }
 
-static int
-filc_claim_data_space(const struct silofs_file_ctx *f_ctx,
-                      enum silofs_vtype vtype, struct silofs_vaddr *out_vaddr)
+static int filc_claim_ftleaf_space(const struct silofs_file_ctx *f_ctx,
+                                   enum silofs_vtype vtype,
+                                   struct silofs_vaddr *out_vaddr)
 {
 	int err;
 
@@ -2235,8 +2235,14 @@ static int filc_reclaim_data_space(const struct silofs_file_ctx *f_ctx,
 	return silofs_reclaim_vspace(f_ctx->task, vaddr);
 }
 
-static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
-                               const struct silofs_vaddr *vaddr)
+static int filc_remove_ftleaf_at(const struct silofs_file_ctx *f_ctx,
+                                 const struct silofs_vaddr *vaddr)
+{
+	return silofs_remove_vnode_at(f_ctx->task, vaddr);
+}
+
+static int filc_remove_ftleaf_space(const struct silofs_file_ctx *f_ctx,
+                                    const struct silofs_vaddr *vaddr)
 {
 	int err;
 	bool last = false;
@@ -2251,7 +2257,7 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	}
-	err = silofs_remove_vnode_at(f_ctx->task, vaddr);
+	err = filc_remove_ftleaf_at(f_ctx, vaddr);
 	if (err) {
 		return err;
 	}
@@ -2300,7 +2306,7 @@ static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
 }
 
 static int
-filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx, off_t off,
+filc_spawn_setup_ftnode(const struct silofs_file_ctx *f_ctx, off_t off,
                         size_t height, struct silofs_ftnode_info **out_fti)
 {
 	int err;
@@ -2315,15 +2321,15 @@ filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx, off_t off,
 }
 
 static int
-filc_spawn_root_finode(const struct silofs_file_ctx *f_ctx, size_t height,
+filc_spawn_root_ftnode(const struct silofs_file_ctx *f_ctx, size_t height,
                        struct silofs_ftnode_info **out_fti)
 {
 	silofs_assert_ge(height, 2);
 
-	return filc_spawn_setup_finode(f_ctx, 0, height, out_fti);
+	return filc_spawn_setup_ftnode(f_ctx, 0, height, out_fti);
 }
 
-static int filc_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
+static int filc_spawn_bind_ftnode(const struct silofs_file_ctx *f_ctx,
                                   struct silofs_ftnode_info *parent_fti,
                                   struct silofs_ftnode_info **out_fti)
 {
@@ -2331,7 +2337,7 @@ static int filc_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
 	const size_t height  = fti_height(parent_fti);
 	int err;
 
-	err = filc_spawn_setup_finode(f_ctx, file_pos, height - 1, out_fti);
+	err = filc_spawn_setup_ftnode(f_ctx, file_pos, height - 1, out_fti);
 	if (err) {
 		return err;
 	}
@@ -2340,13 +2346,13 @@ static int filc_spawn_bind_finode(const struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int
-filc_create_data_leaf(const struct silofs_file_ctx *f_ctx,
-                      enum silofs_vtype vtype, struct silofs_vaddr *out_vaddr)
+static int filc_create_ftleaf_space(const struct silofs_file_ctx *f_ctx,
+                                    enum silofs_vtype vtype,
+                                    struct silofs_vaddr *out_vaddr)
 {
 	int err;
 
-	err = filc_claim_data_space(f_ctx, vtype, out_vaddr);
+	err = filc_claim_ftleaf_space(f_ctx, vtype, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -2360,7 +2366,7 @@ static int filc_create_head1_leaf_space(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = filc_create_data_leaf(f_ctx, SILOFS_VTYPE_DATA1K, &vaddr);
+	err = filc_create_ftleaf_space(f_ctx, SILOFS_VTYPE_DATA1K, &vaddr);
 	if (err) {
 		return err;
 	}
@@ -2376,7 +2382,7 @@ static int filc_create_head2_leaf_space(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = filc_create_data_leaf(f_ctx, SILOFS_VTYPE_DATA4K, &vaddr);
+	err = filc_create_ftleaf_space(f_ctx, SILOFS_VTYPE_DATA4K, &vaddr);
 	if (err) {
 		return err;
 	}
@@ -2393,7 +2399,7 @@ filc_do_create_tree_leaf_space(const struct silofs_file_ctx *f_ctx,
 	struct silofs_vaddr vaddr;
 	int err;
 
-	err = filc_create_data_leaf(f_ctx, SILOFS_VTYPE_DATA64K, &vaddr);
+	err = filc_create_ftleaf_space(f_ctx, SILOFS_VTYPE_DATA64K, &vaddr);
 	if (err) {
 		return err;
 	}
@@ -2451,7 +2457,7 @@ static int filc_create_tree_spine(const struct silofs_file_ctx *f_ctx)
 	height_want = off_to_tree_height(f_ctx->off);
 	height_curr = fti ? fti_height(fti) : 1;
 	while (height_curr < height_want) {
-		err = filc_spawn_root_finode(f_ctx, ++height_curr, &fti);
+		err = filc_spawn_root_ftnode(f_ctx, ++height_curr, &fti);
 		if (err) {
 			return err;
 		}
@@ -2471,7 +2477,7 @@ static int filc_do_require_tree_node(const struct silofs_file_ctx *f_ctx,
 	if (!silofs_vaddr_isnull(&vaddr)) {
 		ret = filc_stage_ftnode(f_ctx, &vaddr, out_fti);
 	} else {
-		ret = filc_spawn_bind_finode(f_ctx, parent_fti, out_fti);
+		ret = filc_spawn_bind_ftnode(f_ctx, parent_fti, out_fti);
 	}
 	return ret;
 }
@@ -2961,7 +2967,7 @@ static int filc_discard_data_leaf(const struct silofs_file_ctx *f_ctx,
 	if (silofs_vaddr_isnull(vaddr)) {
 		return 0;
 	}
-	err = filc_del_data_space(f_ctx, vaddr);
+	err = filc_remove_ftleaf_space(f_ctx, vaddr);
 	if (err) {
 		return err;
 	}
@@ -3693,7 +3699,8 @@ static int filc_create_bind_tree_leaf(const struct silofs_file_ctx *f_ctx,
 	if (flref.has_data) {
 		return filc_require_mut_by(f_ctx, &flref);
 	}
-	err = filc_create_data_leaf(f_ctx, SILOFS_VTYPE_DATA64K, &flref.vaddr);
+	err = filc_create_ftleaf_space(f_ctx, SILOFS_VTYPE_DATA64K,
+	                               &flref.vaddr);
 	if (err) {
 		return err;
 	}
@@ -4251,13 +4258,13 @@ filc_copy_data_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 	int err;
 	bool all;
 
-	err = filc_stage_fileaf(f_ctx_src, &flref_src->vaddr, &fli_src);
+	err = filc_stage_ftleaf(f_ctx_src, &flref_src->vaddr, &fli_src);
 	if (err) {
 		goto out;
 	}
 	fli_incref(fli_src);
 
-	err = filc_stage_fileaf(f_ctx_dst, &flref_dst->vaddr, &fli_dst);
+	err = filc_stage_ftleaf(f_ctx_dst, &flref_dst->vaddr, &fli_dst);
 	if (err) {
 		goto out;
 	}
@@ -4330,8 +4337,8 @@ static int filc_unshare_leaf_by(const struct silofs_file_ctx *f_ctx,
 	}
 	flref_setup(&flref_new, f_ctx->ii, flref->parent_fti, &flref->vaddr,
 	            flref->file_pos, f_ctx->end);
-	err = filc_claim_data_space(f_ctx, flref->vaddr.vtype,
-	                            &flref_new.vaddr);
+	err = filc_claim_ftleaf_space(f_ctx, flref->vaddr.vtype,
+	                              &flref_new.vaddr);
 	if (err) {
 		return err;
 	}

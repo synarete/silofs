@@ -120,6 +120,15 @@ int silofs_spawn_ftnode(struct silofs_task_ctx     *task,
 int silofs_remove_ftnode(struct silofs_task_ctx    *task,
                          struct silofs_ftnode_info *fti);
 
+int silofs_stage_ftleaf(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        struct silofs_inode_info     *pii,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_ftleaf_info   **out_fli);
+
+int silofs_remove_ftleaf_at(struct silofs_task_ctx    *task,
+                            const struct silofs_vaddr *vaddr);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/inode.h>

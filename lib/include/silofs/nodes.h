@@ -780,7 +780,7 @@ struct silofs_symval_info *silofs_svi_from_vni(struct silofs_vnode_info *vni);
 
 struct silofs_dtnode_info *silofs_dti_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_ftnode_info *silofs_fni_from_vni(struct silofs_vnode_info *vni);
+struct silofs_ftnode_info *silofs_fti_from_vni(struct silofs_vnode_info *vni);
 
 struct silofs_ftleaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
 

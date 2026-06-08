@@ -107,6 +107,19 @@ int silofs_spawn_dtnode(struct silofs_task_ctx     *task,
 int silofs_remove_dtnode(struct silofs_task_ctx    *task,
                          struct silofs_dtnode_info *dti);
 
+int silofs_stage_ftnode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        struct silofs_inode_info     *pii,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_ftnode_info   **out_fti);
+
+int silofs_spawn_ftnode(struct silofs_task_ctx     *task,
+                        struct silofs_inode_info   *pii,
+                        struct silofs_ftnode_info **out_fti);
+
+int silofs_remove_ftnode(struct silofs_task_ctx    *task,
+                         struct silofs_ftnode_info *fti);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/inode.h>

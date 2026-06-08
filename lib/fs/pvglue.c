@@ -22,6 +22,14 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 
+static void
+vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, silofs_vni_vaddr(vni));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int
 stage_vnode(const struct silofs_task_ctx *task,
             const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii,
@@ -236,6 +244,67 @@ int silofs_remove_dtnode(struct silofs_task_ctx *task,
 {
 	struct silofs_vaddr vaddr;
 
-	silofs_vaddr_assign(&vaddr, silofs_vni_vaddr(&dti->dtn_vni));
+	vaddr_of(&dti->dtn_vni, &vaddr);
+	return remove_vnode_at(task, &vaddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_ftnode_info *vni_to_fti(struct silofs_vnode_info *vni)
+{
+	struct silofs_ftnode_info *fti = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	fti = silofs_fti_from_vni(vni);
+	if (unlikely(fti == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	if (unlikely(fti->ftn == nullptr)) {
+		silofs_panic("missing ftnode: fti=%" PRIxPTR, (uintptr_t)fti);
+	}
+	return fti;
+}
+
+int silofs_stage_ftnode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_inode_info *pii,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_ftnode_info **out_fti)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_FTNODE);
+	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_fti = vni_to_fti(vni);
+	return 0;
+}
+
+int silofs_spawn_ftnode(struct silofs_task_ctx *task,
+                        struct silofs_inode_info *pii,
+                        struct silofs_ftnode_info **out_fti)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = spawn_vnode(task, pii, SILOFS_VTYPE_FTNODE, &vni);
+	if (err) {
+		return err;
+	}
+	*out_fti = vni_to_fti(vni);
+	return 0;
+}
+
+int silofs_remove_ftnode(struct silofs_task_ctx *task,
+                         struct silofs_ftnode_info *fti)
+{
+	struct silofs_vaddr vaddr;
+
+	vaddr_of(&fti->ftn_vni, &vaddr);
 	return remove_vnode_at(task, &vaddr);
 }

@@ -104,8 +104,8 @@ int silofs_spawn_dtnode(struct silofs_task_ctx     *task,
                         struct silofs_inode_info   *pii,
                         struct silofs_dtnode_info **out_dti);
 
-int silofs_remove_dtnode_at(struct silofs_task_ctx    *task,
-                            const struct silofs_vaddr *vaddr);
+int silofs_remove_dtnode(struct silofs_task_ctx    *task,
+                         struct silofs_dtnode_info *dti);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

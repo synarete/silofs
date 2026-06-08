@@ -68,14 +68,14 @@ static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
 	struct silofs_xanode_info *xai = nullptr;
 
 	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	xai = silofs_xai_from_vni(vni);
 	if (unlikely(xai == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	if (unlikely(xai->xan == nullptr)) {
-		silofs_panic("missing xanode: xai=%" PRIXPTR, (uintptr_t)xai);
+		silofs_panic("missing xanode: xai=%" PRIxPTR, (uintptr_t)xai);
 	}
 	return xai;
 }
@@ -127,14 +127,14 @@ static struct silofs_symval_info *vni_to_svi(struct silofs_vnode_info *vni)
 	struct silofs_symval_info *svi = nullptr;
 
 	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	svi = silofs_svi_from_vni(vni);
 	if (unlikely(svi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	if (unlikely(svi->svn == nullptr)) {
-		silofs_panic("missing symval: svi=%" PRIXPTR, (uintptr_t)svi);
+		silofs_panic("missing symval: svi=%" PRIxPTR, (uintptr_t)svi);
 	}
 	return svi;
 }
@@ -185,15 +185,15 @@ static struct silofs_dtnode_info *vni_to_dti(struct silofs_vnode_info *vni)
 {
 	struct silofs_dtnode_info *dti = nullptr;
 
-	if (unlikely(dti == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIXPTR, (uintptr_t)vni);
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	dti = silofs_dti_from_vni(vni);
 	if (unlikely(dti == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIXPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
 	if (unlikely(dti->dtn == nullptr)) {
-		silofs_panic("missing symval: dti=%" PRIXPTR, (uintptr_t)dti);
+		silofs_panic("missing dtnode: dti=%" PRIxPTR, (uintptr_t)dti);
 	}
 	return dti;
 }
@@ -231,9 +231,11 @@ int silofs_spawn_dtnode(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_remove_dtnode_at(struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr)
+int silofs_remove_dtnode(struct silofs_task_ctx *task,
+                         struct silofs_dtnode_info *dti)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
-	return remove_vnode_at(task, vaddr);
+	struct silofs_vaddr vaddr;
+
+	silofs_vaddr_assign(&vaddr, silofs_vni_vaddr(&dti->dtn_vni));
+	return remove_vnode_at(task, &vaddr);
 }

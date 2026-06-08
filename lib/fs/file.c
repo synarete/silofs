@@ -1544,22 +1544,17 @@ static int filc_stage_ftnode(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_vaddr *vaddr,
                              struct silofs_ftnode_info **out_fti)
 {
-	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_ftnode_info *fti = nullptr;
 	int err;
 
-	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
-	                         f_ctx->stg_mode, &vni);
+	err = silofs_stage_ftnode(f_ctx->task, vaddr, f_ctx->ii,
+	                          f_ctx->stg_mode, out_fti);
 	if (err) {
 		return err;
 	}
-	fti = silofs_fti_from_vni(vni);
-	err = filc_recheck_fti(f_ctx, fti);
+	err = filc_recheck_fti(f_ctx, *out_fti);
 	if (err) {
 		return err;
 	}
-
-	*out_fti = fti;
 	return 0;
 }
 
@@ -2263,28 +2258,16 @@ static int filc_del_data_space(const struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int filc_spawn_finode(const struct silofs_file_ctx *f_ctx,
+static int filc_spawn_ftnode(const struct silofs_file_ctx *f_ctx,
                              struct silofs_ftnode_info **out_fti)
 {
-	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_ftnode_info *fti = nullptr;
-	int err;
-
-	err = silofs_spawn_vnode(f_ctx->task, f_ctx->ii, SILOFS_VTYPE_FTNODE,
-	                         &vni);
-	if (err) {
-		return err;
-	}
-	fti = silofs_fti_from_vni(vni);
-	fti_markdirty(fti, f_ctx->ii);
-	*out_fti = fti;
-	return 0;
+	return silofs_spawn_ftnode(f_ctx->task, f_ctx->ii, out_fti);
 }
 
 static int filc_remove_ftnode(const struct silofs_file_ctx *f_ctx,
                               struct silofs_ftnode_info *fti)
 {
-	return silofs_remove_vnode(f_ctx->task, &fti->ftn_vni);
+	return silofs_remove_ftnode(f_ctx->task, fti);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2322,7 +2305,7 @@ filc_spawn_setup_finode(const struct silofs_file_ctx *f_ctx, off_t off,
 {
 	int err;
 
-	err = filc_spawn_finode(f_ctx, out_fti);
+	err = filc_spawn_ftnode(f_ctx, out_fti);
 	if (err) {
 		return err;
 	}

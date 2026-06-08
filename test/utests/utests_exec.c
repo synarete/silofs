@@ -319,8 +319,7 @@ static void ut_check_spacestats(const struct silofs_space_stats1k *spst1,
 
 static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 {
-	size_t ualloc_now;
-	size_t ualloc_dif;
+	size_t ualloc_now, ualloc_dif;
 
 	if (pre_execute) {
 		ut_statfs_rootd(ute, &ute->stvfs[0]);

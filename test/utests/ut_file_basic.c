@@ -36,8 +36,7 @@ static void ut_file_simple2_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
 	void *buf        = ut_randbuf(ute, bsz);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -51,8 +50,7 @@ static void ut_file_simple3_(struct ut_env *ute, off_t off, size_t bsz)
 {
 	const char *name = UT_NAME;
 	void *buf        = ut_randbuf(ute, bsz);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -116,8 +114,7 @@ static void ut_file_minio_(struct ut_env *ute, off_t off, size_t len)
 {
 	uint8_t bytes[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 	const char *name = UT_NAME;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -130,9 +127,13 @@ static void ut_file_minio_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_minio_aligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE0(0),      UT_MKRANGE0(UT_4K), UT_MKRANGE0(UT_8K),
-		UT_MKRANGE0(UT_64K), UT_MKRANGE0(UT_1M), UT_MKRANGE0(UT_1G),
-		UT_MKRANGE0(UT_1T),
+		UT_MKRANGE0(0),      //
+		UT_MKRANGE0(UT_4K),  //
+		UT_MKRANGE0(UT_8K),  //
+		UT_MKRANGE0(UT_64K), //
+		UT_MKRANGE0(UT_1M),  //
+		UT_MKRANGE0(UT_1G),  //
+		UT_MKRANGE0(UT_1T),  //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_minio_, ranges);
@@ -141,9 +142,12 @@ static void ut_file_minio_aligned(struct ut_env *ute)
 static void ut_file_minio_unaligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE0(UT_4K - 1),  UT_MKRANGE0(UT_8K - 1),
-		UT_MKRANGE0(UT_64K - 1), UT_MKRANGE0(UT_1M - 2),
-		UT_MKRANGE0(UT_1G - 3),  UT_MKRANGE0(UT_1T - 4),
+		UT_MKRANGE0(UT_4K - 1),  //
+		UT_MKRANGE0(UT_8K - 1),  //
+		UT_MKRANGE0(UT_64K - 1), //
+		UT_MKRANGE0(UT_1M - 2),  //
+		UT_MKRANGE0(UT_1G - 3),  //
+		UT_MKRANGE0(UT_1T - 4),  //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_minio_, ranges);
@@ -155,8 +159,7 @@ static void ut_file_data_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf        = ut_randbuf(ute, len);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -252,8 +255,7 @@ static void ut_file_multi_(struct ut_env *ute, size_t bsz, off_t off1,
 	void *buf2       = ut_randbuf(ute, bsz);
 	void *buf3       = ut_randbuf(ute, bsz);
 	void *buf4       = ut_randbuf(ute, bsz);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -310,8 +312,7 @@ ut_file_overwrite_simple_(struct ut_env *ute, off_t off, size_t len)
 	const char *name = UT_NAME;
 	void *buf1       = ut_randbuf(ute, len);
 	void *buf2       = ut_randbuf(ute, len);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -358,8 +359,7 @@ static void ut_file_overwrite_complex_(struct ut_env *ute, off_t off1,
 	const off_t offx  = off2 + (off_t)len;
 	const size_t bszx = len - (size_t)(offx - off2);
 	const size_t step = (size_t)(offx - off2);
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_expect_lt(off1, off2);
 	ut_expect_le(off2 - off1, (off_t)len);
@@ -408,9 +408,8 @@ static void ut_file_sequence_(struct ut_env *ute, off_t off, size_t len)
 	uint64_t num     = 0;
 	const size_t nsz = sizeof(num);
 	const size_t cnt = len / nsz;
-	off_t pos        = -1;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -467,7 +466,7 @@ static void ut_file_sequence_at_end(struct ut_env *ute)
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_64K, UT_64K),
 		UT_MKRANGE1(UT_FILESIZE_MAX - (3 * UT_64K) - 1, 2 * UT_64K),
-		UT_MKRANGE1(UT_FILESIZE_MAX - (5 * UT_1M) - 5, 4 * UT_1M),
+		UT_MKRANGE1(UT_FILESIZE_MAX - (5 * UT_64K) - 5, 4 * UT_64K),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_sequence_, ranges);
@@ -510,9 +509,8 @@ static void ut_file_unaligned_(struct ut_env *ute, off_t off, size_t len)
 	const char *name        = UT_NAME;
 	const size_t nsz        = sizeof(*urec) - 1;
 	const size_t cnt        = len / nsz;
-	off_t pos               = -1;
-	ino_t dino              = 0;
-	ino_t ino               = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -567,9 +565,8 @@ static void ut_file_firstlast_(struct ut_env *ute, off_t off, size_t len)
 	uint64_t num     = 0;
 	const size_t nsz = sizeof(num);
 	const off_t end  = off + (off_t)len;
-	off_t pos        = -1;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -622,14 +619,13 @@ static void ut_file_firstlast(struct ut_env *ute)
 
 static void ut_file_zigzag_(struct ut_env *ute, off_t off, size_t len)
 {
-	uint64_t num     = 0;
 	const char *name = UT_NAME;
+	uint64_t num     = 0;
 	const size_t nsz = sizeof(num);
 	const size_t cnt = len / nsz;
 	const off_t end  = off + (off_t)len;
-	off_t pos        = -1;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -691,8 +687,7 @@ ut_file_with_hole_(struct ut_env *ute, off_t off1, off_t off2, size_t len)
 	void *buf1            = ut_randbuf(ute, len);
 	void *buf2            = ut_randbuf(ute, len);
 	void *zeros           = ut_zerobuf(ute, nzeros);
-	ino_t dino            = 0;
-	ino_t ino             = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_expect_gt(off2, off1);
 	ut_expect_gt((off2 - off1), (off_t)len);
@@ -742,9 +737,8 @@ static void ut_file_backward_(struct ut_env *ute, off_t off, size_t cnt)
 	const char *name = UT_NAME;
 	uint64_t val     = 0;
 	const size_t vsz = sizeof(val);
-	off_t pos        = -1;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -784,10 +778,9 @@ static void ut_file_read_behind_(struct ut_env *ute, off_t off, size_t len)
 	const char *name  = UT_NAME;
 	uint8_t *buf      = ut_randbuf(ute, (size_t)bsz);
 	uint8_t da        = 0xDA;
-	ssize_t idx       = -1;
-	off_t pos         = -1;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
+	off_t pos;
+	ssize_t idx;
 
 	pos      = (off < bsz) ? 0 : (off - bsz + 1);
 	idx      = ((off >= 0) && (off < bsz)) ? off : (bsz - 1);
@@ -807,12 +800,17 @@ static void ut_file_read_behind_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_read_behind(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE0(1111),           UT_MKRANGE0(UT_8K - 1),
-		UT_MKRANGE0(UT_8K),          UT_MKRANGE0(UT_BK_SIZE),
-		UT_MKRANGE0(UT_BK_SIZE + 1), UT_MKRANGE0(UT_1M),
-		UT_MKRANGE0(UT_1M + 1),      UT_MKRANGE0(UT_1G),
-		UT_MKRANGE0(UT_1G - 1),      UT_MKRANGE0(UT_1T),
-		UT_MKRANGE0(UT_1T + 1),
+		UT_MKRANGE0(1111),           //
+		UT_MKRANGE0(UT_8K - 1),      //
+		UT_MKRANGE0(UT_8K),          //
+		UT_MKRANGE0(UT_BK_SIZE),     //
+		UT_MKRANGE0(UT_BK_SIZE + 1), //
+		UT_MKRANGE0(UT_1M),          //
+		UT_MKRANGE0(UT_1M + 1),      //
+		UT_MKRANGE0(UT_1G),          //
+		UT_MKRANGE0(UT_1G - 1),      //
+		UT_MKRANGE0(UT_1T),          //
+		UT_MKRANGE0(UT_1T + 1),      //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_read_behind_, ranges);

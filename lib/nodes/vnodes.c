@@ -1193,8 +1193,12 @@ silofs_ii_from_lni(const struct silofs_lnode_info *lni)
 struct silofs_inode_info *
 silofs_ii_from_vni(const struct silofs_vnode_info *vni)
 {
-	return likely(vni != nullptr) ? ii_from_vni(vni_unconst(vni)) :
-	                                nullptr;
+	struct silofs_inode_info *ii = nullptr;
+
+	if (likely(vni != nullptr)) {
+		ii = ii_from_vni(vni_unconst(vni));
+	}
+	return ii;
 }
 
 struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dq_elem *dqe)

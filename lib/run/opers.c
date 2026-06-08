@@ -283,7 +283,7 @@ static int op_stage_inode(struct silofs_task_ctx *task, ino_t ino, bool mut,
 {
 	enum silofs_stg_mode stg_mode = mut ? SILOFS_STG_COW : SILOFS_STG_CUR;
 
-	return silofs_stage_inode(task, ino, stg_mode, out_ii);
+	return silofs_stage_inode_of(task, ino, stg_mode, out_ii);
 }
 
 static int op_stage_cur_inode(struct silofs_task_ctx *task, ino_t ino,

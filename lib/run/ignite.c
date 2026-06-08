@@ -392,7 +392,7 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	int err;
 
 	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);
-	err = silofs_spawn_inode(task, &inp, &ii);
+	err = silofs_spawn_inode_by(task, &inp, &ii);
 	if (err) {
 		return err;
 	}
@@ -578,7 +578,8 @@ static int reload_rootd(struct silofs_task_ctx *task)
 	struct silofs_inode_info *ii = nullptr;
 	int err;
 
-	err = silofs_stage_inode(task, SILOFS_INO_ROOT, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode_of(task, SILOFS_INO_ROOT, SILOFS_STG_CUR,
+	                            &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;

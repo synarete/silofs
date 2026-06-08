@@ -34,7 +34,7 @@ static ino_t ino_from_vaddr(const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
 
-	return silofs_calc_ino_by_vaddr(vaddr);
+	return silofs_vaddr_to_ino(vaddr);
 }
 
 bool silofs_ino_isnull(ino_t ino)
@@ -742,7 +742,7 @@ static int check_xaccess_parent(struct silofs_task_ctx *task,
 		return 0;
 	}
 	parent = silofs_ii_parent(ii);
-	err    = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
+	err = silofs_stage_inode_of(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {
 		return err;
 	}
@@ -1061,7 +1061,7 @@ static int check_parent_dir_ii(struct silofs_task_ctx *task,
 	if (silofs_ino_isnull(parent)) {
 		return ii->i_nopen ? 0 : -SILOFS_ENOENT;
 	}
-	err = silofs_stage_inode(task, parent, SILOFS_STG_CUR, &parent_ii);
+	err = silofs_stage_inode_of(task, parent, SILOFS_STG_CUR, &parent_ii);
 	if (err) {
 		return err;
 	}

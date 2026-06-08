@@ -306,14 +306,14 @@ static ino_t off_to_ino(off_t off)
 	return ino;
 }
 
-void silofs_calc_vaddr_of_ino(ino_t ino, struct silofs_vaddr *out_vaddr)
+void silofs_ino_to_vaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 {
 	const off_t off = ino_to_off(ino);
 
 	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_INODE, off);
 }
 
-ino_t silofs_calc_ino_by_vaddr(const struct silofs_vaddr *vaddr)
+ino_t silofs_vaddr_to_ino(const struct silofs_vaddr *vaddr)
 {
 	ino_t ino;
 

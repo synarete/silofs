@@ -76,7 +76,7 @@ static bool stage_cow(enum silofs_stg_mode stg_mode)
 
 static ino_t vaddr_to_ino(const struct silofs_vaddr *vaddr)
 {
-	return silofs_calc_ino_by_vaddr(vaddr);
+	return silofs_vaddr_to_ino(vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2301,7 +2301,7 @@ vstgc_pre_clone_stage_inode_at(const struct silofs_vstage_ctx *vstg_ctx,
 	if (ino == SILOFS_INO_NULL) {
 		return -SILOFS_EINVAL;
 	}
-	err = silofs_stage_inode(vstg_ctx->task, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode_of(vstg_ctx->task, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		return err;
 	}
@@ -2834,7 +2834,7 @@ fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
 
 static int resolve_iaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
 {
-	silofs_calc_vaddr_of_ino(ino, out_vaddr);
+	silofs_ino_to_vaddr(ino, out_vaddr);
 	return !silofs_vaddr_isnull(out_vaddr) ? 0 : -SILOFS_EINVAL;
 }
 
@@ -2934,9 +2934,9 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_stage_inode(struct silofs_task_ctx *task, ino_t ino,
-                       enum silofs_stg_mode stg_mode,
-                       struct silofs_inode_info **out_ii)
+int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
+                          enum silofs_stg_mode stg_mode,
+                          struct silofs_inode_info **out_ii)
 {
 	int err;
 
@@ -3091,9 +3091,9 @@ static int spawn_new_inode_at(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_inode(struct silofs_task_ctx *task,
-                       const struct silofs_inew_params *inp,
-                       struct silofs_inode_info **out_ii)
+int silofs_spawn_inode_by(struct silofs_task_ctx *task,
+                          const struct silofs_inew_params *inp,
+                          struct silofs_inode_info **out_ii)
 {
 	struct silofs_vaddr vaddr;
 	int err;

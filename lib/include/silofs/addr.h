@@ -653,9 +653,9 @@ void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
 void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
                                   struct silofs_vaddr       *out_vaddr);
 
-void silofs_calc_vaddr_of_ino(ino_t ino, struct silofs_vaddr *out_vaddr);
+void silofs_ino_to_vaddr(ino_t ino, struct silofs_vaddr *out_vaddr);
 
-ino_t silofs_calc_ino_by_vaddr(const struct silofs_vaddr *vaddr);
+ino_t silofs_vaddr_to_ino(const struct silofs_vaddr *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* genid */

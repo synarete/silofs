@@ -129,6 +129,17 @@ int silofs_stage_ftleaf(const struct silofs_task_ctx *task,
 int silofs_remove_ftleaf_at(struct silofs_task_ctx    *task,
                             const struct silofs_vaddr *vaddr);
 
+int silofs_stage_inode2(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_inode_info    **out_ii);
+
+int silofs_spawn_inode2(struct silofs_task_ctx    *task,
+                        struct silofs_inode_info **out_ii);
+
+int silofs_remove_inode2(struct silofs_task_ctx   *task,
+                         struct silofs_inode_info *ii);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/inode.h>
@@ -228,9 +239,9 @@ int silofs_stage_vnode2_new(struct silofs_task_ctx    *task,
                             enum silofs_stg_mode       stg_mode,
                             struct silofs_vnode_info **out_vni);
 
-int silofs_stage_inode(struct silofs_task_ctx *task, ino_t ino,
-                       enum silofs_stg_mode       stg_mode,
-                       struct silofs_inode_info **out_ii);
+int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
+                          enum silofs_stg_mode       stg_mode,
+                          struct silofs_inode_info **out_ii);
 
 int silofs_fetch_cached_vnode(struct silofs_task_ctx    *task,
                               const struct silofs_vaddr *vaddr,
@@ -245,9 +256,9 @@ int silofs_spawn_vnode(struct silofs_task_ctx   *task,
                        struct silofs_inode_info *pii, enum silofs_vtype vtype,
                        struct silofs_vnode_info **out_vni);
 
-int silofs_spawn_inode(struct silofs_task_ctx          *task,
-                       const struct silofs_inew_params *inp,
-                       struct silofs_inode_info       **out_ii);
+int silofs_spawn_inode_by(struct silofs_task_ctx          *task,
+                          const struct silofs_inew_params *inp,
+                          struct silofs_inode_info       **out_ii);
 
 int silofs_remove_vnode(struct silofs_task_ctx   *task,
                         struct silofs_vnode_info *vni);

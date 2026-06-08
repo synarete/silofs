@@ -275,7 +275,7 @@ static int spawn_inode(struct silofs_task_ctx *task,
 	struct silofs_inew_params inp;
 
 	silofs_inew_params_of(task, parent_dii, mode, rdev, &inp);
-	return silofs_spawn_inode(task, &inp, out_ii);
+	return silofs_spawn_inode_by(task, &inp, out_ii);
 }
 
 static int spawn_dir_inode(struct silofs_task_ctx *task,
@@ -543,7 +543,7 @@ stage_by_name(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = silofs_stage_inode(task, ino, stg_mode, out_ii);
+	err = silofs_stage_inode_of(task, ino, stg_mode, out_ii);
 	if (err) {
 		return err;
 	}
@@ -675,10 +675,10 @@ check_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
-static int
-do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-              const struct silofs_namestr *nstr, struct silofs_inode_info *ii,
-              bool del_upon_failure)
+static int add_namehash_dentry(struct silofs_task_ctx *task,
+                               struct silofs_inode_info *dir_ii,
+                               const struct silofs_namestr *nstr,
+                               struct silofs_inode_info *ii)
 {
 	struct silofs_namestr name;
 	int err;
@@ -688,10 +688,24 @@ do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 		return err;
 	}
 	err = silofs_add_dentry(task, dir_ii, &name, ii);
-	if (err && del_upon_failure) {
-		silofs_remove_inode(task, ii);
+	if (err) {
+		return err;
 	}
-	return err;
+	return 0;
+}
+
+static int
+do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
+              const struct silofs_namestr *nstr, struct silofs_inode_info *ii)
+{
+	int err;
+
+	err = add_namehash_dentry(task, dir_ii, nstr, ii);
+	if (err) {
+		silofs_remove_inode(task, ii);
+		return err;
+	}
+	return 0;
 }
 
 static void post_create_open(struct silofs_task_ctx *task,
@@ -719,7 +733,7 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = do_add_dentry(task, dir_ii, name, ii, true);
+	err = do_add_dentry(task, dir_ii, name, ii);
 	if (err) {
 		return err;
 	}
@@ -826,7 +840,7 @@ static int do_mknod_special(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = do_add_dentry(task, dir_ii, name, ii, true);
+	err = do_add_dentry(task, dir_ii, name, ii);
 	if (err) {
 		return err;
 	}
@@ -1299,7 +1313,7 @@ do_link(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = do_add_dentry(task, dir_ii, nstr, ii, false);
+	err = add_namehash_dentry(task, dir_ii, nstr, ii);
 	if (err) {
 		return err;
 	}
@@ -1359,7 +1373,7 @@ do_mkdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	}
 	silofs_dir_inherit_parent(*out_ii, dir_ii);
 
-	err = do_add_dentry(task, dir_ii, name, *out_ii, true);
+	err = do_add_dentry(task, dir_ii, name, *out_ii);
 	if (err) {
 		return err;
 	}
@@ -1530,7 +1544,7 @@ do_symlink(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	if (err) {
 		return err;
 	}
-	err = do_add_dentry(task, dir_ii, name, ii, true);
+	err = do_add_dentry(task, dir_ii, name, ii);
 	if (err) {
 		return err;
 	}
@@ -1908,7 +1922,7 @@ do_add_dentry_at(struct silofs_task_ctx *task, struct silofs_dentry_ref *dref,
 {
 	int err;
 
-	err = do_add_dentry(task, dref->dir_ii, dref->name, ii, false);
+	err = add_namehash_dentry(task, dref->dir_ii, dref->name, ii);
 	if (err) {
 		return err;
 	}

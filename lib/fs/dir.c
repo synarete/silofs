@@ -101,6 +101,11 @@ static void vaddr_of_dnode(struct silofs_vaddr *vaddr, off_t off)
 	silofs_vaddr_setup(vaddr, SILOFS_VTYPE_DTNODE, off);
 }
 
+static bool vaddr_isnull(const struct silofs_vaddr *vaddr)
+{
+	return silofs_vaddr_isnull(vaddr);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool dtn_index_isnull(silofs_dtn_index_t dtn_index)
@@ -521,7 +526,7 @@ dtn_has_child_at(const struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord)
 	struct silofs_vaddr vaddr;
 
 	dtn_child(dtn, ord, &vaddr);
-	return !silofs_vaddr_isnull(&vaddr);
+	return !vaddr_isnull(&vaddr);
 }
 
 static void dtn_set_child(struct silofs_dtree_node *dtn, silofs_dtn_ord_t ord,
@@ -1249,7 +1254,7 @@ static bool dir_has_tree(const struct silofs_inode_info *dir_ii)
 	struct silofs_vaddr vaddr = { .off = -1 };
 
 	dir_tree_root(dir_ii, &vaddr);
-	return !silofs_vaddr_isnull(&vaddr);
+	return !vaddr_isnull(&vaddr);
 }
 
 static void dir_set_tree_root(struct silofs_inode_info *dir_ii,
@@ -1530,7 +1535,7 @@ static int dirc_stage_child_by_name(const struct silofs_dir_ctx *d_ctx,
 	int err = -SILOFS_ENOENT;
 
 	dti_child_addr_by_hash(parent_dti, d_ctx->name->hash, &vaddr);
-	if (!silofs_vaddr_isnull(&vaddr)) {
+	if (!vaddr_isnull(&vaddr)) {
 		err = dirc_stage_child(d_ctx, parent_dti, &vaddr, out_dti);
 	}
 	return err;
@@ -1616,7 +1621,7 @@ static int dirc_stage_tree_root(const struct silofs_dir_ctx *d_ctx,
 	int ret                   = -SILOFS_ENOENT;
 
 	dirc_resolve_tree(d_ctx, &vaddr);
-	if (!silofs_vaddr_isnull(&vaddr)) {
+	if (!vaddr_isnull(&vaddr)) {
 		ret = dirc_stage_dtnode(d_ctx, &vaddr, out_dti);
 	}
 	return ret;
@@ -1877,7 +1882,7 @@ static int dirc_require_child(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	dirc_resolve_child_of(d_ctx, parent_dti, &vaddr);
-	if (!silofs_vaddr_isnull(&vaddr)) {
+	if (!vaddr_isnull(&vaddr)) {
 		err = dirc_stage_child(d_ctx, parent_dti, &vaddr, out_dti);
 	} else {
 		err = dirc_spawn_bind_child(d_ctx, parent_dti, out_dti);
@@ -2230,7 +2235,7 @@ static int dirc_do_stage_child_by_ord(const struct silofs_dir_ctx *d_ctx,
 		goto out;
 	}
 	dti_child_addr_by_ord(dti, ord, &vaddr);
-	if (silofs_vaddr_isnull(&vaddr)) {
+	if (vaddr_isnull(&vaddr)) {
 		goto out;
 	}
 	ret = dirc_stage_dtnode(d_ctx, &vaddr, out_dti);
@@ -2296,7 +2301,7 @@ static int dirc_next_node(struct silofs_dir_ctx *d_ctx,
 	next_dtn_idx = curr_dtn_idx + 1;
 
 	dtn_parent_addr(dti->dtn, &vaddr);
-	if (silofs_vaddr_isnull(&vaddr)) {
+	if (vaddr_isnull(&vaddr)) {
 		*out_dtn_idx = next_dtn_idx;
 		return 0;
 	}
@@ -2307,7 +2312,7 @@ static int dirc_next_node(struct silofs_dir_ctx *d_ctx,
 	ord = dtn_child_ord(dti->dtn);
 	while (++ord < DTREE_FANOUT) {
 		dti_child_addr_by_ord(parent_dti, ord, &vaddr);
-		if (!silofs_vaddr_isnull(&vaddr)) {
+		if (!vaddr_isnull(&vaddr)) {
 			break;
 		}
 		next_dtn_idx += 1;
@@ -2560,7 +2565,7 @@ static int dirc_discard_childs_of(const struct silofs_dir_ctx *d_ctx,
 			break;
 		}
 		dtn_child_by_ord(dti->dtn, ord, &child_vaddr);
-		if (silofs_vaddr_isnull(&child_vaddr)) {
+		if (vaddr_isnull(&child_vaddr)) {
 			continue;
 		}
 		err = dirc_discard_recursively(d_ctx, &child_vaddr);
@@ -2595,7 +2600,7 @@ static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_dtnode_info *dti = nullptr;
 	int err;
 
-	if (silofs_vaddr_isnull(vaddr)) {
+	if (vaddr_isnull(vaddr)) {
 		return 0;
 	}
 	err = dirc_stage_dtnode(d_ctx, vaddr, &dti);
@@ -2855,7 +2860,7 @@ static int dtn_verify_childs(const struct silofs_dtree_node *dtn)
 
 	for (unsigned int i = 0; i < ARRAY_SIZE(dtn->dn_child); ++i) {
 		dtn_child(dtn, i, &vaddr);
-		if (silofs_vaddr_isnull(&vaddr)) {
+		if (vaddr_isnull(&vaddr)) {
 			continue;
 		}
 		err = silofs_verify_off(vaddr.off);

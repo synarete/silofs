@@ -129,6 +129,9 @@ int silofs_stage_ftleaf(const struct silofs_task_ctx *task,
 int silofs_remove_ftleaf_at(struct silofs_task_ctx    *task,
                             const struct silofs_vaddr *vaddr);
 
+int silofs_probe_inode2(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr    *vaddr);
+
 int silofs_stage_inode2(const struct silofs_task_ctx *task,
                         const struct silofs_vaddr    *vaddr,
                         enum silofs_stg_mode          stg_mode,

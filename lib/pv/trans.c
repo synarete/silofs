@@ -20,9 +20,23 @@
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
 
+static void
+vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, silofs_vni_vaddr(vni));
+}
+
 static void vni_markdirty(struct silofs_vnode_info *vni)
 {
 	silofs_vni_markdirty(vni, nullptr);
+}
+
+int silofs_probe_vnode2(struct silofs_pexec_ctx *pexec,
+                        const struct silofs_vaddr *vaddr)
+{
+	struct silofs_pnptr pnptr;
+
+	return silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 }
 
 int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
@@ -132,15 +146,25 @@ reclaim:
 int silofs_reclaim_vnode2(struct silofs_pexec_ctx *pexec,
                           struct silofs_vnode_info *vni)
 {
-	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
-	int err;
+	struct silofs_vaddr vaddr;
 
-	err = reclaim_vnode2_at(pexec, vaddr);
-	if (err) {
-		return err;
+	vaddr_of(vni, &vaddr);
+	return silofs_reclaim_vnode2_at(pexec, &vaddr);
+}
+
+static struct silofs_vnode_info *
+lookup_cached_vni(struct silofs_pexec_ctx *pexec,
+                  const struct silofs_vaddr *vaddr)
+{
+	return silofs_vcache_lookup_vnode(pexec->vcache, vaddr);
+}
+
+static void forget_cached_vni(struct silofs_pexec_ctx *pexec,
+                              struct silofs_vnode_info *vni)
+{
+	if (vni != nullptr) {
+		silofs_vcache_forget_vnode(pexec->vcache, vni);
 	}
-	silofs_vcache_forget_vnode(pexec->vcache, vni);
-	return 0;
 }
 
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
@@ -149,14 +173,12 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni;
 	int err;
 
-	vni = silofs_vcache_lookup_vnode(pexec->vcache, vaddr);
+	vni = lookup_cached_vni(pexec, vaddr);
 	err = reclaim_vnode2_at(pexec, vaddr);
 	if (err) {
 		return err;
 	}
-	if (vni != nullptr) {
-		silofs_vcache_forget_vnode(pexec->vcache, vni);
-	}
+	forget_cached_vni(pexec, vni);
 	return 0;
 }
 

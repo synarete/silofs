@@ -31,6 +31,20 @@ vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
+probe_vnode(const struct silofs_task_ctx *task,
+            const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	silofs_make_pexec(task, &pexec);
+	silofs_ii_incref(pii);
+	err = silofs_probe_vnode2(&pexec, vaddr);
+	silofs_ii_decref(pii);
+	return err;
+}
+
+static int
 stage_vnode(const struct silofs_task_ctx *task,
             const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii,
             enum silofs_stg_mode stg_mode, struct silofs_vnode_info **out_vni)
@@ -370,6 +384,13 @@ static struct silofs_inode_info *vni_to_ii(struct silofs_vnode_info *vni)
 		silofs_panic("missing inode: ii=%" PRIxPTR, (uintptr_t)ii);
 	}
 	return ii;
+}
+
+int silofs_probe_inode2(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
+	return probe_vnode(task, vaddr, nullptr);
 }
 
 int silofs_stage_inode2(const struct silofs_task_ctx *task,

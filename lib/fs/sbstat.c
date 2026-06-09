@@ -21,7 +21,8 @@
 #include <silofs/ioctls.h>
 #include <silofs/base.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/super.h>
+#include <silofs/pv.h>
+#include <silofs/fs.h>
 
 /* Local functions. */
 static ssize_t *
@@ -711,16 +712,28 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 }
 
 void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
+                              const struct silofs_uber_stats *ub_stats,
                               struct statvfs *out_stv)
 {
-	const size_t funit          = 4096;
-	const size_t bsize          = funit;
-	const size_t frsize         = funit;
-	const size_t nbytes_max     = sbst_capacity(sbi);
-	const size_t nbytes_use     = sbst_bytes_used(sbi);
-	const size_t nbytes_free    = nbytes_max - nbytes_use;
-	const fsfilcnt_t nfiles_max = sbst_inodes_max(sbi);
-	const fsfilcnt_t nfiles_cur = sbst_inodes_used(sbi);
+	constexpr size_t funit  = 4096;
+	constexpr size_t bsize  = funit;
+	constexpr size_t frsize = funit;
+	size_t nbytes_max, nbytes_use, nbytes_free, vtype_size;
+	fsfilcnt_t nfiles_max, nfiles_cur;
+	enum silofs_vtype vtype;
+
+	nbytes_max = sbst_capacity(sbi);
+	nbytes_use = sbst_bytes_used(sbi);
+	nbytes_use = 0;
+	for (vtype = SILOFS_VTYPE_NONE; vtype < SILOFS_VTYPE_LAST; ++vtype) {
+		vtype_size = silofs_vtype_size(vtype);
+		nbytes_use += ub_stats->st[vtype].vn * vtype_size;
+	}
+	nbytes_free = nbytes_max - nbytes_use;
+
+	nfiles_max = sbst_inodes_max(sbi);
+	nfiles_cur = sbst_inodes_used(sbi);
+	nfiles_cur = ub_stats->st[SILOFS_VTYPE_INODE].vn;
 
 	silofs_memzero(out_stv, sizeof(*out_stv));
 	out_stv->f_bsize   = bsize;

@@ -2278,8 +2278,10 @@ static int
 do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 {
 	const struct silofs_sb_info *sbi = silofs_get_sbi(task);
+	struct silofs_uber_stats ub_stats;
 
-	silofs_sbst_fill_statvfs(sbi, out_stv);
+	silofs_ubi_collect_stats(task->ubref->ubi, &ub_stats);
+	silofs_sbst_fill_statvfs(sbi, &ub_stats, out_stv);
 	return 0;
 }
 

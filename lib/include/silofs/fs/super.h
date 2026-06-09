@@ -28,6 +28,7 @@ struct silofs_spmap_lmap;
 struct silofs_super_block;
 struct silofs_sb_info;
 struct silofs_query_spstats;
+struct silofs_uber_stats;
 
 int silofs_sb_check_version(const struct silofs_super_block *sb);
 
@@ -150,8 +151,9 @@ void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi);
 
 void silofs_sbst_force_into_sb(struct silofs_sb_info *sbi);
 
-void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
-                              struct statvfs              *out_stv);
+void silofs_sbst_fill_statvfs(const struct silofs_sb_info    *sbi,
+                              const struct silofs_uber_stats *ub_stats,
+                              struct statvfs                 *out_stv);
 
 void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
                             struct silofs_query_spstats *out_qsp);

@@ -582,7 +582,7 @@ struct silofs_vnode_info {
 	struct silofs_llink      vn_llink;
 	uint64_t                 vn_magic;
 	int                      vn_asyncwr;
-	bool                     vn_has_pn;
+	bool                     vn_use_pn_vnis_dq;
 
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
@@ -830,7 +830,7 @@ silofs_vcache_lookup_vnode(struct silofs_vcache      *vcache,
 
 struct silofs_vnode_info *
 silofs_vcache_create_vnode(struct silofs_vcache      *vcache,
-                           const struct silofs_vaddr *vaddr);
+                           const struct silofs_vaddr *vaddr, bool pn);
 
 void silofs_vcache_forget_vnode(struct silofs_vcache     *vcache,
                                 struct silofs_vnode_info *vni);

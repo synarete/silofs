@@ -768,7 +768,7 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_vnode_info **out_vni)
 {
-	*out_vni = silofs_vcache_create_vnode(st_ctx->vcache, vaddr);
+	*out_vni = silofs_vcache_create_vnode(st_ctx->vcache, vaddr, true);
 
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
@@ -776,7 +776,7 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
 static void stc_rebind_vnode(const struct silofs_stage_ctx *st_ctx,
                              struct silofs_vnode_info *vni)
 {
-	vni->vn_has_pn = true;
+	vni->vn_use_pn_vnis_dq = true;
 	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 

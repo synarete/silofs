@@ -61,7 +61,7 @@ vcache_resolve_dirtyq_for(struct silofs_vcache *vcache,
 	struct silofs_dirtyq *dq;
 	const enum silofs_vtype vtype = vni_vtype(vni);
 
-	if (vni->vn_has_pn) {
+	if (vni->vn_use_pn_vnis_dq) {
 		dq = &vcache->vc_pn_vnis_dq;
 	} else if (silofs_vtype_isinode(vtype)) {
 		dq = &vcache->vc_iis_dq;
@@ -193,6 +193,11 @@ static bool vcache_evict_or_relru_vni(struct silofs_vcache *vcache,
 		vcache_evict_vni(vcache, vni);
 		evicted = true;
 	} else {
+
+		/* XXX */
+		test_evictable_vni(vni);
+		/* XXX */
+
 		vcache_promote_vni(vcache, vni, true);
 		evicted = false;
 	}
@@ -309,12 +314,14 @@ static void vcache_set_dq_of_vni(struct silofs_vcache *vcache,
 
 struct silofs_vnode_info *
 silofs_vcache_create_vnode(struct silofs_vcache *vcache,
-                           const struct silofs_vaddr *vaddr)
+                           const struct silofs_vaddr *vaddr, bool pn)
 {
 	struct silofs_vnode_info *vni;
 
 	vni = vcache_require_vni(vcache, vaddr);
 	if (vni != nullptr) {
+		vni->vn_use_pn_vnis_dq = pn;
+
 		vcache_set_dq_of_vni(vcache, vni);
 		vcache_store_vni(vcache, vni);
 	}

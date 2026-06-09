@@ -182,25 +182,33 @@ lni_dqe(const struct silofs_lnode_info *lni)
 
 static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_set_dirtyq(lni_mut_dqe(lni), dq);
+	struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
+
+	silofs_dqe_set_dirtyq(dqe, dq);
 }
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
 {
-	return silofs_dqe_isdirty(lni_dqe(lni));
+	const struct silofs_dq_elem *dqe = lni_dqe(lni);
+
+	return silofs_dqe_isdirty(dqe);
 }
 
 void silofs_lni_markdirty(struct silofs_lnode_info *lni)
 {
 	if (!silofs_lni_isdirty(lni)) {
-		silofs_dqe_markdirty(lni_mut_dqe(lni));
+		struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
+
+		silofs_dqe_markdirty(dqe);
 	}
 }
 
 void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
 {
 	if (silofs_lni_isdirty(lni)) {
-		silofs_dqe_cleardirty(lni_mut_dqe(lni));
+		struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
+
+		silofs_dqe_cleardirty(dqe);
 	}
 }
 
@@ -370,9 +378,9 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_llink_reset(&vni->vn_llink);
 	silofs_paddr_reset(&vni->vn_curr_paddr);
-	vni->vn_asyncwr = 0;
-	vni->vn_has_pn  = false;
-	vni->vn_magic   = SILOFS_VI_MAGIC;
+	vni->vn_asyncwr        = 0;
+	vni->vn_use_pn_vnis_dq = false;
+	vni->vn_magic          = SILOFS_VI_MAGIC;
 
 	vni->isevictable_fn = silofs_vni_isevictable;
 }
@@ -445,8 +453,10 @@ bool silofs_vni_isdirty(const struct silofs_vnode_info *vni)
 static void
 vni_update_dq_by(struct silofs_vnode_info *vni, struct silofs_inode_info *ii)
 {
-	if (ii != nullptr && !vni->vn_has_pn) {
+	if (ii != nullptr && !vni->vn_use_pn_vnis_dq) {
+		/* XXX disable per-ii dirtyq
 		silofs_vni_set_dq(vni, &ii->i_dq_vnis);
+		*/
 	}
 }
 
@@ -466,6 +476,7 @@ void silofs_vni_cleardirty(struct silofs_vnode_info *vni)
 	silofs_assert_not_null(vni);
 
 	if (silofs_vni_isdirty(vni)) {
+
 		silofs_lni_cleardirty(&vni->vn_lni);
 	}
 }

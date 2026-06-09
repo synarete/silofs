@@ -408,7 +408,7 @@ struct silofs_vnode_info *
 silofs_lcache_create_vnode(struct silofs_lcache *lcache,
                            const struct silofs_vaddr *vaddr)
 {
-	return silofs_vcache_create_vnode(&lcache->lc_vc, vaddr);
+	return silofs_vcache_create_vnode(&lcache->lc_vc, vaddr, false);
 }
 
 void silofs_lcache_remarkdirty_vnode(struct silofs_lcache *lcache,

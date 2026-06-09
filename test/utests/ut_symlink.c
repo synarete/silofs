@@ -161,16 +161,14 @@ static void ut_symlink_to_reg(struct ut_env *ute)
 
 static void ut_symlink_with_io_(struct ut_env *ute, size_t cnt)
 {
-	off_t off         = -1;
-	ino_t dino        = 0;
-	ino_t fino        = 0;
-	ino_t sino        = 0;
-	char *symval      = nullptr;
-	const char *fname = nullptr;
-	const char *sname = nullptr;
-	const char *fp    = "f";
-	const char *sp    = "s";
-	const char *dname = UT_NAME;
+	const char *symval = nullptr;
+	const char *fname  = nullptr;
+	const char *sname  = nullptr;
+	const char *fp     = "f";
+	const char *sp     = "s";
+	const char *dname  = UT_NAME;
+	ino_t dino = 0, fino = 0, sino = 0;
+	off_t off;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
@@ -216,20 +214,17 @@ static void ut_symlink_with_io(struct ut_env *ute)
 
 static void ut_symlink_with_io2_(struct ut_env *ute, size_t cnt)
 {
-	const char *fname    = nullptr;
-	const char *sname    = nullptr;
-	const char *dname    = UT_NAME;
-	const char *ff       = "ff";
-	const char *s1       = "s1";
-	const char *s2       = "s2";
-	const ino_t root_ino = UT_ROOT_INO;
-	ino_t dino           = 0;
-	ino_t fino           = 0;
-	ino_t sino           = 0;
-	char *symval         = nullptr;
-	off_t off            = -1;
+	const char *dname  = UT_NAME;
+	const char *fname  = nullptr;
+	const char *sname  = nullptr;
+	const char *symval = nullptr;
+	const char *ff     = "ff";
+	const char *s1     = "s1";
+	const char *s2     = "s2";
+	ino_t dino = 0, fino = 0, sino = 0;
+	off_t off;
 
-	ut_mkdir2(ute, root_ino, dname, &dino);
+	ut_mkdir_at_root(ute, dname, &dino);
 	for (size_t i = 0; i < cnt; ++i) {
 		sname  = ut_make_name(ute, s1, i);
 		fname  = ut_make_name(ute, ff, i);
@@ -272,11 +267,12 @@ static void ut_symlink_with_io2_(struct ut_env *ute, size_t cnt)
 		ut_unlink(ute, dino, sname);
 		ut_unlink(ute, dino, fname);
 	}
-	ut_rmdir(ute, root_ino, dname);
+	ut_rmdir_at_root(ute, dname);
 }
 
 static void ut_symlink_with_io2(struct ut_env *ute)
 {
+	ut_symlink_with_io2_(ute, 1);
 	ut_symlink_with_io2_(ute, 11);
 	ut_symlink_with_io2_(ute, 111);
 	ut_symlink_with_io2_(ute, 1111);

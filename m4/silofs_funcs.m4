@@ -29,6 +29,7 @@ AC_DEFUN([AX_SILOFS_NEED_FUNCS2],
   AX_SILOFS_CHECK_FUNCS([chdir])
   AX_SILOFS_CHECK_FUNCS([copy_file_range])
   AX_SILOFS_CHECK_FUNCS([endpwent])
+  AX_SILOFS_CHECK_FUNCS([explicit_bzero])
   AX_SILOFS_CHECK_FUNCS([fcntl])
   AX_SILOFS_CHECK_FUNCS([futimens])
   AX_SILOFS_CHECK_FUNCS([get_current_dir_name])

@@ -35,13 +35,11 @@ static void write_newline(void)
 
 static void wipe_password(char *buf, size_t bsz)
 {
-	memset(buf, 0xff, bsz);
+	explicit_bzero(buf, bsz);
 }
 
-static void check_password_char(char *buf, size_t bsz, size_t idx)
+static void check_password_char(int ch, char *buf, size_t bsz)
 {
-	const int ch = (int)(buf[idx]);
-
 	if (!isascii(ch)) {
 		wipe_password(buf, bsz);
 		cmd_die(-EINVAL, "non ASCII char in password");
@@ -90,7 +88,7 @@ static char *parse_dup_password(char *buf, size_t bsz)
 		cmd_die(-EINVAL, "password too long");
 	}
 	for (size_t i = 0; i < len; ++i) {
-		check_password_char(buf, bsz, i);
+		check_password_char((int)str[i], buf, bsz);
 	}
 	return cmd_strndup(str, len);
 }
@@ -111,6 +109,7 @@ read_password_buf_from_fd(int fd, void *buf, size_t bsz, size_t *out_len)
 	if (*out_len == bsz) {
 		err = silofs_sys_read(fd, &ch, 1, &nrd);
 		if (!err && (nrd > 0)) {
+			wipe_password(buf, bsz);
 			cmd_die(-EINVAL, "password too long");
 		}
 	}
@@ -138,9 +137,9 @@ read_password_from_file(int fd, void *buf, size_t bsz, size_t *out_len)
 static void
 read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 {
-	struct termios tr_old;
-	struct termios tr_new;
-	char *pass = nullptr;
+	struct termios tr_old = {};
+	struct termios tr_new = {};
+	char *pass            = nullptr;
 	int read_err;
 	int err;
 
@@ -162,13 +161,14 @@ read_password_from_tty(int fd, void *buf, size_t bsz, size_t *out_len)
 	}
 
 	read_err = silofs_sys_read(fd, buf, bsz, out_len);
-	write_newline();
 
 	err = tcsetattr(fd, TCSANOW, &tr_old);
 	if (err) {
 		wipe_password(buf, bsz);
 		cmd_die(errno, "tcsetattr fd=%d", fd);
 	}
+
+	write_newline();
 
 	err = read_err;
 	if (err) {
@@ -208,8 +208,7 @@ static void read_password_from(int fd, void *buf, size_t bsz, size_t *out_len)
 
 static int open_password_fd(const char *path)
 {
-	int err;
-	int fd = -1;
+	int err, fd = -1;
 
 	if (path == nullptr) {
 		return STDIN_FILENO;
@@ -309,7 +308,7 @@ char *cmd_duppass(const char *pass)
 void cmd_delpass(char **pass)
 {
 	if ((pass != nullptr) && (*pass != nullptr)) {
-		silofs_memffff(*pass, strlen(*pass));
+		explicit_bzero(*pass, strlen(*pass));
 		cmd_pstrfree(pass);
 	}
 }

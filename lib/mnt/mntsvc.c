@@ -364,7 +364,9 @@ out_err:
 
 static int do_umount_fuse_fs(const struct silofs_mntparams *mntp)
 {
-	return silofs_sys_umount2(mntp->path, (int)mntp->flags);
+	const int flags = (int)mntp->flags | UMOUNT_NOFOLLOW;
+
+	return silofs_sys_umount2(mntp->path, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -999,7 +1001,8 @@ static int mntsvc_exec_mount(struct silofs_mntsvc *msvc,
 static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
                                const struct silofs_mntparams *mntp)
 {
-	const uint64_t mnt_allow      = MNT_DETACH | MNT_FORCE;
+	constexpr uint64_t mnt_allow  = MNT_DETACH | MNT_FORCE |
+	                                UMOUNT_NOFOLLOW;
 	const struct ucred *peer_cred = &msvc->ms_peer_ucred;
 	const char *path              = mntp->path;
 	int err;

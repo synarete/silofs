@@ -1653,78 +1653,78 @@ struct silofs_ftnode_info *silofs_fti_from_vni(struct silofs_vnode_info *vni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *fli_to_vni(struct silofs_ftleaf_info *fli)
+static struct silofs_vnode_info *fdi_to_vni(struct silofs_fdnode_info *fdi)
 {
-	return likely(fli != nullptr) ? &fli->ftl_vni : nullptr;
+	return likely(fdi != nullptr) ? &fdi->fdn_vni : nullptr;
 }
 
-static struct silofs_ftleaf_info *fli_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_fdnode_info *fdi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_ftleaf_info, ftl_vni);
-}
-
-static void
-fli_init(struct silofs_ftleaf_info *fli, const struct silofs_vaddr *vaddr)
-{
-	vni_init(&fli->ftl_vni, vaddr);
-}
-
-static void fli_fini(struct silofs_ftleaf_info *fli)
-{
-	vni_fini(&fli->ftl_vni);
-	fli->ftl.db = nullptr;
-}
-
-static struct silofs_ftleaf_info *fli_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_ftleaf_info *fli;
-
-	fli = memalloc_lni(alloc, sizeof(*fli));
-	return fli;
+	return mut_container_of(vni, struct silofs_fdnode_info, fdn_vni);
 }
 
 static void
-fli_free(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
+fdi_init(struct silofs_fdnode_info *fdi, const struct silofs_vaddr *vaddr)
 {
-	memfree_lni(alloc, fli, sizeof(*fli));
+	vni_init(&fdi->fdn_vni, vaddr);
 }
 
-static struct silofs_ftleaf_info *
-fli_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static void fdi_fini(struct silofs_fdnode_info *fdi)
 {
-	struct silofs_ftleaf_info *fli;
+	vni_fini(&fdi->fdn_vni);
+	fdi->fdn.dn64 = nullptr;
+}
 
-	fli = fli_malloc(alloc);
-	if (fli != nullptr) {
-		fli_init(fli, vaddr);
+static struct silofs_fdnode_info *fdi_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_fdnode_info *fdi;
+
+	fdi = memalloc_lni(alloc, sizeof(*fdi));
+	return fdi;
+}
+
+static void
+fdi_free(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+{
+	memfree_lni(alloc, fdi, sizeof(*fdi));
+}
+
+static struct silofs_fdnode_info *
+fdi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+{
+	struct silofs_fdnode_info *fdi;
+
+	fdi = fdi_malloc(alloc);
+	if (fdi != nullptr) {
+		fdi_init(fdi, vaddr);
 	}
-	return fli;
+	return fdi;
 }
 
 static void
-fli_fini_free(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
+fdi_fini_free(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 {
-	fli_fini(fli);
-	fli_free(fli, alloc);
+	fdi_fini(fdi);
+	fdi_free(fdi, alloc);
 }
 
 static int
-fli_attach_lview(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
+fdi_attach_lview(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview = nullptr;
 	int err;
 
-	err = vni_attach_lview(&fli->ftl_vni, alloc);
+	err = vni_attach_lview(&fdi->fdn_vni, alloc);
 	if (!err) {
-		const enum silofs_vtype vtype = vni_vtype(&fli->ftl_vni);
+		const enum silofs_vtype vtype = vni_vtype(&fdi->fdn_vni);
 
-		lview = silofs_vni_lview(&fli->ftl_vni);
+		lview = silofs_vni_lview(&fdi->fdn_vni);
 		if (vtype == SILOFS_VTYPE_DATA1K) {
-			fli->ftl.db1 = &lview->u.dbk1;
+			fdi->fdn.dn1 = &lview->u.dn1;
 		} else if (vtype == SILOFS_VTYPE_DATA4K) {
-			fli->ftl.db4 = &lview->u.dbk4;
+			fdi->fdn.dn4 = &lview->u.dn4;
 		} else if (vtype == SILOFS_VTYPE_DATA64K) {
-			fli->ftl.db = &lview->u.dbk64;
+			fdi->fdn.dn64 = &lview->u.dn64;
 		} else {
 			silofs_panic("not a data vtype: %d", (int)vtype);
 		}
@@ -1733,39 +1733,39 @@ fli_attach_lview(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
 }
 
 static void
-fli_detach_lview(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
+fdi_detach_lview(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 {
-	vni_detach_lview(&fli->ftl_vni, alloc);
+	vni_detach_lview(&fdi->fdn_vni, alloc);
 }
 
-static struct silofs_ftleaf_info *
-fli_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static struct silofs_fdnode_info *
+fdi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_ftleaf_info *fli;
+	struct silofs_fdnode_info *fdi;
 	int err;
 
-	fli = fli_malloc_init(alloc, vaddr);
-	if (fli == nullptr) {
+	fdi = fdi_malloc_init(alloc, vaddr);
+	if (fdi == nullptr) {
 		return nullptr;
 	}
-	err = fli_attach_lview(fli, alloc);
+	err = fdi_attach_lview(fdi, alloc);
 	if (err) {
-		fli_fini_free(fli, alloc);
+		fdi_fini_free(fdi, alloc);
 		return nullptr;
 	}
-	return fli;
+	return fdi;
 }
 
-static void fli_del(struct silofs_ftleaf_info *fli, struct silofs_alloc *alloc)
+static void fdi_del(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 {
-	fli_detach_lview(fli, alloc);
-	fli_fini_free(fli, alloc);
+	fdi_detach_lview(fdi, alloc);
+	fdi_fini_free(fdi, alloc);
 }
 
-struct silofs_ftleaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni)
+struct silofs_fdnode_info *silofs_fdi_from_vni(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
-	return fli_from_vni(vni);
+	return fdi_from_vni(vni);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1873,7 +1873,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
-		vni = fli_to_vni(fli_new(alloc, vaddr));
+		vni = fdi_to_vni(fdi_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
@@ -1918,7 +1918,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
-		fli_del(fli_from_vni(vni), alloc);
+		fdi_del(fdi_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:

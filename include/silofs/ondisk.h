@@ -256,7 +256,7 @@
 /* maximum size in bytes of regular file */
 #define SILOFS_FILE_SIZE_MAX ((SILOFS_LBK_SIZE * SILOFS_FILE_LEAVES_MAX) - 1)
 
-/* on-disk size of file's radix-tree-node */
+/* on-disk size of file's tree-node */
 #define SILOFS_FILE_RTNODE_SIZE (8192)
 
 /* number of file's radix-tree-nodes per logical-block */
@@ -362,8 +362,8 @@ enum silofs_vtype {
 	SILOFS_VTYPE_LSMAP   = 5,
 	SILOFS_VTYPE_INODE   = 6,
 	SILOFS_VTYPE_XANODE  = 7,
-	SILOFS_VTYPE_DTNODE  = 8,
-	SILOFS_VTYPE_SYMVAL  = 9,
+	SILOFS_VTYPE_SYMVAL  = 8,
+	SILOFS_VTYPE_DTNODE  = 9,
 	SILOFS_VTYPE_FTNODE  = 10,
 	SILOFS_VTYPE_SPNODE2 = 11,
 	SILOFS_VTYPE_DATA1K  = 12,
@@ -980,31 +980,31 @@ struct silofs_symval_node {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* 1K data block */
-struct silofs_data_block1 {
+struct silofs_data_node1 {
 	uint8_t dat[1024];
 } silofs_attr_aligned64;
 
 /* 4K data block */
-struct silofs_data_block4 {
+struct silofs_data_node4 {
 	uint8_t dat[4096];
 } silofs_attr_aligned64;
 
 /* 64K data block */
-struct silofs_data_block64 {
+struct silofs_data_node64 {
 	uint8_t dat[65536];
 } silofs_attr_aligned64;
 
 /* single logical block unit */
 union silofs_lblock_u {
-	uint8_t                    bk[SILOFS_LBK_SIZE];
-	struct silofs_inode        inode[SILOFS_NINODE_IN_LBK];
-	struct silofs_xattr_node   xan[SILOFS_NXANODE_IN_LBK];
-	struct silofs_symval_node  svn[SILOFS_NSYMVAL_IN_LBK];
-	struct silofs_dtree_node   dtn[SILOFS_NDTNODE_IN_LBK];
-	struct silofs_ftree_node   ftn[SILOFS_NFRTNODE_IN_LBK];
-	struct silofs_data_block1  dbk1[SILOFS_NKB_IN_LBK];
-	struct silofs_data_block4  dbk4[SILOFS_NKB_IN_LBK / 4];
-	struct silofs_data_block64 dbk64[SILOFS_NKB_IN_LBK / 64];
+	uint8_t                   bk[SILOFS_LBK_SIZE];
+	struct silofs_inode       inode[SILOFS_NINODE_IN_LBK];
+	struct silofs_xattr_node  xan[SILOFS_NXANODE_IN_LBK];
+	struct silofs_symval_node svn[SILOFS_NSYMVAL_IN_LBK];
+	struct silofs_dtree_node  dtn[SILOFS_NDTNODE_IN_LBK];
+	struct silofs_ftree_node  ftn[SILOFS_NFRTNODE_IN_LBK];
+	struct silofs_data_node1  dn1[SILOFS_NKB_IN_LBK];
+	struct silofs_data_node4  dn4[SILOFS_NKB_IN_LBK / 4];
+	struct silofs_data_node64 dn64[SILOFS_NKB_IN_LBK / 64];
 } silofs_attr_aligned64;
 
 struct silofs_lblock {
@@ -1106,23 +1106,23 @@ struct silofs_pview {
 
 /* semantic "view" into lnodes' meta-elements */
 union silofs_lview_u {
-	struct silofs_header       hdr[2];
-	struct silofs_mbr1k        mbr;
-	struct silofs_space_node   spn;
-	struct silofs_arix_node    arn;
-	struct silofs_super_block  sb;
-	struct silofs_spmap_node   sn;
-	struct silofs_spmap_leaf   sl;
-	struct silofs_lsmap        lsm;
-	struct silofs_inode        in;
-	struct silofs_dtree_node   dtn;
-	struct silofs_ftree_node   ftn;
-	struct silofs_xattr_node   xan;
-	struct silofs_symval_node  svn;
-	struct silofs_data_block1  dbk1;
-	struct silofs_data_block4  dbk4;
-	struct silofs_data_block64 dbk64;
-	struct silofs_lblock       lbk;
+	struct silofs_header      hdr[2];
+	struct silofs_mbr1k       mbr;
+	struct silofs_space_node  spn;
+	struct silofs_arix_node   arn;
+	struct silofs_super_block sb;
+	struct silofs_spmap_node  sn;
+	struct silofs_spmap_leaf  sl;
+	struct silofs_lsmap       lsm;
+	struct silofs_inode       in;
+	struct silofs_dtree_node  dtn;
+	struct silofs_ftree_node  ftn;
+	struct silofs_xattr_node  xan;
+	struct silofs_symval_node svn;
+	struct silofs_data_node1  dn1;
+	struct silofs_data_node4  dn4;
+	struct silofs_data_node64 dn64;
+	struct silofs_lblock      lbk;
 } silofs_attr_aligned64;
 
 struct silofs_lview {

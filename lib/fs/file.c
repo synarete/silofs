@@ -304,56 +304,56 @@ static bool fl_mode_zero_range(int fl_mode)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
-fli_markdirty(struct silofs_ftleaf_info *fli, struct silofs_inode_info *ii)
+fdi_markdirty(struct silofs_fdnode_info *fdi, struct silofs_inode_info *ii)
 {
-	silofs_vni_markdirty(&fli->ftl_vni, ii);
+	silofs_vni_markdirty(&fdi->fdn_vni, ii);
 }
 
-static void fli_incref(struct silofs_ftleaf_info *fli)
+static void fdi_incref(struct silofs_fdnode_info *fdi)
 {
-	if (likely(fli != nullptr)) {
-		silofs_vni_incref(&fli->ftl_vni);
+	if (likely(fdi != nullptr)) {
+		silofs_vni_incref(&fdi->fdn_vni);
 	}
 }
 
-static void fli_decref(struct silofs_ftleaf_info *fli)
+static void fdi_decref(struct silofs_fdnode_info *fdi)
 {
-	if (likely(fli != nullptr)) {
-		silofs_vni_decref(&fli->ftl_vni);
+	if (likely(fdi != nullptr)) {
+		silofs_vni_decref(&fdi->fdn_vni);
 	}
 }
 
 static const struct silofs_vaddr *
-fli_vaddr(const struct silofs_ftleaf_info *fli)
+fdi_vaddr(const struct silofs_fdnode_info *fdi)
 {
-	return (fli != nullptr) ? silofs_vni_vaddr(&fli->ftl_vni) : nullptr;
+	return (fdi != nullptr) ? silofs_vni_vaddr(&fdi->fdn_vni) : nullptr;
 }
 
-static enum silofs_vtype fli_vtype(const struct silofs_ftleaf_info *fli)
+static enum silofs_vtype fdi_vtype(const struct silofs_fdnode_info *fdi)
 {
-	return silofs_vni_vtype(&fli->ftl_vni);
+	return silofs_vni_vtype(&fdi->fdn_vni);
 }
 
-static size_t fli_data_len(const struct silofs_ftleaf_info *fli)
+static size_t fdi_data_len(const struct silofs_fdnode_info *fdi)
 {
-	return silofs_vtype_size(fli_vtype(fli));
+	return silofs_vtype_size(fdi_vtype(fdi));
 }
 
-static void *fli_data_at(const struct silofs_ftleaf_info *fli, off_t pos)
+static void *fdi_data_at(const struct silofs_fdnode_info *fdi, off_t pos)
 {
 	size_t dat_size               = 0;
 	uint8_t *dat_base             = nullptr;
-	const enum silofs_vtype vtype = fli_vtype(fli);
+	const enum silofs_vtype vtype = fdi_vtype(fdi);
 
 	if (vtype == SILOFS_VTYPE_DATA1K) {
-		dat_size = sizeof(fli->ftl.db1->dat);
-		dat_base = fli->ftl.db1->dat;
+		dat_size = sizeof(fdi->fdn.dn1->dat);
+		dat_base = fdi->fdn.dn1->dat;
 	} else if (vtype == SILOFS_VTYPE_DATA4K) {
-		dat_size = sizeof(fli->ftl.db4->dat);
-		dat_base = fli->ftl.db4->dat;
+		dat_size = sizeof(fdi->fdn.dn4->dat);
+		dat_base = fdi->fdn.dn4->dat;
 	} else if (vtype == SILOFS_VTYPE_DATA64K) {
-		dat_size = sizeof(fli->ftl.db->dat);
-		dat_base = fli->ftl.db->dat;
+		dat_size = sizeof(fdi->fdn.dn64->dat);
+		dat_base = fdi->fdn.dn64->dat;
 	}
 
 	if ((dat_base == nullptr) || (pos >= (ssize_t)dat_size) || (pos < 0)) {
@@ -364,30 +364,30 @@ static void *fli_data_at(const struct silofs_ftleaf_info *fli, off_t pos)
 	return &dat_base[pos];
 }
 
-static off_t fli_off_within(const struct silofs_ftleaf_info *fli, off_t off)
+static off_t fdi_off_within(const struct silofs_fdnode_info *fdi, off_t off)
 {
-	return off_in_data(off, fli_vtype(fli));
+	return off_in_data(off, fdi_vtype(fdi));
 }
 
 static size_t
-fli_len_within(const struct silofs_ftleaf_info *fli, off_t off, off_t end)
+fdi_len_within(const struct silofs_fdnode_info *fdi, off_t off, off_t end)
 {
-	return len_of_data(off, end, fli_vtype(fli));
+	return len_of_data(off, end, fdi_vtype(fdi));
 }
 
-static void fli_pre_io(struct silofs_ftleaf_info *fli, bool asyncwr_mode)
+static void fdi_pre_io(struct silofs_fdnode_info *fdi, bool asyncwr_mode)
 {
-	fli_incref(fli);
+	fdi_incref(fdi);
 	if (asyncwr_mode) {
-		silofs_atomic_sqc_add(&fli->ftl_vni.vn_asyncwr, 1);
+		silofs_atomic_sqc_add(&fdi->fdn_vni.vn_asyncwr, 1);
 	}
 }
 
-static void fli_post_io(struct silofs_ftleaf_info *fli, bool asyncwr_mode)
+static void fdi_post_io(struct silofs_fdnode_info *fdi, bool asyncwr_mode)
 {
-	fli_decref(fli);
+	fdi_decref(fdi);
 	if (asyncwr_mode) {
-		silofs_atomic_sqc_sub(&fli->ftl_vni.vn_asyncwr, 1);
+		silofs_atomic_sqc_sub(&fdi->fdn_vni.vn_asyncwr, 1);
 	}
 }
 
@@ -909,7 +909,7 @@ static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
 }
 
 static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
-                                 struct silofs_ftleaf_info *fli, bool all,
+                                 struct silofs_fdnode_info *fdi, bool all,
                                  struct silofs_iovec *out_iov)
 {
 	off_t off_within;
@@ -917,16 +917,16 @@ static void filc_iovec_by_fileaf(const struct silofs_file_ctx *f_ctx,
 
 	if (all) {
 		off_within = 0;
-		len        = fli_data_len(fli);
+		len        = fdi_data_len(fdi);
 	} else {
-		off_within = fli_off_within(fli, f_ctx->off);
-		len        = fli_len_within(fli, f_ctx->off, f_ctx->end);
+		off_within = fdi_off_within(fdi, f_ctx->off);
+		len        = fdi_len_within(fdi, f_ctx->off, f_ctx->end);
 	}
 
 	silofs_iovec_reset(out_iov);
-	out_iov->iov.iov_base = fli_data_at(fli, off_within);
+	out_iov->iov.iov_base = fdi_data_at(fdi, off_within);
 	out_iov->iov.iov_len  = len;
-	out_iov->iov_backref  = f_ctx->with_backref ? fli : nullptr;
+	out_iov->iov_backref  = f_ctx->with_backref ? fdi : nullptr;
 }
 
 static void filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
@@ -1447,22 +1447,22 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int filc_recheck_fileaf(const struct silofs_file_ctx *f_ctx,
-                               struct silofs_ftleaf_info *fli)
+                               struct silofs_fdnode_info *fdi)
 {
-	if (!silofs_vni_need_recheck(&fli->ftl_vni)) {
+	if (!silofs_vni_need_recheck(&fdi->fdn_vni)) {
 		return 0;
 	}
 	silofs_unused(f_ctx);
-	silofs_vni_set_rechecked(&fli->ftl_vni);
+	silofs_vni_set_rechecked(&fdi->fdn_vni);
 	return 0;
 }
 
 static int filc_stage_ftleaf(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_vaddr *vaddr,
-                             struct silofs_ftleaf_info **out_fli)
+                             struct silofs_fdnode_info **out_fdi)
 {
 	struct silofs_vnode_info *vni  = nullptr;
-	struct silofs_ftleaf_info *fli = nullptr;
+	struct silofs_fdnode_info *fdi = nullptr;
 	int err;
 
 	err = silofs_stage_vnode(f_ctx->task, f_ctx->ii, vaddr,
@@ -1470,43 +1470,43 @@ static int filc_stage_ftleaf(const struct silofs_file_ctx *f_ctx,
 	if (err) {
 		return err;
 	}
-	fli = silofs_fli_from_vni(vni);
-	err = filc_recheck_fileaf(f_ctx, fli);
+	fdi = silofs_fdi_from_vni(vni);
+	err = filc_recheck_fileaf(f_ctx, fdi);
 	if (err) {
 		return err;
 	}
-	*out_fli = fli;
+	*out_fdi = fdi;
 	return 0;
 }
 
 static void filc_markdirty_fileaf(const struct silofs_file_ctx *f_ctx,
-                                  struct silofs_ftleaf_info *fli)
+                                  struct silofs_fdnode_info *fdi)
 {
-	fli_markdirty(fli, f_ctx->ii);
+	fdi_markdirty(fdi, f_ctx->ii);
 }
 
 static void filc_zero_fileaf_sub(const struct silofs_file_ctx *f_ctx,
-                                 struct silofs_ftleaf_info *fli,
+                                 struct silofs_fdnode_info *fdi,
                                  off_t off_in_db, size_t len)
 {
-	struct silofs_data_block64 *db = fli->ftl.db;
+	struct silofs_data_node64 *dn64 = fdi->fdn.dn64;
 
-	silofs_memzero(&db->dat[off_in_db], len);
-	filc_markdirty_fileaf(f_ctx, fli);
+	silofs_memzero(&dn64->dat[off_in_db], len);
+	filc_markdirty_fileaf(f_ctx, fdi);
 }
 
 static int filc_zero_data_leaf_range(const struct silofs_file_ctx *f_ctx,
                                      const struct silofs_vaddr *vaddr,
                                      off_t off_in_bk, size_t len)
 {
-	struct silofs_ftleaf_info *fli = nullptr;
+	struct silofs_fdnode_info *fdi = nullptr;
 	int err;
 
-	err = filc_stage_ftleaf(f_ctx, vaddr, &fli);
+	err = filc_stage_ftleaf(f_ctx, vaddr, &fdi);
 	if (err) {
 		return err;
 	}
-	filc_zero_fileaf_sub(f_ctx, fli, off_in_bk, len);
+	filc_zero_fileaf_sub(f_ctx, fdi, off_in_bk, len);
 	return 0;
 }
 
@@ -1739,13 +1739,13 @@ static int filc_seek_hole_by_heads(struct silofs_file_ctx *f_ctx,
 }
 
 static void filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
-                               struct silofs_ftleaf_info *fli,
+                               struct silofs_fdnode_info *fdi,
                                struct silofs_iovec *out_iov)
 {
 	enum silofs_vtype vtype;
 
-	if (fli != nullptr) {
-		filc_iovec_by_fileaf(f_ctx, fli, false, out_iov);
+	if (fdi != nullptr) {
+		filc_iovec_by_fileaf(f_ctx, fdi, false, out_iov);
 	} else {
 		filc_curr_data_vtype(f_ctx, &vtype);
 		filc_iovec_by_nilbk(f_ctx, vtype, out_iov);
@@ -1754,19 +1754,19 @@ static void filc_resolve_iovec(const struct silofs_file_ctx *f_ctx,
 
 static void iovref_pre(const struct silofs_iovec *iov, bool asyncwr_mode)
 {
-	struct silofs_ftleaf_info *fli = iov->iov_backref;
+	struct silofs_fdnode_info *fdi = iov->iov_backref;
 
-	if (fli != nullptr) {
-		fli_pre_io(fli, asyncwr_mode);
+	if (fdi != nullptr) {
+		fdi_pre_io(fdi, asyncwr_mode);
 	}
 }
 
 static void iovref_post(const struct silofs_iovec *iov, bool asyncwr_mode)
 {
-	struct silofs_ftleaf_info *fli = iov->iov_backref;
+	struct silofs_fdnode_info *fdi = iov->iov_backref;
 
-	if (fli != nullptr) {
-		fli_post_io(fli, asyncwr_mode);
+	if (fdi != nullptr) {
+		fdi_post_io(fdi, asyncwr_mode);
 	}
 }
 
@@ -1777,7 +1777,7 @@ static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
 }
 
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
-                              struct silofs_ftleaf_info *fli, size_t *out_len)
+                              struct silofs_fdnode_info *fdi, size_t *out_len)
 {
 	struct silofs_iovec iovec = {
 		.iov.iov_base = nullptr,
@@ -1789,7 +1789,7 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 	const bool asyncwr = filc_asyncwr_mode(f_ctx);
 	int err;
 
-	filc_resolve_iovec(f_ctx, fli, &iovec);
+	filc_resolve_iovec(f_ctx, fdi, &iovec);
 	iovref_pre(&iovec, asyncwr);
 	err = f_ctx->rwi_ctx->actor(f_ctx->rwi_ctx, &iovec);
 
@@ -1802,9 +1802,9 @@ static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,
 
 static int
 filc_export_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
-                           struct silofs_ftleaf_info *fli, size_t *out_sz)
+                           struct silofs_fdnode_info *fdi, size_t *out_sz)
 {
-	return filc_call_rw_actor(f_ctx, fli, out_sz);
+	return filc_call_rw_actor(f_ctx, fdi, out_sz);
 }
 
 static int
@@ -1815,13 +1815,13 @@ filc_export_data_by_curr(struct silofs_file_ctx *f_ctx, size_t *out_sz)
 
 static int
 filc_import_data_by_fileaf(const struct silofs_file_ctx *f_ctx,
-                           struct silofs_ftleaf_info *fli, size_t *out_sz)
+                           struct silofs_fdnode_info *fdi, size_t *out_sz)
 {
 	int err;
 
-	err = filc_call_rw_actor(f_ctx, fli, out_sz);
+	err = filc_call_rw_actor(f_ctx, fdi, out_sz);
 	if (!err) {
-		filc_markdirty_fileaf(f_ctx, fli);
+		filc_markdirty_fileaf(f_ctx, fdi);
 	}
 	return err;
 }
@@ -1908,13 +1908,13 @@ static int filc_stage_by_tree(const struct silofs_file_ctx *f_ctx,
 }
 
 static int filc_read_leaf_by_copy(struct silofs_file_ctx *f_ctx,
-                                  struct silofs_ftleaf_info *fli, size_t *sz)
+                                  struct silofs_fdnode_info *fdi, size_t *sz)
 {
 	int err;
 
-	fli_incref(fli);
-	err = filc_export_data_by_fileaf(f_ctx, fli, sz);
-	fli_decref(fli);
+	fdi_incref(fdi);
+	err = filc_export_data_by_fileaf(f_ctx, fdi, sz);
+	fdi_decref(fdi);
 	return err;
 }
 
@@ -1926,13 +1926,13 @@ filc_read_leaf_as_zeros(struct silofs_file_ctx *f_ctx, size_t *out_sz)
 
 static int filc_stage_fileaf_by(const struct silofs_file_ctx *f_ctx,
                                 const struct silofs_fileaf_ref *flref,
-                                struct silofs_ftleaf_info **out_fli)
+                                struct silofs_fdnode_info **out_fdi)
 {
 	int ret = -SILOFS_ENOENT;
 
-	*out_fli = nullptr;
+	*out_fdi = nullptr;
 	if (flref->has_data) {
-		ret = filc_stage_ftleaf(f_ctx, &flref->vaddr, out_fli);
+		ret = filc_stage_ftleaf(f_ctx, &flref->vaddr, out_fdi);
 	}
 	return ret;
 }
@@ -1941,7 +1941,7 @@ static int
 filc_read_from_leaf(struct silofs_file_ctx *f_ctx,
                     struct silofs_fileaf_ref *flref, size_t *out_len)
 {
-	struct silofs_ftleaf_info *fli = nullptr;
+	struct silofs_fdnode_info *fdi = nullptr;
 	int err;
 
 	*out_len = 0;
@@ -1955,11 +1955,11 @@ filc_read_from_leaf(struct silofs_file_ctx *f_ctx,
 			return err;
 		}
 	} else {
-		err = filc_stage_fileaf_by(f_ctx, flref, &fli);
+		err = filc_stage_fileaf_by(f_ctx, flref, &fdi);
 		if (err && (err != -SILOFS_ENOENT)) {
 			return err;
 		}
-		err = filc_read_leaf_by_copy(f_ctx, fli, out_len);
+		err = filc_read_leaf_by_copy(f_ctx, fdi, out_len);
 		if (err) {
 			return err;
 		}
@@ -2193,17 +2193,17 @@ static int filc_clear_unwritten_at(const struct silofs_file_ctx *f_ctx,
 }
 
 static int filc_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
-                                   struct silofs_ftleaf_info *fli)
+                                   struct silofs_fdnode_info *fdi)
 {
-	const struct silofs_vaddr *vaddr = fli_vaddr(fli);
+	const struct silofs_vaddr *vaddr = fdi_vaddr(fdi);
 	int ret;
 
-	fli_incref(fli);
+	fdi_incref(fdi);
 	ret = filc_clear_unwritten_at(f_ctx, vaddr);
 	if (ret == 0) {
-		filc_markdirty_fileaf(f_ctx, fli);
+		filc_markdirty_fileaf(f_ctx, fdi);
 	}
-	fli_decref(fli);
+	fdi_decref(fdi);
 	return ret;
 }
 
@@ -2546,15 +2546,15 @@ static int filc_require_tree(const struct silofs_file_ctx *f_ctx,
 
 static int
 filc_do_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
-                           struct silofs_ftleaf_info *fli, size_t *out_sz)
+                           struct silofs_fdnode_info *fdi, size_t *out_sz)
 {
 	int err;
 
-	err = filc_import_data_by_fileaf(f_ctx, fli, out_sz);
+	err = filc_import_data_by_fileaf(f_ctx, fdi, out_sz);
 	if (err) {
 		return err;
 	}
-	err = filc_clear_unwritten_of(f_ctx, fli);
+	err = filc_clear_unwritten_of(f_ctx, fdi);
 	if (err) {
 		return err;
 	}
@@ -2563,13 +2563,13 @@ filc_do_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
 
 static int
 filc_write_leaf_by_copy(const struct silofs_file_ctx *f_ctx,
-                        struct silofs_ftleaf_info *fli, size_t *out_sz)
+                        struct silofs_fdnode_info *fdi, size_t *out_sz)
 {
 	int err;
 
-	fli_incref(fli);
-	err = filc_do_write_leaf_by_copy(f_ctx, fli, out_sz);
-	fli_decref(fli);
+	fdi_incref(fdi);
+	err = filc_do_write_leaf_by_copy(f_ctx, fdi, out_sz);
+	fdi_decref(fdi);
 	return err;
 }
 
@@ -2634,18 +2634,18 @@ static int
 filc_write_to_leaf_by(const struct silofs_file_ctx *f_ctx,
                       struct silofs_fileaf_ref *flref, size_t *out_len)
 {
-	struct silofs_ftleaf_info *fli = nullptr;
+	struct silofs_fdnode_info *fdi = nullptr;
 	int err;
 
 	err = filc_pre_write_leaf(f_ctx, flref, 0);
 	if (err) {
 		return err;
 	}
-	err = filc_stage_fileaf_by(f_ctx, flref, &fli);
+	err = filc_stage_fileaf_by(f_ctx, flref, &fdi);
 	if (err) {
 		return err;
 	}
-	err = filc_write_leaf_by_copy(f_ctx, fli, out_len);
+	err = filc_write_leaf_by_copy(f_ctx, fdi, out_len);
 	if (err) {
 		return err;
 	}
@@ -4235,14 +4235,14 @@ filc_calc_next_copy_range_len(const struct silofs_file_ctx *f_ctx_src,
 
 static int filc_clear_unwritten_by(const struct silofs_file_ctx *f_ctx,
                                    struct silofs_fileaf_ref *flref,
-                                   struct silofs_ftleaf_info *fli)
+                                   struct silofs_fdnode_info *fdi)
 {
 	int err;
 
 	if (!flref->unwritten) {
 		return 0;
 	}
-	err = filc_clear_unwritten_of(f_ctx, fli);
+	err = filc_clear_unwritten_of(f_ctx, fdi);
 	if (err) {
 		return err;
 	}
@@ -4258,42 +4258,42 @@ filc_copy_data_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 {
 	struct silofs_iovec iov_src        = { .iov_off = -1, .iov_fd = -1 };
 	struct silofs_iovec iov_dst        = { .iov_off = -1, .iov_fd = -1 };
-	struct silofs_ftleaf_info *fli_src = nullptr;
-	struct silofs_ftleaf_info *fli_dst = nullptr;
+	struct silofs_fdnode_info *fdi_src = nullptr;
+	struct silofs_fdnode_info *fdi_dst = nullptr;
 	int err;
 	bool all;
 
-	err = filc_stage_ftleaf(f_ctx_src, &flref_src->vaddr, &fli_src);
+	err = filc_stage_ftleaf(f_ctx_src, &flref_src->vaddr, &fdi_src);
 	if (err) {
 		goto out;
 	}
-	fli_incref(fli_src);
+	fdi_incref(fdi_src);
 
-	err = filc_stage_ftleaf(f_ctx_dst, &flref_dst->vaddr, &fli_dst);
+	err = filc_stage_ftleaf(f_ctx_dst, &flref_dst->vaddr, &fdi_dst);
 	if (err) {
 		goto out;
 	}
-	fli_incref(fli_dst);
+	fdi_incref(fdi_dst);
 
 	all = (len == silofs_vaddr_len(&flref_src->vaddr));
-	filc_iovec_by_fileaf(f_ctx_src, fli_src, all, &iov_src);
+	filc_iovec_by_fileaf(f_ctx_src, fdi_src, all, &iov_src);
 
 	all = (len == silofs_vaddr_len(&flref_dst->vaddr));
-	filc_iovec_by_fileaf(f_ctx_dst, fli_dst, all, &iov_dst);
+	filc_iovec_by_fileaf(f_ctx_dst, fdi_dst, all, &iov_dst);
 
 	err = silofs_iovec_copy_mem(&iov_src, &iov_dst, len);
 	if (err) {
 		goto out;
 	}
-	fli_markdirty(fli_dst, f_ctx_dst->ii);
+	fdi_markdirty(fdi_dst, f_ctx_dst->ii);
 
-	err = filc_clear_unwritten_by(f_ctx_dst, flref_dst, fli_dst);
+	err = filc_clear_unwritten_by(f_ctx_dst, flref_dst, fdi_dst);
 	if (err) {
 		goto out;
 	}
 out:
-	fli_decref(fli_dst);
-	fli_decref(fli_src);
+	fdi_decref(fdi_dst);
+	fdi_decref(fdi_src);
 	return err;
 }
 

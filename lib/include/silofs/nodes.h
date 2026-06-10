@@ -628,28 +628,28 @@ struct silofs_symval_info {
 	struct silofs_symval_node *svn;
 };
 
-/* dir-tree node */
+/* dir tree node */
 struct silofs_dtnode_info {
 	struct silofs_vnode_info  dtn_vni;
 	struct silofs_dtree_node *dtn;
 };
 
-/* file-tree node */
+/* file tree node */
 struct silofs_ftnode_info {
 	struct silofs_vnode_info  ftn_vni;
 	struct silofs_ftree_node *ftn;
 };
 
-/* file-tree leaf */
-union silofs_ftleaf_u {
-	struct silofs_data_block1  *db1;
-	struct silofs_data_block4  *db4;
-	struct silofs_data_block64 *db;
+/* file data node */
+union silofs_fdnode_u {
+	struct silofs_data_node1  *dn1;
+	struct silofs_data_node4  *dn4;
+	struct silofs_data_node64 *dn64;
 };
 
-struct silofs_ftleaf_info {
-	struct silofs_vnode_info ftl_vni;
-	union silofs_ftleaf_u    ftl;
+struct silofs_fdnode_info {
+	struct silofs_vnode_info fdn_vni;
+	union silofs_fdnode_u    fdn;
 };
 
 struct silofs_lview *silofs_lni_lview(const struct silofs_lnode_info *lni);
@@ -782,7 +782,7 @@ struct silofs_dtnode_info *silofs_dti_from_vni(struct silofs_vnode_info *vni);
 
 struct silofs_ftnode_info *silofs_fti_from_vni(struct silofs_vnode_info *vni);
 
-struct silofs_ftleaf_info *silofs_fli_from_vni(struct silofs_vnode_info *vni);
+struct silofs_fdnode_info *silofs_fdi_from_vni(struct silofs_vnode_info *vni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

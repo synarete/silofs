@@ -36,7 +36,7 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 		sz = sizeof(struct silofs_btree_node);
 		break;
 	case SILOFS_PTYPE_VNODE:
-		sz = sizeof(struct silofs_data_block1); /* min vnode size */
+		sz = sizeof(struct silofs_data_node1); /* min vnode size */
 		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_LAST:
@@ -207,13 +207,13 @@ size_t silofs_vtype_size(enum silofs_vtype vtype)
 		size = sizeof(struct silofs_symval_node);
 		break;
 	case SILOFS_VTYPE_DATA1K:
-		size = sizeof(struct silofs_data_block1);
+		size = sizeof(struct silofs_data_node1);
 		break;
 	case SILOFS_VTYPE_DATA4K:
-		size = sizeof(struct silofs_data_block4);
+		size = sizeof(struct silofs_data_node4);
 		break;
 	case SILOFS_VTYPE_DATA64K:
-		size = sizeof(struct silofs_data_block64);
+		size = sizeof(struct silofs_data_node64);
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 		size = sizeof(struct silofs_space_node);

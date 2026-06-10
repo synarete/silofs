@@ -84,4 +84,9 @@
 #define list_pop_front(ls)      silofs_list_pop_front(ls)
 #define list_front(ls)          silofs_list_front(ls)
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+#define return_if_err(err_) \
+	do { if (err_) return (err_); } while (0)
+
 #endif /* SILOFS_PRIVATE_H_ */

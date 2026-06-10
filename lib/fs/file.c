@@ -2228,7 +2228,7 @@ filc_claim_vspace(const struct silofs_file_ctx *f_ctx, enum silofs_vtype vtype,
 	return silofs_claim_vspace(f_ctx->task, vtype, out_vaddr);
 }
 
-static int filc_claim_ftleaf_space(const struct silofs_file_ctx *f_ctx,
+static int filc_claim_fdnode_space(const struct silofs_file_ctx *f_ctx,
                                    enum silofs_vtype vtype,
                                    struct silofs_vaddr *out_vaddr)
 {
@@ -2374,7 +2374,7 @@ static int filc_create_ftleaf_space(const struct silofs_file_ctx *f_ctx,
 {
 	int err;
 
-	err = filc_claim_ftleaf_space(f_ctx, vtype, out_vaddr);
+	err = filc_claim_fdnode_space(f_ctx, vtype, out_vaddr);
 	if (err) {
 		return err;
 	}
@@ -4356,7 +4356,7 @@ static int filc_unshare_leaf_by(const struct silofs_file_ctx *f_ctx,
 	}
 	flref_setup(&flref_new, f_ctx->ii, flref->parent_fti, &flref->vaddr,
 	            flref->file_pos, f_ctx->end);
-	err = filc_claim_ftleaf_space(f_ctx, flref->vaddr.vtype,
+	err = filc_claim_fdnode_space(f_ctx, flref->vaddr.vtype,
 	                              &flref_new.vaddr);
 	if (err) {
 		return err;

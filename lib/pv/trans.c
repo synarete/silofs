@@ -59,22 +59,35 @@ int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int claim_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
+static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_pnptr *out_pnptr)
+{
+	int err;
+
+	err = silofs_carve_next_vspace(pexec, vaddr->vtype, out_pnptr);
+	if (err) {
+		return err;
+	}
+	err = silofs_create_vtop_mapping(pexec, vaddr, out_pnptr);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+static int carve_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
                                  const struct silofs_vaddr *vaddr,
                                  struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_carve_next_vspace(pexec, vaddr->vtype, &pnptr);
+	err = carve_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
 	err = silofs_spawn_vnode2(pexec, vaddr, &pnptr, out_vni);
-	if (err) {
-		return err;
-	}
-	err = silofs_create_vtop_mapping(pexec, vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
@@ -93,7 +106,25 @@ int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
 	if (err) {
 		return err;
 	}
-	err = claim_spawn_vnode2_at(pexec, &vaddr, out_vni);
+	err = carve_spawn_vnode2_at(pexec, &vaddr, out_vni);
+	if (err) {
+		return err;
+	}
+	return 0;
+}
+
+int silofs_carve_vnode2_space(struct silofs_pexec_ctx *pexec,
+                              enum silofs_vtype vtype,
+                              struct silofs_vaddr *out_vaddr)
+{
+	struct silofs_pnptr pnptr = {};
+	int err;
+
+	err = silofs_claim_free_vspace(pexec, vtype, out_vaddr);
+	if (err) {
+		return err;
+	}
+	err = carve_vtop_mapping(pexec, out_vaddr, &pnptr);
 	if (err) {
 		return err;
 	}
@@ -192,7 +223,7 @@ static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = claim_spawn_vnode2_at(pexec, vaddr, &vni);
+	err = carve_spawn_vnode2_at(pexec, vaddr, &vni);
 	if (err) {
 		return err;
 	}

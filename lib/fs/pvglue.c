@@ -83,6 +83,21 @@ static int remove_vnode_at(const struct silofs_task_ctx *task,
 	return silofs_reclaim_vnode2_at(&pexec, vaddr);
 }
 
+static int
+carve_vnode_space(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
+                  struct silofs_inode_info *pii,
+                  struct silofs_vaddr *out_vaddr)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	silofs_make_pexec(task, &pexec);
+	silofs_ii_incref(pii);
+	err = silofs_carve_vnode2_space(&pexec, vtype, out_vaddr);
+	silofs_ii_decref(pii);
+	return err;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
@@ -120,7 +135,7 @@ int silofs_stage_xanode(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_xanode(struct silofs_task_ctx *task,
+int silofs_spawn_xanode(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *pii,
                         struct silofs_xanode_info **out_xai)
 {
@@ -135,7 +150,7 @@ int silofs_spawn_xanode(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_remove_xanode_at(struct silofs_task_ctx *task,
+int silofs_remove_xanode_at(const struct silofs_task_ctx *task,
                             const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
@@ -179,7 +194,7 @@ int silofs_stage_symval(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_symval(struct silofs_task_ctx *task,
+int silofs_spawn_symval(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *pii,
                         struct silofs_symval_info **out_svi)
 {
@@ -194,7 +209,7 @@ int silofs_spawn_symval(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_remove_symval_at(struct silofs_task_ctx *task,
+int silofs_remove_symval_at(const struct silofs_task_ctx *task,
                             const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
@@ -238,7 +253,7 @@ int silofs_stage_dtnode(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_dtnode(struct silofs_task_ctx *task,
+int silofs_spawn_dtnode(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *pii,
                         struct silofs_dtnode_info **out_dti)
 {
@@ -253,7 +268,7 @@ int silofs_spawn_dtnode(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_remove_dtnode(struct silofs_task_ctx *task,
+int silofs_remove_dtnode(const struct silofs_task_ctx *task,
                          struct silofs_dtnode_info *dti)
 {
 	struct silofs_vaddr vaddr;
@@ -299,7 +314,7 @@ int silofs_stage_ftnode(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_ftnode(struct silofs_task_ctx *task,
+int silofs_spawn_ftnode(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *pii,
                         struct silofs_ftnode_info **out_fti)
 {
@@ -321,50 +336,6 @@ int silofs_remove_ftnode(struct silofs_task_ctx *task,
 
 	vaddr_of(&fti->ftn_vni, &vaddr);
 	return remove_vnode_at(task, &vaddr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_fdnode_info *vni_to_fdi(struct silofs_vnode_info *vni)
-{
-	struct silofs_fdnode_info *fdi = nullptr;
-
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
-	}
-	fdi = silofs_fdi_from_vni(vni);
-	if (unlikely(fdi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
-	}
-	if (unlikely(fdi->fdn.dn64 == nullptr)) {
-		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fdi);
-	}
-	return fdi;
-}
-
-int silofs_stage_fdnode(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr *vaddr,
-                        struct silofs_inode_info *pii,
-                        enum silofs_stg_mode stg_mode,
-                        struct silofs_fdnode_info **out_fdi)
-{
-	struct silofs_vnode_info *vni = nullptr;
-	int err;
-
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
-	if (err) {
-		return err;
-	}
-	*out_fdi = vni_to_fdi(vni);
-	return 0;
-}
-
-int silofs_remove_fdnode_at(struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr)
-{
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return remove_vnode_at(task, vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -410,7 +381,7 @@ int silofs_stage_inode2(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_inode2(struct silofs_task_ctx *task,
+int silofs_spawn_inode2(const struct silofs_task_ctx *task,
                         struct silofs_inode_info **out_ii)
 {
 	struct silofs_vnode_info *vni = nullptr;
@@ -424,11 +395,65 @@ int silofs_spawn_inode2(struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_remove_inode2(struct silofs_task_ctx *task,
+int silofs_remove_inode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *ii)
 {
 	struct silofs_vaddr vaddr;
 
 	vaddr_of(&ii->i_vni, &vaddr);
 	return remove_vnode_at(task, &vaddr);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_fdnode_info *vni_to_fdi(struct silofs_vnode_info *vni)
+{
+	struct silofs_fdnode_info *fdi = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	fdi = silofs_fdi_from_vni(vni);
+	if (unlikely(fdi == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	if (unlikely(fdi->fdn.dn64 == nullptr)) {
+		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fdi);
+	}
+	return fdi;
+}
+
+int silofs_carve_fdnode_space(const struct silofs_task_ctx *task,
+                              enum silofs_vtype vtype,
+                              struct silofs_inode_info *pii,
+                              struct silofs_vaddr *out_vaddr)
+{
+	silofs_assert(silofs_vtype_isdata(vtype));
+	return carve_vnode_space(task, vtype, pii, out_vaddr);
+}
+
+int silofs_stage_fdnode(const struct silofs_task_ctx *task,
+                        const struct silofs_vaddr *vaddr,
+                        struct silofs_inode_info *pii,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_fdnode_info **out_fdi)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+
+	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	if (err) {
+		return err;
+	}
+	*out_fdi = vni_to_fdi(vni);
+	return 0;
+}
+
+int silofs_remove_fdnode_at(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return remove_vnode_at(task, vaddr);
 }

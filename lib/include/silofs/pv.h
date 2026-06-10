@@ -628,6 +628,10 @@ int silofs_create_vnode2(struct silofs_pexec_ctx   *pexec,
                          enum silofs_vtype          vtype,
                          struct silofs_vnode_info **out_vni);
 
+int silofs_carve_vnode2_space(struct silofs_pexec_ctx *pexec,
+                              enum silofs_vtype        vtype,
+                              struct silofs_vaddr     *out_vaddr);
+
 int silofs_reclaim_vnode2(struct silofs_pexec_ctx  *pexec,
                           struct silofs_vnode_info *vni);
 

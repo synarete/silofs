@@ -50,7 +50,7 @@ struct fiemap;
 #define FT_FRGSIZE              (512) /* Fragment size (see stat(2)) */
 #define FT_BK_SIZE              SILOFS_LBK_SIZE
 #define FT_IOSIZE_MAX           SILOFS_IO_SIZE_MAX
-#define FT_FILEMAP_NCHILD       SILOFS_FILE_NODE_NCHILDS
+#define FT_FILEMAP_NCHILD       SILOFS_FTREE_NODE_NCHILDS
 #define FT_FILESIZE_MAX         SILOFS_FILE_SIZE_MAX
 #define FT_FILESIZE_ALIGNED_MAX ((FT_FILESIZE_MAX / FT_BK_SIZE) * FT_BK_SIZE)
 

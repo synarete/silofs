@@ -29,6 +29,12 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
+enum silofs_file_leaf_size {
+	SILOFS_FILE_HEAD1_LEAF_SIZE = SILOFS_FILE_DATA_NODE1_SIZE,
+	SILOFS_FILE_HEAD2_LEAF_SIZE = SILOFS_FILE_DATA_NODE4_SIZE,
+	SILOFS_FILE_TREE_LEAF_SIZE  = SILOFS_FILE_DATA_NODE64_SIZE,
+};
+
 struct silofs_file_ctx {
 	enum silofs_file_op op;
 	enum silofs_stg_mode stg_mode;
@@ -232,7 +238,7 @@ static size_t off_to_head2_slot(off_t off)
 static size_t off_to_leaf_slot(off_t off)
 {
 	constexpr size_t slot_size = SILOFS_FILE_TREE_LEAF_SIZE;
-	constexpr size_t nchilds   = SILOFS_FILE_NODE_NCHILDS;
+	constexpr size_t nchilds   = SILOFS_FTREE_NODE_NCHILDS;
 
 	return ((size_t)off / slot_size) % nchilds;
 }
@@ -664,6 +670,14 @@ static void filin_validate_vslots(const struct silofs_inode_file *filin)
 	/* Slot-0: root; Slots [1..4]: 1K data; Slots [5..20]: 4K. */
 	STATICASSERT_GT(ARRAY_SIZE(filin->f_slots),
 	                1 + SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF);
+
+	STATICASSERT_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
+	                SILOFS_FILE_HEAD2_LEAF_SIZE);
+	STATICASSERT_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE *
+	                 SILOFS_FILE_HEAD1_NLEAF) +
+	                        (SILOFS_FILE_HEAD2_LEAF_SIZE *
+	                         SILOFS_FILE_HEAD2_NLEAF),
+	                SILOFS_FILE_TREE_LEAF_SIZE);
 }
 
 static size_t filin_vslot_of_root(const struct silofs_inode_file *filin)
@@ -1372,7 +1386,7 @@ static int filc_seek_tree_recursive(struct silofs_file_ctx *f_ctx,
 static bool filc_ismapping_boundaries(const struct silofs_file_ctx *f_ctx)
 {
 	const off_t mapping_size =
-		(SILOFS_FILE_TREE_LEAF_SIZE * SILOFS_FILE_NODE_NCHILDS);
+		(SILOFS_FILE_TREE_LEAF_SIZE * SILOFS_FTREE_NODE_NCHILDS);
 
 	return ((f_ctx->off % mapping_size) == 0);
 }

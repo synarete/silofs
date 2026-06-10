@@ -142,12 +142,12 @@ static void validate_ondisk_defs(void)
 	REQUIRE_EQ(SILOFS_CAPACITY_SIZE_MAX, 64 * SILOFS_TERA);
 	REQUIRE_LT(SILOFS_CAPACITY_SIZE_MAX, SILOFS_VSPACE_SIZE_MAX / 2);
 	REQUIRE_EQ(SILOFS_VSPACE_SIZE_MAX, 256 * SILOFS_PETA);
-	REQUIRE_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
-	           SILOFS_FILE_HEAD2_LEAF_SIZE);
-	REQUIRE_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
-	                   (SILOFS_FILE_HEAD2_LEAF_SIZE *
-	                    SILOFS_FILE_HEAD2_NLEAF),
-	           SILOFS_FILE_TREE_LEAF_SIZE);
+	REQUIRE_EQ(SILOFS_FILE_DATA_NODE4_SIZE,
+	           SILOFS_FILE_DATA_NODE1_SIZE * SILOFS_FILE_HEAD1_NLEAF);
+	REQUIRE_EQ(SILOFS_FILE_DATA_NODE64_SIZE,
+	           (SILOFS_FILE_DATA_NODE1_SIZE * SILOFS_FILE_HEAD1_NLEAF) +
+	                   (SILOFS_FILE_DATA_NODE4_SIZE *
+	                    SILOFS_FILE_HEAD2_NLEAF));
 }
 
 static void validate_ondisk_base_types(void)
@@ -404,18 +404,18 @@ static void validate_ondisk_dir(void)
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_data, 128);
 	REQUIRE_OFFSET64(struct silofs_dtree_node, dn_child, 7744);
-	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DIR_NODE_NENTS);
+	REQUIRE_NELEMS(union silofs_dtree_data, de, SILOFS_DTREE_NODE_NENTS);
 	REQUIRE_NELEMS(struct silofs_dtree_node, dn_child,
-	               SILOFS_DIR_NODE_NCHILDS);
-	REQUIRE_SIZEOF(union silofs_dtree_data, SILOFS_DIR_NODE_NBSIZE);
-	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DIR_NODE_SIZE);
+	               SILOFS_DTREE_NODE_NCHILDS);
+	REQUIRE_SIZEOF(union silofs_dtree_data, SILOFS_DTREE_NODE_NBSIZE);
+	REQUIRE_SIZEOF(struct silofs_dtree_node, SILOFS_DTREE_NODE_SIZE);
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
 }
 
 static void validate_ondisk_file(void)
 {
 	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
-	               SILOFS_FILE_NODE_NCHILDS);
+	               SILOFS_FTREE_NODE_NCHILDS);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_refcnt, 32);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_ino, 40);
@@ -427,11 +427,12 @@ static void validate_ondisk_file(void)
 
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 128);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);
-	REQUIRE_SIZEOF(struct silofs_ftree_node, SILOFS_FILE_RTNODE_SIZE);
+	REQUIRE_SIZEOF(struct silofs_ftree_node, SILOFS_FTREE_NODE_SIZE);
 	REQUIRE_SIZEOF_8K(struct silofs_ftree_node);
-	REQUIRE_SIZEOF(struct silofs_data_node1, SILOFS_FILE_HEAD1_LEAF_SIZE);
-	REQUIRE_SIZEOF(struct silofs_data_node4, SILOFS_FILE_HEAD2_LEAF_SIZE);
-	REQUIRE_SIZEOF(struct silofs_data_node64, SILOFS_FILE_TREE_LEAF_SIZE);
+	REQUIRE_SIZEOF(struct silofs_data_node1, SILOFS_FILE_DATA_NODE1_SIZE);
+	REQUIRE_SIZEOF(struct silofs_data_node4, SILOFS_FILE_DATA_NODE4_SIZE);
+	REQUIRE_SIZEOF(struct silofs_data_node64,
+	               SILOFS_FILE_DATA_NODE64_SIZE);
 	REQUIRE_SIZEOF_1K(struct silofs_data_node1);
 	REQUIRE_SIZEOF_4K(struct silofs_data_node4);
 	REQUIRE_SIZEOF_64K(struct silofs_data_node64);
@@ -440,7 +441,7 @@ static void validate_ondisk_file(void)
 static void validate_ondisk_symlnk(void)
 {
 	REQUIRE_OFFSET64(struct silofs_symval_node, svn_value, 64);
-	REQUIRE_SIZEOF(struct silofs_symval_node, SILOFS_SYMLNK_VAL_SIZE);
+	REQUIRE_SIZEOF(struct silofs_symval_node, SILOFS_SYMVAL_NODE_SIZE);
 	REQUIRE_SIZEOF_4K(struct silofs_symval_node);
 }
 

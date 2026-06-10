@@ -23,8 +23,8 @@
 #include <silofs/fs.h>
 
 enum silofs_dtree_consts {
-	DTREE_SHIFT      = SILOFS_DIR_NODE_SHIFT,
-	DTREE_FANOUT     = SILOFS_DIR_NODE_NCHILDS,
+	DTREE_SHIFT      = SILOFS_DTREE_NODE_SHIFT,
+	DTREE_FANOUT     = SILOFS_DTREE_NODE_NCHILDS,
 	DTREE_DEPTH_MAX  = SILOFS_DIR_TREE_DEPTH_MAX,
 	DTREE_INDEX_MAX  = SILOFS_DIR_TREE_INDEX_MAX,
 	DTREE_INDEX_NULL = SILOFS_DIR_TREE_INDEX_NULL,
@@ -228,7 +228,7 @@ static off_t make_doffset(size_t dtn_index, size_t slot)
 {
 	uint64_t doff;
 
-	STATICASSERT_EQ(SILOFS_DIR_NODE_SIZE, 1 << DTREE_OFF_SHIFT);
+	STATICASSERT_EQ(SILOFS_DTREE_NODE_SIZE, 1 << DTREE_OFF_SHIFT);
 
 	encode_doffset(dtn_index, slot, &doff);
 	return (off_t)((doff << 2) | 2);
@@ -386,11 +386,11 @@ static bool de_isvalid(const struct silofs_dir_entry *de, size_t names_pos_beg)
 		return false;
 	}
 	name_pos = de_name_pos(de);
-	if (!name_pos || (name_pos >= SILOFS_DIR_NODE_NBSIZE)) {
+	if (!name_pos || (name_pos >= SILOFS_DTREE_NODE_NBSIZE)) {
 		return false;
 	}
 	if ((name_pos < names_pos_beg) ||
-	    ((name_pos + name_len) > SILOFS_DIR_NODE_NBSIZE)) {
+	    ((name_pos + name_len) > SILOFS_DTREE_NODE_NBSIZE)) {
 		return false;
 	}
 	return true;

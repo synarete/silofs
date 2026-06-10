@@ -181,36 +181,30 @@
 /* on-disk size of inode */
 #define SILOFS_INODE_SIZE (1 << SILOFS_INODE_SHIFT)
 
-/* number of inodes per logical-block */
-#define SILOFS_NINODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_INODE_SIZE)
-
 /* base size of empty directory */
 #define SILOFS_DIR_EMPTY_SIZE SILOFS_INODE_SIZE
 
 /* on-disk size of directory tree-node */
-#define SILOFS_DIR_NODE_SIZE (8192)
-
-/* number of directory tree-nodes per logical-block */
-#define SILOFS_NDTNODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_DIR_NODE_SIZE)
+#define SILOFS_DTREE_NODE_SIZE (8192)
 
 /* number of directory-entries in dir's hash-tree node */
-#define SILOFS_DIR_NODE_NENTS (476)
+#define SILOFS_DTREE_NODE_NENTS (476)
 
 /* max size of names-buffer in dir's tree-mapping node */
-#define SILOFS_DIR_NODE_NBSIZE (7616)
+#define SILOFS_DTREE_NODE_NBSIZE (7616)
 
 /* bits-shift of children per dir tree-mapping node */
-#define SILOFS_DIR_NODE_SHIFT (6)
+#define SILOFS_DTREE_NODE_SHIFT (6)
 
 /* number of children per dir tree-mapping node */
-#define SILOFS_DIR_NODE_NCHILDS (1 << SILOFS_DIR_NODE_SHIFT)
+#define SILOFS_DTREE_NODE_NCHILDS (1 << SILOFS_DTREE_NODE_SHIFT)
 
 /* maximum depth of directory tree-mapping */
 #define SILOFS_DIR_TREE_DEPTH_MAX (4L)
 
 /* max dir-node index of tree-mapping nodes (1-based) */
 #define SILOFS_DIR_TREE_INDEX_MAX \
-	((1L << (SILOFS_DIR_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)))
+	((1L << (SILOFS_DTREE_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)))
 
 /* non-valid dir's tree-mapping node-index */
 #define SILOFS_DIR_TREE_INDEX_NULL (0)
@@ -220,7 +214,7 @@
 
 /* max entries in directory */
 #define SILOFS_DIR_ENTRIES_MAX \
-	(SILOFS_DIR_NODE_NENTS * SILOFS_DIR_TREE_INDEX_MAX)
+	(SILOFS_DTREE_NODE_NENTS * SILOFS_DIR_TREE_INDEX_MAX)
 
 /* max value of directory offset */
 #define SILOFS_DIR_OFFSET_MAX (SILOFS_DIR_ENTRIES_MAX + 1)
@@ -231,23 +225,17 @@
 /* bits-shift of single file-mapping address-space */
 #define SILOFS_FILE_MAP_SHIFT (10)
 
-/* file's level1 head-mapping block-sizes (1K) */
-#define SILOFS_FILE_HEAD1_LEAF_SIZE (SILOFS_KB_SIZE)
-
 /* number of 1K leaves in regular-file's head mapping */
 #define SILOFS_FILE_HEAD1_NLEAF (4)
-
-/* file's level2 head-mapping block-sizes (4K) */
-#define SILOFS_FILE_HEAD2_LEAF_SIZE (4U * SILOFS_KB_SIZE)
 
 /* number of 4K leaves in regular-file's head mapping */
 #define SILOFS_FILE_HEAD2_NLEAF (15)
 
-/* file's tree-mapping block-sizes */
-#define SILOFS_FILE_TREE_LEAF_SIZE SILOFS_LBK_SIZE
+/* on-disk size of file's tree-node */
+#define SILOFS_FTREE_NODE_SIZE (8192U)
 
 /* number of mapping-slots per single file tree node */
-#define SILOFS_FILE_NODE_NCHILDS (1LL << SILOFS_FILE_MAP_SHIFT)
+#define SILOFS_FTREE_NODE_NCHILDS (1LL << SILOFS_FILE_MAP_SHIFT)
 
 /* maximum number of data-leafs in regular file */
 #define SILOFS_FILE_LEAVES_MAX \
@@ -256,16 +244,15 @@
 /* maximum size in bytes of regular file */
 #define SILOFS_FILE_SIZE_MAX ((SILOFS_LBK_SIZE * SILOFS_FILE_LEAVES_MAX) - 1)
 
-/* on-disk size of file's tree-node */
-#define SILOFS_FILE_RTNODE_SIZE (8192)
-
-/* number of file's radix-tree-nodes per logical-block */
-#define SILOFS_NFRTNODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_FILE_RTNODE_SIZE)
-
 /* max number of callbacks for read-write iter operations */
 #define SILOFS_FILE_NITER_MAX                                \
 	(SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF + \
 	 (SILOFS_IO_SIZE_MAX / SILOFS_LBK_SIZE))
+
+/* user data node sizes via regular file mapping */
+#define SILOFS_FILE_DATA_NODE1_SIZE  (1024U)
+#define SILOFS_FILE_DATA_NODE4_SIZE  (4096U)
+#define SILOFS_FILE_DATA_NODE64_SIZE (65536U)
 
 /* max size of symbolic-link value (including null terminator) */
 #define SILOFS_SYMLNK_MAX SILOFS_PATH_MAX
@@ -274,16 +261,13 @@
 #define SILOFS_SYMLNK_HEAD_MAX (480)
 
 /* max size of symbolic-link part  */
-#define SILOFS_SYMLNK_PART_MAX (4032)
+#define SILOFS_SYMVAL_PART_MAX (4032)
 
 /* number of possible symbolic-link parts  */
 #define SILOFS_SYMLNK_NPARTS (2)
 
 /* on-disk size of symbolic-link tail-value */
-#define SILOFS_SYMLNK_VAL_SIZE (4096)
-
-/* number of symval-nodes per logical-block */
-#define SILOFS_NSYMVAL_IN_LBK (SILOFS_LBK_SIZE / SILOFS_SYMLNK_VAL_SIZE)
+#define SILOFS_SYMVAL_NODE_SIZE (4096)
 
 /* number of extended-attributes entries in indirect node */
 #define SILOFS_XATTR_NENTS (1008)
@@ -293,9 +277,6 @@
 
 /* on-disk size of xattr node */
 #define SILOFS_XATTR_NODE_SIZE (8192)
-
-/* number of xattr-nodes per logical-block */
-#define SILOFS_NXANODE_IN_LBK (SILOFS_LBK_SIZE / SILOFS_XATTR_NODE_SIZE)
 
 /* max size of single I/O operation (2M - 64K) */
 #define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
@@ -935,8 +916,8 @@ struct silofs_dir_entry {
 } silofs_attr_aligned16;
 
 union silofs_dtree_data {
-	struct silofs_dir_entry de[SILOFS_DIR_NODE_NENTS];
-	uint8_t                 nb[SILOFS_DIR_NODE_NBSIZE];
+	struct silofs_dir_entry de[SILOFS_DTREE_NODE_NENTS];
+	uint8_t                 nb[SILOFS_DTREE_NODE_NBSIZE];
 } silofs_attr_aligned64;
 
 struct silofs_dtree_node {
@@ -950,7 +931,7 @@ struct silofs_dtree_node {
 	uint32_t                dn_nactive_childs;
 	uint8_t                 dn_reserved[68];
 	union silofs_dtree_data dn_data;
-	struct silofs_vaddr56   dn_child[SILOFS_DIR_NODE_NCHILDS];
+	struct silofs_vaddr56   dn_child[SILOFS_DTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_ftree_node {
@@ -965,7 +946,7 @@ struct silofs_ftree_node {
 	uint8_t               fn_child_vtype;
 	uint8_t               fn_reserved[58];
 	uint8_t               fn_zeros[896];
-	struct silofs_vaddr56 fn_child[SILOFS_FILE_NODE_NCHILDS];
+	struct silofs_vaddr56 fn_child[SILOFS_FTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_symval_node {
@@ -974,38 +955,42 @@ struct silofs_symval_node {
 	uint64_t             svn_parent;
 	uint16_t             svn_length;
 	uint8_t              svn_reserved2[22];
-	uint8_t              svn_value[SILOFS_SYMLNK_PART_MAX];
+	uint8_t              svn_value[SILOFS_SYMVAL_PART_MAX];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* 1K data block */
+/* 1K data node */
 struct silofs_data_node1 {
 	uint8_t dat[1024];
 } silofs_attr_aligned64;
 
-/* 4K data block */
+/* 4K data node */
 struct silofs_data_node4 {
 	uint8_t dat[4096];
 } silofs_attr_aligned64;
 
-/* 64K data block */
+/* 64K data node */
 struct silofs_data_node64 {
 	uint8_t dat[65536];
 } silofs_attr_aligned64;
 
-/* single logical block unit */
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* single logical node unit */
 union silofs_lblock_u {
+#define SILOFS_LBK_N_(n_) (SILOFS_LBK_SIZE / n_)
 	uint8_t                   bk[SILOFS_LBK_SIZE];
-	struct silofs_inode       inode[SILOFS_NINODE_IN_LBK];
-	struct silofs_xattr_node  xan[SILOFS_NXANODE_IN_LBK];
-	struct silofs_symval_node svn[SILOFS_NSYMVAL_IN_LBK];
-	struct silofs_dtree_node  dtn[SILOFS_NDTNODE_IN_LBK];
-	struct silofs_ftree_node  ftn[SILOFS_NFRTNODE_IN_LBK];
+	struct silofs_inode       in[SILOFS_LBK_N_(SILOFS_INODE_SIZE)];
+	struct silofs_xattr_node  xan[SILOFS_LBK_N_(SILOFS_XATTR_NODE_SIZE)];
+	struct silofs_symval_node svn[SILOFS_LBK_N_(SILOFS_SYMVAL_NODE_SIZE)];
+	struct silofs_dtree_node  dtn[SILOFS_LBK_N_(SILOFS_DTREE_NODE_SIZE)];
+	struct silofs_ftree_node  ftn[SILOFS_LBK_N_(SILOFS_FTREE_NODE_SIZE)];
 	struct silofs_data_node1  dn1[SILOFS_NKB_IN_LBK];
 	struct silofs_data_node4  dn4[SILOFS_NKB_IN_LBK / 4];
 	struct silofs_data_node64 dn64[SILOFS_NKB_IN_LBK / 64];
-} silofs_attr_aligned64;
+#undef SILOFS_LBK_N_
+};
 
 struct silofs_lblock {
 	union silofs_lblock_u u;

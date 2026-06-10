@@ -50,7 +50,7 @@ static size_t head_size(size_t len)
 
 static size_t part_size(size_t len)
 {
-	return silofs_min(len, SILOFS_SYMLNK_PART_MAX);
+	return silofs_min(len, SILOFS_SYMVAL_PART_MAX);
 }
 
 static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
@@ -573,7 +573,7 @@ static int svn_verify_length(const struct silofs_symval_node *svn)
 {
 	const size_t len = svn_length(svn);
 
-	if ((len == 0) || (len > SILOFS_SYMLNK_PART_MAX)) {
+	if ((len == 0) || (len > SILOFS_SYMVAL_PART_MAX)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

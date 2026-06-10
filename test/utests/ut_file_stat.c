@@ -23,7 +23,7 @@ static blkcnt_t datasize_to_nbytes(size_t dsz, blkcnt_t blksize)
 
 static blkcnt_t datasize_to_nfrgs_min(size_t dsz)
 {
-	return datasize_to_nbytes(dsz, SILOFS_FILE_HEAD1_LEAF_SIZE) / 512;
+	return datasize_to_nbytes(dsz, SILOFS_KILO) / 512;
 }
 
 static blkcnt_t datasize_to_nfrgs_max(size_t dsz)

@@ -283,7 +283,7 @@ static void ut_symlink_with_io2(struct ut_env *ute)
 
 static blkcnt_t symval_length_to_blocks(size_t len)
 {
-	constexpr size_t val_size = SILOFS_SYMLNK_VAL_SIZE;
+	constexpr size_t val_size = SILOFS_SYMVAL_NODE_SIZE;
 	constexpr size_t head_len = SILOFS_SYMLNK_HEAD_MAX;
 	constexpr size_t factor   = val_size / 512;
 	size_t nparts             = 0;

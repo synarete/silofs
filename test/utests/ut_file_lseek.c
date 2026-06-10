@@ -109,9 +109,9 @@ static void ut_file_lseek_sparse_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name          = UT_NAME;
 	const size_t nsteps       = (len < UT_1M) ? 1000 : 100;
-	const ssize_t head1_lsize = (ssize_t)SILOFS_FILE_HEAD1_LEAF_SIZE;
-	const ssize_t head2_lsize = (ssize_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
-	const ssize_t tree_lsize  = (ssize_t)SILOFS_FILE_TREE_LEAF_SIZE;
+	const ssize_t head1_lsize = (ssize_t)SILOFS_FILE_DATA_NODE1_SIZE;
+	const ssize_t head2_lsize = (ssize_t)SILOFS_FILE_DATA_NODE4_SIZE;
+	const ssize_t tree_lsize  = (ssize_t)SILOFS_FILE_DATA_NODE64_SIZE;
 	off_t pos_data            = -1;
 	off_t pos_hole            = -1;
 	off_t pos_next            = -1;

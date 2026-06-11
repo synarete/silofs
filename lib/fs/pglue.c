@@ -22,6 +22,21 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 
+static void
+start_pexec(struct silofs_pexec_ctx *pexec, const struct silofs_task_ctx *task,
+            struct silofs_inode_info *pii)
+{
+	silofs_make_pexec(task, pexec);
+	silofs_ii_incref(pii);
+}
+
+static void
+finish_pexec(struct silofs_pexec_ctx *pexec, struct silofs_inode_info *pii)
+{
+	silofs_ii_decref(pii);
+	silofs_memzero(pexec, sizeof(*pexec));
+}
+
 static int
 probe_vnode(const struct silofs_task_ctx *task,
             const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
@@ -29,10 +44,9 @@ probe_vnode(const struct silofs_task_ctx *task,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_probe_vnode2(&pexec, vaddr);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -44,10 +58,9 @@ stage_vnode(const struct silofs_task_ctx *task,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_fetch_vnode2(&pexec, vaddr, out_vni);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	silofs_unused(stg_mode);
 	return err;
 }
@@ -59,10 +72,9 @@ spawn_vnode(const struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_create_vnode2(&pexec, vtype, out_vni);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -73,10 +85,9 @@ static int reclaim_vnode_at(const struct silofs_task_ctx *task,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_reclaim_vnode2_at(&pexec, vaddr);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -88,10 +99,9 @@ claim_vnode_space(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_claim_vnode2_space(&pexec, vtype, out_vaddr);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -102,10 +112,9 @@ static int clear_unwritten_at(const struct silofs_task_ctx *task,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_clear_unwritten_at2(&pexec, vaddr);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -116,10 +125,9 @@ static int unshare_vnode_at(const struct silofs_task_ctx *task,
 	struct silofs_pexec_ctx pexec;
 	int err;
 
-	silofs_make_pexec(task, &pexec);
-	silofs_ii_incref(pii);
+	start_pexec(&pexec, task, pii);
 	err = silofs_unshare_vnode2_at(&pexec, vaddr);
-	silofs_ii_decref(pii);
+	finish_pexec(&pexec, pii);
 	return err;
 }
 
@@ -422,18 +430,6 @@ int silofs_remove_ftnode2(struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void require_fdnode(enum silofs_vtype vtype)
-{
-	if (!silofs_vtype_isdata(vtype)) {
-		silofs_panic("not a file data-node: vtype=%d", (int)vtype);
-	}
-}
-
-static void require_fdnode_at(const struct silofs_vaddr *vaddr)
-{
-	require_fdnode(vaddr->vtype);
-}
-
 static struct silofs_fdnode_info *vni_to_fdi(struct silofs_vnode_info *vni)
 {
 	struct silofs_fdnode_info *fdi = nullptr;
@@ -460,7 +456,7 @@ int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	require_fdnode_at(vaddr);
+	silofs_assert(silofs_vaddr_isdata(vaddr));
 
 	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
@@ -474,7 +470,7 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *pii,
                          struct silofs_vaddr *out_vaddr)
 {
-	require_fdnode(vtype);
+	silofs_assert(silofs_vtype_isdata(vtype));
 	return claim_vnode_space(task, vtype, pii, out_vaddr);
 }
 
@@ -482,7 +478,7 @@ int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_inode_info *pii)
 {
-	require_fdnode_at(vaddr);
+	silofs_assert(silofs_vaddr_isdata(vaddr));
 	return unshare_vnode_at(task, vaddr, pii);
 }
 
@@ -490,7 +486,7 @@ int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           const struct silofs_vaddr *vaddr,
                           struct silofs_inode_info *pii)
 {
-	require_fdnode_at(vaddr);
+	silofs_assert(silofs_vaddr_isdata(vaddr));
 	return reclaim_vnode_at(task, vaddr, pii);
 }
 
@@ -498,6 +494,6 @@ int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_inode_info *pii)
 {
-	require_fdnode_at(vaddr);
+	silofs_assert(silofs_vaddr_isdata(vaddr));
 	return clear_unwritten_at(task, vaddr, pii);
 }

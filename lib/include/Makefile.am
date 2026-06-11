@@ -42,7 +42,6 @@ noinst_HEADERS += silofs/fs/spxmap.h
 noinst_HEADERS += silofs/fs/super.h
 noinst_HEADERS += silofs/fs/symlink.h
 noinst_HEADERS += silofs/fs/task.h
-noinst_HEADERS += silofs/fs/xattr.h
 noinst_HEADERS += silofs/fs.h
 noinst_HEADERS += silofs/ar/archive.h
 noinst_HEADERS += silofs/ar/index.h

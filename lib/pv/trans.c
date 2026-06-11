@@ -47,15 +47,11 @@ int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_stage_vnode2(pexec, vaddr, &pnptr, out_vni);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -66,13 +62,11 @@ static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_carve_next_vspace(pexec, vaddr->vtype, out_pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_create_vtop_mapping(pexec, vaddr, out_pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -84,13 +78,11 @@ static int carve_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = carve_vtop_mapping(pexec, vaddr, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_spawn_vnode2(pexec, vaddr, &pnptr, out_vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	vni_markdirty(*out_vni);
 	return 0;
 }
@@ -103,17 +95,15 @@ int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = carve_spawn_vnode2_at(pexec, &vaddr, out_vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
-int silofs_carve_vnode2_space(struct silofs_pexec_ctx *pexec,
+int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
                               enum silofs_vtype vtype,
                               struct silofs_vaddr *out_vaddr)
 {
@@ -121,13 +111,11 @@ int silofs_carve_vnode2_space(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_claim_free_vspace(pexec, vtype, out_vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = carve_vtop_mapping(pexec, out_vaddr, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -139,6 +127,12 @@ static void retain_free_vspace(struct silofs_pexec_ctx *pexec,
 	silofs_vspmaps_push(pexec->vspmaps, vaddr);
 }
 
+static int decref_used_vspace(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr)
+{
+	return silofs_update_used_vspace(pexec, vaddr, true);
+}
+
 static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
@@ -147,31 +141,24 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if (vspref.refcnt > 1) {
-		goto reclaim; /* dec-ref only */
+		goto out; /* reclaim: dec-ref only */
 	}
+
 	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_detach_vnode2(pexec, vaddr, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_remove_vtop_mapping(pexec, vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	retain_free_vspace(pexec, vaddr);
-reclaim:
-	err = silofs_update_used_vspace(pexec, vaddr, true);
-	if (err) {
-		return err;
-	}
-	return 0;
+out:
+	return decref_used_vspace(pexec, vaddr);
 }
 
 int silofs_reclaim_vnode2(struct silofs_pexec_ctx *pexec,
@@ -205,11 +192,30 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	vni = lookup_cached_vni(pexec, vaddr);
+
 	err = reclaim_vnode2_at(pexec, vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	forget_cached_vni(pexec, vni);
+	return 0;
+}
+
+int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr)
+{
+	struct silofs_vspace_ref vspref;
+	int err;
+
+	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	return_if_err(err);
+
+	if (vspref.refcnt > 1) {
+		err = decref_used_vspace(pexec, vaddr);
+		return_if_err(err);
+	} else {
+		err = reclaim_vnode2_at(pexec, vaddr);
+		return_if_err(err);
+	}
 	return 0;
 }
 
@@ -224,9 +230,8 @@ static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = carve_spawn_vnode2_at(pexec, vaddr, &vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_spi = silofs_spi_from_vni(vni);
 	silofs_spi_setup_spawned(*out_spi, ref_vaddr);
 	return 0;
@@ -240,9 +245,8 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = silofs_fetch_vnode2(pexec, vaddr, &vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_spi = silofs_spi_from_vni(vni);
 	silofs_spi_setup_staged(*out_spi);
 	return 0;
@@ -281,13 +285,28 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
 
 	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
 	err = test_vtop_mapping(pexec, &vaddr, &exists);
-	if (!err) {
-		if (exists) {
-			err = resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
-		} else {
-			err = claim_spawn_spnode2_at(pexec, &vaddr, ref_vaddr,
-			                             out_spi);
-		}
+	return_if_err(err);
+
+	if (exists) {
+		err = resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
+		return_if_err(err);
+	} else {
+		err = claim_spawn_spnode2_at(pexec, &vaddr, ref_vaddr,
+		                             out_spi);
+		return_if_err(err);
 	}
-	return err;
+	return 0;
+}
+
+int silofs_clear_unwritten_at2(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *ref_vaddr)
+{
+	struct silofs_space_info *spi = nullptr;
+	int err;
+
+	err = silofs_fetch_spnode2_of(pexec, ref_vaddr, &spi);
+	return_if_err(err);
+
+	silofs_spi_clear_unwritten(spi, ref_vaddr);
+	return 0;
 }

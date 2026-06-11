@@ -1550,7 +1550,7 @@ static int dirc_spawn_dtnode(const struct silofs_dir_ctx *d_ctx,
 static int dirc_remove_dtnode(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dtnode_info *dti)
 {
-	return silofs_remove_dtnode(d_ctx->task, dti);
+	return silofs_remove_dtnode(d_ctx->task, dti, d_ctx->dir_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

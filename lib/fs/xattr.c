@@ -562,29 +562,6 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int
-stage_xanode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
-             const struct silofs_vaddr *vaddr, enum silofs_stg_mode stg_mode,
-             struct silofs_xanode_info **out_xai)
-{
-	return silofs_stage_xanode(task, vaddr, pii, stg_mode, out_xai);
-}
-
-static int
-spawn_xanode(struct silofs_task_ctx *task, struct silofs_inode_info *pii,
-             struct silofs_xanode_info **out_xai)
-{
-	return silofs_spawn_xanode(task, pii, out_xai);
-}
-
-static int remove_xanode_at(struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr)
-{
-	return silofs_remove_xanode_at(task, vaddr);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info *xai)
 {
@@ -609,15 +586,13 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 {
 	int err;
 
-	err = stage_xanode(xa_ctx->task, xa_ctx->ii, vaddr, xa_ctx->stg_mode,
-	                   out_xai);
-	if (err) {
-		return err;
-	}
+	err = silofs_stage_xanode(xa_ctx->task, vaddr, xa_ctx->ii,
+	                          xa_ctx->stg_mode, out_xai);
+	return_if_err(err);
+
 	err = xac_recheck_node(xa_ctx, *out_xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -863,7 +838,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 {
 	int err;
 
-	err = spawn_xanode(xa_ctx->task, xa_ctx->ii, out_xai);
+	err = silofs_spawn_xanode(xa_ctx->task, xa_ctx->ii, out_xai);
 	if (err) {
 		return err;
 	}
@@ -896,7 +871,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return remove_xanode_at(xa_ctx->task, vaddr);
+	return silofs_remove_xanode_at(xa_ctx->task, vaddr, xa_ctx->ii);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,

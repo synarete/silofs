@@ -377,7 +377,7 @@ static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_symval_at(sl_ctx->task, vaddr);
+	return silofs_remove_symval_at(sl_ctx->task, vaddr, sl_ctx->lnk_ii);
 }
 
 static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,

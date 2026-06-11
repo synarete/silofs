@@ -608,7 +608,7 @@ int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
                              struct silofs_vaddr     *out_vaddr);
 
 int silofs_update_used_vspace(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *vaddr, bool reclaim);
+                              const struct silofs_vaddr *vaddr, bool decref);
 
 int silofs_probe_vspace_ref(struct silofs_pexec_ctx   *pexec,
                             const struct silofs_vaddr *vaddr,
@@ -628,7 +628,7 @@ int silofs_create_vnode2(struct silofs_pexec_ctx   *pexec,
                          enum silofs_vtype          vtype,
                          struct silofs_vnode_info **out_vni);
 
-int silofs_carve_vnode2_space(struct silofs_pexec_ctx *pexec,
+int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
                               enum silofs_vtype        vtype,
                               struct silofs_vaddr     *out_vaddr);
 
@@ -645,6 +645,12 @@ int silofs_fetch_spnode2_of(struct silofs_pexec_ctx   *pexec,
 int silofs_require_spnode2_of(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *ref_vaddr,
                               struct silofs_space_info **out_spi);
+
+int silofs_clear_unwritten_at2(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_vaddr *ref_vaddr);
+
+int silofs_unshare_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* format */

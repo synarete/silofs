@@ -2245,8 +2245,8 @@ static int filc_claim_fdnode_space(const struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static int filc_share_data_space(const struct silofs_file_ctx *f_ctx,
-                                 const struct silofs_vaddr *vaddr)
+static int filc_share_fdnode_space(const struct silofs_file_ctx *f_ctx,
+                                   const struct silofs_vaddr *vaddr)
 {
 	return silofs_addref_vspace(f_ctx->task, vaddr);
 }
@@ -2295,7 +2295,7 @@ static int filc_spawn_ftnode(const struct silofs_file_ctx *f_ctx,
 static int filc_remove_ftnode(const struct silofs_file_ctx *f_ctx,
                               struct silofs_ftnode_info *fti)
 {
-	return silofs_remove_ftnode(f_ctx->task, fti);
+	return silofs_remove_ftnode(f_ctx->task, fti, f_ctx->ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -4426,14 +4426,14 @@ static int filc_require_leaf(const struct silofs_file_ctx *f_ctx,
 	return ret;
 }
 
-static int filc_share_leaf_by(const struct silofs_file_ctx *f_ctx_src,
-                              const struct silofs_fileaf_ref *flref_src,
-                              const struct silofs_file_ctx *f_ctx_dst,
-                              struct silofs_fileaf_ref *flref_dst)
+static int filc_share_fdnode_by(const struct silofs_file_ctx *f_ctx_src,
+                                const struct silofs_fileaf_ref *flref_src,
+                                const struct silofs_file_ctx *f_ctx_dst,
+                                struct silofs_fileaf_ref *flref_dst)
 {
 	int err;
 
-	err = filc_share_data_space(f_ctx_src, &flref_src->vaddr);
+	err = filc_share_fdnode_space(f_ctx_src, &flref_src->vaddr);
 	if (err) {
 		return err;
 	}
@@ -4529,8 +4529,8 @@ filc_copy_range_at_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 			if (err) {
 				return err;
 			}
-			err = filc_share_leaf_by(f_ctx_src, flref_src,
-			                         f_ctx_dst, flref_dst);
+			err = filc_share_fdnode_by(f_ctx_src, flref_src,
+			                           f_ctx_dst, flref_dst);
 			if (err) {
 				return err;
 			}
@@ -4568,8 +4568,8 @@ filc_copy_range_at_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 			if (err) {
 				return err;
 			}
-			err = filc_share_leaf_by(f_ctx_src, flref_src,
-			                         f_ctx_dst, flref_dst);
+			err = filc_share_fdnode_by(f_ctx_src, flref_src,
+			                           f_ctx_dst, flref_dst);
 			if (err) {
 				return err;
 			}

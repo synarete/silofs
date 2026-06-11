@@ -224,13 +224,13 @@ static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 }
 
 int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr, bool reclaim)
+                              const struct silofs_vaddr *vaddr, bool decref)
 {
 	struct silofs_vspace_ctx vs_ctx;
 	int ret;
 
 	vsc_init_by(&vs_ctx, pexec, vaddr);
-	if (reclaim) {
+	if (decref) {
 		ret = vsc_decref_used_vspace(&vs_ctx, vaddr);
 	} else {
 		ret = vsc_incref_used_vspace(&vs_ctx, vaddr);

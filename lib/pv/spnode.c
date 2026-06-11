@@ -392,12 +392,10 @@ void silofs_spi_dec_allocated(struct silofs_space_info *spi,
 	const bool last   = (spi_refcnt_at(spi, slot) == 1);
 
 	spn_dec_refcnt_at(spi->spn, slot);
-	if (!last) {
-		goto out;
+	if (last) {
+		spi_update_nused_ref(spi, -1);
+		spn_reset_flags_at(spi->spn, slot);
 	}
-	spi_update_nused_ref(spi, -1);
-	spn_reset_flags_at(spi->spn, slot);
-out:
 	spi_markdirty(spi);
 }
 

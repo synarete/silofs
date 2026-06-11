@@ -1002,6 +1002,12 @@ dti_vaddr(const struct silofs_dtnode_info *dti)
 	return silofs_vni_vaddr(&dti->dtn_vni);
 }
 
+static void dti_get_vaddr(const struct silofs_dtnode_info *dti,
+                          struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, dti_vaddr(dti));
+}
+
 static void
 dti_child_addr_by_hash(const struct silofs_dtnode_info *dti, uint64_t hash,
                        struct silofs_vaddr *out_vaddr)
@@ -1502,8 +1508,8 @@ static int dirc_stage_dtnode(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	silofs_assert_gt(vaddr->off, 0);
-	err = silofs_stage_dtnode(d_ctx->task, vaddr, d_ctx->dir_ii,
-	                          d_ctx->stg_mode, out_dti);
+	err = silofs_stage_dtnode2(d_ctx->task, vaddr, d_ctx->dir_ii,
+	                           d_ctx->stg_mode, out_dti);
 	if (err) {
 		return err;
 	}
@@ -1544,13 +1550,16 @@ static int dirc_stage_child_by_name(const struct silofs_dir_ctx *d_ctx,
 static int dirc_spawn_dtnode(const struct silofs_dir_ctx *d_ctx,
                              struct silofs_dtnode_info **out_dti)
 {
-	return silofs_spawn_dtnode(d_ctx->task, d_ctx->dir_ii, out_dti);
+	return silofs_spawn_dtnode2(d_ctx->task, d_ctx->dir_ii, out_dti);
 }
 
 static int dirc_remove_dtnode(const struct silofs_dir_ctx *d_ctx,
                               struct silofs_dtnode_info *dti)
 {
-	return silofs_remove_dtnode(d_ctx->task, dti, d_ctx->dir_ii);
+	struct silofs_vaddr vaddr;
+
+	dti_get_vaddr(dti, &vaddr);
+	return silofs_remove_dtnode2(d_ctx->task, &vaddr, d_ctx->dir_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

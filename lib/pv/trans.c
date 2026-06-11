@@ -144,7 +144,8 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return_if_err(err);
 
 	if (vspref.refcnt > 1) {
-		goto out; /* reclaim: dec-ref only */
+		silofs_assert(silofs_vaddr_isdata(vaddr));
+		goto out; /* shared data node: dec-ref only */
 	}
 
 	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);

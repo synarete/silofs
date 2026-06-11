@@ -3104,7 +3104,7 @@ int silofs_remove_inode(struct silofs_task_ctx *task,
                         struct silofs_inode_info *ii)
 {
 	silofs_ii_cleardirty(ii);
-	return silofs_remove_inode2(task, ii);
+	return silofs_remove_inode2(task, silofs_ii_vaddr(ii));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

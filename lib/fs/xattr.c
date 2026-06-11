@@ -586,8 +586,8 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 {
 	int err;
 
-	err = silofs_stage_xanode(xa_ctx->task, vaddr, xa_ctx->ii,
-	                          xa_ctx->stg_mode, out_xai);
+	err = silofs_stage_xanode2(xa_ctx->task, vaddr, xa_ctx->ii,
+	                           xa_ctx->stg_mode, out_xai);
 	return_if_err(err);
 
 	err = xac_recheck_node(xa_ctx, *out_xai);
@@ -838,7 +838,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 {
 	int err;
 
-	err = silofs_spawn_xanode(xa_ctx->task, xa_ctx->ii, out_xai);
+	err = silofs_spawn_xanode2(xa_ctx->task, xa_ctx->ii, out_xai);
 	if (err) {
 		return err;
 	}
@@ -871,7 +871,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 static int xac_remove_xanode_at(const struct silofs_xattr_ctx *xa_ctx,
                                 const struct silofs_vaddr *vaddr)
 {
-	return silofs_remove_xanode_at(xa_ctx->task, vaddr, xa_ctx->ii);
+	return silofs_remove_xanode2(xa_ctx->task, vaddr, xa_ctx->ii);
 }
 
 static int xac_require_xanode(const struct silofs_xattr_ctx *xa_ctx,

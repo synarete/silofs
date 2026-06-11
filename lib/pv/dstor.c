@@ -931,13 +931,11 @@ dstor_stat_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_stat(bf, out_st);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1001,17 +999,14 @@ static int dstor_require_bpos(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_blob(dstor, blobidx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_expand(bf, pos);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1031,13 +1026,11 @@ static int dstor_access_bpos(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_stat_offset(bf, pos);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1057,13 +1050,11 @@ static int dstor_flush_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_sync(bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1083,13 +1074,11 @@ static int dstor_punch_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_punch(bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1110,13 +1099,11 @@ static int dstor_read_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_read(bf, pos, buf, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 

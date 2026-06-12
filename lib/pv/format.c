@@ -57,13 +57,11 @@ static int format_uber(struct silofs_pexec_ctx *pexec)
 	int err;
 
 	err = silofs_carve_base_ubspace(pexec, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_spawn_uber(pexec, &pnptr, &ubi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	update_active_uber(pexec, ubi);
 	return 0;
 }
@@ -85,13 +83,11 @@ spawn_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype,
 	int err;
 
 	err = silofs_carve_base_btspace(pexec, vtype, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_spawn_btnode(pexec, &pnptr, out_bti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	fixup_spawned_btroot(pexec, *out_bti, vtype);
 	return 0;
 }
@@ -118,9 +114,8 @@ format_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	err = spawn_btroot_of(pexec, vtype, &bti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	update_formatted_btroot(pexec, bti);
 	return 0;
 }
@@ -132,9 +127,8 @@ format_vspace_root_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	err = silofs_carve_base_vspace(pexec, vtype, &paddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_ubi_start_spdesc(pexec->ubref->ubi, &paddr);
 	return 0;
 }
@@ -149,17 +143,13 @@ static int format_vspace_roots(struct silofs_pexec_ctx *pexec)
 			continue;
 		}
 		err = format_btree_root_of(pexec, vtype);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = format_vspace_root_of(pexec, vtype);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = flush_dirty_nodes(pexec, false);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }
@@ -227,9 +217,8 @@ format_zero_node_step2(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	err = format_refetch_zero_node(pexec, vtype, &vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_reclaim_vnode2(pexec, vni);
 	if (err) {
 		log_err("failed to reclaim zero node: vtype=%d err=%d", //
@@ -276,21 +265,17 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	err = format_zero_node_step1(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_zero_node_step2(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_zero_node_step3(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_zero_node_step4(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -332,17 +317,14 @@ format_vspace_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	err = format_space_node_of(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_zero_node_of(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_base_node_of(pexec, vtype);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -393,13 +375,11 @@ int silofs_format_pv(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = format_uber(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_vspace(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	resolve_uber(pexec, out_pnptr);
 	return 0;
 }
@@ -413,9 +393,8 @@ reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 	int err;
 
 	err = silofs_stage_uber(pexec, pnptr, &ubi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	update_active_uber(pexec, ubi);
 	return 0;
 }
@@ -450,9 +429,7 @@ static int reload_vspace_roots(struct silofs_pexec_ctx *pexec)
 			continue;
 		}
 		err = reload_btree_root_of(pexec, vtype);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }
@@ -467,18 +444,18 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	int err;
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
+
 	err = silofs_fetch_spnode2_of(pexec, &vaddr, &spi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_spi_vspace_ref(spi, &vaddr, &vspref);
 	if (vspref.refcnt != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}
+
 	err = silofs_fetch_vnode2(pexec, &vaddr, &vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -493,9 +470,7 @@ static int reload_vspace_nodes(struct silofs_pexec_ctx *pexec)
 			continue;
 		}
 		err = reload_node_zero_of(pexec, vtype);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }
@@ -505,13 +480,11 @@ static int reload_vspace(struct silofs_pexec_ctx *pexec)
 	int err;
 
 	err = reload_vspace_roots(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = reload_vspace_nodes(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -521,12 +494,10 @@ int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
 	int err;
 
 	err = reload_uber(pexec, pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = reload_vspace(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

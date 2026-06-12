@@ -223,19 +223,27 @@ static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
-int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr, bool decref)
+static int
+vsc_update_used_vspace(struct silofs_vspace_ctx *vs_ctx,
+                       const struct silofs_vaddr *vaddr, bool incref)
 {
-	struct silofs_vspace_ctx vs_ctx;
 	int ret;
 
-	vsc_init_by(&vs_ctx, pexec, vaddr);
-	if (decref) {
-		ret = vsc_decref_used_vspace(&vs_ctx, vaddr);
+	if (incref) {
+		ret = vsc_incref_used_vspace(vs_ctx, vaddr);
 	} else {
-		ret = vsc_incref_used_vspace(&vs_ctx, vaddr);
+		ret = vsc_decref_used_vspace(vs_ctx, vaddr);
 	}
 	return ret;
+}
+
+int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr, bool incref)
+{
+	struct silofs_vspace_ctx vs_ctx;
+
+	vsc_init_by(&vs_ctx, pexec, vaddr);
+	return vsc_update_used_vspace(&vs_ctx, vaddr, incref);
 }
 
 static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
@@ -246,10 +254,8 @@ static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
-	silofs_assert_ok(err);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_spi_vspace_ref(spi, vaddr, out_vspref);
 	return 0;
 }

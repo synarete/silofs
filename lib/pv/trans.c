@@ -127,10 +127,16 @@ static void retain_free_vspace(struct silofs_pexec_ctx *pexec,
 	silofs_vspmaps_push(pexec->vspmaps, vaddr);
 }
 
-static int decref_used_vspace(struct silofs_pexec_ctx *pexec,
+static int incref_used_vspace(struct silofs_pexec_ctx *pexec,
                               const struct silofs_vaddr *vaddr)
 {
 	return silofs_update_used_vspace(pexec, vaddr, true);
+}
+
+static int decref_used_vspace(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr)
+{
+	return silofs_update_used_vspace(pexec, vaddr, false);
 }
 
 static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
@@ -198,6 +204,21 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return_if_err(err);
 
 	forget_cached_vni(pexec, vni);
+	return 0;
+}
+
+int silofs_share_vnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *vaddr)
+{
+	struct silofs_vspace_ref vspref;
+	int err;
+
+	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	return_if_err(err);
+
+	err = incref_used_vspace(pexec, vaddr);
+	return_if_err(err);
+
 	return 0;
 }
 

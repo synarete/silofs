@@ -78,9 +78,9 @@ spawn_vnode(const struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 	return err;
 }
 
-static int reclaim_vnode_at(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_inode_info *pii)
+static int
+reclaim_vnode(const struct silofs_task_ctx *task,
+              const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
@@ -92,9 +92,8 @@ static int reclaim_vnode_at(const struct silofs_task_ctx *task,
 }
 
 static int
-claim_vnode_space(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
-                  struct silofs_inode_info *pii,
-                  struct silofs_vaddr *out_vaddr)
+claim_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
+            struct silofs_inode_info *pii, struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
@@ -105,28 +104,54 @@ claim_vnode_space(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
 	return err;
 }
 
-static int clear_unwritten_at(const struct silofs_task_ctx *task,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_inode_info *pii)
+static int
+share_vnode(const struct silofs_task_ctx *task,
+            const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_clear_unwritten_at2(&pexec, vaddr);
+	err = silofs_share_vnode2_at(&pexec, vaddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
-static int unshare_vnode_at(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_inode_info *pii)
+static int
+unshare_vnode(const struct silofs_task_ctx *task,
+              const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
 	err = silofs_unshare_vnode2_at(&pexec, vaddr);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
+static int isshared_vnode(const struct silofs_task_ctx *task,
+                          const struct silofs_vaddr *vaddr,
+                          struct silofs_inode_info *pii, bool *out_res)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_isshared_vnode2_at(&pexec, vaddr, out_res);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
+static int clear_unwritten(const struct silofs_task_ctx *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_inode_info *pii)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_clear_unwritten_at2(&pexec, vaddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
@@ -190,7 +215,7 @@ int silofs_remove_inode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr *vaddr)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
-	return reclaim_vnode_at(task, vaddr, nullptr);
+	return reclaim_vnode(task, vaddr, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -249,7 +274,7 @@ int silofs_remove_xanode2(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *pii)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
-	return reclaim_vnode_at(task, vaddr, pii);
+	return reclaim_vnode(task, vaddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -308,7 +333,7 @@ int silofs_remove_symval2(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *pii)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
-	return reclaim_vnode_at(task, vaddr, pii);
+	return reclaim_vnode(task, vaddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -367,7 +392,7 @@ int silofs_remove_dtnode2(const struct silofs_task_ctx *task,
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
 
-	return reclaim_vnode_at(task, vaddr, pii);
+	return reclaim_vnode(task, vaddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -425,7 +450,7 @@ int silofs_remove_ftnode2(struct silofs_task_ctx *task,
                           struct silofs_inode_info *pii)
 {
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_FTNODE);
-	return reclaim_vnode_at(task, vaddr, pii);
+	return reclaim_vnode(task, vaddr, pii);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -471,15 +496,7 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
                          struct silofs_vaddr *out_vaddr)
 {
 	silofs_assert(silofs_vtype_isdata(vtype));
-	return claim_vnode_space(task, vtype, pii, out_vaddr);
-}
-
-int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_inode_info *pii)
-{
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return unshare_vnode_at(task, vaddr, pii);
+	return claim_vnode(task, vtype, pii, out_vaddr);
 }
 
 int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
@@ -487,7 +504,31 @@ int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *pii)
 {
 	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return reclaim_vnode_at(task, vaddr, pii);
+	return reclaim_vnode(task, vaddr, pii);
+}
+
+int silofs_share_fdnode2(const struct silofs_task_ctx *task,
+                         const struct silofs_vaddr *vaddr,
+                         struct silofs_inode_info *pii)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return share_vnode(task, vaddr, pii);
+}
+
+int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_inode_info *pii)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return unshare_vnode(task, vaddr, pii);
+}
+
+int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_inode_info *pii, bool *out_res)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return isshared_vnode(task, vaddr, pii, out_res);
 }
 
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
@@ -495,5 +536,5 @@ int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                    struct silofs_inode_info *pii)
 {
 	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return clear_unwritten_at(task, vaddr, pii);
+	return clear_unwritten(task, vaddr, pii);
 }

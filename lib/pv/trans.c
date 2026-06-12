@@ -207,6 +207,19 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
+int silofs_isshared_vnode2_at(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr, bool *out_res)
+{
+	struct silofs_vspace_ref vspref;
+	int err;
+
+	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	return_if_err(err);
+
+	*out_res = (vspref.refcnt > 1);
+	return 0;
+}
+
 int silofs_share_vnode2_at(struct silofs_pexec_ctx *pexec,
                            const struct silofs_vaddr *vaddr)
 {

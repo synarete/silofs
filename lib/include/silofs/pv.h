@@ -635,6 +635,9 @@ int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
 int silofs_reclaim_vnode2(struct silofs_pexec_ctx  *pexec,
                           struct silofs_vnode_info *vni);
 
+int silofs_isshared_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *vaddr, bool *out_res);
+
 int silofs_share_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr);
 

@@ -154,9 +154,17 @@ int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           const struct silofs_vaddr    *vaddr,
                           struct silofs_inode_info     *pii);
 
+int silofs_share_fdnode2(const struct silofs_task_ctx *task,
+                         const struct silofs_vaddr    *vaddr,
+                         struct silofs_inode_info     *pii);
+
 int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
                            const struct silofs_vaddr    *vaddr,
                            struct silofs_inode_info     *pii);
+
+int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr    *vaddr,
+                            struct silofs_inode_info *pii, bool *out_res);
 
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                    const struct silofs_vaddr    *vaddr,

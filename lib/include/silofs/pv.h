@@ -399,6 +399,9 @@ void silofs_spi_inc_allocated(struct silofs_space_info  *spi,
 void silofs_spi_dec_allocated(struct silofs_space_info  *spi,
                               const struct silofs_vaddr *vaddr);
 
+void silofs_spi_mark_unwritten(struct silofs_space_info  *spi,
+                               const struct silofs_vaddr *vaddr);
+
 void silofs_spi_clear_unwritten(struct silofs_space_info  *spi,
                                 const struct silofs_vaddr *vaddr);
 
@@ -586,9 +589,14 @@ int silofs_spawn_vnode2(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_vnode_info **out_vni);
 
+int silofs_claim_vnode2_space2(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr);
+
 int silofs_stage_vnode2(struct silofs_pexec_ctx   *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
+                        enum silofs_spacef         spacef,
                         struct silofs_vnode_info **out_vni);
 
 int silofs_detach_vnode2(struct silofs_pexec_ctx   *pexec,
@@ -655,8 +663,15 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *ref_vaddr,
                               struct silofs_space_info **out_spi);
 
+int silofs_mark_unwritten_at2(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *ref_vaddr);
+
 int silofs_clear_unwritten_at2(struct silofs_pexec_ctx   *pexec,
                                const struct silofs_vaddr *ref_vaddr);
+
+int silofs_test_unwritten_at2(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_vaddr *ref_vaddr,
+                              bool                      *out_unwritten);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* format */

@@ -144,6 +144,10 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info     *pii,
                          struct silofs_vaddr          *out_vaddr);
 
+int silofs_reclaim_fdnode2(const struct silofs_task_ctx *task,
+                           const struct silofs_vaddr    *vaddr,
+                           struct silofs_inode_info     *pii);
+
 int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr,
                          struct silofs_inode_info     *pii,
@@ -166,9 +170,18 @@ int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
                             const struct silofs_vaddr    *vaddr,
                             struct silofs_inode_info *pii, bool *out_res);
 
+int silofs_mark_unwritten_fdnode2(const struct silofs_task_ctx *task,
+                                  const struct silofs_vaddr    *vaddr,
+                                  struct silofs_inode_info     *pii);
+
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                    const struct silofs_vaddr    *vaddr,
                                    struct silofs_inode_info     *pii);
+
+int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
+                                  const struct silofs_vaddr    *vaddr,
+                                  struct silofs_inode_info     *pii,
+                                  bool                         *out_unwritten);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -183,6 +196,76 @@ int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
 #include <silofs/fs/lcache.h>
 #include <silofs/fs/namei.h>
 #include <silofs/fs/spmaps.h>
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* dir */
+
+/* pair of ino and dir-type */
+struct silofs_ino_dt {
+	ino_t  ino;
+	mode_t dt;
+};
+
+enum silofs_dirf silofs_dir_flags(const struct silofs_inode_info *dir_ii);
+
+void silofs_dir_set_flag(struct silofs_inode_info *dir_ii,
+                         enum silofs_dirf          flag);
+
+void silofs_dir_unset_flag(struct silofs_inode_info *dir_ii,
+                           enum silofs_dirf          flag);
+
+void silofs_ii_setup_dir(struct silofs_inode_info *dir_ii, //
+                         nlink_t nlink, uint64_t seed);
+
+int silofs_lookup_dentry(struct silofs_task_ctx      *task,
+                         struct silofs_inode_info    *dir_ii,
+                         const struct silofs_namestr *name,
+                         struct silofs_ino_dt        *out_idt);
+
+int silofs_add_dentry(struct silofs_task_ctx      *task,
+                      struct silofs_inode_info    *dir_ii,
+                      const struct silofs_namestr *name,
+                      struct silofs_inode_info    *ii);
+
+int silofs_remove_dentry(struct silofs_task_ctx      *task,
+                         struct silofs_inode_info    *dir_ii,
+                         const struct silofs_namestr *name);
+
+int silofs_readdir_normal(struct silofs_task_ctx    *task,
+                          struct silofs_inode_info  *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_readdir_plus(struct silofs_task_ctx    *task,
+                        struct silofs_inode_info  *dir_ii,
+                        struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_drop_dir(struct silofs_task_ctx   *task,
+                    struct silofs_inode_info *dir_ii);
+
+bool silofs_dir_isempty(const struct silofs_inode_info *dir_ii);
+
+bool silofs_dir_may_add(const struct silofs_inode_info *dir_ii);
+
+bool silofs_dir_has_flags(const struct silofs_inode_info *dir_ii,
+                          enum silofs_dirf                mask);
+
+void silofs_dir_inherit_parent(struct silofs_inode_info       *dir_ii,
+                               const struct silofs_inode_info *parentd_ii);
+
+int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_mdigest_hd *md_hd,
+                          const struct silofs_namestr    *nstr,
+                          struct silofs_namestr          *out_nstr);
+
+int silofs_dir_check_name(const struct silofs_inode_info *dir_ii,
+                          const struct silofs_uconv      *uconv,
+                          const struct silofs_namestr    *nstr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_verify_dir_inode(const struct silofs_inode *inode);
+
+int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* xattr */

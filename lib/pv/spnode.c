@@ -399,6 +399,17 @@ void silofs_spi_dec_allocated(struct silofs_space_info *spi,
 	spi_markdirty(spi);
 }
 
+void silofs_spi_mark_unwritten(struct silofs_space_info *spi,
+                               const struct silofs_vaddr *vaddr)
+{
+	const size_t slot = spi_slot_of(spi, vaddr);
+
+	if (!spi_test_unwritten_at(spi, slot)) {
+		spi_mark_unwritten_at(spi, slot);
+		spi_markdirty(spi);
+	}
+}
+
 void silofs_spi_clear_unwritten(struct silofs_space_info *spi,
                                 const struct silofs_vaddr *vaddr)
 {

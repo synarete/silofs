@@ -244,6 +244,7 @@ struct silofs_stage_ctx {
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
 	struct silofs_vcache *vcache;
+	enum silofs_spacef spacef;
 };
 
 static void
@@ -254,6 +255,15 @@ stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec)
 	st_ctx->dstor  = pexec->dstor;
 	st_ctx->pcache = pexec->pcache;
 	st_ctx->vcache = pexec->vcache;
+	st_ctx->spacef = SILOFS_SPACEF_NONE;
+}
+
+static void
+stc_init2(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec,
+          enum silofs_spacef spacef)
+{
+	stc_init(st_ctx, pexec);
+	st_ctx->spacef = spacef;
 }
 
 static void stc_fini(struct silofs_stage_ctx *st_ctx)
@@ -288,8 +298,11 @@ static void stc_detach_lviewx(const struct silofs_stage_ctx *st_ctx,
 static int stc_require_paddr(const struct silofs_stage_ctx *st_ctx,
                              const struct silofs_paddr *paddr)
 {
-	return silofs_dstor_require_blob_at(st_ctx->dstor, &paddr->blobid,
-	                                    paddr->pos);
+	struct silofs_paddr next;
+
+	silofs_paddr_next(paddr, &next);
+	return silofs_dstor_require_blob_at(st_ctx->dstor, //
+	                                    &next.blobid, next.pos);
 }
 
 static int stc_require_paddr_of(const struct silofs_stage_ctx *st_ctx,
@@ -780,14 +793,20 @@ static void stc_rebind_vnode(const struct silofs_stage_ctx *st_ctx,
 	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 
+static void stc_update_claimed_vnode(const struct silofs_stage_ctx *st_ctx,
+                                     const struct silofs_vaddr *vaddr,
+                                     const struct silofs_pnptr *pnptr)
+{
+	silofs_unused(vaddr);
+	silofs_ubi_inc_count_by(stc_ubi(st_ctx), &pnptr->paddr.blobid);
+}
+
 static void stc_update_spawned_vnode(const struct silofs_stage_ctx *st_ctx,
                                      struct silofs_vnode_info *vni,
                                      const struct silofs_pnptr *pnptr)
 {
-	const struct silofs_blobid *blobid = &pnptr->paddr.blobid;
-
 	stc_rebind_vnode(st_ctx, vni);
-	silofs_ubi_inc_count_by(stc_ubi(st_ctx), blobid);
+	stc_update_claimed_vnode(st_ctx, vni_vaddr(vni), pnptr);
 }
 
 static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
@@ -819,6 +838,32 @@ int silofs_spawn_vnode2(struct silofs_pexec_ctx *pexec,
 
 	stc_init(&st_ctx, pexec);
 	err = stc_spawn_vnode(&st_ctx, vaddr, pnptr, out_vni);
+	stc_fini(&st_ctx);
+	return err;
+}
+
+static int stc_claim_vnode_space(const struct silofs_stage_ctx *st_ctx,
+                                 const struct silofs_vaddr *vaddr,
+                                 const struct silofs_pnptr *pnptr)
+{
+	int err;
+
+	err = stc_require_paddr_of(st_ctx, pnptr);
+	return_if_err(err);
+
+	stc_update_claimed_vnode(st_ctx, vaddr, pnptr);
+	return 0;
+}
+
+int silofs_claim_vnode2_space2(struct silofs_pexec_ctx *pexec,
+                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_pnptr *pnptr)
+{
+	struct silofs_stage_ctx st_ctx = {};
+	int err;
+
+	stc_init(&st_ctx, pexec);
+	err = stc_claim_vnode_space(&st_ctx, vaddr, pnptr);
 	stc_fini(&st_ctx);
 	return err;
 }
@@ -906,11 +951,15 @@ static int stc_stage_vnode(struct silofs_stage_ctx *st_ctx,
 		silofs_assert_ok(err);
 		return err;
 	}
+	if (st_ctx->spacef & SILOFS_SPACEF_UNWRITTEN) {
+		goto out_rebind;
+	}
 	err = stc_fetch_decrypt_vnode(st_ctx, pnptr, vni);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;
 	}
+out_rebind:
 	stc_rebind_vnode(st_ctx, vni);
 out_ok:
 	*out_vni = vni;
@@ -920,12 +969,13 @@ out_ok:
 int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
                         const struct silofs_vaddr *vaddr,
                         const struct silofs_pnptr *pnptr,
+                        enum silofs_spacef spacef,
                         struct silofs_vnode_info **out_vni)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, pexec);
+	stc_init2(&st_ctx, pexec, spacef);
 	err = stc_stage_vnode(&st_ctx, vaddr, pnptr, out_vni);
 	stc_fini(&st_ctx);
 	return err;

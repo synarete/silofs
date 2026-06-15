@@ -79,19 +79,6 @@ spawn_vnode(const struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 }
 
 static int
-reclaim_vnode(const struct silofs_task_ctx *task,
-              const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
-{
-	struct silofs_pexec_ctx pexec;
-	int err;
-
-	start_pexec(&pexec, task, pii);
-	err = silofs_reclaim_vnode2_at(&pexec, vaddr);
-	finish_pexec(&pexec, pii);
-	return err;
-}
-
-static int
 claim_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
             struct silofs_inode_info *pii, struct silofs_vaddr *out_vaddr)
 {
@@ -100,6 +87,19 @@ claim_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
 
 	start_pexec(&pexec, task, pii);
 	err = silofs_claim_vnode2_space(&pexec, vtype, out_vaddr);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
+static int
+reclaim_vnode(const struct silofs_task_ctx *task,
+              const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_reclaim_vnode2_at(&pexec, vaddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
@@ -143,6 +143,19 @@ static int isshared_vnode(const struct silofs_task_ctx *task,
 	return err;
 }
 
+static int
+mark_unwritten(const struct silofs_task_ctx *task,
+               const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_mark_unwritten_at2(&pexec, vaddr);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
 static int clear_unwritten(const struct silofs_task_ctx *task,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_inode_info *pii)
@@ -152,6 +165,19 @@ static int clear_unwritten(const struct silofs_task_ctx *task,
 
 	start_pexec(&pexec, task, pii);
 	err = silofs_clear_unwritten_at2(&pexec, vaddr);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
+static int test_unwritten(const struct silofs_task_ctx *task,
+                          const struct silofs_vaddr *vaddr,
+                          struct silofs_inode_info *pii, bool *out_unwritten)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_test_unwritten_at2(&pexec, vaddr, out_unwritten);
 	finish_pexec(&pexec, pii);
 	return err;
 }
@@ -499,6 +525,14 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
 	return claim_vnode(task, vtype, pii, out_vaddr);
 }
 
+int silofs_reclaim_fdnode2(const struct silofs_task_ctx *task,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_inode_info *pii)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return reclaim_vnode(task, vaddr, pii);
+}
+
 int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           const struct silofs_vaddr *vaddr,
                           struct silofs_inode_info *pii)
@@ -531,10 +565,27 @@ int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
 	return isshared_vnode(task, vaddr, pii, out_res);
 }
 
+int silofs_mark_unwritten_fdnode2(const struct silofs_task_ctx *task,
+                                  const struct silofs_vaddr *vaddr,
+                                  struct silofs_inode_info *pii)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return mark_unwritten(task, vaddr, pii);
+}
+
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_inode_info *pii)
 {
 	silofs_assert(silofs_vaddr_isdata(vaddr));
 	return clear_unwritten(task, vaddr, pii);
+}
+
+int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
+                                  const struct silofs_vaddr *vaddr,
+                                  struct silofs_inode_info *pii,
+                                  bool *out_unwritten)
+{
+	silofs_assert(silofs_vaddr_isdata(vaddr));
+	return test_unwritten(task, vaddr, pii, out_unwritten);
 }

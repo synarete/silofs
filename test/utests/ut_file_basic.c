@@ -41,6 +41,7 @@ static void ut_file_simple2_(struct ut_env *ute, off_t off, size_t bsz)
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
 	ut_write_read(ute, ino, buf, bsz, off);
+	ut_trunacate_zero(ute, ino);
 	ut_release_flush(ute, ino);
 	ut_unlink_file(ute, dino, name);
 	ut_rmdir_at_root(ute, name);
@@ -213,8 +214,7 @@ static void ut_file_unlinked_(struct ut_env *ute, off_t off, size_t len)
 {
 	const char *name = UT_NAME;
 	void *buf        = ut_randbuf(ute, len);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -230,8 +230,15 @@ static void ut_file_unlinked_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_unlinked(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_1M / 8),
-		UT_MKRANGE1(1, UT_1M / 8),
+		UT_MKRANGE1(0, UT_1K),
+		UT_MKRANGE1(0, UT_4K),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(1, UT_4K),
+		UT_MKRANGE1(1, UT_64K - 1),
+		UT_MKRANGE1(1, UT_64K),
+		UT_MKRANGE1(0, 2 * UT_64K),
+		UT_MKRANGE1(1, 2 * UT_64K),
+		UT_MKRANGE1(UT_64K, UT_64K),
 		UT_MKRANGE1(UT_1M, 8 * UT_1K),
 		UT_MKRANGE1(UT_1M - 1, UT_1K),
 		UT_MKRANGE1(UT_1G, UT_1M),
@@ -706,6 +713,11 @@ ut_file_with_hole_(struct ut_env *ute, off_t off1, off_t off2, size_t len)
 static void ut_file_with_hole(struct ut_env *ute)
 {
 	const struct ut_range2 range[] = {
+
+		/* XXX */
+		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
+		/* XXX */
+
 		UT_MKRANGE2(0, UT_1M, UT_BK_SIZE),
 		UT_MKRANGE2(0, 2 * UT_BK_SIZE, UT_BK_SIZE),
 		UT_MKRANGE2(1, 3 * UT_BK_SIZE, UT_BK_SIZE),
@@ -724,8 +736,11 @@ static void ut_file_with_hole(struct ut_env *ute)
 	};
 
 	for (size_t i = 0; i < UT_ARRAY_SIZE(range); ++i) {
-		ut_file_with_hole_(ute, range[i].off1, range[i].off2,
-		                   range[i].len);
+		const off_t off1 = range[i].off1;
+		const off_t off2 = range[i].off2;
+		const size_t len = range[i].len;
+
+		ut_file_with_hole_(ute, off1, off2, len);
 		ut_relax_mem(ute);
 	}
 }

@@ -2051,6 +2051,7 @@ static int vstgc_require_stable_vaddr(const struct silofs_vstage_ctx *vstg_ctx)
 	int err;
 
 	err = vstgc_check_stable_vaddr(vstg_ctx);
+	silofs_assert_ok(err);
 	if (err) {
 		log_err("unstable: off=0x%lx vtype=%d", vstg_ctx->vaddr->off,
 		        vstg_ctx->vaddr->vtype);

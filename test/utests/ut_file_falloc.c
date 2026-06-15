@@ -22,8 +22,7 @@ ut_file_fallocate_simple_(struct ut_env *ute, off_t off, size_t ulen)
 	const void *buf   = ut_randbuf(ute, ulen);
 	const char *name  = UT_NAME;
 	const ssize_t len = (ssize_t)ulen;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -36,9 +35,11 @@ ut_file_fallocate_simple_(struct ut_env *ute, off_t off, size_t ulen)
 static void ut_file_fallocate_aligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_BK_SIZE), UT_MKRANGE1(0, UT_1M),
-		UT_MKRANGE1(UT_1M, UT_1M),  UT_MKRANGE1(UT_1G, UT_1M),
-		UT_MKRANGE1(UT_1T, UT_1M),
+		UT_MKRANGE1(0, UT_BK_SIZE), //
+		UT_MKRANGE1(0, UT_1M),      //
+		UT_MKRANGE1(UT_1M, UT_1M),  //
+		UT_MKRANGE1(UT_1G, UT_1M),  //
+		UT_MKRANGE1(UT_1T, UT_1M),  //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_fallocate_simple_, ranges);
@@ -65,8 +66,7 @@ ut_file_fallocate_rdonly_(struct ut_env *ute, off_t off, size_t ulen)
 {
 	const char *name  = UT_NAME;
 	const ssize_t len = (ssize_t)ulen;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -103,8 +103,7 @@ ut_file_fallocate_truncate_(struct ut_env *ute, off_t off, size_t ulen)
 	const ssize_t len = (ssize_t)ulen;
 	const off_t mid   = off + (len / 2);
 	const off_t end   = off + len;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -154,8 +153,7 @@ ut_file_fallocate_unwritten_(struct ut_env *ute, off_t off, size_t ulen)
 	const char *name  = UT_NAME;
 	const ssize_t len = (ssize_t)ulen;
 	const uint8_t b   = 1;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -192,8 +190,7 @@ ut_file_fallocate_drop_caches_(struct ut_env *ute, off_t off, size_t ulen)
 	const char *name  = UT_NAME;
 	void *buf         = ut_randbuf(ute, ulen);
 	const ssize_t len = (ssize_t)ulen;
-	ino_t dino        = 0;
-	ino_t ino         = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -231,8 +228,7 @@ ut_file_fallocate_punch_hole1_(struct ut_env *ute, off_t off, size_t len)
 	uint8_t *buf     = ut_randbuf(ute, len);
 	const off_t off1 = off + (off_t)len;
 	const off_t off2 = off1 + (off_t)len;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -267,11 +263,10 @@ static void ut_file_fallocate_punch_hole1(struct ut_env *ute)
 static void ut_file_fallocate_punch_hole2_(struct ut_env *ute, off_t off1,
                                            off_t off2, size_t len)
 {
-	uint8_t *buf     = ut_randbuf(ute, len);
 	const char *name = UT_NAME;
+	uint8_t *buf     = ut_randbuf(ute, len);
 	uint8_t zero[1]  = { 0 };
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -631,6 +626,10 @@ static void ut_file_fallocate_beyond(struct ut_env *ute)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ut_testdef ut_local_tests[] = {
+
+	// XXX
+	UT_DEFTEST2(ut_file_fallocate_zero_range),
+
 	UT_DEFTEST2(ut_file_fallocate_aligned),
 	UT_DEFTEST2(ut_file_fallocate_unaligned),
 	UT_DEFTEST2(ut_file_fallocate_rdonly),

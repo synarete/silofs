@@ -210,9 +210,9 @@ svi_vaddr(const struct silofs_symval_info *svi)
 }
 
 static void
-svi_markdirty(struct silofs_symval_info *svi, struct silofs_inode_info *ii)
+svi_setdirty(struct silofs_symval_info *svi, struct silofs_inode_info *ii)
 {
-	silofs_vni_markdirty(&svi->svn_vni, ii);
+	silofs_vni_setdirty(&svi->svn_vni, ii);
 }
 
 static int svi_recheck_symval(struct silofs_symval_info *svi)
@@ -230,7 +230,7 @@ svi_setup_by(struct silofs_symval_info *svi, struct silofs_inode_info *ii,
              const struct silofs_strview *sv)
 {
 	svn_init(svi->svn, ii->i_ino, sv->str, sv->len);
-	svi_markdirty(svi, ii);
+	svi_setdirty(svi, ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -400,7 +400,7 @@ static int slc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 
 	lnk_assign_value_head(lnk_ii, sv_dsc->head.str, sv_dsc->head.len);
-	silofs_ii_markdirty(lnk_ii);
+	silofs_ii_setdirty(lnk_ii);
 	return 0;
 }
 

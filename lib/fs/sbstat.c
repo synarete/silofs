@@ -568,7 +568,7 @@ void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
 	spst_assign(&sbi->sb_spst_curr, &spst);
 	spst_assign(&sbi->sb_spst_prev, &spst);
 	spst_reset_spgs(&sbi->sb_spst_curr);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 void silofs_sbst_account_super(struct silofs_sb_info *sbi)
@@ -588,7 +588,7 @@ static size_t sbst_capacity(const struct silofs_sb_info *sbi)
 void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
 {
 	sbi->sb_spst_curr.capacity = capacity;
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
@@ -596,7 +596,7 @@ void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_lsegs(&sbi->sb_spst_curr, vtype, take);
-		silofs_sbi_markdirty(sbi);
+		silofs_sbi_setdirty(sbi);
 	}
 }
 
@@ -605,7 +605,7 @@ void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_bks(&sbi->sb_spst_curr, vtype, take);
-		silofs_sbi_markdirty(sbi);
+		silofs_sbi_setdirty(sbi);
 	}
 }
 
@@ -614,7 +614,7 @@ void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
 {
 	if (take != 0) {
 		spst_update_objs(&sbi->sb_spst_curr, vtype, take);
-		silofs_sbi_markdirty(sbi);
+		silofs_sbi_setdirty(sbi);
 	}
 }
 

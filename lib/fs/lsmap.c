@@ -748,9 +748,9 @@ static void lrange_of(struct silofs_lrange *lrange, off_t beg, size_t nlbk)
 	silofs_lrange_setup(lrange, SILOFS_HEIGHT_SPLEAF, beg, end);
 }
 
-static void lsi_markdirty(struct silofs_lsmap_info *lsi)
+static void lsi_setdirty(struct silofs_lsmap_info *lsi)
 {
-	silofs_vni_markdirty(&lsi->ls_vni, nullptr);
+	silofs_vni_setdirty(&lsi->ls_vni, nullptr);
 }
 
 static void lsi_lrange(const struct silofs_lsmap_info *lsi,
@@ -790,7 +790,7 @@ void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
 	lrange_of(&lrange, beg, ARRAY_SIZE(lsi->lsm->lsm_lbms));
 	lsmap_init(lsi->lsm, &lrange, refvtype);
 	lsmap_gen_keys(lsi->lsm);
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 }
 
 void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi)
@@ -940,7 +940,7 @@ void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info *lsi,
 		lsmap_set_unwritten_at(lsi->lsm, vaddr);
 	}
 	lsi->ls_nused_bytes += len;
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 }
 
 void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
@@ -962,7 +962,7 @@ void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info *lsi,
 		lsmap_renew_bk_at(lsi->lsm, vaddr);
 		lsmap_renew_key_at(lsi->lsm, vaddr);
 	}
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 }
 
 void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
@@ -973,7 +973,7 @@ void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info *lsi,
 	silofs_assert_le(lsi->ls_nused_bytes, SILOFS_LSEG_SIZE_MAX);
 
 	lsmap_set_allocated_at(lsi->lsm, vaddr);
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 }
 
 size_t silofs_lsi_refcnt_at(const struct silofs_lsmap_info *lsi,
@@ -1037,7 +1037,7 @@ void silofs_lsi_clear_unwritten_at(struct silofs_lsmap_info *lsi,
 	if (lsi_is_subref(lsi, vaddr) &&
 	    lsmap_test_unwritten_at(lsi->lsm, vaddr)) {
 		lsmap_clear_unwritten_at(lsi->lsm, vaddr);
-		lsi_markdirty(lsi);
+		lsi_setdirty(lsi);
 	}
 }
 
@@ -1047,7 +1047,7 @@ void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info *lsi,
 	if (lsi_is_subref(lsi, vaddr) &&
 	    !lsmap_test_unwritten_at(lsi->lsm, vaddr)) {
 		lsmap_set_unwritten_at(lsi->lsm, vaddr);
-		lsi_markdirty(lsi);
+		lsi_setdirty(lsi);
 	}
 }
 
@@ -1068,7 +1068,7 @@ void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
 	lsmap_clone_from(lsi->lsm, lsi_other->lsm);
 	lsi->ls_nused_bytes = lsi_other->ls_nused_bytes;
 	lsi->ls_off_hint    = lsi_other->ls_off_hint;
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 }
 
 int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
@@ -1090,7 +1090,7 @@ int silofs_lsi_rebind_key(struct silofs_lsmap_info *lsi,
 		return -SILOFS_ERANGE;
 	}
 	lsmap_set_key_of(lsi->lsm, vaddr->off, key);
-	lsi_markdirty(lsi);
+	lsi_setdirty(lsi);
 	return 0;
 }
 

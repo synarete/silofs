@@ -524,7 +524,7 @@ int silofs_verify_super_block(const struct silofs_super_block *sb)
 void silofs_sbi_add_flags(struct silofs_sb_info *sbi, enum silofs_superf flags)
 {
 	sb_add_flags(sbi->sb, flags);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
@@ -593,7 +593,7 @@ void silofs_sbi_bind_main_lseg(struct silofs_sb_info *sbi,
                                const struct silofs_lsid *lsid)
 {
 	sb_set_main_lsid(sbi->sb, vspace, lsid);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
@@ -678,7 +678,7 @@ void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_vtype vtype,
                            const struct silofs_uaddr *uaddr)
 {
 	sb_set_sproot_of(sbi->sb, vtype, uaddr);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
@@ -885,9 +885,9 @@ void silofs_sbi_decref(struct silofs_sb_info *sbi)
 	}
 }
 
-void silofs_sbi_markdirty(struct silofs_sb_info *sbi)
+void silofs_sbi_setdirty(struct silofs_sb_info *sbi)
 {
-	silofs_uni_markdirty(&sbi->sb_uni);
+	silofs_uni_setdirty(&sbi->sb_uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -898,7 +898,7 @@ static void sbi_setup_birth_tms_now(struct silofs_sb_info *sbi)
 
 	silofs_localtime_now(&now);
 	sb_set_birth_tms(sbi->sb, &now);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
@@ -907,7 +907,7 @@ static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
 
 	silofs_localtime_now(&now);
 	sb_set_btime_curr(sbi->sb, &now);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
@@ -929,7 +929,7 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 	sbi_setup_spstats(sbi);
 	sbi_setup_birth_tms_now(sbi);
 	sbi_assign_vspace_span(sbi);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 static void sbi_make_fork_of(struct silofs_sb_info *sbi,
@@ -942,7 +942,7 @@ static void sbi_make_fork_of(struct silofs_sb_info *sbi,
 	sb_clone_sproots(sb, sb_other);
 	sb_clone_tms(sb, sb_other);
 	sb_reset_main_lsids(sb);
-	silofs_sbi_markdirty(sbi);
+	silofs_sbi_setdirty(sbi);
 }
 
 void silofs_sbi_make_fork_of(struct silofs_sb_info *sbi_new,

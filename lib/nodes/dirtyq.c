@@ -59,7 +59,7 @@ void silofs_dqe_set_dirtyq(struct silofs_dq_elem *dqe,
 	dqe->drq = drq;
 }
 
-void silofs_dqe_markdirty(struct silofs_dq_elem *dqe)
+void silofs_dqe_setdirty(struct silofs_dq_elem *dqe)
 {
 	if (!dqe->in_drq) {
 		silofs_assert_not_null(dqe->drq);
@@ -69,7 +69,7 @@ void silofs_dqe_markdirty(struct silofs_dq_elem *dqe)
 	}
 }
 
-void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe)
+void silofs_dqe_unsetdirty(struct silofs_dq_elem *dqe)
 {
 	if (dqe->in_drq) {
 		silofs_assert_not_null(dqe->drq);

@@ -63,9 +63,9 @@ bool silofs_dqe_isinq(const struct silofs_dq_elem *dqe);
 void silofs_dqe_set_dirtyq(struct silofs_dq_elem *dqe,
                            struct silofs_dirtyq  *drq);
 
-void silofs_dqe_markdirty(struct silofs_dq_elem *dqe);
+void silofs_dqe_setdirty(struct silofs_dq_elem *dqe);
 
-void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe);
+void silofs_dqe_unsetdirty(struct silofs_dq_elem *dqe);
 
 bool silofs_dqe_isdirty(const struct silofs_dq_elem *dqe);
 
@@ -393,9 +393,9 @@ struct silofs_btnode_info {
 const struct silofs_pnptr *
 silofs_pni_self(const struct silofs_pnode_info *pni);
 
-void silofs_pni_markdirty(struct silofs_pnode_info *pni);
+void silofs_pni_setdirty(struct silofs_pnode_info *pni);
 
-void silofs_pni_cleardirty(struct silofs_pnode_info *pni);
+void silofs_pni_unsetdirty(struct silofs_pnode_info *pni);
 
 void silofs_pni_incref(struct silofs_pnode_info *pni);
 
@@ -660,9 +660,9 @@ void silofs_lni_incref(struct silofs_lnode_info *lni);
 
 void silofs_lni_decref(struct silofs_lnode_info *lni);
 
-void silofs_lni_markdirty(struct silofs_lnode_info *lni);
+void silofs_lni_setdirty(struct silofs_lnode_info *lni);
 
-void silofs_lni_cleardirty(struct silofs_lnode_info *lni);
+void silofs_lni_unsetdirty(struct silofs_lnode_info *lni);
 
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,
                             struct silofs_hmapq      *hmapq);
@@ -689,9 +689,9 @@ void silofs_uni_incref(struct silofs_unode_info *uni);
 
 void silofs_uni_decref(struct silofs_unode_info *uni);
 
-void silofs_uni_markdirty(struct silofs_unode_info *uni);
+void silofs_uni_setdirty(struct silofs_unode_info *uni);
 
-void silofs_uni_cleardirty(struct silofs_unode_info *uni);
+void silofs_uni_unsetdirty(struct silofs_unode_info *uni);
 
 bool silofs_uni_isevictable(const struct silofs_unode_info *uni);
 
@@ -731,10 +731,10 @@ void silofs_vni_decref(struct silofs_vnode_info *vni);
 
 bool silofs_vni_isdirty(const struct silofs_vnode_info *vni);
 
-void silofs_vni_markdirty(struct silofs_vnode_info *vni,
-                          struct silofs_inode_info *ii);
+void silofs_vni_setdirty(struct silofs_vnode_info *vni,
+                         struct silofs_inode_info *ii);
 
-void silofs_vni_cleardirty(struct silofs_vnode_info *vni);
+void silofs_vni_unsetdirty(struct silofs_vnode_info *vni);
 
 bool silofs_vni_isevictable(const struct silofs_vnode_info *vni);
 

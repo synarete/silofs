@@ -201,7 +201,7 @@ pcache_bind_dirtyq(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 static void pcache_unbind_dirtyq(struct silofs_pcache *pcache,
                                  struct silofs_pnode_info *pni)
 {
-	silofs_pni_cleardirty(pni);
+	silofs_pni_unsetdirty(pni);
 	silofs_pni_set_dq(pni, nullptr);
 	unused(pcache);
 }

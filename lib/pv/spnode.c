@@ -270,9 +270,9 @@ void silofs_spi_decref(struct silofs_space_info *spi)
 	}
 }
 
-static void spi_markdirty(struct silofs_space_info *spi)
+static void spi_setdirty(struct silofs_space_info *spi)
 {
-	silofs_vni_markdirty(&spi->spn_vni, nullptr);
+	silofs_vni_setdirty(&spi->spn_vni, nullptr);
 }
 
 void silofs_spi_setup_spawned(struct silofs_space_info *spi,
@@ -283,7 +283,7 @@ void silofs_spi_setup_spawned(struct silofs_space_info *spi,
 
 	spn_init(spi->spn, ref_vaddr->vtype, base_off);
 	spi->spn_nused_ref = 0;
-	spi_markdirty(spi);
+	spi_setdirty(spi);
 }
 
 void silofs_spi_setup_staged(struct silofs_space_info *spi)
@@ -382,7 +382,7 @@ void silofs_spi_inc_allocated(struct silofs_space_info *spi,
 	}
 	spi_mark_unwritten_at(spi, slot);
 out:
-	spi_markdirty(spi);
+	spi_setdirty(spi);
 }
 
 void silofs_spi_dec_allocated(struct silofs_space_info *spi,
@@ -396,7 +396,7 @@ void silofs_spi_dec_allocated(struct silofs_space_info *spi,
 		spi_update_nused_ref(spi, -1);
 		spn_reset_flags_at(spi->spn, slot);
 	}
-	spi_markdirty(spi);
+	spi_setdirty(spi);
 }
 
 void silofs_spi_mark_unwritten(struct silofs_space_info *spi,
@@ -406,7 +406,7 @@ void silofs_spi_mark_unwritten(struct silofs_space_info *spi,
 
 	if (!spi_test_unwritten_at(spi, slot)) {
 		spi_mark_unwritten_at(spi, slot);
-		spi_markdirty(spi);
+		spi_setdirty(spi);
 	}
 }
 
@@ -417,7 +417,7 @@ void silofs_spi_clear_unwritten(struct silofs_space_info *spi,
 
 	if (spi_test_unwritten_at(spi, slot)) {
 		spi_clear_unwritten_at(spi, slot);
-		spi_markdirty(spi);
+		spi_setdirty(spi);
 	}
 }
 
@@ -436,5 +436,5 @@ void silofs_spi_clone_from(struct silofs_space_info *spi,
 {
 	spn_clone(spi->spn, spi_other->spn);
 	spi->spn_nused_ref = spi_other->spn_nused_ref;
-	spi_markdirty(spi);
+	spi_setdirty(spi);
 }

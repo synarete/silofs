@@ -135,14 +135,14 @@ silofs_pni_civkey(const struct silofs_pnode_info *pni)
 	return &pni->pn_self.nmeta.civkey;
 }
 
-void silofs_pni_markdirty(struct silofs_pnode_info *pni)
+void silofs_pni_setdirty(struct silofs_pnode_info *pni)
 {
-	silofs_dqe_markdirty(pni_dqe(pni));
+	silofs_dqe_setdirty(pni_dqe(pni));
 }
 
-void silofs_pni_cleardirty(struct silofs_pnode_info *pni)
+void silofs_pni_unsetdirty(struct silofs_pnode_info *pni)
 {
-	silofs_dqe_cleardirty(pni_dqe(pni));
+	silofs_dqe_unsetdirty(pni_dqe(pni));
 }
 
 void silofs_pni_incref(struct silofs_pnode_info *pni)

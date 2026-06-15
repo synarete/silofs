@@ -26,9 +26,9 @@ vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
 	silofs_vaddr_assign(out_vaddr, silofs_vni_vaddr(vni));
 }
 
-static void vni_markdirty(struct silofs_vnode_info *vni)
+static void vni_setdirty(struct silofs_vnode_info *vni)
 {
-	silofs_vni_markdirty(vni, nullptr);
+	silofs_vni_setdirty(vni, nullptr);
 }
 
 int silofs_probe_vnode2(struct silofs_pexec_ctx *pexec,
@@ -107,7 +107,7 @@ static int carve_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = silofs_spawn_vnode2(pexec, vaddr, &pnptr, out_vni);
 	return_if_err(err);
 
-	vni_markdirty(*out_vni);
+	vni_setdirty(*out_vni);
 	return 0;
 }
 

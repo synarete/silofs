@@ -519,10 +519,10 @@ xai_vaddr(const struct silofs_xanode_info *xai)
 }
 
 static void
-xai_markdirty(struct silofs_xanode_info *xai, struct silofs_inode_info *ii)
+xai_setdirty(struct silofs_xanode_info *xai, struct silofs_inode_info *ii)
 {
 	if (xai != nullptr) {
-		silofs_vni_markdirty(&xai->xan_vni, ii);
+		silofs_vni_setdirty(&xai->xan_vni, ii);
 	}
 }
 
@@ -842,7 +842,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	if (err) {
 		return err;
 	}
-	xai_markdirty(*out_xai, xa_ctx->ii);
+	xai_setdirty(*out_xai, xa_ctx->ii);
 	return 0;
 }
 
@@ -862,7 +862,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 	xai_setup_node(xai, ii->i_ino);
 
 	ii_xa_set_at(ii, slot, xai_vaddr(xai));
-	silofs_ii_markdirty(ii);
+	silofs_ii_setdirty(ii);
 
 	*out_xai = xai;
 	return 0;
@@ -902,7 +902,7 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	xei->xai = xai;
 	xei->xe  = xe;
-	xai_markdirty(xai, xa_ctx->ii);
+	xai_setdirty(xai, xa_ctx->ii);
 	return 0;
 }
 
@@ -983,9 +983,9 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 	}
 	if (xei_cur.xe != nullptr) {
 		xei_discard_entry(&xei_cur);
-		xai_markdirty(xei_cur.xai, xa_ctx->ii);
+		xai_setdirty(xei_cur.xai, xa_ctx->ii);
 	}
-	xai_markdirty(xei->xai, xa_ctx->ii);
+	xai_setdirty(xei->xai, xa_ctx->ii);
 	return 0;
 }
 
@@ -1138,7 +1138,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 		return xac_removexattr_retval(xa_ctx, err);
 	}
 	xei_discard_entry(&xei);
-	xai_markdirty(xei.xai, xa_ctx->ii);
+	xai_setdirty(xei.xai, xa_ctx->ii);
 	silofs_update_itimes_of(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
 	return 0;
 }

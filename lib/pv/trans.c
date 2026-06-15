@@ -20,12 +20,6 @@
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
 
-static void
-vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
-{
-	silofs_vaddr_assign(out_vaddr, silofs_vni_vaddr(vni));
-}
-
 static void vni_setdirty(struct silofs_vnode_info *vni)
 {
 	silofs_vni_setdirty(vni, nullptr);
@@ -167,7 +161,7 @@ static int decref_used_vspace(struct silofs_pexec_ctx *pexec,
 }
 
 static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr)
+                             const struct silofs_vaddr *vaddr, bool *out_last)
 {
 	struct silofs_pnptr pnptr;
 	struct silofs_vspace_ref vspref;
@@ -176,7 +170,10 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
 	return_if_err(err);
 
-	if (vspref.refcnt > 1) {
+	silofs_assert_gt(vspref.refcnt, 0);
+
+	*out_last = (vspref.refcnt == 1);
+	if (*out_last == false) {
 		silofs_assert(silofs_vaddr_isdata(vaddr));
 		goto out; /* shared data node: dec-ref only */
 	}
@@ -195,15 +192,6 @@ out:
 	return decref_used_vspace(pexec, vaddr);
 }
 
-int silofs_reclaim_vnode2(struct silofs_pexec_ctx *pexec,
-                          struct silofs_vnode_info *vni)
-{
-	struct silofs_vaddr vaddr;
-
-	vaddr_of(vni, &vaddr);
-	return silofs_reclaim_vnode2_at(pexec, &vaddr);
-}
-
 static struct silofs_vnode_info *
 lookup_cached_vni(struct silofs_pexec_ctx *pexec,
                   const struct silofs_vaddr *vaddr)
@@ -214,24 +202,22 @@ lookup_cached_vni(struct silofs_pexec_ctx *pexec,
 static void forget_cached_vni(struct silofs_pexec_ctx *pexec,
                               struct silofs_vnode_info *vni)
 {
-	if (vni != nullptr) {
-		silofs_vcache_forget_vnode(pexec->vcache, vni);
-	}
+	silofs_vcache_forget_vnode(pexec->vcache, vni);
 }
 
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni;
+	bool last = false;
 	int err;
 
 	vni = lookup_cached_vni(pexec, vaddr);
-
-	err = reclaim_vnode2_at(pexec, vaddr);
-	return_if_err(err);
-
-	forget_cached_vni(pexec, vni);
-	return 0;
+	err = reclaim_vnode2_at(pexec, vaddr, &last);
+	if (!err && last && (vni != nullptr)) {
+		forget_cached_vni(pexec, vni);
+	}
+	return err;
 }
 
 int silofs_isshared_vnode2_at(struct silofs_pexec_ctx *pexec,
@@ -266,18 +252,15 @@ int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vspace_ref vspref;
+	bool last;
 	int err;
 
 	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
 	return_if_err(err);
 
-	if (vspref.refcnt > 1) {
-		err = decref_used_vspace(pexec, vaddr);
-		return_if_err(err);
-	} else {
-		err = reclaim_vnode2_at(pexec, vaddr);
-		return_if_err(err);
-	}
+	err = reclaim_vnode2_at(pexec, vaddr, &last);
+	return_if_err(err);
+
 	return 0;
 }
 

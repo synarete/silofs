@@ -59,7 +59,6 @@ struct silofs_file_ctx {
 };
 
 struct silofs_fileaf_ref {
-	struct silofs_laddr laddr;
 	struct silofs_vaddr vaddr;
 	const struct silofs_inode_info *ii;
 	struct silofs_ftnode_info *parent_fti;
@@ -187,11 +186,16 @@ static bool off_is_partial_leaf(off_t off, off_t end)
 	return off_is_partial(off, end, SILOFS_VTYPE_DATA64K);
 }
 
+static off_t off_end(off_t off, size_t len)
+{
+	return silofs_off_end(off, len);
+}
+
 static off_t off_head1_end_of(size_t slot)
 {
 	constexpr size_t leaf_size = SILOFS_FILE_HEAD1_LEAF_SIZE;
 
-	return silofs_off_end(0, (slot + 1) * leaf_size);
+	return off_end(0, (slot + 1) * leaf_size);
 }
 
 static off_t off_head1_max(void)
@@ -203,7 +207,7 @@ static off_t off_head2_end_of(size_t slot)
 {
 	constexpr size_t leaf_size = (size_t)SILOFS_FILE_HEAD2_LEAF_SIZE;
 
-	return silofs_off_end(off_head1_max(), (slot + 1) * leaf_size);
+	return off_end(off_head1_max(), (slot + 1) * leaf_size);
 }
 
 static off_t off_head2_max(void)
@@ -614,7 +618,7 @@ static off_t ftn_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 	off_t next_off;
 	const size_t nbps = ftn_nbytes_per_slot(ftn);
 
-	next_off = silofs_off_end(ftn_beg(ftn), slot * nbps);
+	next_off = off_end(ftn_beg(ftn), slot * nbps);
 	return silofs_off_align_to_lbk(next_off);
 }
 
@@ -625,7 +629,7 @@ ftn_next_file_pos(const struct silofs_ftree_node *ftn, size_t slot)
 	const size_t nbps = ftn_nbytes_per_slot(ftn);
 
 	file_pos = ftn_file_pos(ftn, slot);
-	return silofs_off_end(file_pos, nbps);
+	return off_end(file_pos, nbps);
 }
 
 static void ftn_init_null_childs(struct silofs_ftree_node *ftn)
@@ -993,7 +997,6 @@ static void flref_reset(struct silofs_fileaf_ref *flref)
 {
 	silofs_memzero(flref, sizeof(*flref));
 	silofs_vaddr_reset(&flref->vaddr);
-	silofs_laddr_reset(&flref->laddr);
 }
 
 static void
@@ -2284,10 +2287,10 @@ static int filc_share_fdnode(const struct silofs_file_ctx *f_ctx,
 	return silofs_share_fdnode2(f_ctx->task, vaddr, f_ctx->ii);
 }
 
-static int filc_reclaim_fdnode(const struct silofs_file_ctx *f_ctx,
+static int filc_unshare_fdnode(const struct silofs_file_ctx *f_ctx,
                                const struct silofs_vaddr *vaddr)
 {
-	return silofs_reclaim_fdnode2(f_ctx->task, vaddr, f_ctx->ii);
+	return silofs_unshare_fdnode2(f_ctx->task, vaddr, f_ctx->ii);
 }
 
 static int filc_remove_fdnode(const struct silofs_file_ctx *f_ctx,
@@ -3515,7 +3518,7 @@ int silofs_do_truncate(struct silofs_task_ctx *task,
 		.len          = len,
 		.beg          = off,
 		.off          = off,
-		.end          = silofs_off_end(off, len),
+		.end          = off_end(off, len),
 		.kill_suidgid = kill_suidgid,
 	};
 	int ret;
@@ -3893,7 +3896,7 @@ int silofs_do_fallocate(struct silofs_task_ctx *task,
 		.len          = (size_t)len,
 		.beg          = off,
 		.off          = off,
-		.end          = silofs_off_end(off, (size_t)len),
+		.end          = off_end(off, (size_t)len),
 		.fl_mode      = mode,
 		.kill_suidgid = true,
 	};
@@ -4063,7 +4066,7 @@ static int filc_fiemap(struct silofs_file_ctx *f_ctx)
 }
 
 static off_t
-ii_silofs_off_end(const struct silofs_inode_info *ii, off_t off, size_t len)
+ii_off_end(const struct silofs_inode_info *ii, off_t off, size_t len)
 {
 	const off_t end = silofs_off_end(off, len);
 	const off_t isz = silofs_ii_size(ii);
@@ -4086,7 +4089,7 @@ int silofs_do_fiemap(struct silofs_task_ctx *task,
 		.len      = len,
 		.beg      = off,
 		.off      = off,
-		.end      = ii_silofs_off_end(ii, off, len),
+		.end      = ii_off_end(ii, off, len),
 		.fm       = fm,
 		.fm_flags = (int)(fm->fm_flags),
 		.fm_stop  = 0,
@@ -4355,10 +4358,10 @@ static int filc_unshare_fdnode_by(const struct silofs_file_ctx *f_ctx,
 	len = silofs_vaddr_len(&flref->vaddr);
 	err = filc_copy_fdnode_by(f_ctx, flref, f_ctx, &flref_new, len);
 	if (err) {
-		filc_reclaim_fdnode(f_ctx, &flref_new.vaddr);
+		filc_remove_fdnode(f_ctx, &flref_new.vaddr);
 		return err;
 	}
-	err = filc_reclaim_fdnode(f_ctx, &flref->vaddr);
+	err = filc_unshare_fdnode(f_ctx, &flref->vaddr);
 	if (err) {
 		return err;
 	}
@@ -4436,8 +4439,10 @@ static int filc_share_fdnode_by(const struct silofs_file_ctx *f_ctx_src,
 static bool filc_test_ismutable_by(const struct silofs_file_ctx *f_ctx,
                                    const struct silofs_fileaf_ref *flref)
 {
-	return silofs_laddr_isnull(&flref->laddr) ||
-	       silofs_sbi_ismutable_laddr(f_ctx->sbi, &flref->laddr);
+	/* XXX FIXME FIXME */
+	silofs_unused(f_ctx);
+	silofs_unused(flref);
+	return true;
 }
 
 static bool
@@ -4459,18 +4464,9 @@ filc_test_may_share_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_resolve_laddr_by(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fileaf_ref *flref)
 {
-	struct silofs_llink llink;
-	int err;
-
-	if (vaddr_isnull(&flref->vaddr)) {
-		return 0;
-	}
-	err = silofs_resolve_llink_of(f_ctx->task, &flref->vaddr,
-	                              f_ctx->stg_mode, &llink);
-	if (err) {
-		return err;
-	}
-	silofs_laddr_assign(&flref->laddr, &llink.laddr);
+	/* XXX FIXME FIXME */
+	silofs_unused(f_ctx);
+	silofs_unused(flref);
 	return 0;
 }
 
@@ -4498,78 +4494,61 @@ filc_copy_range_at_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 
 	if (!flref_src->has_data && flref_dst->has_data) {
 		err = filc_require_mut_by(f_ctx_dst, flref_dst);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = filc_unshare_fdnode_by(f_ctx_dst, flref_dst);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = filc_discard_data_by(f_ctx_dst, flref_dst);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 	} else if (flref_src->has_data && !flref_dst->has_data) {
 		err = filc_resolve_laddr_by(f_ctx_src, flref_src);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		if (filc_test_may_share_leaf_by(f_ctx_src, flref_src, 1) &&
 		    filc_test_may_share_leaf_by(f_ctx_dst, flref_dst, 0)) {
 			err = filc_require_tree_by(f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 			err = filc_share_fdnode_by(f_ctx_src, flref_src,
 			                           f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 		} else {
 			err = filc_require_leaf(f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 			err = filc_require_mut_by(f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 			err = filc_copy_leaf_by(f_ctx_src, flref_src,
 			                        f_ctx_dst, flref_dst, len);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
 		}
 	} else if (flref_src->has_data && flref_dst->has_data) {
 		err = filc_require_mut_by(f_ctx_dst, flref_dst);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = filc_resolve_laddr_by(f_ctx_src, flref_src);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = filc_resolve_laddr_by(f_ctx_dst, flref_dst);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		if (filc_test_may_share_leaf_by(f_ctx_src, flref_src, 1) &&
 		    filc_test_may_share_leaf_by(f_ctx_dst, flref_dst, 0)) {
 			err = filc_discard_data_by(f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 			err = filc_share_fdnode_by(f_ctx_src, flref_src,
 			                           f_ctx_dst, flref_dst);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 		} else {
 			err = filc_copy_leaf_by(f_ctx_src, flref_src,
 			                        f_ctx_dst, flref_dst, len);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
 		}
 	} /* else: !flref_src->has_data && !flref_dst->has_data (no-op) */
 	return 0;
@@ -4598,37 +4577,53 @@ static int filc_copy_range_iter(struct silofs_file_ctx *f_ctx_src,
 		}
 		err = filc_copy_range_at_leaf_by(f_ctx_src, &flref_src,
 		                                 f_ctx_dst, &flref_dst, len);
+		return_if_err(err);
 
-		if (err) {
-			return err;
-		}
 		filc_advance_by_nbytes(f_ctx_src, len);
 		filc_advance_by_nbytes(f_ctx_dst, len);
 	}
 	return 0;
 }
 
+static int filc_check_copy_range_same(const struct silofs_file_ctx *f_ctx_src,
+                                      const struct silofs_file_ctx *f_ctx_dst)
+{
+	const off_t src_off = f_ctx_src->off;
+	const off_t src_end = silofs_off_end(src_off, f_ctx_dst->len);
+	const off_t dst_off = f_ctx_dst->off;
+	const off_t dst_end = silofs_off_end(dst_off, f_ctx_dst->len);
+	int ret;
+
+	if (f_ctx_src->ii != f_ctx_dst->ii) {
+		/* OK: not copy-range within same file */
+		ret = 0;
+	} else if (dst_end <= src_off) {
+		/* OK: no overlap (pre) */
+		ret = 0;
+	} else if (src_end <= dst_off) {
+		/* OK: no overlap (post) */
+		ret = 0;
+	} else {
+		/* Don't allow overlapped copying within the same file. */
+		ret = -SILOFS_EINVAL;
+	}
+	return ret;
+}
+
 static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,
                                  const struct silofs_file_ctx *f_ctx_dst)
 {
-	const long len      = (long)(f_ctx_dst->len);
-	const off_t off_src = f_ctx_src->off;
-	const off_t off_dst = f_ctx_dst->off;
 	int err;
 
 	err = filc_check_file_io(f_ctx_src);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_check_file_io(f_ctx_dst);
-	if (err) {
-		return err;
-	}
-	/* Don't allow overlapped copying within the same file. */
-	if ((f_ctx_src->ii == f_ctx_dst->ii) && ((off_dst + len) > off_src) &&
-	    (off_dst < (off_src + len))) {
-		return -SILOFS_EINVAL;
-	}
+	return_if_err(err);
+
+	err = filc_check_copy_range_same(f_ctx_src, f_ctx_dst);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -4672,27 +4667,23 @@ static ssize_t min3(ssize_t a, ssize_t b, ssize_t c)
 static int filc_set_copy_range_start(struct silofs_file_ctx *f_ctx_src,
                                      struct silofs_file_ctx *f_ctx_dst)
 {
-	off_t off_data_src = 0;
-	off_t off_data_dst = 0;
-	ssize_t skip_src   = 0;
-	ssize_t skip_dst   = 0;
-	ssize_t skip       = 0;
+	off_t off_data_src = 0, off_data_dst = 0;
+	ssize_t skip_src = 0, skip_dst = 0, skip = 0;
 	int err;
 
 	err = filc_lseek_data_pos(f_ctx_src, &off_data_src);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_lseek_data_pos(f_ctx_dst, &off_data_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if (f_ctx_src->off < off_data_src) {
 		skip_src = silofs_off_len(f_ctx_src->off, off_data_src);
 	}
 	if (f_ctx_dst->off < off_data_dst) {
 		skip_dst = silofs_off_len(f_ctx_dst->off, off_data_dst);
 	}
+
 	skip = min3(skip_src, skip_dst, SILOFS_COPY_FILE_RANGE_MAX);
 	filc_advance_by_nbytes2(f_ctx_src, f_ctx_dst, skip);
 	return 0;
@@ -4704,13 +4695,11 @@ static int filc_pre_copy_range(struct silofs_file_ctx *f_ctx_src,
 	int err;
 
 	err = filc_flush_dirty_now(f_ctx_src);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_flush_dirty_now(f_ctx_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -4720,21 +4709,17 @@ static int filc_copy_range(struct silofs_file_ctx *f_ctx_src,
 	int err;
 
 	err = filc_check_copy_range(f_ctx_src, f_ctx_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_pre_copy_range(f_ctx_src, f_ctx_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_set_copy_range_start(f_ctx_src, f_ctx_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_copy_range_iter(f_ctx_src, f_ctx_dst);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	filc_update_post_io(f_ctx_dst);
 	*out_ncp = filc_io_length(f_ctx_dst);
 
@@ -4757,7 +4742,7 @@ int silofs_do_copy_file_range(struct silofs_task_ctx *task,
 		.len          = len,
 		.beg          = off_in,
 		.off          = off_in,
-		.end          = ii_silofs_off_end(ii_in, off_in, len),
+		.end          = ii_off_end(ii_in, off_in, len),
 		.cp_flags     = flags,
 		.with_backref = 0,
 		.kill_suidgid = true,

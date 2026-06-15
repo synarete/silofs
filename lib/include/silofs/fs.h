@@ -144,10 +144,6 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info     *pii,
                          struct silofs_vaddr          *out_vaddr);
 
-int silofs_reclaim_fdnode2(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr    *vaddr,
-                           struct silofs_inode_info     *pii);
-
 int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr,
                          struct silofs_inode_info     *pii,

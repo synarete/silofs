@@ -20,6 +20,14 @@
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
 
+static void
+vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, silofs_vni_vaddr(vni));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void drop_caches(struct silofs_pexec_ctx *pexec)
 {
 	silofs_vcache_drop(pexec->vcache);
@@ -189,25 +197,55 @@ static int format_refetch_zero_node(struct silofs_pexec_ctx *pexec,
 }
 
 static int
+create_vnode(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype,
+             struct silofs_vnode_info **out_vni)
+{
+	int err;
+
+	err = silofs_create_vnode2(pexec, vtype, out_vni);
+	if (err) {
+		log_err("failed to create vnode: vtype=%d err=%d", //
+		        vtype, err);
+	}
+	return err;
+}
+
+static int
 format_zero_node_step1(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	const struct silofs_vaddr *vaddr = nullptr;
 	struct silofs_vnode_info *vni    = nullptr;
 	int err;
 
-	err = silofs_create_vnode2(pexec, vtype, &vni);
-	if (err) {
-		log_err("failed to claim zero node: vtype=%d err=%d", //
-		        vtype, err);
-		return err;
-	}
+	err = create_vnode(pexec, vtype, &vni);
+	return_if_err(err);
+
 	vaddr = silofs_vni_vaddr(vni);
 	if (vaddr->off != 0) {
 		log_err("bad offset for node zero: vtype=%d off=%ld",
 		        (int)vaddr->vtype, (long)vaddr->off);
 		return -SILOFS_EBUG;
 	}
-	return flush_dirty_nodes(pexec, true);
+
+	err = flush_dirty_nodes(pexec, true);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int
+reclaim_vnode(struct silofs_pexec_ctx *pexec, struct silofs_vnode_info *vni)
+{
+	struct silofs_vaddr vaddr;
+	int err;
+
+	vaddr_of(vni, &vaddr);
+	err = silofs_reclaim_vnode2_at(pexec, &vaddr);
+	if (err) {
+		log_err("failed to reclaim vnode: vtype=%d off=%zd err=%d",
+		        vaddr.vtype, vaddr.off, err);
+	}
+	return err;
 }
 
 static int
@@ -219,36 +257,37 @@ format_zero_node_step2(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	err = format_refetch_zero_node(pexec, vtype, &vni);
 	return_if_err(err);
 
-	err = silofs_reclaim_vnode2(pexec, vni);
-	if (err) {
-		log_err("failed to reclaim zero node: vtype=%d err=%d", //
-		        vtype, err);
-		return err;
-	}
-	return flush_dirty_nodes(pexec, true);
+	err = reclaim_vnode(pexec, vni);
+	return_if_err(err);
+
+	err = flush_dirty_nodes(pexec, true);
+	return_if_err(err);
+
+	return 0;
 }
 
 static int
 format_zero_node_step3(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
-	const struct silofs_vaddr *vaddr = nullptr;
-	struct silofs_vnode_info *vni    = nullptr;
+	struct silofs_vaddr vaddr;
+	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
 	/* Occupy vaddr pos=0 indefinitely */
-	err = silofs_create_vnode2(pexec, vtype, &vni);
-	if (err) {
-		log_err("failed to claim again zero node: vtype=%d err=%d",
-		        vtype, err);
-		return err;
-	}
-	vaddr = silofs_vni_vaddr(vni);
-	if (vaddr->off != 0) {
+	err = create_vnode(pexec, vtype, &vni);
+	return_if_err(err);
+
+	vaddr_of(vni, &vaddr);
+	if (vaddr.off != 0) {
 		log_err("bad offset for node zero: vtype=%d off=%ld",
-		        (int)vaddr->vtype, (long)vaddr->off);
+		        (int)vaddr.vtype, (long)vaddr.off);
 		return -SILOFS_EBUG;
 	}
-	return flush_dirty_nodes(pexec, true);
+
+	err = flush_dirty_nodes(pexec, true);
+	return_if_err(err);
+
+	return 0;
 }
 
 static int
@@ -287,11 +326,9 @@ format_base_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	ssize_t ssize;
 	int err;
 
-	err = silofs_create_vnode2(pexec, vtype, &vni);
-	if (err) {
-		log_err("failed to claim node: vtype=%d err=%d", vtype, err);
-		return err;
-	}
+	err = create_vnode(pexec, vtype, &vni);
+	return_if_err(err);
+
 	vaddr = silofs_vni_vaddr(vni);
 	ssize = silofs_vtype_ssize(vaddr->vtype);
 	if (vaddr->off != ssize) {
@@ -299,15 +336,13 @@ format_base_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		        (int)vaddr->vtype, (int)ssize, (long)vaddr->off);
 		return -SILOFS_EBUG;
 	}
-	err = silofs_reclaim_vnode2(pexec, vni);
-	if (err) {
-		log_err("failed to reclaim node: vtype=%d err=%d", vtype, err);
-		return err;
-	}
+
+	err = reclaim_vnode(pexec, vni);
+	return_if_err(err);
+
 	err = flush_dirty_nodes(pexec, true);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 

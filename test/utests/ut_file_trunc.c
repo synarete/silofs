@@ -23,8 +23,7 @@ static void ut_file_trunc_data_(struct ut_env *ute, off_t off, size_t len)
 	const off_t bk_size      = (off_t)UT_64K;
 	const off_t off_bk_start = (off / bk_size) * bk_size;
 	char *buf                = ut_randbuf(ute, len);
-	ino_t dino               = 0;
-	ino_t ino                = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -101,8 +100,7 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, off_t off, size_t len)
 	const off_t zoff = off - (off_t)len;
 	const size_t bsz = 2 * len;
 	uint8_t *buf     = ut_randbuf(ute, bsz);
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_expect(len >= UT_64K);
 	ut_expect(zoff >= 0);
@@ -401,8 +399,7 @@ ut_file_trunc_null_data_(struct ut_env *ute, off_t off, size_t unused_len)
 	uint8_t nil[1]   = { 0x00 };
 	const size_t rsz = sizeof(rnd);
 	const char *name = UT_NAME;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_expect_ge(off, sizeof(rnd));
 	ut_randfill(ute, rnd, rsz);

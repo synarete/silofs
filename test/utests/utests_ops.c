@@ -1825,13 +1825,15 @@ void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, off_t off_in,
                         ino_t ino_out, off_t off_out, size_t len)
 {
 	size_t cnt = 0;
-	size_t ncp;
 
 	while (cnt < len) {
-		ncp = 0;
-		ut_copy_file_range1(ute, ino_in, ut_off_end(off_in, cnt),
-		                    ino_out, ut_off_end(off_out, cnt),
-		                    len - cnt, &ncp);
+		const off_t pos_in  = ut_off_end(off_in, cnt);
+		const off_t pos_out = ut_off_end(off_out, cnt);
+		const size_t rem    = len - cnt;
+		size_t ncp          = 0;
+
+		ut_copy_file_range1(ute, ino_in, pos_in, //
+		                    ino_out, pos_out, rem, &ncp);
 		cnt += ncp;
 	}
 }

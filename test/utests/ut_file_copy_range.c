@@ -84,9 +84,7 @@ ut_file_copy_range_simple_(struct ut_env *ute, off_t off, size_t len)
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	void *buf            = ut_randbuf(ute, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -103,6 +101,11 @@ ut_file_copy_range_simple_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_copy_range_simple_aligned(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
+
+		/* XXX */
+		COPYARGS1(UT_1K, UT_1M),
+		/* XXX */
+
 		COPYARGS1(0, UT_1K),
 		COPYARGS1(UT_1K, 2 * UT_1K),
 		COPYARGS1(0, UT_4K),
@@ -153,9 +156,7 @@ ut_file_copy_range_between_(struct ut_env *ute, off_t off_src, size_t len_src,
 	const size_t len_min = ut_min(len_src, len_dst);
 	void *buf_src        = ut_randbuf(ute, len_max);
 	void *buf_dst        = ut_randbuf(ute, len_max);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -241,8 +242,7 @@ ut_file_copy_range_self_(struct ut_env *ute, off_t off_src, size_t len_src,
 	const off_t off_zeros = ut_off_end(off_dst, len_min);
 	void *buf_src         = ut_randbuf(ute, len_src);
 	void *buf_dst         = ut_randbuf(ute, len_dst);
-	ino_t dino            = 0;
-	ino_t ino             = 0;
+	ino_t dino = 0, ino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);
@@ -313,10 +313,8 @@ ut_file_copy_range_truncate_(struct ut_env *ute, off_t off, size_t len)
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const off_t end      = ut_off_end(off, len);
-	uint8_t *buf         = ut_randbuf(ute, len);
-	ino_t dino           = 0;
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
+	const uint8_t *buf   = ut_randbuf(ute, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -370,15 +368,13 @@ static void ut_file_copy_range_truncate(struct ut_env *ute)
 static void
 ut_file_copy_range_overwrite_(struct ut_env *ute, off_t off, size_t len)
 {
-	ino_t dino           = 0;
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	const off_t end      = ut_off_end(off, len);
 	const char *name     = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
-	uint8_t *buf1        = ut_randbuf(ute, len);
-	uint8_t *buf2        = ut_randbuf(ute, len);
+	const uint8_t *buf1  = ut_randbuf(ute, len);
+	const uint8_t *buf2  = ut_randbuf(ute, len);
+	const off_t end      = ut_off_end(off, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -437,15 +433,13 @@ static void ut_file_copy_range_overwrite(struct ut_env *ute)
 static void
 ut_file_copy_range_nfiles_(struct ut_env *ute, off_t off, size_t len)
 {
-	ino_t dino           = 0;
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	const off_t end      = ut_off_end(off, len);
-	const size_t nfiles  = 256;
-	const char *name     = UT_NAME;
-	const char *name_src = UT_NAME;
-	const char *name_dst = nullptr;
-	uint8_t *buf         = ut_randbuf(ute, len);
+	constexpr size_t nfiles = 256;
+	const char *name        = UT_NAME;
+	const char *name_src    = UT_NAME;
+	const char *name_dst    = nullptr;
+	const uint8_t *buf      = ut_randbuf(ute, len);
+	const off_t end         = ut_off_end(off, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -473,11 +467,16 @@ ut_file_copy_range_nfiles_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_copy_range_nfiles_aligned(struct ut_env *ute)
 {
 	const struct ut_copy_range_args args[] = {
-		COPYARGS1(0, UT_1K),       COPYARGS1(0, UT_4K),
-		COPYARGS1(UT_1K, UT_4K),   COPYARGS1(0, UT_64K),
-		COPYARGS1(UT_64K, UT_64K), COPYARGS1(2 * UT_64K, 4 * UT_64K),
-		COPYARGS1(0, UT_1M / 4),   COPYARGS1(UT_1M, UT_1M / 8),
-		COPYARGS1(UT_1G, UT_64K),  COPYARGS1(UT_1T, UT_4K),
+		COPYARGS1(0, UT_1K),               //
+		COPYARGS1(0, UT_4K),               //
+		COPYARGS1(UT_1K, UT_4K),           //
+		COPYARGS1(0, UT_64K),              //
+		COPYARGS1(UT_64K, UT_64K),         //
+		COPYARGS1(2 * UT_64K, 4 * UT_64K), //
+		COPYARGS1(0, UT_1M / 4),           //
+		COPYARGS1(UT_1M, UT_1M / 8),       //
+		COPYARGS1(UT_1G, UT_64K),          //
+		COPYARGS1(UT_1T, UT_4K),           //
 	};
 
 	ut_copy_range1(ute, ut_file_copy_range_nfiles_, args);
@@ -507,10 +506,8 @@ ut_file_copy_range_from_hole_(struct ut_env *ute, off_t off_src,
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const size_t len     = ut_min(len_src, len_dst);
-	void *buf            = ut_randbuf(ute, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	const void *buf      = ut_randbuf(ute, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -568,10 +565,8 @@ ut_file_copy_range_into_hole_(struct ut_env *ute, off_t off_src,
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const size_t len     = ut_min(len_src, len_dst);
-	void *buf            = ut_randbuf(ute, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	const void *buf      = ut_randbuf(ute, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -622,10 +617,8 @@ ut_file_copy_range_mtime_(struct ut_env *ute, off_t off_src, size_t len_src,
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const size_t len     = ut_min(len_src, len_dst);
-	void *buf            = ut_randbuf(ute, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	const void *buf      = ut_randbuf(ute, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -676,10 +669,8 @@ ut_file_copy_range_extend_(struct ut_env *ute, off_t off, size_t len)
 	const char *name     = UT_NAME;
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
-	void *buf            = ut_randbuf(ute, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	const void *buf      = ut_randbuf(ute, len);
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -736,9 +727,7 @@ ut_file_copy_range_empty_(struct ut_env *ute, off_t off, size_t len)
 	const char *name_src = UT_NAME_AT;
 	const char *name_dst = UT_NAME_AT;
 	const off_t end      = ut_off_end(off, len);
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);
@@ -781,9 +770,7 @@ ut_file_copy_range_sparse_(struct ut_env *ute, off_t off, size_t len)
 	const char *name_dst = UT_NAME_AT;
 	const off_t end      = ut_off_end(off, len);
 	uint8_t b[2]         = { 'A', 'B' };
-	ino_t ino_src        = 0;
-	ino_t ino_dst        = 0;
-	ino_t dino           = 0;
+	ino_t dino = 0, ino_src = 0, ino_dst = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name_src, &ino_src);

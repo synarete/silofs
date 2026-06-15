@@ -525,14 +525,6 @@ int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
 	return claim_vnode(task, vtype, pii, out_vaddr);
 }
 
-int silofs_reclaim_fdnode2(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_inode_info *pii)
-{
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return reclaim_vnode(task, vaddr, pii);
-}
-
 int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           const struct silofs_vaddr *vaddr,
                           struct silofs_inode_info *pii)

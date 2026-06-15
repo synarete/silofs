@@ -120,7 +120,7 @@ static void ut_rename_replace_with_data(struct ut_env *ute)
 	ut_mkdir2(ute, dino0, dname2, &dino2);
 
 	for (size_t i = 0; i < name_max; ++i) {
-		constexpr size_t bsz = UT_BK_SIZE;
+		constexpr size_t bsz = UT_64K;
 		const off_t off      = (off_t)((i * bsz) + i);
 
 		buf1  = ut_randbuf(ute, bsz);

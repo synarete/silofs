@@ -20,7 +20,7 @@ static void ut_file_trunc_data_(struct ut_env *ute, off_t off, size_t len)
 {
 	struct stat st           = { .st_ino = 0 };
 	const char *name         = UT_NAME;
-	const off_t bk_size      = (off_t)UT_BK_SIZE;
+	const off_t bk_size      = (off_t)UT_64K;
 	const off_t off_bk_start = (off / bk_size) * bk_size;
 	char *buf                = ut_randbuf(ute, len);
 	ino_t dino               = 0;
@@ -104,7 +104,7 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, off_t off, size_t len)
 	ino_t dino       = 0;
 	ino_t ino        = 0;
 
-	ut_expect(len >= UT_BK_SIZE);
+	ut_expect(len >= UT_64K);
 	ut_expect(zoff >= 0);
 
 	memset(buf, 0, bsz / 2);
@@ -113,8 +113,8 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, off_t off, size_t len)
 	ut_write_read(ute, ino, buf + len, len, off);
 	ut_trunacate_file(ute, ino, eoff - 1);
 	ut_read_verify(ute, ino, buf, bsz - 1, zoff);
-	ut_trunacate_file(ute, ino, eoff - UT_BK_SIZE + 1);
-	ut_read_verify(ute, ino, buf, bsz - UT_BK_SIZE + 1, zoff);
+	ut_trunacate_file(ute, ino, eoff - UT_64K + 1);
+	ut_read_verify(ute, ino, buf, bsz - UT_64K + 1, zoff);
 	ut_trunacate_file(ute, ino, off);
 	ut_read_verify(ute, ino, buf, len, zoff);
 	ut_remove_file(ute, dino, name, ino);
@@ -124,16 +124,16 @@ static void ut_file_trunc_mixed_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_trunc_mixed(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, 4 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G, 8 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_64K, UT_64K),
+		UT_MKRANGE1(UT_1M, 4 * UT_64K),
+		UT_MKRANGE1(UT_1G, 8 * UT_64K),
 		UT_MKRANGE1(UT_1T, UT_IOSIZE_MAX / 2),
-		UT_MKRANGE1(UT_1M - 11111, 11 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M + 11111, 11 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G - 11111, 11 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G + 11111, 11 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T - 11111, 11 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T + 11111, 11 * UT_BK_SIZE),
+		UT_MKRANGE1(UT_1M - 11111, 11 * UT_64K),
+		UT_MKRANGE1(UT_1M + 11111, 11 * UT_64K),
+		UT_MKRANGE1(UT_1G - 11111, 11 * UT_64K),
+		UT_MKRANGE1(UT_1G + 11111, 11 * UT_64K),
+		UT_MKRANGE1(UT_1T - 11111, 11 * UT_64K),
+		UT_MKRANGE1(UT_1T + 11111, 11 * UT_64K),
 	};
 
 	ut_exec_with_ranges(ute, ut_file_trunc_mixed_, ranges);
@@ -178,11 +178,11 @@ ut_file_trunc_hole_(struct ut_env *ute, off_t off1, off_t off2, size_t len)
 static void ut_file_trunc_hole(struct ut_env *ute)
 {
 	const struct ut_range2 range[] = {
-		UT_MKRANGE2(0, UT_1M, UT_BK_SIZE),
-		UT_MKRANGE2(1, UT_1M - 1, UT_BK_SIZE),
+		UT_MKRANGE2(0, UT_1M, UT_64K),
+		UT_MKRANGE2(1, UT_1M - 1, UT_64K),
 		UT_MKRANGE2(2, 2 * UT_1M - 2, UT_1M),
 		UT_MKRANGE2(3, 3 * UT_1M + 3, UT_1M),
-		UT_MKRANGE2(UT_1M + 1, UT_1M + UT_BK_SIZE + 2, UT_BK_SIZE),
+		UT_MKRANGE2(UT_1M + 1, UT_1M + UT_64K + 2, UT_64K),
 		UT_MKRANGE2(0, UT_1G, UT_1M),
 		UT_MKRANGE2(1, UT_1G - 1, UT_1M),
 		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
@@ -244,10 +244,10 @@ static void ut_file_trunc_single_byte_(struct ut_env *ute,
 static void ut_file_trunc_single_byte(struct ut_env *ute)
 {
 	const off_t off1[] = {
-		0, UT_BK_SIZE, UT_1M, UT_1G, UT_1T,
+		0, UT_64K, UT_1M, UT_1G, UT_1T,
 	};
 	const off_t off2[] = {
-		1, UT_BK_SIZE + 1, UT_1M + 1, UT_1G + 1, UT_1T + 1,
+		1, UT_64K + 1, UT_1M + 1, UT_1G + 1, UT_1T + 1,
 	};
 	const off_t off3[] = {
 		77, 777, 7777, 77777, 777777, 7777777,
@@ -376,12 +376,12 @@ static void ut_file_trunc_zero_size_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_trunc_zero_size(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(1, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1K, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M - 1, UT_BK_SIZE),
-		UT_MKRANGE1(11 * UT_1M + 11, UT_BK_SIZE),
-		UT_MKRANGE1(111 * UT_1G - 111, UT_BK_SIZE),
+		UT_MKRANGE1(1, UT_64K),
+		UT_MKRANGE1(UT_1K, UT_64K),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1M - 1, UT_64K),
+		UT_MKRANGE1(11 * UT_1M + 11, UT_64K),
+		UT_MKRANGE1(111 * UT_1G - 111, UT_64K),
 		UT_MKRANGE1(UT_1T, UT_1M),
 		UT_MKRANGE1(UT_1T + 1111111, UT_1M - 1),
 		UT_MKRANGE1(UT_FILESIZE_MAX - UT_1M, UT_1M),
@@ -432,13 +432,13 @@ static void ut_file_trunc_null_data(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
 		UT_MKRANGE0(UT_1K),
-		UT_MKRANGE0(UT_BK_SIZE),
+		UT_MKRANGE0(UT_64K),
 		UT_MKRANGE0(UT_1M + UT_1K),
 		UT_MKRANGE0(UT_1G + UT_1M),
 		UT_MKRANGE0(UT_1T + UT_1G),
 		UT_MKRANGE0(UT_1K + 1),
-		UT_MKRANGE0(UT_BK_SIZE - 1),
-		UT_MKRANGE0(UT_BK_SIZE + 1),
+		UT_MKRANGE0(UT_64K - 1),
+		UT_MKRANGE0(UT_64K + 1),
 		UT_MKRANGE0(UT_1M + UT_1K + 1),
 		UT_MKRANGE0(UT_1G + UT_1M + 1),
 		UT_MKRANGE0(UT_1T + UT_1G + 1),

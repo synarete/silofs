@@ -47,13 +47,13 @@ static void ut_clone_write_sparse_(struct ut_env *ute, const off_t *offs,
 static void ut_clone_write_sparse(struct ut_env *ute)
 {
 	const off_t offs[] = {
-		1,              //
-		2 * UT_1K - 1,  //
-		8 * UT_1K - 1,  //
-		UT_BK_SIZE - 1, //
-		UT_1M - 1,      //
-		UT_1G - 1,      //
-		UT_1T - 1,      //
+		1,             //
+		2 * UT_1K - 1, //
+		8 * UT_1K - 1, //
+		UT_64K - 1,    //
+		UT_1M - 1,     //
+		UT_1G - 1,     //
+		UT_1T - 1,     //
 	};
 
 	ut_clone_write_sparse_(ute, offs, UT_ARRAY_SIZE(offs), UT_1K);

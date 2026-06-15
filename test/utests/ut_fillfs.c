@@ -20,7 +20,7 @@
 
 static size_t calc_wr_size(const struct statvfs *stv, size_t limit)
 {
-	size_t wr_size           = UT_BK_SIZE;
+	size_t wr_size           = UT_64K;
 	const size_t nbytes_free = stv->f_bfree * stv->f_frsize;
 
 	if (nbytes_free > wr_size) {

@@ -172,7 +172,7 @@ static void ut_file_fiemap_sparse_(struct ut_env *ute, off_t off_base,
 	const char *name                   = UT_NAME;
 	const struct fiemap *fm            = nullptr;
 	const struct fiemap_extent *fm_ext = nullptr;
-	const off_t bk_size                = UT_BK_SIZE;
+	const off_t bk_size                = UT_64K;
 	const off_t off_end                = off_base + (step * (off_t)cnt);
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -216,7 +216,7 @@ static void ut_file_fiemap_sparse(struct ut_env *ute)
 {
 	ut_file_fiemap_sparse_(ute, 0, 100, 1);
 	ut_file_fiemap_sparse_(ute, 1, 1000, 1);
-	ut_file_fiemap_sparse_(ute, 0, UT_BK_SIZE, 8);
+	ut_file_fiemap_sparse_(ute, 0, UT_64K, 8);
 	ut_file_fiemap_sparse_(ute, 1, UT_1M, 16);
 	ut_file_fiemap_sparse_(ute, UT_1G, UT_1M, 32);
 	ut_file_fiemap_sparse_(ute, UT_1T - 1, UT_1G + 3, 64);

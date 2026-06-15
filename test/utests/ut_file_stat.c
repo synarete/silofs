@@ -79,8 +79,8 @@ static void ut_file_stat_blocks_at_(struct ut_env *ute, size_t bsz, off_t off)
 static void ut_file_stat_blocks_(struct ut_env *ute, off_t off)
 {
 	ut_file_stat_blocks_at_(ute, 1, off);
-	ut_file_stat_blocks_at_(ute, UT_BK_SIZE, off);
-	ut_file_stat_blocks_at_(ute, 2 * UT_BK_SIZE, off);
+	ut_file_stat_blocks_at_(ute, UT_64K, off);
+	ut_file_stat_blocks_at_(ute, 2 * UT_64K, off);
 	ut_file_stat_blocks_at_(ute, UT_1M, off);
 	ut_file_stat_blocks_at_(ute, UT_IOSIZE_MAX, off);
 	ut_file_stat_blocks_at_(ute, SILOFS_IO_SIZE_MAX, off);

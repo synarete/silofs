@@ -67,11 +67,11 @@ static void ut_file_write_iter_unaligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(1, UT_4K),
-		UT_MKRANGE1(3, 3 * UT_BK_SIZE),
+		UT_MKRANGE1(3, 3 * UT_64K),
 		UT_MKRANGE1(UT_4K - 5, UT_64K + 7),
 		UT_MKRANGE1(UT_4K + 5, 3 * UT_64K - 7),
-		UT_MKRANGE1(UT_BK_SIZE - 1, UT_BK_SIZE + 3),
-		UT_MKRANGE1(UT_1M - 3, UT_BK_SIZE / 5),
+		UT_MKRANGE1(UT_64K - 1, UT_64K + 3),
+		UT_MKRANGE1(UT_1M - 3, UT_64K / 5),
 		UT_MKRANGE1(UT_1G - 5, UT_1M / 1),
 		UT_MKRANGE1(UT_1T - 7, UT_1M / 7),
 	};
@@ -119,14 +119,8 @@ ut_file_write_iter_sparse_(struct ut_env *ute, const off_t *offs, size_t cnt)
 static void ut_file_write_iter_sparse(struct ut_env *ute)
 {
 	const off_t offs[] = {
-		8 * UT_BK_SIZE,
-		UT_1G / 5 - 5,
-		UT_BK_SIZE - 1,
-		UT_1T / 7 - 7,
-		0,
-		UT_1M / 3 - 3,
-		4 * UT_1M,
-		UT_1K - 1,
+		8 * UT_64K, UT_1G / 5 - 5, UT_64K - 1, UT_1T / 7 - 7,
+		0,          UT_1M / 3 - 3, 4 * UT_1M,  UT_1K - 1,
 	};
 
 	ut_file_write_iter_sparse_(ute, offs, UT_ARRAY_SIZE(offs));

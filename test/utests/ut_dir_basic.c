@@ -490,7 +490,7 @@ static const char *make_xname(struct ut_env *ute, size_t x)
 static void ut_dir_stat_(struct ut_env *ute, size_t cnt)
 {
 	struct stat st         = { .st_size = -1 };
-	const blkcnt_t nfrg    = UT_BK_SIZE / 512;
+	const blkcnt_t nfrg    = UT_64K / 512;
 	const char *dname      = UT_NAME;
 	const char *xname      = nullptr;
 	const off_t empty_size = SILOFS_DIR_EMPTY_SIZE;

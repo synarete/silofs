@@ -346,7 +346,7 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 
 		/* XXX */
 		/*
-		ut_expect_le(ualloc_dif, 2 * UT_BK_SIZE);
+		ut_expect_le(ualloc_dif, 2 * UT_64K);
 		*/
 		(void)ualloc_dif;
 	}

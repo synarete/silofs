@@ -292,9 +292,9 @@ static void ut_file_multi(struct ut_env *ute)
 
 static void ut_file_tricky(struct ut_env *ute)
 {
-	const size_t bsz = UT_BK_SIZE;
+	const size_t bsz = UT_64K;
 	const off_t nch  = (off_t)UT_FILEMAP_NCHILDS;
-	const off_t off1 = (off_t)(UT_BK_SIZE * UT_FILEMAP_NCHILDS);
+	const off_t off1 = (off_t)(UT_64K * UT_FILEMAP_NCHILDS);
 	const off_t off2 = off1 * nch;
 	const off_t off3 = (off_t)UT_FILESIZE_MAX / 2;
 	const off_t off4 = (off_t)UT_FILESIZE_MAX - (off_t)bsz;
@@ -394,7 +394,7 @@ static void ut_file_overwrite_complex(struct ut_env *ute)
 		UT_MKRANGE2(1, 2, UT_1M),
 		UT_MKRANGE2(UT_1M, UT_1M + UT_64K, UT_1M),
 		UT_MKRANGE2(UT_1M - 7, UT_1M - 5, (11 * UT_64K) + 11),
-		UT_MKRANGE2(UT_1G, UT_1G + UT_BK_SIZE, UT_1M),
+		UT_MKRANGE2(UT_1G, UT_1G + UT_64K, UT_1M),
 		UT_MKRANGE2(UT_1G - 11111, UT_1G - 111, UT_64K + 11111),
 		UT_MKRANGE2(UT_1T, UT_1T + UT_64K, UT_1M),
 		UT_MKRANGE2(UT_1T - 111111, UT_1T - 111, UT_1M + 11),
@@ -483,7 +483,7 @@ static void ut_file_sequence_at_end(struct ut_env *ute)
 
 struct ut_urecord {
 	uint64_t idx;
-	uint8_t pat[UT_BK_SIZE];
+	uint8_t pat[UT_64K];
 };
 
 static void setup_urecord(struct ut_urecord *urec, uint64_t num)
@@ -540,13 +540,13 @@ static void ut_file_unaligned_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_unaligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(1, 8 * UT_BK_SIZE),
+		UT_MKRANGE1(0, 8 * UT_64K),
+		UT_MKRANGE1(1, 8 * UT_64K),
 		UT_MKRANGE1(0, UT_1M),
-		UT_MKRANGE1(UT_1G, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G - 1, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T, 8 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T - 11, (8 * UT_BK_SIZE)),
+		UT_MKRANGE1(UT_1G, 8 * UT_64K),
+		UT_MKRANGE1(UT_1G - 1, 8 * UT_64K),
+		UT_MKRANGE1(UT_1T, 8 * UT_64K),
+		UT_MKRANGE1(UT_1T - 11, (8 * UT_64K)),
 		UT_MKRANGE1(UT_1T - 11, UT_1M),
 		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M),
 	};
@@ -602,20 +602,20 @@ static void ut_file_firstlast(struct ut_env *ute)
 		UT_MKRANGE1(1, UT_4K),
 		UT_MKRANGE1(0, UT_8K),
 		UT_MKRANGE1(1, UT_8K),
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(1, UT_BK_SIZE),
-		UT_MKRANGE1(8, UT_BK_SIZE + 8),
-		UT_MKRANGE1(11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_BK_SIZE - 11, UT_BK_SIZE + 111),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(1, UT_64K),
+		UT_MKRANGE1(8, UT_64K + 8),
+		UT_MKRANGE1(11, UT_64K + 11),
+		UT_MKRANGE1(UT_64K - 11, UT_64K + 111),
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(1, UT_1M),
 		UT_MKRANGE1(UT_1M - 1, UT_1M + 11),
 		UT_MKRANGE1(UT_1M + 1, 2 * UT_1M),
-		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G - 1, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T - 11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_1T - 111, UT_BK_SIZE + 1111),
+		UT_MKRANGE1(UT_1G, UT_64K),
+		UT_MKRANGE1(UT_1G - 1, 2 * UT_64K),
+		UT_MKRANGE1(UT_1T, 2 * UT_64K),
+		UT_MKRANGE1(UT_1T - 11, UT_64K + 11),
+		UT_MKRANGE1(UT_1T - 111, UT_64K + 1111),
 		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M + 1),
 	};
 
@@ -661,20 +661,20 @@ static void ut_file_zigzag_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_zigzag(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(1, UT_BK_SIZE),
-		UT_MKRANGE1(8, UT_BK_SIZE + 8),
-		UT_MKRANGE1(11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_BK_SIZE - 11, UT_BK_SIZE + 111),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(1, UT_64K),
+		UT_MKRANGE1(8, UT_64K + 8),
+		UT_MKRANGE1(11, UT_64K + 11),
+		UT_MKRANGE1(UT_64K - 11, UT_64K + 111),
 		UT_MKRANGE1(0, UT_1M),
 		UT_MKRANGE1(1, UT_1M),
 		UT_MKRANGE1(UT_1M - 1, UT_1M + 11),
 		UT_MKRANGE1(UT_1M + 1, 2 * UT_1M),
-		UT_MKRANGE1(UT_1G, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G - 1, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T - 11, UT_BK_SIZE + 11),
-		UT_MKRANGE1(UT_1T - 111, UT_BK_SIZE + 1111),
+		UT_MKRANGE1(UT_1G, UT_64K),
+		UT_MKRANGE1(UT_1G - 1, 2 * UT_64K),
+		UT_MKRANGE1(UT_1T, 2 * UT_64K),
+		UT_MKRANGE1(UT_1T - 11, UT_64K + 11),
+		UT_MKRANGE1(UT_1T - 111, UT_64K + 1111),
 		UT_MKRANGE1(UT_FILESIZE_MAX / 2, UT_1M + 1),
 	};
 
@@ -718,12 +718,12 @@ static void ut_file_with_hole(struct ut_env *ute)
 		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
 		/* XXX */
 
-		UT_MKRANGE2(0, UT_1M, UT_BK_SIZE),
-		UT_MKRANGE2(0, 2 * UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE2(1, 3 * UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE2(1, UT_1M - 1, UT_BK_SIZE),
+		UT_MKRANGE2(0, UT_1M, UT_64K),
+		UT_MKRANGE2(0, 2 * UT_64K, UT_64K),
+		UT_MKRANGE2(1, 3 * UT_64K, UT_64K),
+		UT_MKRANGE2(1, UT_1M - 1, UT_64K),
 		UT_MKRANGE2(2, 2 * UT_1M - 2, UT_1M),
-		UT_MKRANGE2(UT_1M + 1, UT_1M + UT_BK_SIZE + 2, UT_BK_SIZE),
+		UT_MKRANGE2(UT_1M + 1, UT_1M + UT_64K + 2, UT_64K),
 		UT_MKRANGE2(0, UT_1G, UT_1M),
 		UT_MKRANGE2(1, UT_1G - 1, UT_1M),
 		UT_MKRANGE2(2, 2 * UT_1G - 2, UT_IOSIZE_MAX),
@@ -815,17 +815,17 @@ static void ut_file_read_behind_(struct ut_env *ute, off_t off, size_t len)
 static void ut_file_read_behind(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE0(1111),           //
-		UT_MKRANGE0(UT_8K - 1),      //
-		UT_MKRANGE0(UT_8K),          //
-		UT_MKRANGE0(UT_BK_SIZE),     //
-		UT_MKRANGE0(UT_BK_SIZE + 1), //
-		UT_MKRANGE0(UT_1M),          //
-		UT_MKRANGE0(UT_1M + 1),      //
-		UT_MKRANGE0(UT_1G),          //
-		UT_MKRANGE0(UT_1G - 1),      //
-		UT_MKRANGE0(UT_1T),          //
-		UT_MKRANGE0(UT_1T + 1),      //
+		UT_MKRANGE0(1111),       //
+		UT_MKRANGE0(UT_8K - 1),  //
+		UT_MKRANGE0(UT_8K),      //
+		UT_MKRANGE0(UT_64K),     //
+		UT_MKRANGE0(UT_64K + 1), //
+		UT_MKRANGE0(UT_1M),      //
+		UT_MKRANGE0(UT_1M + 1),  //
+		UT_MKRANGE0(UT_1G),      //
+		UT_MKRANGE0(UT_1G - 1),  //
+		UT_MKRANGE0(UT_1T),      //
+		UT_MKRANGE0(UT_1T + 1),  //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_read_behind_, ranges);

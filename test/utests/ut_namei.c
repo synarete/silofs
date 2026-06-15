@@ -106,7 +106,7 @@ static void ut_create_unlink_random_(struct ut_env *ute, size_t nfiles,
 
 static void ut_create_unlink_random(struct ut_env *ute)
 {
-	ut_create_unlink_random_(ute, 256, UT_BK_SIZE, UT_BK_SIZE);
+	ut_create_unlink_random_(ute, 256, UT_64K, UT_64K);
 	ut_create_unlink_random_(ute, 16, UT_1M, UT_1M);
 }
 

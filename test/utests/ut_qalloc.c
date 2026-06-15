@@ -248,7 +248,7 @@ static void ut_qalloc_free_nbks(struct ut_env *ute)
 	struct silofs_list_head lst;
 	struct silofs_qalloc *qal = nullptr;
 	struct ut_mrecord *mr     = nullptr;
-	const size_t bk_size      = UT_BK_SIZE;
+	const size_t bk_size      = UT_64K;
 	size_t total              = 0;
 	size_t msz                = 0;
 	size_t rem                = 0;
@@ -309,7 +309,7 @@ static void ut_qalloc_mixed(struct ut_env *ute)
 	size_t val2               = 0;
 	size_t val_max            = 100000;
 	struct silofs_qalloc *qal = nullptr;
-	const size_t bk_size      = UT_BK_SIZE;
+	const size_t bk_size      = UT_64K;
 	struct ut_mrecord *mr     = nullptr;
 	struct silofs_list_head lst;
 

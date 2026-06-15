@@ -174,8 +174,8 @@ static void ut_statfs_bfree(struct ut_env *ute)
 {
 	ut_statfs_bfree_(ute, 0, UT_1M);
 	ut_statfs_bfree_(ute, UT_1K, UT_1M - 1);
-	ut_statfs_bfree_(ute, 8 * UT_1K, UT_BK_SIZE - 1);
-	ut_statfs_bfree_(ute, UT_BK_SIZE, 2 * UT_BK_SIZE);
+	ut_statfs_bfree_(ute, 8 * UT_1K, UT_64K - 1);
+	ut_statfs_bfree_(ute, UT_64K, 2 * UT_64K);
 	ut_statfs_bfree_(ute, UT_1M, UT_1M);
 	ut_statfs_bfree_(ute, UT_1M + 1, UT_1M);
 	ut_statfs_bfree_(ute, UT_1T - 11, UT_1M + 111);

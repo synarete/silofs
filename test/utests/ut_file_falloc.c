@@ -35,11 +35,11 @@ ut_file_fallocate_simple_(struct ut_env *ute, off_t off, size_t ulen)
 static void ut_file_fallocate_aligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_BK_SIZE), //
-		UT_MKRANGE1(0, UT_1M),      //
-		UT_MKRANGE1(UT_1M, UT_1M),  //
-		UT_MKRANGE1(UT_1G, UT_1M),  //
-		UT_MKRANGE1(UT_1T, UT_1M),  //
+		UT_MKRANGE1(0, UT_64K),    //
+		UT_MKRANGE1(0, UT_1M),     //
+		UT_MKRANGE1(UT_1M, UT_1M), //
+		UT_MKRANGE1(UT_1G, UT_1M), //
+		UT_MKRANGE1(UT_1T, UT_1M), //
 	};
 
 	ut_exec_with_ranges(ute, ut_file_fallocate_simple_, ranges);
@@ -48,7 +48,7 @@ static void ut_file_fallocate_aligned(struct ut_env *ute)
 static void ut_file_fallocate_unaligned(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(1, 3 * UT_BK_SIZE),
+		UT_MKRANGE1(1, 3 * UT_64K),
 		UT_MKRANGE1(3, UT_1M / 3),
 		UT_MKRANGE1(5 * UT_1M, UT_1M / 5),
 		UT_MKRANGE1(7 * UT_1G, UT_1M / 7),
@@ -83,7 +83,7 @@ static void ut_file_fallocate_rdonly(struct ut_env *ute)
 		UT_MKRANGE1(0, UT_4K),
 		UT_MKRANGE1(0, UT_8K),
 		UT_MKRANGE1(UT_8K, UT_8K),
-		UT_MKRANGE1(0, UT_BK_SIZE),
+		UT_MKRANGE1(0, UT_64K),
 		UT_MKRANGE1(1, UT_1M),
 		UT_MKRANGE1(0, SILOFS_LSEG_SIZE_MAX),
 		UT_MKRANGE1(UT_1M - 1, SILOFS_LSEG_SIZE_MAX + 2),
@@ -133,8 +133,8 @@ static void ut_file_fallocate_truncate(struct ut_env *ute)
 		UT_MKRANGE1(UT_4K - 1, 2 * UT_4K + 3),
 		UT_MKRANGE1(0, UT_8K),
 		UT_MKRANGE1(UT_8K, UT_8K),
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(11, UT_BK_SIZE),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(11, UT_64K),
 		UT_MKRANGE1(11, UT_1M),
 		UT_MKRANGE1(0, SILOFS_LSEG_SIZE_MAX),
 		UT_MKRANGE1(UT_1M - 1, SILOFS_LSEG_SIZE_MAX + 2),
@@ -169,10 +169,10 @@ ut_file_fallocate_unwritten_(struct ut_env *ute, off_t off, size_t ulen)
 static void ut_file_fallocate_unwritten(struct ut_env *ute)
 {
 	const struct ut_range ranges[] = {
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, 2 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G, 3 * UT_BK_SIZE),
-		UT_MKRANGE1(UT_1T, 4 * UT_BK_SIZE),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(UT_1M, 2 * UT_64K),
+		UT_MKRANGE1(UT_1G, 3 * UT_64K),
+		UT_MKRANGE1(UT_1T, 4 * UT_64K),
 		UT_MKRANGE1(UT_1M - 111, UT_1M + 1111),
 		UT_MKRANGE1(UT_1G - 1111, UT_1M + 111),
 		UT_MKRANGE1(UT_1T - 11111, UT_1M + 11),
@@ -286,16 +286,16 @@ static void ut_file_fallocate_punch_hole2_(struct ut_env *ute, off_t off1,
 static void ut_file_fallocate_punch_hole2(struct ut_env *ute)
 {
 	const struct ut_range2 range[] = {
-		UT_MKRANGE2(0, UT_BK_SIZE, UT_BK_SIZE),
-		UT_MKRANGE2(0, UT_1M, UT_BK_SIZE),
+		UT_MKRANGE2(0, UT_64K, UT_64K),
+		UT_MKRANGE2(0, UT_1M, UT_64K),
 		UT_MKRANGE2(0, UT_1G, UT_1M),
 		UT_MKRANGE2(0, UT_1T, UT_1M),
-		UT_MKRANGE2(UT_1M, 2 * UT_1M, UT_BK_SIZE),
+		UT_MKRANGE2(UT_1M, 2 * UT_1M, UT_64K),
 		UT_MKRANGE2(UT_1M, UT_1G, UT_1M),
 		UT_MKRANGE2(UT_1M, UT_1T, UT_1M),
 		UT_MKRANGE2(UT_1G, UT_1T, UT_1M),
-		UT_MKRANGE2(7, 7 * UT_BK_SIZE - 7, UT_BK_SIZE),
-		UT_MKRANGE2(77, 7 * UT_1M, 7 * UT_BK_SIZE + 7),
+		UT_MKRANGE2(7, 7 * UT_64K - 7, UT_64K),
+		UT_MKRANGE2(77, 7 * UT_1M, 7 * UT_64K + 7),
 		UT_MKRANGE2(777, 7 * UT_1G - 7, UT_1M + 77),
 		UT_MKRANGE2(7777, UT_1T - 7, UT_1M + 77),
 		UT_MKRANGE2(77 * UT_1M - 7, 7 * UT_1G - 7, UT_1M + 77),
@@ -316,7 +316,7 @@ ut_file_fallocate_punch_hole_sparse_(struct ut_env *ute, off_t off_base,
                                      off_t step, size_t cnt)
 {
 	const char *name    = UT_NAME;
-	const off_t bk_size = UT_BK_SIZE;
+	const off_t bk_size = UT_64K;
 	off_t off_end       = -1;
 	off_t off           = -1;
 	ino_t dino          = 0;
@@ -407,12 +407,12 @@ static void ut_file_fallocate_zero_range(struct ut_env *ute)
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(0, UT_4K),
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1G, 2 * UT_64K),
 		UT_MKRANGE1(UT_1T, UT_1M),
-		UT_MKRANGE1(UT_1M - 11, UT_BK_SIZE + 111),
-		UT_MKRANGE1(UT_1G - 111, UT_BK_SIZE + 11),
+		UT_MKRANGE1(UT_1M - 11, UT_64K + 111),
+		UT_MKRANGE1(UT_1G - 111, UT_64K + 11),
 		UT_MKRANGE1(UT_1T - 1111, UT_1M + 1),
 	};
 
@@ -423,19 +423,19 @@ static void ut_file_fallocate_zero_range(struct ut_env *ute)
 
 static off_t off_to_nbk(off_t off)
 {
-	return off / UT_BK_SIZE;
+	return off / UT_64K;
 }
 
 static off_t off_to_nbk_up(off_t off)
 {
-	return off_to_nbk(off + UT_BK_SIZE - 1);
+	return off_to_nbk(off + UT_64K - 1);
 }
 
 static blkcnt_t blocks_count_of(off_t off, off_t len)
 {
 	const silofs_lba_t lba_beg = off_to_nbk(off);
 	const silofs_lba_t lba_end = off_to_nbk_up(off + len);
-	const off_t length         = (lba_end - lba_beg) * UT_BK_SIZE;
+	const off_t length         = (lba_end - lba_beg) * UT_64K;
 
 	return length / 512;
 }
@@ -451,8 +451,8 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
 	ino_t dino       = 0;
 	ino_t ino        = 0;
 
-	ut_expect_eq(base_off % UT_BK_SIZE, 0);
-	ut_expect_eq(step_size % UT_BK_SIZE, 0);
+	ut_expect_eq(base_off % UT_64K, 0);
+	ut_expect_eq(step_size % UT_64K, 0);
 	ut_expect_le(len, step_size);
 
 	ut_mkdir_at_root(ute, name, &dino);
@@ -489,11 +489,11 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
 
 static void ut_file_fallocate_stat(struct ut_env *ute)
 {
-	ut_file_fallocate_stat_(ute, 0, UT_BK_SIZE, UT_BK_SIZE);
-	ut_file_fallocate_stat_(ute, 0, UT_BK_SIZE - 1, UT_BK_SIZE);
-	ut_file_fallocate_stat_(ute, UT_BK_SIZE, UT_BK_SIZE - 3, UT_BK_SIZE);
+	ut_file_fallocate_stat_(ute, 0, UT_64K, UT_64K);
+	ut_file_fallocate_stat_(ute, 0, UT_64K - 1, UT_64K);
+	ut_file_fallocate_stat_(ute, UT_64K, UT_64K - 3, UT_64K);
 	ut_file_fallocate_stat_(ute, 0, UT_1M, UT_1M);
-	ut_file_fallocate_stat_(ute, UT_BK_SIZE, UT_BK_SIZE, UT_1M);
+	ut_file_fallocate_stat_(ute, UT_64K, UT_64K, UT_1M);
 	ut_file_fallocate_stat_(ute, UT_1M, UT_1M - 1, UT_1M);
 	ut_file_fallocate_stat_(ute, UT_1G, UT_1M - 11, 11 * UT_1M);
 	ut_file_fallocate_stat_(ute, UT_1T, UT_1M - 111, 111 * UT_1M);
@@ -611,11 +611,11 @@ static void ut_file_fallocate_beyond(struct ut_env *ute)
 	const struct ut_range ranges[] = {
 		UT_MKRANGE1(0, UT_1K),
 		UT_MKRANGE1(0, UT_4K),
-		UT_MKRANGE1(0, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1M, UT_BK_SIZE),
-		UT_MKRANGE1(UT_1G, 2 * UT_BK_SIZE),
+		UT_MKRANGE1(0, UT_64K),
+		UT_MKRANGE1(UT_1M, UT_64K),
+		UT_MKRANGE1(UT_1G, 2 * UT_64K),
 		UT_MKRANGE1(UT_1T, UT_1M),
-		UT_MKRANGE1(UT_1M - 11, (11 * UT_BK_SIZE) + 111),
+		UT_MKRANGE1(UT_1M - 11, (11 * UT_64K) + 111),
 		UT_MKRANGE1(UT_1G - 111, UT_1M + 1111),
 		UT_MKRANGE1(UT_1T - 1111, UT_1M + 11111),
 	};

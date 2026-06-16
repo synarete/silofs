@@ -27,6 +27,7 @@ silofs_utests_SOURCES += utests_ops.c
 silofs_utests_SOURCES += ut_avl.c
 silofs_utests_SOURCES += ut_base64.c
 silofs_utests_SOURCES += ut_dir_basic.c
+silofs_utests_SOURCES += ut_dir_io.c
 silofs_utests_SOURCES += ut_dir_iter.c
 silofs_utests_SOURCES += ut_dir_list.c
 silofs_utests_SOURCES += ut_file_basic.c

@@ -38,7 +38,8 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_statfs),
 	UT_DEFTGRP(ut_tdefs_ioctl),
 	/* dir & namei */
-	UT_DEFTGRP(ut_tdefs_dir),
+	UT_DEFTGRP(ut_tdefs_dir_basic),
+	UT_DEFTGRP(ut_tdefs_dir_io),
 	UT_DEFTGRP(ut_tdefs_dir_iter),
 	UT_DEFTGRP(ut_tdefs_dir_list),
 	UT_DEFTGRP(ut_tdefs_namei),

@@ -563,4 +563,4 @@ static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_dir_stat_simple),
 };
 
-const struct ut_testdefs ut_tdefs_dir = UT_MKTESTS(ut_local_tests);
+const struct ut_testdefs ut_tdefs_dir_basic = UT_MKTESTS(ut_local_tests);

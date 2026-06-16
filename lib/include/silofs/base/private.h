@@ -89,4 +89,10 @@
 #define return_if_err(err_) \
 	do { if (err_) return (err_); } while (0)
 
+#define return_if_err_and_not(err_, status_) \
+	do { if ( (err_) && ((err_) != (status_)) ) return (err_); } while (0)
+
+#define goto_out_if_err(err_, label_) \
+	do { if (err_) goto label_; } while (0)
+
 #endif /* SILOFS_PRIVATE_H_ */

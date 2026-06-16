@@ -17,6 +17,7 @@
 #define _GNU_SOURCE 1
 
 #include "cmd_jconf.h"
+#include <inttypes.h>
 
 static char *cmd_localtime_str(time_t t)
 {
@@ -221,7 +222,7 @@ uint32_t cmd_json_uint32_value(const json_t *jint)
 
 	u = cmd_json_uint64_value(jint);
 	if (u > UINT32_MAX) {
-		cmd_diez("json: bad uint32 value: %zu", u);
+		cmd_diez("json: bad uint32 value: %" PRIu64, u);
 	}
 	return (uint32_t)u;
 }
@@ -347,14 +348,17 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 	}
 	err = silofs_sys_fchmod(fd, S_IRUSR);
 	if (err) {
+		silofs_sys_closefd(&fd);
 		cmd_die(err, "failed to change-mode: %s", tmp);
 	}
 	err = silofs_sys_writen(fd, jtxt, strlen(jtxt));
 	if (err) {
+		silofs_sys_closefd(&fd);
 		cmd_die(err, "failed to write: %s", tmp);
 	}
 	err = silofs_sys_writen(fd, "\n", 1);
 	if (err) {
+		silofs_sys_closefd(&fd);
 		cmd_die(err, "failed to write: %s", tmp);
 	}
 	silofs_sys_closefd(&fd);
@@ -363,10 +367,12 @@ static void cmd_save_jtext_at(int dfd, const char *name, const char *jtxt)
 	err = silofs_sys_renameat(dfd, tmp, dfd, name);
 	if (err) {
 		silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
+		silofs_sys_closefd(&fd);
 		cmd_die(err, "failed to rename: %s", name);
 	}
 	err = silofs_sys_fchmodat(dfd, name, S_IRUSR, 0);
 	if (err) {
+		silofs_sys_closefd(&fd);
 		cmd_die(err, "failed to change-mode: %s", name);
 	}
 }
@@ -391,12 +397,11 @@ void cmd_json_save(json_t *jobj, const char *dirpath, const char *name)
 
 static char *cmd_load_jtext_at(int dfd, const char *name)
 {
-	struct stat st        = { .st_mode = 0 };
-	const size_t jtxt_max = 1 << 24;
-	char *jtxt            = nullptr;
-	size_t len            = 0;
-	int fd                = -1;
-	int err;
+	constexpr size_t jtxt_max = 1 << 24;
+	struct stat st;
+	char *jtxt;
+	size_t len;
+	int err, fd = -1;
 
 	err = silofs_sys_fstatat(dfd, name, &st, 0);
 	if (err) {
@@ -417,7 +422,8 @@ static char *cmd_load_jtext_at(int dfd, const char *name)
 	err  = silofs_sys_readn(fd, jtxt, len);
 	silofs_sys_closefd(&fd);
 	if (err) {
-		cmd_die(err, "failed to read blobid56b: %s", name);
+		cmd_pstrfree(&jtxt);
+		cmd_die(err, "failed to read json: %s", name);
 	}
 	return jtxt;
 }

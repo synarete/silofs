@@ -18,16 +18,15 @@
 #include <silofs/addr.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 static bool isock_allowed(const struct silofs_task_ctx *task)
 {
-	return (task->env->flags & SILOFS_F_ALLOW_ISOCK) > 0;
+	return (task->flags & SILOFS_F_ALLOW_ISOCK) > 0;
 }
 
 static bool ififo_allowed(const struct silofs_task_ctx *task)
 {
-	return (task->env->flags & SILOFS_F_ALLOW_IFIFO) > 0;
+	return (task->flags & SILOFS_F_ALLOW_IFIFO) > 0;
 }
 
 static int check_itype(const struct silofs_task_ctx *task, mode_t mode)

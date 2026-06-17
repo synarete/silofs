@@ -43,11 +43,13 @@ struct silofs_task_ctx {
 	struct silofs_prandgen     *prng;
 	struct silofs_repo         *repo;
 	struct silofs_lcache       *lcache;
+	struct silofs_vcache       *vcache;
 	struct silofs_submitq      *submitq;
 	struct silofs_inode_info   *looseq;
 	struct silofs_uber_ref     *ubref;
 	uint64_t                    upper_id;
 	struct timespec             op_start_time;
+	enum silofs_flags           flags;
 	volatile int8_t             interrupted;
 	volatile bool               fs_locked;
 	volatile bool               rw_locked;

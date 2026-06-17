@@ -85,10 +85,12 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	silofs_cred_init(&task->auth.creds.fs_cred);
 	silofs_cred_init(&task->auth.creds.host_cred);
 	task->env         = env;
+	task->flags       = env->flags;
 	task->prng        = env->base.prng;
 	task->idsm        = env->base.idsmap;
 	task->repo        = env->base.repo;
 	task->lcache      = env->base.lcache;
+	task->vcache      = &env->base.lcache->lc_vc;
 	task->submitq     = env->base.submitq;
 	task->looseq      = nullptr;
 	task->ubref       = &env->ubref;
@@ -112,6 +114,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	task->idsm     = nullptr;
 	task->repo     = nullptr;
 	task->lcache   = nullptr;
+	task->vcache   = nullptr;
 	task->submitq  = nullptr;
 	task->runnable = false;
 }

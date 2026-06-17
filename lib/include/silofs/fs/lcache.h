@@ -59,20 +59,6 @@ silofs_lcache_find_uni_by(struct silofs_lcache      *lcache,
 
 void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
 
-struct silofs_vnode_info *
-silofs_lcache_lookup_vnode(struct silofs_lcache      *lcache,
-                           const struct silofs_vaddr *vaddr);
-
-struct silofs_vnode_info *
-silofs_lcache_create_vnode(struct silofs_lcache      *lcache,
-                           const struct silofs_vaddr *vaddr);
-
-void silofs_lcache_forget_vnode(struct silofs_lcache     *lcache,
-                                struct silofs_vnode_info *vni);
-
-void silofs_lcache_resetdirty_vnode(struct silofs_lcache     *lcache,
-                                    struct silofs_vnode_info *vni);
-
 void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
                                  struct silofs_cache_stats  *out_cstats);
 

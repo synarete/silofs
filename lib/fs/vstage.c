@@ -124,6 +124,12 @@ vstgc_lcache(const struct silofs_vstage_ctx *vstg_ctx)
 	return vstg_ctx->env->base.lcache;
 }
 
+static struct silofs_vcache *
+vstgc_vcache(const struct silofs_vstage_ctx *vstg_ctx)
+{
+	return &vstg_ctx->env->base.lcache->lc_vc;
+}
+
 static void vstgc_log_cache_stat(const struct silofs_vstage_ctx *vstg_ctx)
 {
 	const struct silofs_lcache *lcache = vstgc_lcache(vstg_ctx);
@@ -2031,7 +2037,7 @@ static int vstgc_pre_clone_lbk(struct silofs_vstage_ctx *vstg_ctx,
 static void vstgc_resetdirty_vni(const struct silofs_vstage_ctx *vstg_ctx,
                                  struct silofs_vnode_info *vni)
 {
-	silofs_lcache_resetdirty_vnode(vstgc_lcache(vstg_ctx), vni);
+	silofs_vcache_rebind_vnode(vstgc_vcache(vstg_ctx), vni);
 }
 
 static void vstgc_post_clone_lbk(const struct silofs_vstage_ctx *vstg_ctx,
@@ -2160,7 +2166,7 @@ static int fixup_cached_vni(const struct silofs_task_ctx *task,
 	if (silofs_vni_refcnt(vni)) {
 		return 0;
 	}
-	silofs_lcache_forget_vnode(task->lcache, vni);
+	silofs_vcache_forget_vnode(task->vcache, vni);
 	return -SILOFS_ENOENT;
 }
 
@@ -2171,7 +2177,7 @@ static int fetch_cached_vni(struct silofs_task_ctx *task,
 	struct silofs_vnode_info *vni;
 	int err;
 
-	vni = silofs_lcache_lookup_vnode(task->lcache, vaddr);
+	vni = silofs_vcache_lookup_vnode(task->vcache, vaddr);
 	if (vni == nullptr) {
 		return -SILOFS_ENOENT;
 	}
@@ -2254,7 +2260,7 @@ static int do_resolve_stage_inode(struct silofs_task_ctx *task, ino_t ino,
 	return_if_err(err);
 
 	err = silofs_stage_inode2(task, &vaddr, stg_mode, out_ii);
-	return_if_err(ii);
+	return_if_err(err);
 
 	silofs_ii_update_staged(*out_ii);
 	return 0;

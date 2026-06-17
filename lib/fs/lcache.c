@@ -391,34 +391,6 @@ void silofs_lcache_drop_uamap(struct silofs_lcache *lcache)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_vnode_info *
-silofs_lcache_lookup_vnode(struct silofs_lcache *lcache,
-                           const struct silofs_vaddr *vaddr)
-{
-	return silofs_vcache_lookup_vnode(&lcache->lc_vc, vaddr);
-}
-
-void silofs_lcache_forget_vnode(struct silofs_lcache *lcache,
-                                struct silofs_vnode_info *vni)
-{
-	silofs_vcache_forget_vnode(&lcache->lc_vc, vni);
-}
-
-struct silofs_vnode_info *
-silofs_lcache_create_vnode(struct silofs_lcache *lcache,
-                           const struct silofs_vaddr *vaddr)
-{
-	return silofs_vcache_create_vnode(&lcache->lc_vc, vaddr, false);
-}
-
-void silofs_lcache_resetdirty_vnode(struct silofs_lcache *lcache,
-                                    struct silofs_vnode_info *vni)
-{
-	silofs_vcache_rebind_vnode(&lcache->lc_vc, vni);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static size_t
 lcache_shrink_some_unis(struct silofs_lcache *lcache, size_t count, int flags)
 {

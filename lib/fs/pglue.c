@@ -22,6 +22,60 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 
+static int verify_lview_of(const struct silofs_lview *lview,
+                           const struct silofs_vaddr *vaddr)
+{
+	int ret;
+
+	switch (vaddr->vtype) {
+	case SILOFS_VTYPE_INODE:
+		ret = silofs_verify_inode(&lview->u.in);
+		break;
+	case SILOFS_VTYPE_XANODE:
+		ret = silofs_verify_xattr_node(&lview->u.xan);
+		break;
+	case SILOFS_VTYPE_SYMVAL:
+		ret = silofs_verify_symval_node(&lview->u.svn);
+		break;
+	case SILOFS_VTYPE_DTNODE:
+		ret = silofs_verify_dtree_node(&lview->u.dtn);
+		break;
+	case SILOFS_VTYPE_FTNODE:
+		ret = silofs_verify_ftree_node(&lview->u.ftn);
+		break;
+	case SILOFS_VTYPE_SPNODE2:
+		ret = silofs_verify_space_node(&lview->u.spn);
+		break;
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
+		ret = 0;
+		break;
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_ARIX:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_LAST:
+	default:
+		silofs_panic("non vnode: vtype=%d off=%zd", //
+		             vaddr->vtype, vaddr->off);
+		break;
+	}
+	return ret;
+}
+
+static int verify_staged_vnode(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_lview *lview = vni->vn_lni.ln_base.view.lview;
+	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+
+	return verify_lview_of(lview, vaddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static void
 start_pexec(struct silofs_pexec_ctx *pexec, const struct silofs_task_ctx *task,
             struct silofs_inode_info *pii)
@@ -63,6 +117,18 @@ stage_vnode(const struct silofs_task_ctx *task,
 	finish_pexec(&pexec, pii);
 	silofs_unused(stg_mode);
 	return err;
+}
+
+static int stage_verify_vnode(const struct silofs_task_ctx *task,
+                              const struct silofs_vaddr *vaddr,
+                              struct silofs_inode_info *pii,
+                              enum silofs_stg_mode stg_mode,
+                              struct silofs_vnode_info **out_vni)
+{
+	int err;
+
+	err = stage_vnode(task, vaddr, pii, stg_mode, out_vni);
+	return err ? err : verify_staged_vnode(*out_vni);
 }
 
 static int
@@ -217,7 +283,7 @@ int silofs_stage_inode2(const struct silofs_task_ctx *task,
 	int err;
 
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
-	err = stage_vnode(task, vaddr, nullptr, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, nullptr, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_ii = vni_to_ii(vni);
@@ -274,7 +340,7 @@ int silofs_stage_xanode2(const struct silofs_task_ctx *task,
 
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
 
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_xai = vni_to_xai(vni);
@@ -333,7 +399,7 @@ int silofs_stage_symval2(const struct silofs_task_ctx *task,
 
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
 
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_svi = vni_to_svi(vni);
@@ -391,7 +457,7 @@ int silofs_stage_dtnode2(const struct silofs_task_ctx *task,
 	int err;
 
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_dti = vni_to_dti(vni);
@@ -450,7 +516,7 @@ int silofs_stage_ftnode2(const struct silofs_task_ctx *task,
 	int err;
 
 	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_FTNODE);
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_fti = vni_to_fti(vni);
@@ -509,7 +575,7 @@ int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
 
 	silofs_assert(silofs_vaddr_isdata(vaddr));
 
-	err = stage_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_fdi = vni_to_fdi(vni);

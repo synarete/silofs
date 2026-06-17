@@ -412,6 +412,8 @@ void silofs_spi_vspace_ref(const struct silofs_space_info *spi,
 void silofs_spi_clone_from(struct silofs_space_info       *spi,
                            const struct silofs_space_info *spi_other);
 
+int silofs_verify_space_node(const struct silofs_space_node *spn);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspmap */
 

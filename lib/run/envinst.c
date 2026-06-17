@@ -304,10 +304,10 @@ static int envi_init_nil_bk(struct silofs_env_inst *envi)
 
 static void envi_fini_nil_bk(struct silofs_env_inst *envi)
 {
-	struct silofs_lblock *lbk = envi->nilbk;
+	struct silofs_lblock *nilbk = envi->nilbk;
 
-	if (lbk != nullptr) {
-		silofs_memfree(envi->alloc, lbk, sizeof(*lbk),
+	if (nilbk != nullptr) {
+		silofs_memfree(envi->alloc, nilbk, sizeof(*nilbk),
 		               SILOFS_ALLOCF_TRYPUNCH);
 		envi->nilbk = nullptr;
 	}

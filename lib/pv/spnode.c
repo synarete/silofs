@@ -249,6 +249,13 @@ static size_t spn_find_free(const struct silofs_space_node *spn, size_t hint)
 	return nslots;
 }
 
+int silofs_verify_space_node(const struct silofs_space_node *spn)
+{
+	/* XXX WRITEME */
+	silofs_unused(spn);
+	return 0;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni)

@@ -2248,17 +2248,14 @@ static int do_resolve_stage_inode(struct silofs_task_ctx *task, ino_t ino,
 	int err;
 
 	err = resolve_iaddr(ino, &vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_probe_inode2(task, &vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_stage_inode2(task, &vaddr, stg_mode, out_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(ii);
+
 	silofs_ii_update_staged(*out_ii);
 	return 0;
 }
@@ -2293,17 +2290,14 @@ int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
 	int err;
 
 	err = check_stage_inode(task, ino, stg_mode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = do_resolve_stage_inode(task, ino, stg_mode, out_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = ii_check_post_stage(*out_ii, stg_mode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 

@@ -99,6 +99,7 @@ libsilofs_la_SOURCES += fs/file.c
 libsilofs_la_SOURCES += fs/flush.c
 libsilofs_la_SOURCES += fs/idsmap.c
 libsilofs_la_SOURCES += fs/inode.c
+libsilofs_la_SOURCES += fs/inops.c
 libsilofs_la_SOURCES += fs/lcache.c
 libsilofs_la_SOURCES += fs/lsmap.c
 libsilofs_la_SOURCES += fs/pglue.c

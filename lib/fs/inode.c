@@ -1505,68 +1505,6 @@ void silofs_update_isize_of(const struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool isock_allowed(const struct silofs_task_ctx *task)
-{
-	return (task->env->flags & SILOFS_F_ALLOW_ISOCK) > 0;
-}
-
-static bool ififo_allowed(const struct silofs_task_ctx *task)
-{
-	return (task->env->flags & SILOFS_F_ALLOW_IFIFO) > 0;
-}
-
-static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
-{
-	/*
-	 * TODO-0031: Filter supported modes based on mount flags
-	 *
-	 * Have explicit control in 'allow_ispecial' from mount command and
-	 * by mount flags.
-	 */
-	const mode_t itype = mode & S_IFMT;
-	int ret;
-
-	switch (itype) {
-	case S_IFDIR:
-	case S_IFREG:
-	case S_IFLNK:
-		ret = 0;
-		break;
-	case S_IFSOCK:
-		ret = isock_allowed(task) ? 0 : -SILOFS_EOPNOTSUPP;
-		break;
-	case S_IFIFO:
-		ret = ififo_allowed(task) ? 0 : -SILOFS_EOPNOTSUPP;
-		break;
-	case S_IFCHR:
-	case S_IFBLK:
-	default:
-		ret = -SILOFS_EOPNOTSUPP;
-		break;
-	}
-	return ret;
-}
-
-int silofs_spawn_inode_by(struct silofs_task_ctx *task,
-                          const struct silofs_inew_params *inp,
-                          struct silofs_inode_info **out_ii)
-{
-	int err;
-
-	err = check_itype(task, inp->mode);
-	if (err) {
-		return err;
-	}
-	err = silofs_spawn_inode2(task, out_ii);
-	if (err) {
-		return err;
-	}
-	silofs_ii_update_spawned(*out_ii, inp);
-	return 0;
-}
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 int silofs_verify_ino(ino_t ino)
 {
 	return !silofs_ino_isnull(ino) ? 0 : -SILOFS_EFSCORRUPTED;

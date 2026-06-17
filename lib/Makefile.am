@@ -93,7 +93,6 @@ libsilofs_la_SOURCES += pv/trans.c
 libsilofs_la_SOURCES += pv/uber.c
 libsilofs_la_SOURCES += pv/vspace.c
 libsilofs_la_SOURCES += pv/vspmap.c
-libsilofs_la_SOURCES += fs/claim.c
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/encdec1.c
 libsilofs_la_SOURCES += fs/file.c

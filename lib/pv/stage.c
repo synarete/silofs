@@ -236,6 +236,13 @@ vni_detach_viewx(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
 	silofs_ni_detach_viewx(&vni->vn_lni.ln_base, alloc);
 }
 
+static bool vni_has_asyncwr(const struct silofs_vnode_info *vni)
+{
+	const int asyncwr = silofs_atomic_sqc_get(&vni->vn_asyncwr);
+
+	return (asyncwr > 0);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_stage_ctx {
@@ -1521,7 +1528,11 @@ static int dsc_prepare_vnode(const struct silofs_destage_ctx *ds_ctx,
                              struct silofs_vnode_info *vni)
 {
 	struct silofs_pnptr pnptr_cur, pnptr_alt;
-	int err = 0;
+	int asyncwr, err = 0;
+
+	/* XXX TODO: FIXME: handle case of async-write when try to destage */
+	asyncwr = vni_has_asyncwr(vni);
+	silofs_assert(!asyncwr);
 
 	err = dsc_resolve_vnode(ds_ctx, vni, &pnptr_cur);
 	if (err) {

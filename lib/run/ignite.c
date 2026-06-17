@@ -275,8 +275,6 @@ static int format_spmaps(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static int
 spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {

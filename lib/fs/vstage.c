@@ -1989,24 +1989,6 @@ static int vstgc_resolve_llink(struct silofs_vstage_ctx *vstg_ctx,
 	return 0;
 }
 
-int silofs_stage_spleaf_of(struct silofs_task_ctx *task,
-                           const struct silofs_vaddr *vaddr,
-                           enum silofs_stg_mode stg_mode,
-                           struct silofs_spleaf_info **out_sli)
-{
-
-	struct silofs_vstage_ctx vstg_ctx;
-	int err;
-
-	vstgc_setup(&vstg_ctx, task, vaddr, stg_mode);
-	err = vstgc_stage_spmaps_of(&vstg_ctx);
-	if (err) {
-		return err;
-	}
-	*out_sli = vstg_ctx.sli;
-	return 0;
-}
-
 int silofs_require_spleaf_of(struct silofs_task_ctx *task,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_stg_mode stg_mode,
@@ -2343,20 +2325,12 @@ static int vstgc_pre_clone_stage_at(const struct silofs_vstage_ctx *vstg_ctx,
 	return ret;
 }
 
-static int vstgc_do_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
-{
-	return silofs_require_lsmap_by(vstg_ctx->task, vstg_ctx->vaddr,
-	                               &vstg_ctx->lsi);
-}
-
 static int vstgc_require_lsmap_of(struct silofs_vstage_ctx *vstg_ctx)
 {
-	int err;
-
 	vstgc_increfs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
-	err = vstgc_do_require_lsmap_of(vstg_ctx);
+	vstg_ctx->lsi = nullptr;
 	vstgc_decrefs(vstg_ctx, SILOFS_HEIGHT_SPLEAF);
-	return err;
+	return 0;
 }
 
 static int vstgc_resolve_vaddrs(struct silofs_vstage_ctx *vstg_ctx,

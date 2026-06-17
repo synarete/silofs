@@ -582,18 +582,7 @@ int silofs_spawn_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
 
 int silofs_stage_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_require_lsmap_by(struct silofs_task_ctx    *task,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_lsmap_info **out_lsi);
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_stage_spleaf_of(struct silofs_task_ctx     *task,
-                           const struct silofs_vaddr  *vaddr,
-                           enum silofs_stg_mode        stg_mode,
-                           struct silofs_spleaf_info **out_sli);
 
 int silofs_require_spleaf_of(struct silofs_task_ctx     *task,
                              const struct silofs_vaddr  *vaddr,

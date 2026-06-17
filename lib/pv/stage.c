@@ -990,7 +990,7 @@ int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void stc_unsetdirty_cached_vnode(struct silofs_stage_ctx *st_ctx,
+static void stc_cleardirty_cached_vnode(struct silofs_stage_ctx *st_ctx,
                                         const struct silofs_vaddr *vaddr)
 {
 	struct silofs_vnode_info *vni = nullptr;
@@ -998,7 +998,7 @@ static void stc_unsetdirty_cached_vnode(struct silofs_stage_ctx *st_ctx,
 
 	err = stc_lookup_cached_vnode(st_ctx, vaddr, &vni);
 	if (!err) {
-		silofs_vni_unsetdirty(vni);
+		silofs_vni_cleardirty(vni);
 	}
 }
 
@@ -1024,7 +1024,7 @@ static int stc_detach_vnode(struct silofs_stage_ctx *st_ctx,
 	}
 
 	stc_detach_vspace(st_ctx, pnptr);
-	stc_unsetdirty_cached_vnode(st_ctx, vaddr);
+	stc_cleardirty_cached_vnode(st_ctx, vaddr);
 	return 0;
 }
 
@@ -1062,7 +1062,7 @@ struct silofs_destage_ctx {
 	struct silofs_dirtyq *drq;
 	struct silofs_uber_info *ubi;
 	struct silofs_dstor *dstor;
-	bool unsetdirty;
+	bool cleardirty;
 };
 
 static void
@@ -1074,7 +1074,7 @@ dsc_init(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
 	ds_ctx->drq        = nullptr;
 	ds_ctx->ubi        = pexec->ubref->ubi;
 	ds_ctx->dstor      = pexec->dstor;
-	ds_ctx->unsetdirty = false;
+	ds_ctx->cleardirty = false;
 }
 
 static void
@@ -1378,8 +1378,8 @@ static int dsc_cleanup_pnode(const struct silofs_destage_ctx *ds_ctx,
 	if (pni_has_pviewx(pni)) {
 		dsc_detach_pviewx(ds_ctx, pni);
 	}
-	if (ds_ctx->unsetdirty) {
-		silofs_pni_unsetdirty(pni);
+	if (ds_ctx->cleardirty) {
+		silofs_pni_cleardirty(pni);
 	}
 	pni->pn_flags &= ~(unsigned)SILOFS_PNODEF_STAINED;
 	return 0;
@@ -1425,7 +1425,7 @@ static int dsc_destage_pnodes(struct silofs_destage_ctx *ds_ctx)
 	if (err) {
 		goto out;
 	}
-	ds_ctx->unsetdirty = true;
+	ds_ctx->cleardirty = true;
 out:
 	dsc_cleanup_depopulate_pnodes(ds_ctx);
 	return err;
@@ -1635,8 +1635,8 @@ static int dsc_cleanup_vnode(const struct silofs_destage_ctx *ds_ctx,
 	if (vni_has_lviewx(vni)) {
 		dsc_detach_lviewx(ds_ctx, vni);
 	}
-	if (ds_ctx->unsetdirty) {
-		silofs_vni_unsetdirty(vni);
+	if (ds_ctx->cleardirty) {
+		silofs_vni_cleardirty(vni);
 	}
 	return 0;
 }
@@ -1682,7 +1682,7 @@ static int dsc_destage_vnodes(struct silofs_destage_ctx *ds_ctx)
 	if (err) {
 		goto out;
 	}
-	ds_ctx->unsetdirty = true;
+	ds_ctx->cleardirty = true;
 out:
 	dsc_cleanup_depopulate_vnodes(ds_ctx);
 	return err;

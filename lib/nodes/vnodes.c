@@ -203,12 +203,12 @@ void silofs_lni_setdirty(struct silofs_lnode_info *lni)
 	}
 }
 
-void silofs_lni_unsetdirty(struct silofs_lnode_info *lni)
+void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
 {
 	if (silofs_lni_isdirty(lni)) {
 		struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
 
-		silofs_dqe_unsetdirty(dqe);
+		silofs_dqe_cleardirty(dqe);
 	}
 }
 
@@ -319,11 +319,11 @@ void silofs_uni_setdirty(struct silofs_unode_info *uni)
 	silofs_lni_setdirty(&uni->un_lni);
 }
 
-void silofs_uni_unsetdirty(struct silofs_unode_info *uni)
+void silofs_uni_cleardirty(struct silofs_unode_info *uni)
 {
 	uni_verify(uni);
 
-	silofs_lni_unsetdirty(&uni->un_lni);
+	silofs_lni_cleardirty(&uni->un_lni);
 }
 
 bool silofs_uni_isevictable(const struct silofs_unode_info *uni)
@@ -471,13 +471,13 @@ void silofs_vni_setdirty(struct silofs_vnode_info *vni,
 	}
 }
 
-void silofs_vni_unsetdirty(struct silofs_vnode_info *vni)
+void silofs_vni_cleardirty(struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
 
 	if (silofs_vni_isdirty(vni)) {
 
-		silofs_lni_unsetdirty(&vni->vn_lni);
+		silofs_lni_cleardirty(&vni->vn_lni);
 	}
 }
 

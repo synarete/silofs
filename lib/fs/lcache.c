@@ -151,7 +151,7 @@ lcache_remove_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 static void
 lcache_evict_uni(struct silofs_lcache *lcache, struct silofs_unode_info *uni)
 {
-	silofs_uni_unsetdirty(uni);
+	silofs_uni_cleardirty(uni);
 	lcache_remove_uni(lcache, uni);
 	silofs_del_unode(uni, lcache->lc_alloc);
 }

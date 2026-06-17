@@ -308,9 +308,9 @@ void silofs_bdi_setdirty(struct silofs_bldesc_info *bdi)
 	silofs_pni_setdirty(&bdi->bld_pni);
 }
 
-void silofs_bdi_unsetdirty(struct silofs_bldesc_info *bdi)
+void silofs_bdi_cleardirty(struct silofs_bldesc_info *bdi)
 {
-	silofs_pni_unsetdirty(&bdi->bld_pni);
+	silofs_pni_cleardirty(&bdi->bld_pni);
 }
 
 void silofs_bdi_ignite2(struct silofs_bldesc_info *bdi,

@@ -566,11 +566,11 @@ void silofs_ii_setdirty(struct silofs_inode_info *ii)
 	}
 }
 
-void silofs_ii_unsetdirty(struct silofs_inode_info *ii)
+void silofs_ii_cleardirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_vni_unsetdirty(silofs_ii_to_vni(ii));
+	silofs_vni_cleardirty(silofs_ii_to_vni(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
@@ -1457,7 +1457,7 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 	ii_update_iattrs(ii, &iattr, ts);
 }
 
-void silofs_ii_unsetdirty_vnis(struct silofs_inode_info *ii)
+void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii)
 {
 	struct silofs_dq_elem *dqe;
 	struct silofs_vnode_info *vni;
@@ -1468,7 +1468,7 @@ void silofs_ii_unsetdirty_vnis(struct silofs_inode_info *ii)
 		silofs_assert_gt(dq->drq.sz, 0);
 		vni = silofs_vni_from_dqe(dqe);
 		if (likely(vni != nullptr)) {
-			silofs_vni_unsetdirty(vni);
+			silofs_vni_cleardirty(vni);
 		}
 		dqe = silofs_dirtyq_front(dq);
 	}

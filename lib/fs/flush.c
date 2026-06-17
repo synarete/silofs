@@ -93,7 +93,7 @@ static void lni_seal_meta(struct silofs_lnode_info *lni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void unsetdirty_lnode(struct silofs_lnode_info *lni)
+static void cleardirty_lnode(struct silofs_lnode_info *lni)
 {
 	struct silofs_unode_info *uni = nullptr;
 	bool isvnode, isunode;
@@ -105,7 +105,7 @@ static void unsetdirty_lnode(struct silofs_lnode_info *lni)
 	silofs_assert(isunode);
 
 	uni = uni_from_lni(lni);
-	silofs_uni_unsetdirty(uni);
+	silofs_uni_cleardirty(uni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -214,12 +214,12 @@ static void dset_mkfifo(struct silofs_dset *dset)
 	}
 }
 
-static void dset_unsetdirty_all(const struct silofs_dset *dset)
+static void dset_cleardirty_all(const struct silofs_dset *dset)
 {
 	struct silofs_lnode_info *lni = dset->ds_postq;
 
 	while (lni != nullptr) {
-		unsetdirty_lnode(lni);
+		cleardirty_lnode(lni);
 		lni = lni->ln_ds_next;
 	}
 }
@@ -602,9 +602,9 @@ static void flusher_seal_dset(struct silofs_flusher *flusher, size_t slot)
 }
 
 static void
-flusher_unsetdirty_dset(struct silofs_flusher *flusher, size_t slot)
+flusher_cleardirty_dset(struct silofs_flusher *flusher, size_t slot)
 {
-	dset_unsetdirty_all(flusher_dset_at(flusher, slot));
+	dset_cleardirty_all(flusher_dset_at(flusher, slot));
 }
 
 static void flusher_cleanup_dset(struct silofs_flusher *flusher, size_t slot)
@@ -706,7 +706,7 @@ static int flusher_process_dset_at(struct silofs_flusher *flusher, size_t slot)
 	flusher_seal_dset(flusher, slot);
 	err = flusher_enqueue_dset(flusher, slot);
 	if (!err) {
-		flusher_unsetdirty_dset(flusher, slot);
+		flusher_cleardirty_dset(flusher, slot);
 	}
 	flusher_cleanup_dset(flusher, slot);
 	return err;

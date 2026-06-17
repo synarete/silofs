@@ -390,9 +390,9 @@ void silofs_ubi_setdirty(struct silofs_uber_info *ubi)
 	silofs_pni_setdirty(&ubi->ub_pni);
 }
 
-void silofs_ubi_unsetdirty(struct silofs_uber_info *ubi)
+void silofs_ubi_cleardirty(struct silofs_uber_info *ubi)
 {
-	silofs_pni_unsetdirty(&ubi->ub_pni);
+	silofs_pni_cleardirty(&ubi->ub_pni);
 }
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,

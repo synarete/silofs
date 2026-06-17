@@ -689,7 +689,7 @@ do_remove_inode(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	struct silofs_vaddr vaddr;
 
 	ii_get_vaddr(ii, &vaddr);
-	silofs_ii_unsetdirty(ii);
+	silofs_ii_cleardirty(ii);
 	return silofs_remove_inode2(task, &vaddr);
 }
 
@@ -998,10 +998,10 @@ int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	return err;
 }
 
-static void ii_unsetdirty_all(struct silofs_inode_info *ii)
+static void ii_cleardirty_all(struct silofs_inode_info *ii)
 {
-	silofs_ii_unsetdirty_vnis(ii);
-	silofs_ii_unsetdirty(ii);
+	silofs_ii_cleardirty_vnis(ii);
+	silofs_ii_cleardirty(ii);
 }
 
 static int
@@ -1017,7 +1017,7 @@ drop_ispecific(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 		err = silofs_drop_symlink(task, ii);
 	}
 	if (!err) {
-		ii_unsetdirty_all(ii);
+		ii_cleardirty_all(ii);
 	}
 	return err;
 }
@@ -1117,7 +1117,7 @@ static int try_prune_inode(struct silofs_task_ctx *task,
 	int err;
 
 	if (ii_is_orphan(ii)) {
-		ii_unsetdirty_all(ii);
+		ii_cleardirty_all(ii);
 		silofs_ii_set_loose(ii);
 	}
 	if (ii_isdropable(ii)) {

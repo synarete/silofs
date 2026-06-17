@@ -738,9 +738,9 @@ void silofs_bti_setdirty(struct silofs_btnode_info *bti)
 	bti_setdirty(bti);
 }
 
-void silofs_bti_unsetdirty(struct silofs_btnode_info *bti)
+void silofs_bti_cleardirty(struct silofs_btnode_info *bti)
 {
-	silofs_pni_unsetdirty(&bti->btn_pni);
+	silofs_pni_cleardirty(&bti->btn_pni);
 }
 
 enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti)

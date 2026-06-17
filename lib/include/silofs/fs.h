@@ -312,7 +312,7 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 void silofs_make_iattr_of(const struct silofs_inode_info *ii,
                           struct silofs_iattr            *out_iattr);
 
-void silofs_ii_unsetdirty_vnis(struct silofs_inode_info *ii);
+void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii);
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 
@@ -326,7 +326,7 @@ void silofs_ii_decref(struct silofs_inode_info *ii);
 
 void silofs_ii_setdirty(struct silofs_inode_info *ii);
 
-void silofs_ii_unsetdirty(struct silofs_inode_info *ii);
+void silofs_ii_cleardirty(struct silofs_inode_info *ii);
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 

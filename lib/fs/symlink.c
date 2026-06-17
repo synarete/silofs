@@ -17,9 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
-
-#include <silofs/fs/symlink.h>
-#include <silofs/run.h>
+#include <silofs/fs.h>
 
 struct silofs_symval_desc {
 	struct silofs_strview head;
@@ -29,7 +27,6 @@ struct silofs_symval_desc {
 
 struct silofs_symlnk_ctx {
 	struct silofs_task_ctx *task;
-	struct silofs_sb_info *sbi;
 	struct silofs_inode_info *lnk_ii;
 	const struct silofs_strview *symval;
 	enum silofs_stg_mode stg_mode;
@@ -350,7 +347,6 @@ int silofs_do_readlink(struct silofs_task_ctx *task,
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task     = task,
-		.sbi      = silofs_get_sbi(task),
 		.lnk_ii   = lnk_ii,
 		.stg_mode = SILOFS_STG_CUR,
 	};
@@ -511,7 +507,6 @@ int silofs_bind_symval(struct silofs_task_ctx *task,
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task     = task,
-		.sbi      = silofs_get_sbi(task),
 		.lnk_ii   = lnk_ii,
 		.symval   = symval,
 		.stg_mode = SILOFS_STG_COW,
@@ -543,7 +538,6 @@ int silofs_drop_symlink(struct silofs_task_ctx *task,
 {
 	struct silofs_symlnk_ctx sl_ctx = {
 		.task     = task,
-		.sbi      = silofs_get_sbi(task),
 		.lnk_ii   = lnk_ii,
 		.stg_mode = SILOFS_STG_COW,
 	};

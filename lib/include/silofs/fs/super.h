@@ -160,22 +160,4 @@ void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
 
 int silofs_verify_space_stats(const struct silofs_space_stats1k *sp);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_clear_unwritten_at(struct silofs_task_ctx    *task,
-                              const struct silofs_vaddr *vaddr);
-
-int silofs_mark_unwritten_at(struct silofs_task_ctx    *task,
-                             const struct silofs_vaddr *vaddr);
-
-int silofs_test_unwritten_at(struct silofs_task_ctx    *task,
-                             const struct silofs_vaddr *vaddr, bool *out_res);
-
-int silofs_test_last_allocated(struct silofs_task_ctx    *task,
-                               const struct silofs_vaddr *vaddr,
-                               bool                      *out_res);
-
-int silofs_test_shared_dbkref(struct silofs_task_ctx    *task,
-                              const struct silofs_vaddr *vaddr, bool *out_res);
-
 #endif /* SILOFS_SUPER_H_ */

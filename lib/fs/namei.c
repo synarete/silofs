@@ -50,6 +50,12 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_PINNED;
 }
 
+static void ii_get_vaddr(const struct silofs_inode_info *ii,
+                         struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, silofs_ii_vaddr(ii));
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
@@ -678,6 +684,16 @@ static int add_namehash_dentry(struct silofs_task_ctx *task,
 }
 
 static int
+do_remove_inode(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+{
+	struct silofs_vaddr vaddr;
+
+	ii_get_vaddr(ii, &vaddr);
+	silofs_ii_unsetdirty(ii);
+	return silofs_remove_inode2(task, &vaddr);
+}
+
+static int
 do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
               const struct silofs_namestr *nstr, struct silofs_inode_info *ii)
 {
@@ -685,7 +701,7 @@ do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 	err = add_namehash_dentry(task, dir_ii, nstr, ii);
 	if (err) {
-		silofs_remove_inode(task, ii);
+		do_remove_inode(task, ii);
 		return err;
 	}
 	return 0;
@@ -1017,7 +1033,7 @@ drop_unlinked(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	err = drop_ispecific(task, ii);
 	return_if_err(err);
 
-	err = silofs_remove_inode(task, ii);
+	err = do_remove_inode(task, ii);
 	return_if_err(err);
 
 	return 0;
@@ -1432,7 +1448,7 @@ static int create_lnk_inode(struct silofs_task_ctx *task,
 	}
 	err = silofs_bind_symval(task, *out_ii, symval);
 	if (err) {
-		silofs_remove_inode(task, *out_ii);
+		do_remove_inode(task, *out_ii);
 		return err;
 	}
 	return 0;

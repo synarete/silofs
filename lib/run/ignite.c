@@ -275,113 +275,6 @@ static int format_spmaps(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-claim_reclaim_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	struct silofs_vaddr vaddr;
-	const off_t voff_exp = 0;
-	int err;
-
-	err = silofs_claim_vspace(task, vtype, &vaddr);
-	if (err) {
-		log_err("claim failed: vtype=%d err=%d", vtype, err);
-		return err;
-	}
-	if (vaddr.off != voff_exp) {
-		log_err("bad claim: vtype=%d exp=%ld got=%ld", vtype, voff_exp,
-		        vaddr.off);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	drop_caches(task);
-	err = silofs_reclaim_vspace(task, &vaddr);
-	if (err) {
-		log_err("bad reclaim: vtype=%d voff=%ld err=%d", vtype,
-		        vaddr.off, err);
-	}
-	return 0;
-}
-
-static int claim_recalim_space(struct silofs_task_ctx *task)
-{
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	int err;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype) ||
-		    (vtype == SILOFS_VTYPE_LSMAP)) {
-			continue;
-		}
-		if (vtype == SILOFS_VTYPE_SPNODE2) {
-			continue;
-		}
-		err = claim_reclaim_of(task, vtype);
-		if (err) {
-			return err;
-		}
-		err = flush_destage_dirty(task);
-		if (err) {
-			return err;
-		}
-		drop_relax_caches(task);
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static off_t vni_offset(const struct silofs_vnode_info *vni)
-{
-	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
-
-	return vaddr->off;
-}
-
-static int
-claim_offset_zero(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	struct silofs_vnode_info *vni = nullptr;
-	off_t off                     = -1;
-	int err;
-
-	err = silofs_spawn_vnode(task, nullptr, vtype, &vni);
-	if (err) {
-		log_err("failed to spawn: vtype=%d err=%d", vtype, err);
-		return err;
-	}
-	off = vni_offset(vni);
-	if (off != 0) {
-		log_err("format zspace failed: vtype=%d off=%ld", vtype, off);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int format_nil_space(struct silofs_task_ctx *task)
-{
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	int err;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype) ||
-		    (vtype == SILOFS_VTYPE_LSMAP)) { /* TODO: revisit */
-			continue;
-		}
-		if (vtype == SILOFS_VTYPE_SPNODE2) {
-			continue;
-		}
-		err = claim_offset_zero(task, vtype);
-		if (err) {
-			return err;
-		}
-		err = flush_destage_dirty(task);
-		if (err) {
-			return err;
-		}
-		drop_relax_caches(task);
-	}
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
@@ -446,14 +339,6 @@ static int format_fs(struct silofs_task_ctx *task)
 		return err;
 	}
 	err = format_spmaps(task);
-	if (err) {
-		return err;
-	}
-	err = claim_recalim_space(task);
-	if (err) {
-		return err;
-	}
-	err = format_nil_space(task);
 	if (err) {
 		return err;
 	}
@@ -568,11 +453,6 @@ static int reload_super(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int reload_vspace(struct silofs_task_ctx *task)
-{
-	return silofs_reload_vspace(task);
-}
-
 static int reload_rootd(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = nullptr;
@@ -600,10 +480,7 @@ int silofs_exec_reload_fs(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = reload_vspace(task);
-	if (err) {
-		return err;
-	}
+
 	err = reload_rootd(task);
 	if (err) {
 		return err;

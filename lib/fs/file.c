@@ -29,6 +29,18 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
+enum silofs_file_op {
+	SILOFS_FILE_OP_NONE       = 0,
+	SILOFS_FILE_OP_READ       = 1,
+	SILOFS_FILE_OP_WRITE      = 2,
+	SILOFS_FILE_OP_TRUNC      = 3,
+	SILOFS_FILE_OP_FALLOC     = 4,
+	SILOFS_FILE_OP_FIEMAP     = 5,
+	SILOFS_FILE_OP_LSEEK      = 6,
+	SILOFS_FILE_OP_COPY_RANGE = 7,
+	SILOFS_FILE_OP_DROP       = 8,
+};
+
 enum silofs_file_leaf_size {
 	SILOFS_FILE_HEAD1_LEAF_SIZE = SILOFS_FILE_DATA_NODE1_SIZE,
 	SILOFS_FILE_HEAD2_LEAF_SIZE = SILOFS_FILE_DATA_NODE4_SIZE,

@@ -153,7 +153,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 static int open_repo(struct silofs_task_ctx *task)
 {
 	return silofs_repo_open(task->repo, task->env->repodir,
-	                        task->env->flags);
+	                        task->ubref->ctl_flags);
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)
@@ -307,7 +307,7 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 
 static bool use_utf8_names(const struct silofs_task_ctx *task)
 {
-	return (task->env->flags & SILOFS_F_UTF8NAMES) > 0;
+	return (task->ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
 }
 
 static int format_rootdir(struct silofs_task_ctx *task)

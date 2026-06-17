@@ -176,17 +176,23 @@ static bool op_is_fsowner(const struct silofs_task_ctx *task)
 	return silofs_uid_eq(creds->host_cred.uid, task->env->owner_cred.uid);
 }
 
+static bool
+op_has_ctl_flags(const struct silofs_task_ctx *task, enum silofs_flags mask)
+{
+	return ((task->ubref->ctl_flags & mask) == mask);
+}
+
 static bool op_cap_sys_admin(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds = &task->auth.creds;
 
-	return silofs_env_hasflag(task->env, SILOFS_F_ALLOW_ADMIN) &&
+	return op_has_ctl_flags(task, SILOFS_F_ALLOW_ADMIN) &&
 	       silofs_user_cap_sys_admin(&creds->host_cred);
 }
 
 static bool op_allow_other(const struct silofs_task_ctx *task)
 {
-	return silofs_env_hasflag(task->env, SILOFS_F_ALLOW_OTHER);
+	return op_has_ctl_flags(task, SILOFS_F_ALLOW_OTHER);
 }
 
 static int op_authorize(const struct silofs_task_ctx *task)

@@ -146,39 +146,9 @@ static int env_update_fscap(struct silofs_env *env, size_t cap_want)
 	return 0;
 }
 
-static int env_setup_mntflags(struct silofs_env *env, enum silofs_flags flags)
+static void env_setup_ctlflags(struct silofs_env *env, enum silofs_flags flags)
 {
-	unsigned long ms_flag_with = 0;
-	unsigned long ms_flag_dont = 0;
-
-	if (flags & SILOFS_F_LAZYTIME) {
-		ms_flag_with |= MS_LAZYTIME;
-	} else {
-		ms_flag_dont |= MS_LAZYTIME;
-	}
-	if (flags & SILOFS_F_ALLOW_EXEC) {
-		ms_flag_dont |= MS_NOEXEC;
-	} else {
-		ms_flag_with |= MS_NOEXEC;
-	}
-	if (flags & SILOFS_F_ALLOW_SUID) {
-		ms_flag_dont |= MS_NOSUID;
-	} else {
-		ms_flag_with |= MS_NOSUID;
-	}
-	if (flags & SILOFS_F_ALLOW_DEV) {
-		ms_flag_dont |= MS_NODEV;
-	} else {
-		ms_flag_with |= MS_NODEV;
-	}
-	if (flags & SILOFS_F_RDONLY) {
-		ms_flag_with |= MS_RDONLY;
-	} else {
-		ms_flag_dont |= MS_RDONLY;
-	}
-	env->ms_flags |= ms_flag_with;
-	env->ms_flags &= ~ms_flag_dont;
-	return 0;
+	silofs_ubref_set_ctlflags(&env->ubref, flags);
 }
 
 static int env_update_name(struct silofs_env *env, const char *fsname)
@@ -223,32 +193,25 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	int err;
 
 	err = env_update_repodir(env, spec->bref[0].repodir);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = env_update_name(env, spec->bref[0].refname);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = env_setup_owner(env, &spec->fsowner);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = env_use_password(env, &spec->passwd, spec->flags);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = env_update_fscap(env, spec->fscap);
-	if (err) {
-		return err;
-	}
-	err = env_setup_mntflags(env, spec->flags);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
+	env_setup_ctlflags(env, spec->flags);
 	env_update_iopen_max(env);
+
 	silofs_env_bind_hooks(env);
-	env->flags = spec->flags;
+
 	return 0;
 }
 
@@ -281,8 +244,6 @@ env_init_commons(struct silofs_env *env, struct silofs_alloc *alloc)
 	env->init_time = silofs_time_mono_now();
 	env->alloc     = alloc;
 	env->sbi       = nullptr;
-	env->flags     = 0;
-	env->ms_flags  = 0;
 	env->iconv_set = false;
 	env->repodir   = nullptr;
 	env->fuseq     = nullptr;
@@ -294,8 +255,7 @@ static void env_fini_commons(struct silofs_env *env)
 	memset(&env->base, 0, sizeof(env->base));
 	silofs_cred_fini(&env->owner_cred);
 	silofs_ubref_fini(&env->ubref);
-	env->sbi      = nullptr;
-	env->ms_flags = 0;
+	env->sbi = nullptr;
 }
 
 static int env_init_mbis(struct silofs_env *env)
@@ -443,7 +403,7 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f)
 {
-	return (env->flags & f) == f;
+	return (env->ubref.ctl_flags & f) == f;
 }
 
 bool silofs_env_isrdonlyfs(const struct silofs_env *env)

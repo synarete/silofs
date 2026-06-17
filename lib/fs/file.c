@@ -1907,8 +1907,14 @@ static void iovref_post(const struct silofs_iovec *iov, bool asyncwr_mode)
 
 static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
 {
-	return (f_ctx->op == SILOFS_FILE_OP_WRITE) &&
-	       silofs_env_hasflag(f_ctx->env, SILOFS_F_ASYNCWR);
+	bool asyncwr = false;
+
+	if (f_ctx->op == SILOFS_FILE_OP_WRITE) {
+		const struct silofs_uber_ref *ubref = f_ctx->task->ubref;
+
+		asyncwr = (ubref->ctl_flags & SILOFS_F_ASYNCWR) > 0;
+	}
+	return asyncwr;
 }
 
 static int filc_call_rw_actor(const struct silofs_file_ctx *f_ctx,

@@ -60,7 +60,7 @@ static void ii_get_vaddr(const struct silofs_inode_info *ii,
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
 {
-	return silofs_env_hasflag(task->env, SILOFS_F_NLOOKUP);
+	return (task->ubref->ctl_flags & SILOFS_F_NLOOKUP) > 0;
 }
 
 static void sub_nlookup(const struct silofs_task_ctx *task,
@@ -778,7 +778,7 @@ check_mknod(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->env->ms_flags & MS_NODEV) {
+		if (task->ubref->ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2175,7 +2175,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->uid       = env->owner_cred.uid;
 	qpr->gid       = env->owner_cred.gid;
 	qpr->pid       = getpid();
-	qpr->msflags   = env->ms_flags;
+	qpr->msflags   = env->ubref.ms_flags;
 	qpr->uptime    = uptime;
 	qpr->iopen_max = env->opstat.op_iopen_max;
 	qpr->iopen_cur = env->opstat.op_iopen;

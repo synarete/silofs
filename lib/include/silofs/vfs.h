@@ -524,4 +524,6 @@ struct silofs_vfs_hooks {
 	silofs_vfs_fn idle;
 };
 
+const struct silofs_vfs_hooks *silofs_vfswrap_hooks(void);
+
 #endif /* SILOFS_VFS_H_ */

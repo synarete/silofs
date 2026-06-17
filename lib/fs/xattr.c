@@ -644,9 +644,9 @@ search_prefix(const struct silofs_namestr *name)
 
 static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 {
-	const struct silofs_env *env = xa_ctx->task->env;
+	const struct silofs_uber_ref *ubref = xa_ctx->task->ubref;
 
-	return silofs_env_hasflag(env, SILOFS_F_ALLOW_XACL);
+	return (ubref->ctl_flags & SILOFS_F_ALLOW_XACL) > 0;
 }
 
 static int

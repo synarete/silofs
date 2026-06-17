@@ -314,7 +314,7 @@ static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)
 	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, mntdir, env->ms_flags);
+	err = silofs_fuseq_mount(fuseq, mntdir, env->ubref.ms_flags);
 	if (!err) {
 		err = silofs_fuseq_exec(fuseq);
 	}

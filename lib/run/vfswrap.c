@@ -517,7 +517,12 @@ static const struct silofs_vfs_hooks s_vfs_hooks = {
 	.idle            = vfswrap_idle,
 };
 
+const struct silofs_vfs_hooks *silofs_vfswrap_hooks(void)
+{
+	return &s_vfs_hooks;
+}
+
 void silofs_env_bind_hooks(struct silofs_env *env)
 {
-	env->vfs_hooks = &s_vfs_hooks;
+	env->vfs_hooks = silofs_vfswrap_hooks();
 }

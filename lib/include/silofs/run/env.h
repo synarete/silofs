@@ -72,10 +72,8 @@ struct silofs_env {
 	const struct silofs_vfs_hooks *vfs_hooks;
 	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
-	enum silofs_flags              flags;
 	char                          *repodir;
 	size_t                         fscap;
-	unsigned long                  ms_flags;
 	time_t                         init_time;
 	bool                           iconv_set;
 };

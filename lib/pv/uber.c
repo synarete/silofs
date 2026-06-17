@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <sys/mount.h>
 #include <silofs/pv.h>
 
 static void
@@ -557,12 +558,16 @@ int silofs_validate_uber(const struct silofs_uber_info *ubi)
 
 void silofs_ubref_init(struct silofs_uber_ref *ubref)
 {
-	ubref->ubi = nullptr;
+	ubref->ubi       = nullptr;
+	ubref->ctl_flags = 0;
+	ubref->ms_flags  = 0;
 }
 
 void silofs_ubref_fini(struct silofs_uber_ref *ubref)
 {
 	silofs_ubref_update(ubref, nullptr);
+	ubref->ctl_flags = 0;
+	ubref->ms_flags  = 0;
 }
 
 void silofs_ubref_update(struct silofs_uber_ref *ubref,
@@ -577,4 +582,44 @@ void silofs_ubref_update(struct silofs_uber_ref *ubref,
 		silofs_ubi_incref(ubi_new);
 	}
 	ubref->ubi = ubi_new;
+}
+
+static void ubref_derive_ms_flags(struct silofs_uber_ref *ubref)
+{
+	unsigned long ms_flag_with = 0;
+	unsigned long ms_flag_dont = 0;
+
+	if (ubref->ctl_flags & SILOFS_F_LAZYTIME) {
+		ms_flag_with |= MS_LAZYTIME;
+	} else {
+		ms_flag_dont |= MS_LAZYTIME;
+	}
+	if (ubref->ctl_flags & SILOFS_F_ALLOW_EXEC) {
+		ms_flag_dont |= MS_NOEXEC;
+	} else {
+		ms_flag_with |= MS_NOEXEC;
+	}
+	if (ubref->ctl_flags & SILOFS_F_ALLOW_SUID) {
+		ms_flag_dont |= MS_NOSUID;
+	} else {
+		ms_flag_with |= MS_NOSUID;
+	}
+	if (ubref->ctl_flags & SILOFS_F_ALLOW_DEV) {
+		ms_flag_dont |= MS_NODEV;
+	} else {
+		ms_flag_with |= MS_NODEV;
+	}
+	if (ubref->ctl_flags & SILOFS_F_RDONLY) {
+		ms_flag_with |= MS_RDONLY;
+	} else {
+		ms_flag_dont |= MS_RDONLY;
+	}
+	ubref->ms_flags = ms_flag_with & ~ms_flag_dont;
+}
+
+void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
+                               enum silofs_flags ctl_flags)
+{
+	ubref->ctl_flags = ctl_flags;
+	ubref_derive_ms_flags(ubref);
 }

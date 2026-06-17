@@ -362,6 +362,8 @@ int silofs_validate_uber(const struct silofs_uber_info *ubi);
 
 struct silofs_uber_ref {
 	struct silofs_uber_info *ubi;
+	enum silofs_flags        ctl_flags;
+	unsigned long            ms_flags;
 };
 
 void silofs_ubref_init(struct silofs_uber_ref *ubref);
@@ -370,6 +372,9 @@ void silofs_ubref_fini(struct silofs_uber_ref *ubref);
 
 void silofs_ubref_update(struct silofs_uber_ref  *ubref,
                          struct silofs_uber_info *ubi);
+
+void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
+                               enum silofs_flags       ctl_flags);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spnode */

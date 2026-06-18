@@ -76,7 +76,7 @@ static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
 {
 	int err;
 
-	err = silofs_carve_next_vspace(pexec, vaddr->vtype, out_pnptr);
+	err = silofs_carve_vspace(pexec, vaddr->vtype, out_pnptr);
 	return_if_err(err);
 
 	err = silofs_require_paddr(pexec, &out_pnptr->paddr);
@@ -142,10 +142,12 @@ int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void retain_free_vspace(struct silofs_pexec_ctx *pexec,
-                               const struct silofs_vaddr *vaddr)
+static void retain_free_space(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_paddr *paddr)
 {
 	silofs_freevsqs_push(pexec->fvsqs, vaddr);
+	silofs_freepaqs_push(pexec->fpaqs, paddr);
 }
 
 static int incref_used_vspace(struct silofs_pexec_ctx *pexec,
@@ -187,7 +189,7 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = silofs_remove_vtop_mapping(pexec, vaddr);
 	return_if_err(err);
 
-	retain_free_vspace(pexec, vaddr);
+	retain_free_space(pexec, vaddr, &pnptr.paddr);
 out:
 	return decref_used_vspace(pexec, vaddr);
 }

@@ -904,7 +904,8 @@ struct silofs_freepaq {
 };
 
 struct silofs_freepaqs {
-	struct silofs_freepaq fpaq[SILOFS_PTYPE_LAST - 1];
+	struct silofs_freepaq fpaq_bn[SILOFS_VTYPE_LAST - 1];
+	struct silofs_freepaq fpaq_vn[SILOFS_VTYPE_LAST - 1];
 };
 
 void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,
@@ -917,8 +918,8 @@ void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs);
 int silofs_freepaqs_push(struct silofs_freepaqs    *fpaqs,
                          const struct silofs_paddr *paddr);
 
-int silofs_freepaqs_pull(struct silofs_freepaqs *fpaqs,
-                         enum silofs_ptype       ptype,
-                         struct silofs_paddr    *out_paddr);
+int silofs_freepaqs_pull(struct silofs_freepaqs    *fpaqs,
+                         const struct silofs_stype *stype,
+                         struct silofs_paddr       *out_paddr);
 
 #endif /* SILOFS_NODES_H_ */

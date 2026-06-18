@@ -479,20 +479,20 @@ int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
                               struct silofs_pnptr           *out_pnptr);
 
 int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype              vspace,
+                              enum silofs_vtype              vtype,
                               struct silofs_pnptr           *out_pnptr);
 
 int silofs_carve_base_vspace(const struct silofs_pexec_ctx *pexec,
                              enum silofs_vtype              vtype,
                              struct silofs_paddr           *out_paddr);
 
-int silofs_carve_next_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype              vtype,
-                              struct silofs_pnptr           *out_pnptr);
+int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
+                         enum silofs_vtype              vtype,
+                         struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_next_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype              vtype,
-                             struct silofs_pnptr           *out_pnptr);
+int silofs_carve_vspace(const struct silofs_pexec_ctx *pexec,
+                        enum silofs_vtype              vtype,
+                        struct silofs_pnptr           *out_pnptr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* encdec */

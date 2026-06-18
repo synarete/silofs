@@ -127,36 +127,48 @@ static void carve_next_space_of(const struct silofs_pexec_ctx *pexec,
 	silofs_ubi_update_spdesc(pexec->ubref->ubi, &spdesc_nxt);
 }
 
-static int carve_next_pnptr_of(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_stype *stype,
-                               struct silofs_pnptr *out_pnptr)
+static bool try_carve_free_space_of(const struct silofs_pexec_ctx *pexec,
+                                    const struct silofs_stype *stype,
+                                    struct silofs_paddr *out_paddr)
+{
+	int err;
+
+	err = silofs_freepaqs_pull(pexec->fpaqs, stype, out_paddr);
+	return (err == 0);
+}
+
+static int carve_pnptr_of(const struct silofs_pexec_ctx *pexec,
+                          const struct silofs_stype *stype,
+                          struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_paddr paddr;
 
-	carve_next_space_of(pexec, stype, &paddr);
+	if (!try_carve_free_space_of(pexec, stype, &paddr)) {
+		carve_next_space_of(pexec, stype, &paddr);
+	}
 	return gen_pnptr_at(pexec, &paddr, out_pnptr);
 }
 
-int silofs_carve_next_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype vtype,
-                              struct silofs_pnptr *out_pnptr)
+int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
+                         enum silofs_vtype vtype,
+                         struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
 		.vtype = vtype,
 	};
 
-	return carve_next_pnptr_of(pexec, &stype, out_pnptr);
+	return carve_pnptr_of(pexec, &stype, out_pnptr);
 }
 
-int silofs_carve_next_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype vtype,
-                             struct silofs_pnptr *out_pnptr)
+int silofs_carve_vspace(const struct silofs_pexec_ctx *pexec,
+                        enum silofs_vtype vtype,
+                        struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_VNODE,
 		.vtype = vtype,
 	};
 
-	return carve_next_pnptr_of(pexec, &stype, out_pnptr);
+	return carve_pnptr_of(pexec, &stype, out_pnptr);
 }

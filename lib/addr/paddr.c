@@ -127,8 +127,6 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 	paddr->ptype = paddr->blobid.stype.ptype;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 void silofs_calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
                               const struct silofs_paddr *paddr,
                               struct silofs_caad *out_caad)

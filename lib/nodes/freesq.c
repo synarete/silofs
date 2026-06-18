@@ -796,7 +796,7 @@ static bool fpaq_cap_push(const struct silofs_freepaq *fpaq)
 {
 	const size_t sz = silofs_listq_size(&fpaq->fpaq_listq);
 
-	return (sz < 100000);
+	return (sz < 1024);
 }
 
 static int
@@ -852,43 +852,74 @@ static void fpaq_clear(struct silofs_freepaq *fpaq)
 	}
 }
 
+static void fpaq_clear_fini(struct silofs_freepaq *fpaq)
+{
+	fpaq_clear(fpaq);
+	fpaq_fini(fpaq);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,
                           struct silofs_alloc *alloc)
 {
-	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
-		fpaq_init(&fpaqs->fpaq[slot], alloc);
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_bn); ++slot) {
+		fpaq_init(&fpaqs->fpaq_bn[slot], alloc);
+	}
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_vn); ++slot) {
+		fpaq_init(&fpaqs->fpaq_vn[slot], alloc);
 	}
 }
 
 void silofs_freepaqs_fini(struct silofs_freepaqs *fpaqs)
 {
-	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
-		fpaq_clear(&fpaqs->fpaq[slot]);
-		fpaq_fini(&fpaqs->fpaq[slot]);
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_bn); ++slot) {
+		fpaq_clear_fini(&fpaqs->fpaq_bn[slot]);
+	}
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_vn); ++slot) {
+		fpaq_clear_fini(&fpaqs->fpaq_vn[slot]);
 	}
 }
 
 void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs)
 {
-	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
-		fpaq_clear(&fpaqs->fpaq[slot]);
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_bn); ++slot) {
+		fpaq_clear(&fpaqs->fpaq_bn[slot]);
+	}
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq_vn); ++slot) {
+		fpaq_clear(&fpaqs->fpaq_vn[slot]);
 	}
 }
 
-static size_t fvsqs_ptype_to_slot(enum silofs_ptype ptype)
+static size_t fpaqs_vtype_to_slot(enum silofs_vtype vtype)
 {
-	return (size_t)(ptype - 1);
+	return (size_t)(vtype - 1);
 }
 
 static struct silofs_freepaq *
-freepaqs_mut_sub(struct silofs_freepaqs *fpaqs, enum silofs_ptype ptype)
+freepaqs_mut_sub(struct silofs_freepaqs *fpaqs,
+                 const struct silofs_stype *stype)
 {
-	constexpr size_t nslots = ARRAY_SIZE(fpaqs->fpaq);
-	const size_t slot       = fvsqs_ptype_to_slot(ptype);
+	struct silofs_freepaq *fpaq = nullptr;
+	size_t slot;
 
-	return (slot < nslots) ? &fpaqs->fpaq[slot] : nullptr;
+	if (stype->ptype == SILOFS_PTYPE_BTNODE) {
+		slot = fpaqs_vtype_to_slot(stype->vtype);
+		if (slot < ARRAY_SIZE(fpaqs->fpaq_bn)) {
+			fpaq = &fpaqs->fpaq_bn[slot];
+		}
+	} else if (stype->ptype == SILOFS_PTYPE_VNODE) {
+		slot = fpaqs_vtype_to_slot(stype->vtype);
+		if (slot < ARRAY_SIZE(fpaqs->fpaq_vn)) {
+			fpaq = &fpaqs->fpaq_vn[slot];
+		}
+	}
+	return fpaq;
+}
+
+static const struct silofs_stype *stype_of(const struct silofs_paddr *paddr)
+{
+	return &paddr->blobid.stype;
 }
 
 int silofs_freepaqs_push(struct silofs_freepaqs *fpaqs,
@@ -897,7 +928,7 @@ int silofs_freepaqs_push(struct silofs_freepaqs *fpaqs,
 	struct silofs_freepaq *fpaq;
 	int ret = -SILOFS_ENOENT;
 
-	fpaq = freepaqs_mut_sub(fpaqs, paddr->ptype);
+	fpaq = freepaqs_mut_sub(fpaqs, stype_of(paddr));
 	if (fpaq != nullptr) {
 		ret = fpaq_push(fpaq, paddr);
 	}
@@ -905,13 +936,13 @@ int silofs_freepaqs_push(struct silofs_freepaqs *fpaqs,
 }
 
 int silofs_freepaqs_pull(struct silofs_freepaqs *fpaqs,
-                         enum silofs_ptype ptype,
+                         const struct silofs_stype *stype,
                          struct silofs_paddr *out_paddr)
 {
 	struct silofs_freepaq *fpaq;
 	int ret = -SILOFS_ENOENT;
 
-	fpaq = freepaqs_mut_sub(fpaqs, ptype);
+	fpaq = freepaqs_mut_sub(fpaqs, stype);
 	if (fpaq != nullptr) {
 		ret = fpaq_pop(fpaq, out_paddr);
 	}

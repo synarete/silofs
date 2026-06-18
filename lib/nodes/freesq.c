@@ -718,3 +718,202 @@ void silofs_freevsqs_fini(struct silofs_freevsqs *fvsqs)
 		fvsq_fini(&fvsqs->fvsq[slot]);
 	}
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static struct silofs_freepaq_entry *fpae_from_lh(struct silofs_list_head *lh)
+{
+	return mut_container_of(lh, struct silofs_freepaq_entry, lh);
+}
+
+static struct silofs_freepaq_entry *fpae_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_freepaq_entry *fpae = nullptr;
+
+	fpae = silofs_memalloc(alloc, sizeof(*fpae), 0);
+	return fpae;
+}
+
+static void
+fpae_free(struct silofs_freepaq_entry *fpae, struct silofs_alloc *alloc)
+{
+	silofs_memfree(alloc, fpae, sizeof(*fpae), 0);
+}
+
+static void
+fpae_init(struct silofs_freepaq_entry *fpae, const struct silofs_paddr *paddr)
+{
+	silofs_list_head_init(&fpae->lh);
+	silofs_paddr_assign(&fpae->paddr, paddr);
+}
+
+static void fpae_fini(struct silofs_freepaq_entry *fpae)
+{
+	silofs_list_head_fini(&fpae->lh);
+	silofs_paddr_reset(&fpae->paddr);
+}
+
+static struct silofs_freepaq_entry *
+fpae_new(const struct silofs_paddr *paddr, struct silofs_alloc *alloc)
+{
+	struct silofs_freepaq_entry *fpae;
+
+	fpae = fpae_malloc(alloc);
+	if (fpae != nullptr) {
+		fpae_init(fpae, paddr);
+	}
+	return fpae;
+}
+
+static void
+fpae_del(struct silofs_freepaq_entry *fpae, struct silofs_alloc *alloc)
+{
+	fpae_fini(fpae);
+	fpae_free(fpae, alloc);
+}
+
+static void fpae_paddr(const struct silofs_freepaq_entry *fpae,
+                       struct silofs_paddr *out_paddr)
+{
+	silofs_paddr_assign(out_paddr, &fpae->paddr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static void fpaq_init(struct silofs_freepaq *fpaq, struct silofs_alloc *alloc)
+{
+	silofs_listq_init(&fpaq->fpaq_listq);
+	fpaq->fpaq_alloc = alloc;
+}
+
+static void fpaq_fini(struct silofs_freepaq *fpaq)
+{
+	silofs_listq_init(&fpaq->fpaq_listq);
+	fpaq->fpaq_alloc = nullptr;
+}
+
+static bool fpaq_cap_push(const struct silofs_freepaq *fpaq)
+{
+	const size_t sz = silofs_listq_size(&fpaq->fpaq_listq);
+
+	return (sz < 100000);
+}
+
+static int
+fpaq_push(struct silofs_freepaq *fpaq, const struct silofs_paddr *paddr)
+{
+	struct silofs_freepaq_entry *fpae;
+
+	if (!fpaq_cap_push(fpaq)) {
+		return -SILOFS_ENOSPC;
+	}
+	fpae = fpae_new(paddr, fpaq->fpaq_alloc);
+	if (fpae == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	silofs_listq_push_back(&fpaq->fpaq_listq, &fpae->lh);
+	return 0;
+}
+
+static struct silofs_freepaq_entry *fpaq_pop_front(struct silofs_freepaq *fpaq)
+{
+	struct silofs_list_head *lh;
+	struct silofs_freepaq_entry *fpae = nullptr;
+
+	lh = silofs_listq_pop_front(&fpaq->fpaq_listq);
+	if (lh != nullptr) {
+		fpae = fpae_from_lh(lh);
+	}
+	return fpae;
+}
+
+static int
+fpaq_pop(struct silofs_freepaq *fpaq, struct silofs_paddr *out_paddr)
+{
+	struct silofs_freepaq_entry *fpae;
+
+	fpae = fpaq_pop_front(fpaq);
+	if (fpae == nullptr) {
+		return -SILOFS_ENOENT;
+	}
+	fpae_paddr(fpae, out_paddr);
+	fpae_del(fpae, fpaq->fpaq_alloc);
+	return 0;
+}
+
+static void fpaq_clear(struct silofs_freepaq *fpaq)
+{
+	struct silofs_freepaq_entry *fpae;
+
+	fpae = fpaq_pop_front(fpaq);
+	while (fpae != nullptr) {
+		fpae_del(fpae, fpaq->fpaq_alloc);
+		fpae = fpaq_pop_front(fpaq);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,
+                          struct silofs_alloc *alloc)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
+		fpaq_init(&fpaqs->fpaq[slot], alloc);
+	}
+}
+
+void silofs_freepaqs_fini(struct silofs_freepaqs *fpaqs)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
+		fpaq_clear(&fpaqs->fpaq[slot]);
+		fpaq_fini(&fpaqs->fpaq[slot]);
+	}
+}
+
+void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(fpaqs->fpaq); ++slot) {
+		fpaq_clear(&fpaqs->fpaq[slot]);
+	}
+}
+
+static size_t fvsqs_ptype_to_slot(enum silofs_ptype ptype)
+{
+	return (size_t)(ptype - 1);
+}
+
+static struct silofs_freepaq *
+freepaqs_mut_sub(struct silofs_freepaqs *fpaqs, enum silofs_ptype ptype)
+{
+	constexpr size_t nslots = ARRAY_SIZE(fpaqs->fpaq);
+	const size_t slot       = fvsqs_ptype_to_slot(ptype);
+
+	return (slot < nslots) ? &fpaqs->fpaq[slot] : nullptr;
+}
+
+int silofs_freepaqs_push(struct silofs_freepaqs *fpaqs,
+                         const struct silofs_paddr *paddr)
+{
+	struct silofs_freepaq *fpaq;
+	int ret = -SILOFS_ENOENT;
+
+	fpaq = freepaqs_mut_sub(fpaqs, paddr->ptype);
+	if (fpaq != nullptr) {
+		ret = fpaq_push(fpaq, paddr);
+	}
+	return ret;
+}
+
+int silofs_freepaqs_pull(struct silofs_freepaqs *fpaqs,
+                         enum silofs_ptype ptype,
+                         struct silofs_paddr *out_paddr)
+{
+	struct silofs_freepaq *fpaq;
+	int ret = -SILOFS_ENOENT;
+
+	fpaq = freepaqs_mut_sub(fpaqs, ptype);
+	if (fpaq != nullptr) {
+		ret = fpaq_pop(fpaq, out_paddr);
+	}
+	return ret;
+}

@@ -880,6 +880,8 @@ int silofs_freevsqs_init(struct silofs_freevsqs *fvsqs,
 
 void silofs_freevsqs_fini(struct silofs_freevsqs *fvsqs);
 
+void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs);
+
 int silofs_freevsqs_push(struct silofs_freevsqs    *fvsqs,
                          const struct silofs_vaddr *vaddr);
 
@@ -887,9 +889,36 @@ int silofs_freevsqs_pull(struct silofs_freevsqs *fvsqs,
                          enum silofs_vtype       vtype,
                          struct silofs_vaddr    *out_vaddr);
 
-int silofs_freevsqs_base(const struct silofs_freevsqs *fvsqs,
-                         enum silofs_vtype vtype, off_t off, off_t *out_base);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs);
+/* single entry of in-memory paddr queue */
+struct silofs_freepaq_entry {
+	struct silofs_list_head lh;
+	struct silofs_paddr     paddr;
+};
+
+/* in-memory queue of free paddr by vtype */
+struct silofs_freepaq {
+	struct silofs_listq  fpaq_listq;
+	struct silofs_alloc *fpaq_alloc;
+};
+
+struct silofs_freepaqs {
+	struct silofs_freepaq fpaq[SILOFS_PTYPE_LAST - 1];
+};
+
+void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,
+                          struct silofs_alloc    *alloc);
+
+void silofs_freepaqs_fini(struct silofs_freepaqs *fpaqs);
+
+void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs);
+
+int silofs_freepaqs_push(struct silofs_freepaqs    *fpaqs,
+                         const struct silofs_paddr *paddr);
+
+int silofs_freepaqs_pull(struct silofs_freepaqs *fpaqs,
+                         enum silofs_ptype       ptype,
+                         struct silofs_paddr    *out_paddr);
 
 #endif /* SILOFS_NODES_H_ */

@@ -340,23 +340,19 @@ int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc)
 	env_init_opstat(env);
 
 	err = env_init_mbis(env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = env_init_locks(env);
-	if (err) {
-		return err;
-	}
+	goto_out_if_err(err);
+
 	err = env_init_crypto(env);
-	if (err) {
-		goto out_err;
-	}
+	goto_out_if_err(err);
+
 	err = env_init_uconv(env);
-	if (err) {
-		goto out_err;
-	}
+	goto_out_if_err(err);
+
 	return 0;
-out_err:
+out:
 	silofs_env_fini(env);
 	return err;
 }

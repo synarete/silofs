@@ -242,6 +242,7 @@ void silofs_make_pexec(const struct silofs_task_ctx *task,
 	out_pexec->pcache    = task->env->base.pcache;
 	out_pexec->vcache    = &task->env->base.lcache->lc_vc;
 	out_pexec->fvsqs     = task->env->base.fvsqs;
+	out_pexec->fpaqs     = task->env->base.fpaqs;
 	out_pexec->md_hd     = &task->env->md_hd;
 	out_pexec->enc_ci_hd = &task->env->enc_ci_hd;
 	out_pexec->dec_ci_hd = &task->env->dec_ci_hd;

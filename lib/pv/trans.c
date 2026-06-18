@@ -205,6 +205,18 @@ static void forget_cached_vni(struct silofs_pexec_ctx *pexec,
 	silofs_vcache_forget_vnode(pexec->vcache, vni);
 }
 
+static void try_forget_cached_vni(struct silofs_pexec_ctx *pexec,
+                                  struct silofs_vnode_info *vni)
+{
+	/*
+	 * Special case where data-node has been unmapped due to forget, yet it
+	 * still has a live ref-count due to on-going I/O operation.
+	 */
+	if ((vni != nullptr) && !silofs_vni_refcnt(vni)) {
+		forget_cached_vni(pexec, vni);
+	}
+}
+
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr)
 {
@@ -214,8 +226,8 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 
 	vni = lookup_cached_vni(pexec, vaddr);
 	err = reclaim_vnode2_at(pexec, vaddr, &last);
-	if (!err && last && (vni != nullptr)) {
-		forget_cached_vni(pexec, vni);
+	if (!err && last) {
+		try_forget_cached_vni(pexec, vni);
 	}
 	return err;
 }

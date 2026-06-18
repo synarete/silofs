@@ -281,7 +281,7 @@ op_rmap_stat_any(const struct silofs_task_ctx *task, struct silofs_stat *st)
 static int op_stage_cacheonly_inode(struct silofs_task_ctx *task, ino_t ino,
                                     struct silofs_inode_info **out_ii)
 {
-	return silofs_fetch_cached_inode(task, ino, out_ii);
+	return silofs_lookup_cached_inode(task, ino, out_ii);
 }
 
 static int op_stage_inode(struct silofs_task_ctx *task, ino_t ino, bool mut,

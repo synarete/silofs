@@ -82,15 +82,15 @@ static int vsc_claim_free_vspace_by_vspmaps(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	err = silofs_vspmaps_pull(vspms, vs_ctx->vtype, out_vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = vsc_stage_spnode_of(vs_ctx, out_vaddr, &spi);
 	if (err) {
 		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
 		        (int)out_vaddr->vtype, out_vaddr->off, err);
 		return err;
 	}
+
 	silofs_spi_vspace_ref(spi, out_vaddr, &vspref);
 	if (vspref.refcnt > 0) {
 		log_err("cached free-vspace has active ref-count: "
@@ -110,14 +110,12 @@ static int vsc_claim_free_vspace_at(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	err = vsc_require_spnode2_of(vs_ctx, ref_vaddr, &spi);
-	silofs_assert_ok(err);
-	if (err) {
-		return err;
-	}
+	silofs_assert_ok(err); /* XXX RM */
+	return_if_err(err);
+
 	err = silofs_spi_find_free(spi, out_vaddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_spi_inc_allocated(spi, out_vaddr);
 	return 0;
 }
@@ -156,15 +154,15 @@ static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
 static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
                                  struct silofs_vaddr *out_vaddr)
 {
-	int err;
+	int ret;
 
 	/* fast: try to allocated from in-memory pool of free vspace */
-	err = vsc_claim_free_vspace_by_vspmaps(vs_ctx, out_vaddr);
-	if (err) {
+	ret = vsc_claim_free_vspace_by_vspmaps(vs_ctx, out_vaddr);
+	if (ret != 0) {
 		/* slow: try to allocate using space-mapping nodes */
-		err = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_vaddr);
+		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_vaddr);
 	}
-	return err;
+	return ret;
 }
 
 int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
@@ -187,10 +185,9 @@ static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
-	silofs_assert_ok(err);
-	if (err) {
-		return err;
-	}
+	silofs_assert_ok(err); /* XXX rm */
+	return_if_err(err);
+
 	silofs_spi_vspace_ref(spi, vaddr, &vspref);
 	if (vspref.refcnt == 0) {
 		log_err("can not reclaim unused vspace: vtype=%d off=%ld",
@@ -209,10 +206,9 @@ static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	int err;
 
 	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
-	silofs_assert_ok(err);
-	if (err) {
-		return err;
-	}
+	silofs_assert_ok(err); /* XXX rm */
+	return_if_err(err);
+
 	silofs_spi_vspace_ref(spi, vaddr, &vspref);
 	if (vspref.refcnt == 0) {
 		log_err("can not incref unused vspace: vtype=%d off=%ld",

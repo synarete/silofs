@@ -380,6 +380,16 @@ int silofs_verify_ino(ino_t ino);
 ino_t silofs_inode_ino(const struct silofs_inode *inode);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* inops */
+
+int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
+                          enum silofs_stg_mode       stg_mode,
+                          struct silofs_inode_info **out_ii);
+
+int silofs_lookup_cached_inode(struct silofs_task_ctx *task, ino_t ino,
+                               struct silofs_inode_info **out_ii);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/lsmap.h>
 #include <silofs/fs/task.h>
@@ -721,30 +731,10 @@ int silofs_spawn_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
 
 int silofs_stage_lseg(struct silofs_env *env, const struct silofs_lsid *lsid);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 int silofs_require_spleaf_of(struct silofs_task_ctx     *task,
                              const struct silofs_vaddr  *vaddr,
                              enum silofs_stg_mode        stg_mode,
                              struct silofs_spleaf_info **out_sli);
-
-int silofs_resolve_llink_of(struct silofs_task_ctx    *task,
-                            const struct silofs_vaddr *vaddr,
-                            enum silofs_stg_mode       stg_mode,
-                            struct silofs_llink       *out_llink);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
-                          enum silofs_stg_mode       stg_mode,
-                          struct silofs_inode_info **out_ii);
-
-int silofs_fetch_cached_vnode(struct silofs_task_ctx    *task,
-                              const struct silofs_vaddr *vaddr,
-                              struct silofs_vnode_info **out_vni);
-
-int silofs_fetch_cached_inode(struct silofs_task_ctx *task, ino_t ino,
-                              struct silofs_inode_info **out_ii);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

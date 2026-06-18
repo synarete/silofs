@@ -19,7 +19,7 @@
 
 struct silofs_vspace_ctx {
 	struct silofs_pexec_ctx *pexec;
-	struct silofs_vspmaps *vspmaps;
+	struct silofs_freevsqs *fvsqs;
 	struct silofs_vcache *vcache;
 	struct silofs_uber_info *ubi;
 	enum silofs_vtype vtype;
@@ -28,11 +28,11 @@ struct silofs_vspace_ctx {
 static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
                      struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
-	vs_ctx->pexec   = pexec;
-	vs_ctx->vspmaps = pexec->vspmaps;
-	vs_ctx->vcache  = pexec->vcache;
-	vs_ctx->ubi     = pexec->ubref->ubi;
-	vs_ctx->vtype   = vtype;
+	vs_ctx->pexec  = pexec;
+	vs_ctx->fvsqs  = pexec->fvsqs;
+	vs_ctx->vcache = pexec->vcache;
+	vs_ctx->ubi    = pexec->ubref->ubi;
+	vs_ctx->vtype  = vtype;
 
 	silofs_assert_ne(vtype, SILOFS_VTYPE_SPNODE2);
 }
@@ -63,7 +63,14 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
                                const struct silofs_vaddr *ref_vaddr,
                                struct silofs_space_info **out_spi)
 {
-	return silofs_fetch_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+	int err;
+
+	err = silofs_fetch_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+	if (err) {
+		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
+		        (int)ref_vaddr->vtype, ref_vaddr->off, err);
+	}
+	return err;
 }
 
 static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
@@ -73,23 +80,19 @@ static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
 	return silofs_require_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
-static int vsc_claim_free_vspace_by_vspmaps(struct silofs_vspace_ctx *vs_ctx,
-                                            struct silofs_vaddr *out_vaddr)
+static int vsc_claim_free_vspace_by_fvsqs(struct silofs_vspace_ctx *vs_ctx,
+                                          struct silofs_vaddr *out_vaddr)
 {
 	struct silofs_vspace_ref vspref;
 	struct silofs_space_info *spi = nullptr;
-	struct silofs_vspmaps *vspms  = vs_ctx->pexec->vspmaps;
+	struct silofs_freevsqs *fvsqs = vs_ctx->pexec->fvsqs;
 	int err;
 
-	err = silofs_vspmaps_pull(vspms, vs_ctx->vtype, out_vaddr);
+	err = silofs_freevsqs_pull(fvsqs, vs_ctx->vtype, out_vaddr);
 	return_if_err(err);
 
 	err = vsc_stage_spnode_of(vs_ctx, out_vaddr, &spi);
-	if (err) {
-		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
-		        (int)out_vaddr->vtype, out_vaddr->off, err);
-		return err;
-	}
+	return_if_err(err);
 
 	silofs_spi_vspace_ref(spi, out_vaddr, &vspref);
 	if (vspref.refcnt > 0) {
@@ -157,7 +160,7 @@ static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	int ret;
 
 	/* fast: try to allocated from in-memory pool of free vspace */
-	ret = vsc_claim_free_vspace_by_vspmaps(vs_ctx, out_vaddr);
+	ret = vsc_claim_free_vspace_by_fvsqs(vs_ctx, out_vaddr);
 	if (ret != 0) {
 		/* slow: try to allocate using space-mapping nodes */
 		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_vaddr);

@@ -53,7 +53,7 @@ struct silofs_env_inst {
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
 	struct silofs_lcache lcache;
-	struct silofs_vspmaps vspmaps;
+	struct silofs_freevsqs fvsqs;
 	struct silofs_spamaps spamaps;
 	struct silofs_idsmap idsmap;
 	struct silofs_submitq submitq;
@@ -373,11 +373,11 @@ static void envi_fini_lcache(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_vspmaps(struct silofs_env_inst *envi)
+static int envi_init_fvsqs(struct silofs_env_inst *envi)
 {
 	int err;
 
-	err = silofs_vspmaps_init(&envi->vspmaps, envi->alloc);
+	err = silofs_freevsqs_init(&envi->fvsqs, envi->alloc);
 	if (err) {
 		return err;
 	}
@@ -385,10 +385,10 @@ static int envi_init_vspmaps(struct silofs_env_inst *envi)
 	return 0;
 }
 
-static void envi_fini_vspmaps(struct silofs_env_inst *envi)
+static void envi_fini_fvsqs(struct silofs_env_inst *envi)
 {
 	if (envi->initf & SILOFS_ENVIF_VSPMAPS) {
-		silofs_vspmaps_fini(&envi->vspmaps);
+		silofs_freevsqs_fini(&envi->fvsqs);
 		envi->initf &= ~SILOFS_ENVIF_VSPMAPS;
 	}
 }
@@ -486,7 +486,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.dstor   = &envi->repo.re_dstor,
 		.pcache  = &envi->pcache,
 		.lcache  = &envi->lcache,
-		.vspmaps = &envi->vspmaps,
+		.fvsqs   = &envi->fvsqs,
 		.spamaps = &envi->spamaps,
 		.submitq = &envi->submitq,
 		.flusher = &envi->flusher,
@@ -543,7 +543,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_flusher(envi);
 	envi_fini_submitq(envi);
 	envi_fini_spamaps(envi);
-	envi_fini_vspmaps(envi);
+	envi_fini_fvsqs(envi);
 	envi_fini_lcache(envi);
 	envi_fini_pcache(envi);
 	envi_fini_repo(envi);
@@ -581,7 +581,7 @@ static int envi_init(struct silofs_env_inst *envi, size_t memwant,
 	if (err) {
 		goto out_err;
 	}
-	err = envi_init_vspmaps(envi);
+	err = envi_init_fvsqs(envi);
 	if (err) {
 		goto out_err;
 	}

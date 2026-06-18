@@ -841,4 +841,55 @@ void silofs_vcache_rebind_vnode(struct silofs_vcache     *vcache,
 void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
                                  struct silofs_cache_stats  *out_cstats);
 
-#endif /* SILOFS_CACHE_H_ */
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* freesq */
+
+/* vspace address span */
+struct silofs_vspan {
+	off_t  off;
+	size_t len;
+};
+
+/* vspace mapping range entry in AVL tree */
+struct silofs_vsp_entry {
+	struct silofs_avl_node vspe_an;
+	struct silofs_vspan    vspe_span;
+};
+
+/* free vspace addresses array */
+struct silofs_freevs_arr {
+	struct silofs_vspan fva[128];
+	uint32_t            fva_count;
+	uint32_t            fva_objsz;
+};
+
+/* in-memory queue of free vspace addresses by vtype */
+struct silofs_freevsq {
+	struct silofs_freevs_arr fvs_arr;
+	struct silofs_avl        fvs_avl;
+	struct silofs_alloc     *fvs_alloc;
+};
+
+/* in-memory queue of free vspace addresses */
+struct silofs_freevsqs {
+	struct silofs_freevsq fvsq[SILOFS_VTYPE_LAST - 1];
+};
+
+int silofs_freevsqs_init(struct silofs_freevsqs *fvsqs,
+                         struct silofs_alloc    *alloc);
+
+void silofs_freevsqs_fini(struct silofs_freevsqs *fvsqs);
+
+int silofs_freevsqs_push(struct silofs_freevsqs    *fvsqs,
+                         const struct silofs_vaddr *vaddr);
+
+int silofs_freevsqs_pull(struct silofs_freevsqs *fvsqs,
+                         enum silofs_vtype       vtype,
+                         struct silofs_vaddr    *out_vaddr);
+
+int silofs_freevsqs_base(const struct silofs_freevsqs *fvsqs,
+                         enum silofs_vtype vtype, off_t off, off_t *out_base);
+
+void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs);
+
+#endif /* SILOFS_NODES_H_ */

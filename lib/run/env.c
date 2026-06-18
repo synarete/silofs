@@ -550,7 +550,7 @@ int silofs_env_reload_sb_lseg(struct silofs_env *env)
 
 void silofs_env_drop_caches(struct silofs_env *env)
 {
-	silofs_vspmaps_drop(env->base.vspmaps);
+	silofs_freevsqs_drop(env->base.fvsqs);
 	silofs_spamaps_drop(env->base.spamaps);
 	silofs_lcache_drop(env->base.lcache);
 	silofs_pcache_drop(env->base.pcache);

@@ -420,56 +420,6 @@ void silofs_spi_clone_from(struct silofs_space_info       *spi,
 int silofs_verify_space_node(const struct silofs_space_node *spn);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* vspmap */
-
-/* vspace address span */
-struct silofs_vspan {
-	off_t  off;
-	size_t len;
-};
-
-/* queue of previously-allocated now-free vspace addresses */
-struct silofs_vsp_queue {
-	struct silofs_vspan vsq[64];
-	uint32_t            vsq_count;
-	uint32_t            vsq_objsz;
-};
-
-/* vspace mapping range entry in AVL tree */
-struct silofs_vsp_entry {
-	struct silofs_avl_node vspe_an;
-	struct silofs_vspan    vspe_span;
-};
-
-/* vspace free addresses in-memory mapping */
-struct silofs_vspmap {
-	struct silofs_vsp_queue vspq;
-	struct silofs_avl       avl;
-	struct silofs_alloc    *alloc;
-};
-
-/* vspace free addresses by vtype */
-struct silofs_vspmaps {
-	struct silofs_vspmap vspm[SILOFS_VTYPE_LAST - 1];
-};
-
-int silofs_vspmaps_init(struct silofs_vspmaps *vspms,
-                        struct silofs_alloc   *alloc);
-
-void silofs_vspmaps_fini(struct silofs_vspmaps *vspms);
-
-int silofs_vspmaps_push(struct silofs_vspmaps     *vspms,
-                        const struct silofs_vaddr *vaddr);
-
-int silofs_vspmaps_pull(struct silofs_vspmaps *vspms, enum silofs_vtype vtype,
-                        struct silofs_vaddr *out_vaddr);
-
-int silofs_vspmaps_base(const struct silofs_vspmaps *vspms,
-                        enum silofs_vtype vtype, off_t off, off_t *out_base);
-
-void silofs_vspmaps_drop(struct silofs_vspmaps *vspms);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* pv-layer execution-context */
 struct silofs_pexec_ctx {
@@ -478,7 +428,7 @@ struct silofs_pexec_ctx {
 	struct silofs_dstor      *dstor;
 	struct silofs_pcache     *pcache;
 	struct silofs_vcache     *vcache;
-	struct silofs_vspmaps    *vspmaps;
+	struct silofs_freevsqs   *fvsqs;
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd  *enc_ci_hd;
 	struct silofs_cipher_hd  *dec_ci_hd;

@@ -145,7 +145,7 @@ int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
 static void retain_free_vspace(struct silofs_pexec_ctx *pexec,
                                const struct silofs_vaddr *vaddr)
 {
-	silofs_vspmaps_push(pexec->vspmaps, vaddr);
+	silofs_freevsqs_push(pexec->fvsqs, vaddr);
 }
 
 static int incref_used_vspace(struct silofs_pexec_ctx *pexec,

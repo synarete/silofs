@@ -73,6 +73,7 @@ libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/uidgid.c
 libsilofs_la_SOURCES += addr/vaddr.c
 libsilofs_la_SOURCES += nodes/dirtyq.c
+libsilofs_la_SOURCES += nodes/freesq.c
 libsilofs_la_SOURCES += nodes/hmapq.c
 libsilofs_la_SOURCES += nodes/nodeview.c
 libsilofs_la_SOURCES += nodes/pcache.c

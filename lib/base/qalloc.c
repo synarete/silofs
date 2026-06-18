@@ -424,7 +424,9 @@ static void qpool_init_page_infos(struct silofs_qpool *qpool)
 
 		qpg  = qpool_page_at(qpool, i);
 		qpgi = qpool_page_info_at(qpool, i);
-		qpgi_init(qpgi, qpg, i);
+		if (silofs_likely(qpgi != nullptr)) { /* make gcc happy */
+			qpgi_init(qpgi, qpg, i);
+		}
 	}
 	qpgi = qpool_page_info_at(qpool, 0);
 	qpool_add_free(qpool, qpgi, nullptr, qpool->npgs_max);

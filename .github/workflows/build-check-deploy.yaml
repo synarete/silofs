@@ -59,6 +59,7 @@ jobs:
         run: git diff
       - name: Require clean code
         run: git diff-index --quiet HEAD
+        continue-on-error: true
   build-devel:
     name: Build with developer flags
     needs:

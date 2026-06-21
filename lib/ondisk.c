@@ -310,6 +310,24 @@ static void validate_ondisk_space_node(void)
 	REQUIRE_SIZEOF_4K(struct silofs_space_node);
 }
 
+static void validate_ondisk_super_node(void)
+{
+	REQUIRE_OFFSET64(struct silofs_super_node, s_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_magic, 32);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_version, 40);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_flags, 48);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_major, 64);
+	REQUIRE_OFFSET32(struct silofs_super_node, s_sw_minor, 68);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_release, 72);
+	REQUIRE_OFFSET32(struct silofs_super_node, s_sw_reserved, 76);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_version, 80);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_btime, 128);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_volume_size, 256);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_nodes_count, 264);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_reserved3, 1024);
+	REQUIRE_SIZEOF_4K(struct silofs_super_node);
+}
+
 static void validate_ondisk_super(void)
 {
 	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
@@ -495,6 +513,7 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_btree_node();
 	validate_ondisk_blob_desc();
 	validate_ondisk_space_node();
+	validate_ondisk_super_node();
 	validate_ondisk_super();
 	validate_ondisk_lsmap();
 	validate_ondisk_inode();

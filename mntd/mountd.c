@@ -186,8 +186,6 @@ static void mountd_require_cap_sys_admin(const struct mountd_ctx *ctx)
 	pid_t pid;
 	int ern, err;
 
-	errno = 0;
-
 	pid = getpid();
 	cap = cap_get_pid(pid);
 	if (cap == nullptr) {

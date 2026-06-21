@@ -829,6 +829,27 @@ struct silofs_lsmap {
 	uint8_t                 lsm_reserved3[57344];
 } silofs_attr_aligned64;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_super_node {
+	struct silofs_header s_hdr;
+	uint8_t              s_reserved0[16];
+	uint64_t             s_magic;
+	uint64_t             s_version;
+	uint64_t             s_flags;
+	uint8_t              s_reserved1[8];
+	uint32_t             s_sw_major;
+	uint32_t             s_sw_minor;
+	uint32_t             s_sw_release;
+	uint32_t             s_sw_reserved;
+	uint8_t              s_sw_version[48];
+	struct silofs_tm64b  s_btime;
+	uint8_t              s_reserved2[64];
+	uint64_t             s_volume_size;
+	uint64_t             s_nodes_count[95];
+	uint8_t              s_reserved3[3072];
+} silofs_attr_aligned64;
+
 struct silofs_inode_times {
 	struct silofs_timespec btime;
 	struct silofs_timespec atime;

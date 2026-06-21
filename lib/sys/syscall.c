@@ -749,7 +749,6 @@ int silofs_sys_getdents(int dfd, void *buf, size_t bsz, struct dirent64 *dents,
 	struct dirent64 *dent               = dents;
 	struct dirent64 *end                = dents + ndents;
 
-	errno = 0;
 	if (!ndents || (bsz < sizeof(*dents))) {
 		return -EINVAL;
 	}

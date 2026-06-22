@@ -125,7 +125,7 @@ silofs_attr_noreturn static void ut_show_help_and_exit(void)
 
 silofs_attr_noreturn static void ut_show_version_and_exit(void)
 {
-	printf("%s %s\n", ut_globals.program, silofs_version.string);
+	printf("%s %s\n", ut_globals.program, silofs_sw_version_string);
 	exit(EXIT_SUCCESS);
 }
 

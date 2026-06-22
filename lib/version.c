@@ -48,14 +48,11 @@
 #define SILOFS_VERSION_STRING_FULL \
 	SILOFS_VERSION_STRING "-" SILOFS_RELEASE "." SILOFS_REVISION
 
-const struct silofs_version silofs_version = {
-	.string   = SILOFS_VERSION_STRING_FULL,
+const struct silofs_sw_version silofs_sw_vers = {
 	.major    = SILOFS_VERSION_MAJOR,
 	.minor    = SILOFS_VERSION_MINOR,
-	.sublevel = SILOFS_VERSION_SUBLEVEL
+	.sublevel = SILOFS_VERSION_SUBLEVEL,
+	.revision = SILOFS_REVISION,
 };
 
-const struct silofs_version *silofs_get_version1(void)
-{
-	return &silofs_version;
-}
+const char *silofs_sw_version_string = SILOFS_VERSION_STRING_FULL;

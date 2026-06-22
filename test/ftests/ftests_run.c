@@ -312,7 +312,7 @@ static void fte_meta(const struct ft_env *fte, int start)
 {
 	if (!fte->params.listtests) {
 		silofs_log_info("%s: %s", start ? "start" : "done",
-		                silofs_version.string);
+		                silofs_sw_version_string);
 	}
 }
 

@@ -2223,10 +2223,10 @@ static void fill_query_version(struct silofs_ioc_query *query)
 	struct silofs_strview s = { .str = nullptr };
 	const size_t bsz        = sizeof(query->u.version.string);
 
-	silofs_strview_init(&s, silofs_version.string);
-	query->u.version.major    = silofs_version.major;
-	query->u.version.minor    = silofs_version.minor;
-	query->u.version.sublevel = silofs_version.sublevel;
+	silofs_strview_init(&s, silofs_sw_version_string);
+	query->u.version.major    = silofs_sw_vers.major;
+	query->u.version.minor    = silofs_sw_vers.minor;
+	query->u.version.sublevel = silofs_sw_vers.sublevel;
 	str_to_buf(&s, query->u.version.string, bsz);
 }
 

@@ -379,7 +379,7 @@ sb_init(struct silofs_super_block *sb, const struct silofs_blobid *blobid)
 	sb_set_magic(sb, SILOFS_SUPER_MAGIC);
 	sb_set_version(sb, SILOFS_FMT_VERSION);
 	sb_set_flags(sb, SILOFS_SUPERF_NONE);
-	sb_set_swversion(sb, silofs_version.string);
+	sb_set_swversion(sb, silofs_sw_version_string);
 	sb_set_lv_ids(sb, blobid);
 	sb->sb_endianness = SILOFS_ENDIANNESS_LE;
 	sb_reset_sproots(sb);

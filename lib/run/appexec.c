@@ -1058,7 +1058,7 @@ out:
 
 void silofs_getversions(struct silofs_versions *out_vers)
 {
-	out_vers->silofs_version = silofs_version.string;
+	out_vers->silofs_version = silofs_sw_version_string;
 	out_vers->gcrypt_version = silofs_gcrypt_version();
 	out_vers->zstd_version   = silofs_zstd_version();
 }

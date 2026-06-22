@@ -442,7 +442,7 @@ silofs_attr_noreturn static void mountd_show_usage(void)
 
 silofs_attr_noreturn static void mountd_show_version(void)
 {
-	printf("%s\n", silofs_version.string);
+	printf("%s\n", silofs_sw_version_string);
 	mountd_goodbye();
 }
 

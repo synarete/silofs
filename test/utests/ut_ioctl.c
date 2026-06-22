@@ -27,10 +27,10 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query(ute, dino, SILOFS_QUERY_VERSION, &query);
-	ut_expect_eq(query.u.version.major, silofs_version.major);
+	ut_expect_eq(query.u.version.major, silofs_sw_vers.major);
 	ut_create_file(ute, dino, name, &ino);
 	ut_query(ute, ino, SILOFS_QUERY_VERSION, &query);
-	ut_expect_eq(query.u.version.minor, silofs_version.minor);
+	ut_expect_eq(query.u.version.minor, silofs_sw_vers.minor);
 	ut_remove_file(ute, dino, name, ino);
 	ut_rmdir_at_root(ute, name);
 }
@@ -133,7 +133,7 @@ ut_query_boot(struct ut_env *ute, ino_t ino, struct silofs_ioc_query *ioc_qry)
 
 static void ut_expect_boot_fsref(const struct silofs_fsref *fsref)
 {
-	ut_expect_eqs(fsref->fsmeta.version, silofs_version.string);
+	ut_expect_eqs(fsref->fsmeta.version, silofs_sw_version_string);
 	ut_expect_eq(fsref->fsmeta.fmtvers, SILOFS_FMT_VERSION);
 	ut_expect_gt(fsref->fsmeta.timestamp, 0);
 	ut_expect_gt(strlen(fsref->mbaddr.mba), 0);

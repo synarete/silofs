@@ -17,15 +17,16 @@
 #ifndef SILOFS_VERSION_H_
 #define SILOFS_VERSION_H_
 
-struct silofs_version {
-	const char  *string;
+struct silofs_sw_version {
+	char         revision[48];
+	unsigned int pad_;
 	unsigned int major;
 	unsigned int minor;
 	unsigned int sublevel;
 };
 
-extern const struct silofs_version silofs_version;
+extern const struct silofs_sw_version silofs_sw_vers;
 
-const struct silofs_version *silofs_get_version1(void);
+extern const char *silofs_sw_version_string;
 
 #endif /* SILOFS_VERSION_H_ */

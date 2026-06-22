@@ -388,8 +388,8 @@ static void mntmsg_init(struct silofs_mntmsg *mmsg, enum silofs_mntcmd cmd)
 	silofs_memzero(mmsg, sizeof(*mmsg));
 	mntmsg_set_status(mmsg, 0);
 	mmsg->mn_magic         = SILOFS_META_MAGIC;
-	mmsg->mn_version_major = (uint16_t)silofs_version.major;
-	mmsg->mn_version_minor = (uint16_t)silofs_version.minor;
+	mmsg->mn_version_major = (uint16_t)silofs_sw_vers.major;
+	mmsg->mn_version_minor = (uint16_t)silofs_sw_vers.minor;
 	mmsg->mn_cmd           = (uint32_t)cmd;
 }
 
@@ -480,10 +480,10 @@ static int mntmsg_check(const struct silofs_mntmsg *mmsg)
 	if (mmsg->mn_magic != SILOFS_META_MAGIC) {
 		return -SILOFS_EINVAL;
 	}
-	if (mmsg->mn_version_major != silofs_version.major) {
+	if (mmsg->mn_version_major != silofs_sw_vers.major) {
 		return -SILOFS_EPROTO;
 	}
-	if (mmsg->mn_version_minor > silofs_version.minor) {
+	if (mmsg->mn_version_minor > silofs_sw_vers.minor) {
 		return -SILOFS_EPROTO;
 	}
 	switch (mntmsg_cmd(mmsg)) {

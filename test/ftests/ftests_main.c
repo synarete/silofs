@@ -370,5 +370,5 @@ static void ft_show_program_version(void)
 {
 	const char *progname = program_invocation_short_name;
 
-	printf("%s %s\n", progname, silofs_version.string);
+	printf("%s %s\n", progname, silofs_sw_version_string);
 }

@@ -36,7 +36,8 @@
 #define STATICASSERT_LE(a_, b_)     SILOFS_STATICASSERT_LE(a_, b_)
 #define STATICASSERT_GT(a_, b_)     SILOFS_STATICASSERT_GT(a_, b_)
 #define STATICASSERT_GE(a_, b_)     SILOFS_STATICASSERT_GE(a_, b_)
-#define STATICASSERT_SIZEOF(t_, s_) SILOFS_STATICASSERT_EQ(sizeof(t_), s_)
+#define STATICASSERT_EQ_SIZEOF(a_, b_) \
+	SILOFS_STATICASSERT_EQ(sizeof(a_), sizeof(b_))
 
 #define ARRAY_SIZE(x)          SILOFS_ARRAY_SIZE(x)
 #define mut_container_of(p, t, m)  silofs_mut_container_of(p, t, m)

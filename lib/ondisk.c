@@ -153,6 +153,7 @@ static void validate_ondisk_defs(void)
 static void validate_ondisk_base_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_name, SILOFS_NAME_MAX + 1);
+	REQUIRE_SIZEOF(struct silofs_sw_version64b, 64);
 	REQUIRE_SIZEOF(struct silofs_tm64b, 64);
 	REQUIRE_SIZEOF(struct silofs_timespec, 16);
 	REQUIRE_SIZEOF(struct silofs_hash128, 16);
@@ -316,11 +317,7 @@ static void validate_ondisk_super_node(void)
 	REQUIRE_OFFSET64(struct silofs_super_node, s_magic, 32);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_version, 40);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_flags, 48);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_major, 64);
-	REQUIRE_OFFSET32(struct silofs_super_node, s_sw_minor, 68);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_release, 72);
-	REQUIRE_OFFSET32(struct silofs_super_node, s_sw_reserved, 76);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_version, 80);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_version, 64);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_btime, 128);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_volume_size, 256);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_nodes_count, 264);

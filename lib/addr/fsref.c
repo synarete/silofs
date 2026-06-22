@@ -21,7 +21,7 @@
 
 void silofs_fsmeta_setup(struct silofs_fsmeta *fsmeta)
 {
-	const char *version = silofs_version.string;
+	const char *version = silofs_sw_version_string;
 
 	silofs_memzero(fsmeta, sizeof(*fsmeta));
 	strlcpy(fsmeta->version, version, sizeof(fsmeta->version));

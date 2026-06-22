@@ -93,7 +93,7 @@ static void cmd_setup_globals(int argc, char *argv[])
 
 	SILOFS_STATICASSERT_LT(sizeof(cmd_global_params), 1024);
 
-	cmd_global_params.version             = silofs_version.string;
+	cmd_global_params.version             = silofs_sw_version_string;
 	cmd_global_params.name                = program_invocation_short_name;
 	cmd_global_params.prog                = program_invocation_name;
 	cmd_global_params.argc                = argc;

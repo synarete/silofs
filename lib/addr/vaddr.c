@@ -118,7 +118,7 @@ void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
 
 	// All sorts of hidden assumptions here. FIXME: document and clean up.
 	STATICASSERT_EQ(SILOFS_VTYPE_INODE, 6);
-	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K - SILOFS_VTYPE_INODE + 1, 9);
+	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K - SILOFS_VTYPE_INODE + 1, 10);
 	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K + 1, SILOFS_VTYPE_LAST);
 	STATICASSERT_EQ(sizeof(struct silofs_lsmap), SILOFS_LBK_SIZE);
 

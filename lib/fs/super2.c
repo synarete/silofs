@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <inttypes.h>
 
 #include <silofs/version.h>
 #include <silofs/base.h>
@@ -78,7 +79,7 @@ static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static inline uint64_t sun_magic(const struct silofs_super_node *sun)
+static uint64_t sun_magic(const struct silofs_super_node *sun)
 {
 	return silofs_le64_to_cpu(sun->s_magic);
 }
@@ -88,7 +89,7 @@ static void sun_set_magic(struct silofs_super_node *sun, uint64_t magic)
 	sun->s_magic = silofs_cpu_to_le64(magic);
 }
 
-static inline uint64_t sun_version(const struct silofs_super_node *sun)
+static uint64_t sun_version(const struct silofs_super_node *sun)
 {
 	return silofs_le64_to_cpu(sun->s_version);
 }
@@ -135,18 +136,17 @@ sun_set_btime(struct silofs_super_node *sun, const struct tm *tm)
 	tm64b_htox(&sun->s_btime, tm);
 }
 
-static inline size_t sun_volume_size(const struct silofs_super_node *sun)
+static size_t sun_fs_capacity(const struct silofs_super_node *sun)
 {
-	return silofs_le64_to_cpu(sun->s_volume_size);
+	return silofs_le64_to_cpu(sun->s_fs_capacity);
 }
 
-static inline void
-sun_set_volume_size(struct silofs_super_node *sun, size_t nbytes)
+static void sun_set_fs_capacity(struct silofs_super_node *sun, size_t nbytes)
 {
-	sun->s_volume_size = silofs_cpu_to_le64(nbytes);
+	sun->s_fs_capacity = silofs_cpu_to_le64(nbytes);
 }
 
-static inline size_t
+static size_t
 sun_nodes_count_at(const struct silofs_super_node *sun, size_t slot)
 {
 	silofs_assert_lt(slot, ARRAY_SIZE(sun->s_nodes_count));
@@ -206,7 +206,60 @@ static inline void sun_init(struct silofs_super_node *sun)
 	sun_set_version(sun, SILOFS_FMT_VERSION);
 	sun_set_flags(sun, SILOFS_SUPERF_NONE);
 	sun_set_sw_version(sun, &silofs_sw_vers);
+	sun_set_fs_capacity(sun, SILOFS_CAPACITY_SIZE_MIN);
 	sun_reset_nodes_count(sun);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int verify_super_magic(const struct silofs_super_node *sun)
+{
+	const uint64_t magic = sun_magic(sun);
+
+	if (magic != SILOFS_SUPER_MAGIC) {
+		log_err("bad super: magic=%" PRIx64, magic);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int verify_super_version(const struct silofs_super_node *sun)
+{
+	const uint64_t vers = sun_version(sun);
+
+	if (vers != SILOFS_FMT_VERSION) {
+		log_err("bad super: version=%" PRIx64, vers);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int verify_super_fs_capacity(const struct silofs_super_node *sun)
+{
+	const size_t fs_capacity = sun_fs_capacity(sun);
+
+	if ((fs_capacity < SILOFS_CAPACITY_SIZE_MIN) ||
+	    (fs_capacity > SILOFS_CAPACITY_SIZE_MAX)) {
+		log_err("bad super: fs_capacity=%zu", fs_capacity);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+int silofs_verify_super_node(const struct silofs_super_node *sun)
+{
+	int err;
+
+	err = verify_super_magic(sun);
+	return_if_err(err);
+
+	err = verify_super_version(sun);
+	return_if_err(err);
+
+	err = verify_super_fs_capacity(sun);
+	return_if_err(err);
+
+	return err;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

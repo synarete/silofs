@@ -264,6 +264,9 @@ static int format_spmaps(struct silofs_task_ctx *task)
 		if (vtype == SILOFS_VTYPE_SPNODE2) {
 			continue;
 		}
+		if (vtype == SILOFS_VTYPE_SUPER2) {
+			continue;
+		}
 		err = format_spmaps_of(task, vtype);
 		if (err) {
 			return err;

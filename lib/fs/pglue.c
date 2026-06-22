@@ -46,6 +46,9 @@ static int verify_lview_of(const struct silofs_lview *lview,
 	case SILOFS_VTYPE_SPNODE2:
 		ret = silofs_verify_space_node(&lview->u.spn);
 		break;
+	case SILOFS_VTYPE_SUPER2:
+		ret = silofs_verify_super_node(&lview->u.sun);
+		break;
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:

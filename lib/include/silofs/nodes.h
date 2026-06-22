@@ -587,6 +587,12 @@ struct silofs_vnode_info {
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
 
+/* super node */
+struct silofs_super_info {
+	struct silofs_vnode_info  sun_vni;
+	struct silofs_super_node *sun;
+};
+
 /* space allocation node */
 struct silofs_space_info {
 	struct silofs_vnode_info  spn_vni;

@@ -128,6 +128,7 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 		ret = &spgs256->sg_ndata64k;
 		break;
 	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SUPER2:
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
@@ -349,6 +350,7 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		ret = &spgs->ndata64k;
 		break;
+	case SILOFS_VTYPE_SUPER2:
 	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_NONE:

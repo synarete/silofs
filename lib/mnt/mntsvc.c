@@ -651,8 +651,7 @@ static int do_unpack_fd(struct msghdr *mh, int *out_fd)
 {
 	struct cmsghdr *cmh;
 
-	*out_fd = -1;
-	cmh     = silofs_cmsg_firsthdr(mh);
+	cmh = silofs_cmsg_firsthdr(mh);
 	return (cmh != nullptr) ? silofs_cmsg_unpack_fd(cmh, out_fd) : 0;
 }
 
@@ -688,10 +687,15 @@ static int mntmsg_recv(const struct silofs_mntmsg *mmsg,
 	}
 
 	err = do_recvmsg(sock, &msg, want_fd);
-	if (!err && want_fd) {
+	return_if_err(err);
+
+	if (want_fd) {
+		*out_fd = -1;
+
 		err = do_unpack_fd(&msg, out_fd);
+		return_if_err(err);
 	}
-	return err;
+	return 0;
 }
 
 static int mntmsg_recv2(const struct silofs_mntmsg *mmsg,
@@ -1186,17 +1190,14 @@ static int mntsrv_open(struct silofs_mntsrv *msrv)
 	int err;
 
 	err = silofs_socket_open(sock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_socket_setkeepalive(sock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_socket_setnonblock(sock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1630,22 +1631,19 @@ static int mntclnt_umount(const struct silofs_mntclnt *mclnt,
 	int err;
 
 	*out_status = -SILOFS_ECOMM;
-	err         = mntmsg_umount(&mmsg, mntp);
-	if (err) {
-		return err;
-	}
+
+	err = mntmsg_umount(&mmsg, mntp);
+	return_if_err(err);
+
 	err = mntmsg_send(&mmsg, sock, -1);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_recv2(&mmsg, sock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_check(&mmsg);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_status = mntmsg_status(&mmsg);
 	return 0;
 }
@@ -1657,17 +1655,14 @@ static int do_rpc_mount(struct silofs_mntclnt *mclnt,
 	int status = -1;
 
 	err = mntclnt_connect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_mount(mclnt, mntp, &status, out_fd);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_disconnect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return status;
 }
 
@@ -1706,17 +1701,14 @@ static int do_rpc_umount(struct silofs_mntclnt *mclnt,
 	int status = -1;
 
 	err = mntclnt_connect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_umount(mclnt, mntp, &status);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_disconnect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return status;
 }
 
@@ -1746,17 +1738,14 @@ static int do_rpc_handshake(struct silofs_mntclnt *mclnt,
 	int status = -1;
 
 	err = mntclnt_connect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_handshake(mclnt, mntp, &status);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntclnt_disconnect(mclnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return status;
 }
 

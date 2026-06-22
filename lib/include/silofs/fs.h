@@ -182,6 +182,11 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                   bool                         *out_unwritten);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* super */
+
+int silofs_verify_super_node(const struct silofs_super_node *sun);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* inode */
 
 /* inode's attributes masks */

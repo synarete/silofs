@@ -178,9 +178,6 @@ int silofs_exec_walkfs(struct silofs_task_ctx            *task,
 
 int silofs_exec_unrefs(struct silofs_task_ctx *task);
 
-int silofs_exec_preserve(struct silofs_task_ctx *task,
-                         struct silofs_mbref    *out_ar_mbref);
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_exec_format_repo(struct silofs_task_ctx *task);

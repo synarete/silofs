@@ -26,11 +26,6 @@ static bool pnptr_isuber(const struct silofs_pnptr *pnptr)
 	return pnptr->paddr.blobid.stype.ptype == SILOFS_PTYPE_UBER;
 }
 
-static bool pnptr_isarix(const struct silofs_pnptr *pnptr)
-{
-	return pnptr->paddr.blobid.stype.vtype == SILOFS_VTYPE_ARIX;
-}
-
 static void mbr_meta_assign(struct silofs_mbr_meta *meta,
                             const struct silofs_mbr_meta *other)
 {
@@ -597,30 +592,12 @@ int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
 	return 0;
 }
 
-int silofs_mbi_arix_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pnptr *out_pnptr)
-{
-	const struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
-
-	if (mbi_mode(mbi) != SILOFS_MBR_AR) {
-		return -SILOFS_EMBRMODE;
-	}
-	mbr1k_root(mbr1k, out_pnptr);
-	if (!pnptr_isarix(out_pnptr)) {
-		return -SILOFS_ENOENT;
-	}
-	return 0;
-}
-
 int silofs_mbi_set_root(struct silofs_mbr_info *mbi,
                         const struct silofs_pnptr *pnptr)
 {
 	struct silofs_mbr1k *mbr1k = &mbi->mb_mbr1k;
 
 	if ((mbi_mode(mbi) == SILOFS_MBR_FS) && !pnptr_isuber(pnptr)) {
-		return -SILOFS_EMBRMODE;
-	}
-	if ((mbi_mode(mbi) == SILOFS_MBR_AR) && !pnptr_isarix(pnptr)) {
 		return -SILOFS_EMBRMODE;
 	}
 	mbr1k_set_root(mbr1k, pnptr);

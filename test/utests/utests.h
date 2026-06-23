@@ -34,7 +34,6 @@
 #include <silofs/snprintf.h>
 #include <silofs/api.h>
 #include <silofs/fs.h>
-#include <silofs/ar.h>
 #include <silofs/run.h>
 
 #ifndef SILOFS_UNITEST

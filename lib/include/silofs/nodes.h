@@ -522,7 +522,6 @@ struct silofs_lnode_info {
 struct silofs_unode_info {
 	struct silofs_lnode_info un_lni;
 	struct silofs_uaddr      un_uaddr;
-	uint64_t                 un_magic;
 };
 
 /* space accounting per sub-type */

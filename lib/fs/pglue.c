@@ -56,7 +56,6 @@ static int verify_lview_of(const struct silofs_lview *lview,
 		ret = 0;
 		break;
 	case SILOFS_VTYPE_NONE:
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:

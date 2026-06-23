@@ -76,10 +76,6 @@ int silofs_sync_fs(struct silofs_env *env, bool drop);
 
 int silofs_inspect_fs(struct silofs_env *env, bool show);
 
-int silofs_preserve_fs(struct silofs_env         *env,
-                       const struct silofs_fsref *fsref,
-                       struct silofs_fsref       *out_fsref);
-
 int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 
 #endif /* SILOFS_APPEXEC_H_ */

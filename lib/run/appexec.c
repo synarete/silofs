@@ -207,28 +207,6 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int appexec_preserve_fs(struct silofs_task_ctx *task,
-                               const struct silofs_mbref *fs_mbref,
-                               struct silofs_mbref *out_ar_mbref)
-{
-	int err;
-
-	err = silofs_exec_reload_pv(task, fs_mbref);
-	if (err) {
-		return err;
-	}
-	err = silofs_exec_reload_fs(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_exec_preserve(task, out_ar_mbref);
-	if (err) {
-		return err;
-	}
-	drop_caches(task);
-	return 0;
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_post_exec_fs(struct silofs_env *env)
@@ -778,57 +756,6 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 
 	silofs_env_lock(env);
 	err = exec_inspect_fs(env, &lvis);
-	silofs_env_unlock(env);
-	return err;
-}
-
-static int
-exec_preserve_fs(struct silofs_env *env, const struct silofs_mbref *fs_mbref,
-                 struct silofs_mbref *out_ar_mbref)
-{
-	struct silofs_task_ctx task;
-	int err;
-
-	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
-	err = silofs_exec_reload_repo(&task);
-	if (err) {
-		goto out;
-	}
-	err = appexec_preserve_fs(&task, fs_mbref, out_ar_mbref);
-out:
-	return term_task(&task, err);
-}
-
-static int
-do_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-               struct silofs_fsref *out_fsref)
-{
-	struct silofs_mbref mbref[2];
-	int err;
-
-	err = decode_fsref(fsref, &mbref[0]);
-	if (err) {
-		return err;
-	}
-	err = exec_preserve_fs(env, &mbref[0], &mbref[1]);
-	if (err) {
-		return err;
-	}
-	encode_fsref(&mbref[1], out_fsref);
-	return 0;
-}
-
-int silofs_preserve_fs(struct silofs_env *env,
-                       const struct silofs_fsref *fsref,
-                       struct silofs_fsref *out_fsref)
-{
-	int err;
-
-	silofs_env_lock(env);
-	err = do_preserve_fs(env, fsref, out_fsref);
 	silofs_env_unlock(env);
 	return err;
 }

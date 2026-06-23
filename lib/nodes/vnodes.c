@@ -21,18 +21,17 @@
 #include <silofs/nodes.h>
 
 enum {
-	SILOFS_UI_MAGIC = 0xCAFEBEB,
 	SILOFS_VI_MAGIC = 0xDEDFACE,
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void *memalloc_lni(struct silofs_alloc *alloc, size_t n)
+static void *malloc_node_info(struct silofs_alloc *alloc, size_t n)
 {
 	return silofs_memalloc(alloc, n, SILOFS_ALLOCF_BZERO);
 }
 
-static void memfree_lni(struct silofs_alloc *alloc, void *p, size_t n)
+static void mfree_node_info(struct silofs_alloc *alloc, void *p, size_t n)
 {
 	silofs_memfree(alloc, p, n, 0);
 }
@@ -230,7 +229,6 @@ uni_unconst(const struct silofs_unode_info *uni)
 static void uni_verify(const struct silofs_unode_info *uni)
 {
 	silofs_assume_not_null(uni);
-	silofs_assert_eq(uni->un_magic, SILOFS_UI_MAGIC);
 }
 
 static void
@@ -238,14 +236,12 @@ uni_init(struct silofs_unode_info *uni, const struct silofs_uaddr *uaddr)
 {
 	lni_init(&uni->un_lni, silofs_uaddr_vtype(uaddr));
 	silofs_uaddr_assign(&uni->un_uaddr, uaddr);
-	uni->un_magic = SILOFS_UI_MAGIC;
 }
 
 static void uni_fini(struct silofs_unode_info *uni)
 {
 	silofs_uaddr_reset(&uni->un_uaddr);
 	lni_fini(&uni->un_lni);
-	uni->un_magic = UINT64_MAX;
 }
 
 struct silofs_lview *silofs_uni_lview(const struct silofs_unode_info *uni)
@@ -576,13 +572,13 @@ static struct silofs_sb_info *sbi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_sb_info *sbi;
 
-	sbi = memalloc_lni(alloc, sizeof(*sbi));
+	sbi = malloc_node_info(alloc, sizeof(*sbi));
 	return sbi;
 }
 
 static void sbi_free(struct silofs_sb_info *sbi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, sbi, sizeof(*sbi));
+	mfree_node_info(alloc, sbi, sizeof(*sbi));
 }
 
 static struct silofs_sb_info *
@@ -684,14 +680,14 @@ static struct silofs_spnode_info *sni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spnode_info *sni;
 
-	sni = memalloc_lni(alloc, sizeof(*sni));
+	sni = malloc_node_info(alloc, sizeof(*sni));
 	return sni;
 }
 
 static void
 sni_free(struct silofs_spnode_info *sni, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, sni, sizeof(*sni));
+	mfree_node_info(alloc, sni, sizeof(*sni));
 }
 
 static struct silofs_spnode_info *
@@ -791,7 +787,7 @@ static struct silofs_spleaf_info *sli_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_spleaf_info *sli;
 
-	sli = memalloc_lni(alloc, sizeof(*sli));
+	sli = malloc_node_info(alloc, sizeof(*sli));
 	return sli;
 }
 
@@ -810,7 +806,7 @@ sli_malloc_init(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 static void
 sli_free(struct silofs_spleaf_info *sli, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, sli, sizeof(*sli));
+	mfree_node_info(alloc, sli, sizeof(*sli));
 }
 
 static void
@@ -897,13 +893,13 @@ static struct silofs_super_info *sui_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_super_info *sui;
 
-	sui = memalloc_lni(alloc, sizeof(*sui));
+	sui = malloc_node_info(alloc, sizeof(*sui));
 	return sui;
 }
 
 static void sui_free(struct silofs_super_info *sui, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, sui, sizeof(*sui));
+	mfree_node_info(alloc, sui, sizeof(*sui));
 }
 
 static struct silofs_super_info *
@@ -1005,13 +1001,13 @@ static struct silofs_space_info *spi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_space_info *spi;
 
-	spi = memalloc_lni(alloc, sizeof(*spi));
+	spi = malloc_node_info(alloc, sizeof(*spi));
 	return spi;
 }
 
 static void spi_free(struct silofs_space_info *spi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, spi, sizeof(*spi));
+	mfree_node_info(alloc, spi, sizeof(*spi));
 }
 
 static struct silofs_space_info *
@@ -1109,13 +1105,13 @@ static struct silofs_lsmap_info *lsi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_lsmap_info *lsi;
 
-	lsi = memalloc_lni(alloc, sizeof(*lsi));
+	lsi = malloc_node_info(alloc, sizeof(*lsi));
 	return lsi;
 }
 
 static void lsi_free(struct silofs_lsmap_info *lsi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, lsi, sizeof(*lsi));
+	mfree_node_info(alloc, lsi, sizeof(*lsi));
 }
 
 static struct silofs_lsmap_info *
@@ -1224,13 +1220,13 @@ static struct silofs_inode_info *ii_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_inode_info *ii;
 
-	ii = memalloc_lni(alloc, sizeof(*ii));
+	ii = malloc_node_info(alloc, sizeof(*ii));
 	return ii;
 }
 
 static void ii_free(struct silofs_inode_info *ii, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, ii, sizeof(*ii));
+	mfree_node_info(alloc, ii, sizeof(*ii));
 }
 
 static struct silofs_inode_info *
@@ -1351,7 +1347,7 @@ static struct silofs_xanode_info *xai_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_xanode_info *xai;
 
-	xai = memalloc_lni(alloc, sizeof(*xai));
+	xai = malloc_node_info(alloc, sizeof(*xai));
 	return xai;
 }
 
@@ -1370,7 +1366,7 @@ xai_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 static void
 xai_free(struct silofs_xanode_info *xai, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, xai, sizeof(*xai));
+	mfree_node_info(alloc, xai, sizeof(*xai));
 }
 
 static void
@@ -1460,14 +1456,14 @@ static struct silofs_symval_info *svi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_symval_info *syi;
 
-	syi = memalloc_lni(alloc, sizeof(*syi));
+	syi = malloc_node_info(alloc, sizeof(*syi));
 	return syi;
 }
 
 static void
 svi_free(struct silofs_symval_info *svi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, svi, sizeof(*svi));
+	mfree_node_info(alloc, svi, sizeof(*svi));
 }
 
 static void
@@ -1567,14 +1563,14 @@ static struct silofs_dtnode_info *dni_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_dtnode_info *dni;
 
-	dni = memalloc_lni(alloc, sizeof(*dni));
+	dni = malloc_node_info(alloc, sizeof(*dni));
 	return dni;
 }
 
 static void
 dni_free(struct silofs_dtnode_info *dni, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, dni, sizeof(*dni));
+	mfree_node_info(alloc, dni, sizeof(*dni));
 }
 
 static struct silofs_dtnode_info *
@@ -1676,14 +1672,14 @@ static struct silofs_ftnode_info *fti_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_ftnode_info *fti;
 
-	fti = memalloc_lni(alloc, sizeof(*fti));
+	fti = malloc_node_info(alloc, sizeof(*fti));
 	return fti;
 }
 
 static void
 fti_free(struct silofs_ftnode_info *fti, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, fti, sizeof(*fti));
+	mfree_node_info(alloc, fti, sizeof(*fti));
 }
 
 static struct silofs_ftnode_info *
@@ -1785,14 +1781,14 @@ static struct silofs_fdnode_info *fdi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_fdnode_info *fdi;
 
-	fdi = memalloc_lni(alloc, sizeof(*fdi));
+	fdi = malloc_node_info(alloc, sizeof(*fdi));
 	return fdi;
 }
 
 static void
 fdi_free(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 {
-	memfree_lni(alloc, fdi, sizeof(*fdi));
+	mfree_node_info(alloc, fdi, sizeof(*fdi));
 }
 
 static struct silofs_fdnode_info *
@@ -1892,7 +1888,6 @@ silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr)
 	case SILOFS_VTYPE_SPLEAF:
 		uni = sli_to_uni(sli_new(alloc, uaddr));
 		break;
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_INODE:
 	case SILOFS_VTYPE_XANODE:
@@ -1928,7 +1923,6 @@ void silofs_del_unode(struct silofs_unode_info *uni,
 	case SILOFS_VTYPE_SPLEAF:
 		sli_del(sli_from_uni(uni), alloc);
 		break;
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_INODE:
 	case SILOFS_VTYPE_XANODE:
@@ -1986,7 +1980,6 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	case SILOFS_VTYPE_DATA64K:
 		vni = fdi_to_vni(fdi_new(alloc, vaddr));
 		break;
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:
@@ -2034,7 +2027,6 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	case SILOFS_VTYPE_DATA64K:
 		fdi_del(fdi_from_vni(vni), alloc);
 		break;
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_SUPER:
 	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_SPLEAF:

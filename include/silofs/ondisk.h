@@ -305,7 +305,6 @@
 enum silofs_mbr_mode {
 	SILOFS_MBR_NONE = 0,
 	SILOFS_MBR_FS   = 1,
-	SILOFS_MBR_AR   = 2,
 };
 
 /* meta-header flags */
@@ -336,22 +335,21 @@ enum silofs_ptype {
 /* v-elements sub-types */
 enum silofs_vtype {
 	SILOFS_VTYPE_NONE    = 0,
-	SILOFS_VTYPE_ARIX    = 1,
-	SILOFS_VTYPE_SUPER   = 2,
-	SILOFS_VTYPE_SPNODE  = 3,
-	SILOFS_VTYPE_SPLEAF  = 4,
-	SILOFS_VTYPE_LSMAP   = 5,
-	SILOFS_VTYPE_INODE   = 6,
-	SILOFS_VTYPE_XANODE  = 7,
-	SILOFS_VTYPE_SYMVAL  = 8,
-	SILOFS_VTYPE_DTNODE  = 9,
-	SILOFS_VTYPE_FTNODE  = 10,
-	SILOFS_VTYPE_SPNODE2 = 11,
-	SILOFS_VTYPE_SUPER2  = 12,
-	SILOFS_VTYPE_DATA1K  = 13,
-	SILOFS_VTYPE_DATA4K  = 14,
-	SILOFS_VTYPE_DATA64K = 15,
-	SILOFS_VTYPE_LAST    = 16, /* keep last */
+	SILOFS_VTYPE_SUPER   = 1,
+	SILOFS_VTYPE_SPNODE  = 2,
+	SILOFS_VTYPE_SPLEAF  = 3,
+	SILOFS_VTYPE_LSMAP   = 4,
+	SILOFS_VTYPE_INODE   = 5,
+	SILOFS_VTYPE_XANODE  = 6,
+	SILOFS_VTYPE_SYMVAL  = 7,
+	SILOFS_VTYPE_DTNODE  = 8,
+	SILOFS_VTYPE_FTNODE  = 9,
+	SILOFS_VTYPE_SPNODE2 = 10,
+	SILOFS_VTYPE_SUPER2  = 11,
+	SILOFS_VTYPE_DATA1K  = 12,
+	SILOFS_VTYPE_DATA4K  = 13,
+	SILOFS_VTYPE_DATA64K = 14,
+	SILOFS_VTYPE_LAST    = 15, /* keep last */
 };
 
 /* logical heights of unode mappings */
@@ -1082,28 +1080,6 @@ struct silofs_btree_node {
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-/* archive descriptor */
-struct silofs_ar_desc256b {
-	struct silofs_paddr64b ard_paddr;
-	struct silofs_laddr96b ard_laddr;
-	uint64_t               ard_len;
-	uint8_t                ard_reserved[56];
-} silofs_attr_aligned64;
-
-/* archive-index */
-struct silofs_arix_node {
-	struct silofs_header      arn_hdr;
-	uint8_t                   arn_reserved0[16];
-	struct silofs_timespec    arn_btime;
-	uint32_t                  arn_flags;
-	uint32_t                  arn_ndescs;
-	uint8_t                   arn_reserved1[200];
-	struct silofs_pnptr256b   arn_next;
-	struct silofs_ar_desc256b arn_descs[254];
-} silofs_attr_aligned64;
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 /* semantic "view" into pnodes' meta-elements */
 union silofs_pview_u {
 	struct silofs_header     hdr[2];
@@ -1122,7 +1098,6 @@ union silofs_lview_u {
 	struct silofs_mbr1k       mbr;
 	struct silofs_super_node  sun;
 	struct silofs_space_node  spn;
-	struct silofs_arix_node   arn;
 	struct silofs_super_block sb;
 	struct silofs_spmap_node  sn;
 	struct silofs_spmap_leaf  sl;

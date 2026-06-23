@@ -22,7 +22,6 @@
 #include <time.h>
 
 #include <silofs/fs.h>
-#include <silofs/ar.h>
 #include <silofs/run.h>
 
 #define status_ok(err_) ((err_) == 0)
@@ -1663,28 +1662,6 @@ int silofs_exec_unrefs(struct silofs_task_ctx *task)
 	ok_or_goto_out(err);
 
 	err = silofs_do_unrefs(task);
-	ok_or_goto_out(err);
-out:
-	return op_finish(task, err);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_exec_preserve(struct silofs_task_ctx *task,
-                         struct silofs_mbref *out_ar_mbref)
-{
-	int err;
-
-	err = op_start(task);
-	ok_or_goto_out(err);
-
-	err = op_authorize(task);
-	ok_or_goto_out(err);
-
-	err = op_map_creds(task);
-	ok_or_goto_out(err);
-
-	err = silofs_do_preserve_fs(task, out_ar_mbref);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

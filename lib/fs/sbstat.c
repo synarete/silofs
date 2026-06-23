@@ -129,7 +129,6 @@ spgs256_gauge_of(const struct silofs_space_gauges256 *spgs256,
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 	case SILOFS_VTYPE_SUPER2:
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:
@@ -352,7 +351,6 @@ spgs_gauge_of(const struct silofs_space_gauges *spgs, enum silofs_vtype vtype)
 		break;
 	case SILOFS_VTYPE_SUPER2:
 	case SILOFS_VTYPE_SPNODE2:
-	case SILOFS_VTYPE_ARIX:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:

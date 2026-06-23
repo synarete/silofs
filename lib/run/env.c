@@ -122,11 +122,6 @@ env_use_password(struct silofs_env *env, const struct silofs_password *pw,
 	if (err) {
 		return err;
 	}
-	mbr_meta.mode = SILOFS_MBR_AR;
-	err           = silofs_mbi_set_meta(&env->mbis.ar_mbi, &mbr_meta);
-	if (err) {
-		return err;
-	}
 	return 0;
 }
 
@@ -261,7 +256,6 @@ static void env_fini_commons(struct silofs_env *env)
 static int env_init_mbis(struct silofs_env *env)
 {
 	silofs_mbi_init(&env->mbis.fs_mbi, SILOFS_MBR_FS);
-	silofs_mbi_init(&env->mbis.ar_mbi, SILOFS_MBR_AR);
 	return 0;
 }
 

@@ -470,22 +470,6 @@ static void validate_ondisk_xattr(void)
 	REQUIRE_SIZEOF_8K(struct silofs_xattr_node);
 }
 
-static void validate_ondisk_archive(void)
-{
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_paddr, 0);
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_laddr, 64);
-	REQUIRE_OFFSET64(struct silofs_ar_desc256b, ard_len, 160);
-	REQUIRE_SIZEOF(struct silofs_ar_desc256b, 256);
-
-	REQUIRE_OFFSET64(struct silofs_arix_node, arn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_arix_node, arn_btime, 32);
-	REQUIRE_OFFSET64(struct silofs_arix_node, arn_flags, 48);
-	REQUIRE_OFFSET32(struct silofs_arix_node, arn_ndescs, 52);
-	REQUIRE_OFFSET32(struct silofs_arix_node, arn_next, 256);
-	REQUIRE_OFFSET64(struct silofs_arix_node, arn_descs, 512);
-	REQUIRE_SIZEOF_64K(struct silofs_arix_node);
-}
-
 static void validate_ioctl_types(void)
 {
 	REQUIRE_SIZEOF(struct silofs_ioc_query, 2048);
@@ -519,6 +503,5 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_file();
 	validate_ondisk_symlnk();
 	validate_ondisk_xattr();
-	validate_ondisk_archive();
 	validate_ioctl_types();
 }

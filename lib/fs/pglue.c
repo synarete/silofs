@@ -253,6 +253,56 @@ static int test_unwritten(const struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void vaddr_of_super(struct silofs_vaddr *out_vaddr)
+{
+	const off_t pos = silofs_vtype_ssize(SILOFS_VTYPE_SUPER2);
+
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SUPER2, pos);
+}
+
+static struct silofs_super_info *vni_to_sui(struct silofs_vnode_info *vni)
+{
+	struct silofs_super_info *sui = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	sui = silofs_sui_from_mut_vni(vni);
+	if (unlikely(sui == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	if (unlikely(sui->sun == nullptr)) {
+		silofs_panic("missing sun: sui=%" PRIxPTR, (uintptr_t)sui);
+	}
+	return sui;
+}
+
+int silofs_probe_super2(const struct silofs_task_ctx *task)
+{
+	struct silofs_vaddr vaddr;
+
+	vaddr_of_super(&vaddr);
+	return probe_vnode(task, &vaddr, nullptr);
+}
+
+int silofs_stage_super2(const struct silofs_task_ctx *task,
+                        enum silofs_stg_mode stg_mode,
+                        struct silofs_super_info **out_sui)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	vaddr_of_super(&vaddr);
+	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
+	return_if_err(err);
+
+	*out_sui = vni_to_sui(vni);
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_inode_info *vni_to_ii(struct silofs_vnode_info *vni)
 {
 	struct silofs_inode_info *ii = nullptr;

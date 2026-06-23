@@ -970,6 +970,12 @@ static void sui_del(struct silofs_super_info *sui, struct silofs_alloc *alloc)
 	sui_fini_free(sui, alloc);
 }
 
+struct silofs_super_info * //
+silofs_sui_from_mut_vni(struct silofs_vnode_info *vni)
+{
+	return sui_from_vni(vni);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_vnode_info *spi_to_vni(struct silofs_space_info *spi)

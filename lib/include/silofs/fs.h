@@ -71,6 +71,12 @@ int silofs_idsmap_rmapcreds(const struct silofs_idsmap *idsm, uid_t fs_uid,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pglue */
 
+int silofs_probe_super2(const struct silofs_task_ctx *task);
+
+int silofs_stage_super2(const struct silofs_task_ctx *task,
+                        enum silofs_stg_mode          stg_mode,
+                        struct silofs_super_info    **out_sui);
+
 int silofs_probe_inode2(const struct silofs_task_ctx *task,
                         const struct silofs_vaddr    *vaddr);
 

@@ -99,7 +99,7 @@ static void sun_set_version(struct silofs_super_node *sun, uint64_t vers)
 	sun->s_version = silofs_cpu_to_le64(vers);
 }
 
-static inline enum silofs_superf sun_flags(const struct silofs_super_node *sun)
+static enum silofs_superf sun_flags(const struct silofs_super_node *sun)
 {
 	const uint32_t flags = silofs_le32_to_cpu(sun->s_flags);
 
@@ -112,8 +112,8 @@ sun_set_flags(struct silofs_super_node *sun, enum silofs_superf flags)
 	sun->s_flags = silofs_cpu_to_le32((uint32_t)flags);
 }
 
-static inline void sun_sw_version(const struct silofs_super_node *sun,
-                                  struct silofs_sw_version *out_swv)
+static void sun_sw_version(const struct silofs_super_node *sun,
+                           struct silofs_sw_version *out_swv)
 {
 	swv64b_xtoh(&sun->s_sw_version, out_swv);
 }
@@ -124,14 +124,12 @@ static void sun_set_sw_version(struct silofs_super_node *sun,
 	swv64b_htox(&sun->s_sw_version, swv);
 }
 
-static inline void
-sun_btime(const struct silofs_super_node *sun, struct tm *tm)
+static void sun_btime(const struct silofs_super_node *sun, struct tm *tm)
 {
 	tm64b_xtoh(&sun->s_btime, tm);
 }
 
-static inline void
-sun_set_btime(struct silofs_super_node *sun, const struct tm *tm)
+static void sun_set_btime(struct silofs_super_node *sun, const struct tm *tm)
 {
 	tm64b_htox(&sun->s_btime, tm);
 }
@@ -144,6 +142,16 @@ static size_t sun_fs_capacity(const struct silofs_super_node *sun)
 static void sun_set_fs_capacity(struct silofs_super_node *sun, size_t nbytes)
 {
 	sun->s_fs_capacity = silofs_cpu_to_le64(nbytes);
+}
+
+static size_t sun_fs_usage(const struct silofs_super_node *sun)
+{
+	return silofs_le64_to_cpu(sun->s_fs_usage);
+}
+
+static void sun_set_fs_usage(struct silofs_super_node *sun, size_t nbytes)
+{
+	sun->s_fs_usage = silofs_cpu_to_le64(nbytes);
 }
 
 static size_t
@@ -180,7 +188,7 @@ sun_slot_of(const struct silofs_super_node *sun, enum silofs_vtype vtype)
 	return slot;
 }
 
-static inline void
+static void
 sun_inc_nodes_count(struct silofs_super_node *sun, enum silofs_vtype vtype)
 {
 	const size_t slot  = sun_slot_of(sun, vtype);
@@ -190,7 +198,7 @@ sun_inc_nodes_count(struct silofs_super_node *sun, enum silofs_vtype vtype)
 	sun_set_nodes_count_at(sun, slot, count + 1);
 }
 
-static inline void
+static void
 sun_dec_nodes_count(struct silofs_super_node *sun, enum silofs_vtype vtype)
 {
 	const size_t slot  = sun_slot_of(sun, vtype);
@@ -200,13 +208,14 @@ sun_dec_nodes_count(struct silofs_super_node *sun, enum silofs_vtype vtype)
 	sun_set_nodes_count_at(sun, slot, count - 1);
 }
 
-static inline void sun_init(struct silofs_super_node *sun)
+static void sun_init(struct silofs_super_node *sun)
 {
 	sun_set_magic(sun, SILOFS_SUPER_MAGIC);
 	sun_set_version(sun, SILOFS_FMT_VERSION);
 	sun_set_flags(sun, SILOFS_SUPERF_NONE);
 	sun_set_sw_version(sun, &silofs_sw_vers);
 	sun_set_fs_capacity(sun, SILOFS_CAPACITY_SIZE_MIN);
+	sun_set_fs_usage(sun, 0);
 	sun_reset_nodes_count(sun);
 }
 
@@ -234,13 +243,55 @@ static int verify_super_version(const struct silofs_super_node *sun)
 	return 0;
 }
 
+static int verify_super_flags(const struct silofs_super_node *sun)
+{
+	const enum silofs_superf flags = sun_flags(sun);
+
+	if (flags != SILOFS_SUPERF_NONE) {
+		log_err("bad super: flags=%d", flags);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int verify_super_sw_version(const struct silofs_super_node *sun)
+{
+	struct silofs_sw_version swv;
+
+	sun_sw_version(sun, &swv);
+	if (swv.revision[0] == 0) {
+		log_err("bad super: major=%u minor=%u sublevel=%u", swv.major,
+		        swv.minor, swv.sublevel);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int verify_super_btime(const struct silofs_super_node *sun)
+{
+	struct tm tm = {};
+
+	sun_btime(sun, &tm);
+	if (tm.tm_year <= 0) {
+		log_err("bad super: tm_year=%d", tm.tm_year);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
 static int verify_super_fs_capacity(const struct silofs_super_node *sun)
 {
 	const size_t fs_capacity = sun_fs_capacity(sun);
+	const size_t fs_usage    = sun_fs_usage(sun);
 
 	if ((fs_capacity < SILOFS_CAPACITY_SIZE_MIN) ||
 	    (fs_capacity > SILOFS_CAPACITY_SIZE_MAX)) {
 		log_err("bad super: fs_capacity=%zu", fs_capacity);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	if (fs_usage > fs_capacity) {
+		log_err("bad super: fs_capacity=%zu fs_usage=%zu", fs_capacity,
+		        fs_usage);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -256,6 +307,15 @@ int silofs_verify_super_node(const struct silofs_super_node *sun)
 	err = verify_super_version(sun);
 	return_if_err(err);
 
+	err = verify_super_flags(sun);
+	return_if_err(err);
+
+	err = verify_super_sw_version(sun);
+	return_if_err(err);
+
+	err = verify_super_btime(sun);
+	return_if_err(err);
+
 	err = verify_super_fs_capacity(sun);
 	return_if_err(err);
 
@@ -263,3 +323,66 @@ int silofs_verify_super_node(const struct silofs_super_node *sun)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static size_t vsize_of(enum silofs_vtype vtype)
+{
+	return silofs_vtype_size(vtype);
+}
+
+void silofs_sui_setdirty(struct silofs_super_info *sui)
+{
+	silofs_vni_setdirty(&sui->sun_vni, nullptr);
+}
+
+static void sui_setup_btime_now(struct silofs_super_info *sui)
+{
+	struct tm now;
+
+	silofs_localtime_now(&now);
+	sun_set_btime(sui->sun, &now);
+}
+
+void silofs_sui_setup_spawned(struct silofs_super_info *sui)
+{
+	sun_init(sui->sun);
+	sui_setup_btime_now(sui);
+	silofs_sui_setdirty(sui);
+}
+
+int silofs_sui_check_avail(const struct silofs_super_info *sui,
+                           enum silofs_vtype vtype)
+{
+	constexpr size_t safezone = SILOFS_MEGA;
+	const size_t capacity     = sun_fs_capacity(sui->sun);
+	const size_t usage        = sun_fs_usage(sui->sun);
+	const size_t nwant        = vsize_of(vtype);
+
+	return ((usage + nwant + safezone) < capacity) ? 0 : -SILOFS_ENOSPC;
+}
+
+void silofs_sui_take_node(struct silofs_super_info *sui,
+                          enum silofs_vtype vtype)
+{
+	const size_t capacity = sun_fs_capacity(sui->sun);
+	const size_t usage    = sun_fs_usage(sui->sun);
+	const size_t ntake    = vsize_of(vtype);
+
+	silofs_assert_lt(usage + ntake, capacity);
+
+	sun_inc_nodes_count(sui->sun, vtype);
+	sun_set_fs_usage(sui->sun, usage + ntake);
+	silofs_sui_setdirty(sui);
+}
+
+void silofs_sui_give_node(struct silofs_super_info *sui,
+                          enum silofs_vtype vtype)
+{
+	const size_t usage = sun_fs_usage(sui->sun);
+	const size_t ngive = vsize_of(vtype);
+
+	silofs_assert_ge(usage, ngive);
+
+	sun_dec_nodes_count(sui->sun, vtype);
+	sun_set_fs_usage(sui->sun, usage - ngive);
+	silofs_sui_setdirty(sui);
+}

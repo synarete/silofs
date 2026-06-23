@@ -320,7 +320,8 @@ static void validate_ondisk_super_node(void)
 	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_version, 64);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_btime, 128);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_fs_capacity, 256);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_nodes_count, 264);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_fs_usage, 264);
+	REQUIRE_OFFSET64(struct silofs_super_node, s_nodes_count, 272);
 	REQUIRE_OFFSET64(struct silofs_super_node, s_reserved3, 1024);
 	REQUIRE_SIZEOF_4K(struct silofs_super_node);
 }

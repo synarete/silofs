@@ -186,6 +186,19 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
 
 int silofs_verify_super_node(const struct silofs_super_node *sun);
 
+void silofs_sui_setdirty(struct silofs_super_info *sui);
+
+void silofs_sui_setup_spawned(struct silofs_super_info *sui);
+
+int silofs_sui_check_avail(const struct silofs_super_info *sui,
+                           enum silofs_vtype               vtype);
+
+void silofs_sui_take_node(struct silofs_super_info *sui,
+                          enum silofs_vtype         vtype);
+
+void silofs_sui_give_node(struct silofs_super_info *sui,
+                          enum silofs_vtype         vtype);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* inode */
 

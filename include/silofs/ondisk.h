@@ -851,7 +851,8 @@ struct silofs_super_node {
 	struct silofs_tm64b         s_btime;
 	uint8_t                     s_reserved2[64];
 	uint64_t                    s_fs_capacity;
-	uint64_t                    s_nodes_count[95];
+	uint64_t                    s_fs_usage;
+	uint64_t                    s_nodes_count[94];
 	uint8_t                     s_reserved3[3072];
 } silofs_attr_aligned64;
 

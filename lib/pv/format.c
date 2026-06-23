@@ -178,7 +178,7 @@ static int format_refetch_node_at(struct silofs_pexec_ctx *pexec,
 {
 	int err;
 
-	err = silofs_fetch_vnode2(pexec, vaddr, out_vni);
+	err = silofs_stage_vnode2_at(pexec, vaddr, out_vni);
 	if (err) {
 		log_err("failed to re-fetch node: vtype=%d off=%ld err=%d",
 		        (int)vaddr->vtype, (long)vaddr->off, err);
@@ -488,7 +488,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 		return -SILOFS_EFSCORRUPTED;
 	}
 
-	err = silofs_fetch_vnode2(pexec, &vaddr, &vni);
+	err = silofs_stage_vnode2_at(pexec, &vaddr, &vni);
 	return_if_err(err);
 
 	return 0;

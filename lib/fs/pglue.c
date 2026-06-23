@@ -101,7 +101,7 @@ probe_vnode(const struct silofs_task_ctx *task,
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_probe_vnode2(&pexec, vaddr);
+	err = silofs_probe_vnode2_at(&pexec, vaddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
@@ -115,7 +115,7 @@ stage_vnode(const struct silofs_task_ctx *task,
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_fetch_vnode2(&pexec, vaddr, out_vni);
+	err = silofs_stage_vnode2_at(&pexec, vaddr, out_vni);
 	finish_pexec(&pexec, pii);
 	silofs_unused(stg_mode);
 	return err;
@@ -266,7 +266,7 @@ static struct silofs_super_info *vni_to_sui(struct silofs_vnode_info *vni)
 	if (unlikely(vni == nullptr)) {
 		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
-	sui = silofs_sui_from_mut_vni(vni);
+	sui = silofs_sui_from_vni(vni);
 	if (unlikely(sui == nullptr)) {
 		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
@@ -297,6 +297,61 @@ int silofs_stage_super2(const struct silofs_task_ctx *task,
 	return_if_err(err);
 
 	*out_sui = vni_to_sui(vni);
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static struct silofs_space_info *vni_to_spi(struct silofs_vnode_info *vni)
+{
+	struct silofs_space_info *spi = nullptr;
+
+	if (unlikely(vni == nullptr)) {
+		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	spi = silofs_spi_from_vni(vni);
+	if (unlikely(spi == nullptr)) {
+		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+	}
+	if (unlikely(spi->spn == nullptr)) {
+		silofs_panic("missing spnode: spi=%" PRIxPTR, (uintptr_t)spi);
+	}
+	return spi;
+}
+
+int silofs_probe_spnode2(const struct silofs_task_ctx *task,
+                         const struct silofs_vaddr *vaddr)
+{
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SPNODE2);
+	return probe_vnode(task, vaddr, nullptr);
+}
+
+int silofs_stage_spnode2(const struct silofs_task_ctx *task,
+                         const struct silofs_vaddr *vaddr,
+                         enum silofs_stg_mode stg_mode,
+                         struct silofs_space_info **out_spi)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SPNODE2);
+	err = stage_verify_vnode(task, vaddr, nullptr, stg_mode, &vni);
+	return_if_err(err);
+
+	*out_spi = vni_to_spi(vni);
+	return 0;
+}
+
+int silofs_spawn_spnode2(const struct silofs_task_ctx *task,
+                         struct silofs_space_info **out_spi)
+{
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	err = spawn_vnode(task, nullptr, SILOFS_VTYPE_SPNODE2, &vni);
+	return_if_err(err);
+
+	*out_spi = vni_to_spi(vni);
 	return 0;
 }
 

@@ -583,16 +583,20 @@ int silofs_probe_vspace_ref(struct silofs_pexec_ctx   *pexec,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* trans */
 
-int silofs_probe_vnode2(struct silofs_pexec_ctx   *pexec,
-                        const struct silofs_vaddr *vaddr);
+int silofs_probe_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *vaddr);
 
-int silofs_fetch_vnode2(struct silofs_pexec_ctx   *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        struct silofs_vnode_info **out_vni);
+int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni);
 
 int silofs_create_vnode2(struct silofs_pexec_ctx   *pexec,
                          enum silofs_vtype          vtype,
                          struct silofs_vnode_info **out_vni);
+
+int silofs_create_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vnode_info **out_vni);
 
 int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
                               enum silofs_vtype        vtype,

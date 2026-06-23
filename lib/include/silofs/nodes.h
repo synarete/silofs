@@ -770,7 +770,7 @@ struct silofs_spnode_info *silofs_sni_from_uni(struct silofs_unode_info *uni);
 struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni);
 
 struct silofs_super_info * //
-silofs_sui_from_mut_vni(struct silofs_vnode_info *vni);
+silofs_sui_from_vni(struct silofs_vnode_info *vni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -25,8 +25,8 @@ static void vni_setdirty(struct silofs_vnode_info *vni)
 	silofs_vni_setdirty(vni, nullptr);
 }
 
-int silofs_probe_vnode2(struct silofs_pexec_ctx *pexec,
-                        const struct silofs_vaddr *vaddr)
+int silofs_probe_vnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *vaddr)
 {
 	struct silofs_pnptr pnptr;
 
@@ -50,9 +50,9 @@ static int resolve_spacef_of(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_fetch_vnode2(struct silofs_pexec_ctx *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        struct silofs_vnode_info **out_vni)
+int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr;
 	enum silofs_spacef spacef;
@@ -88,9 +88,20 @@ static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int carve_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
-                                 const struct silofs_vaddr *vaddr,
-                                 struct silofs_vnode_info **out_vni)
+int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
+                         enum silofs_vtype vtype,
+                         struct silofs_vnode_info **out_vni)
+{
+	struct silofs_vaddr vaddr;
+	int err;
+
+	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
+	return err ? err : silofs_create_vnode2_at(pexec, &vaddr, out_vni);
+}
+
+int silofs_create_vnode2_at(struct silofs_pexec_ctx *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -102,22 +113,6 @@ static int carve_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return_if_err(err);
 
 	vni_setdirty(*out_vni);
-	return 0;
-}
-
-int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
-                         enum silofs_vtype vtype,
-                         struct silofs_vnode_info **out_vni)
-{
-	struct silofs_vaddr vaddr;
-	int err;
-
-	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
-	return_if_err(err);
-
-	err = carve_spawn_vnode2_at(pexec, &vaddr, out_vni);
-	return_if_err(err);
-
 	return 0;
 }
 
@@ -288,7 +283,7 @@ static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = carve_spawn_vnode2_at(pexec, vaddr, &vni);
+	err = silofs_create_vnode2_at(pexec, vaddr, &vni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_vni(vni);
@@ -303,7 +298,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = silofs_fetch_vnode2(pexec, vaddr, &vni);
+	err = silofs_stage_vnode2_at(pexec, vaddr, &vni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_vni(vni);

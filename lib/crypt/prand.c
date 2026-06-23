@@ -78,12 +78,13 @@ prandgen_update_state_by(struct silofs_prandgen *prng, uint64_t count,
 		struct silofs_hash256 h;
 		uint64_t count;
 		struct timespec ts;
-	} s = {};
+	} s;
 	struct silofs_hash256 ph;
 	struct silofs_prndstate *ps = prandgen_get_state(prng, count);
 
 	STATICASSERT_EQ(sizeof(ph), sizeof(*ps));
 
+	memset(&s, 0, sizeof(s));
 	silofs_clock_gettime_mono(&s.ts);
 	memcpy(&s.ps, ps, sizeof(s.ps));
 	memcpy(&s.h, hash, sizeof(s.h));
@@ -219,18 +220,20 @@ static uint64_t lcg_next(const uint64_t state)
 	return (lcg_a * state) + lcg_c;
 }
 
-static void prandgen_reseed_by_lcg(struct silofs_prandgen *prng)
+static void prandgen_reseed_by_time(struct silofs_prandgen *prng)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(prng->state); ++i) {
-		uint64_t *p = as_u64(prng->state[i].s);
+	struct {
+		struct timespec ts;
+		uint64_t n;
+	} d = {};
+	uint64_t idx, val;
 
-		STATICASSERT_EQ(sizeof(prng->state[i].s), 4 * sizeof(*p));
+	idx = prng->xcount % ARRAY_SIZE(prng->state);
+	val = *as_u64(prng->state[idx].s);
 
-		p[0] = lcg_next(p[0]);
-		p[1] = lcg_next(p[1]);
-		p[2] = lcg_next(p[2]);
-		p[3] = lcg_next(p[3]);
-	}
+	d.n = lcg_next(val);
+	silofs_clock_gettime_mono(&d.ts);
+	silofs_prandgen_feed(prng, &d, sizeof(d));
 }
 
 static void prandgen_reseed_with_entropy(struct silofs_prandgen *prng)
@@ -240,23 +243,26 @@ static void prandgen_reseed_with_entropy(struct silofs_prandgen *prng)
 
 	absorb_entropy(r, sizeof(r));
 	for (size_t i = 0; i < ARRAY_SIZE(prng->state); ++i) {
-		uint64_t *p = as_u64(prng->state[i].s);
+		uint64_t *p         = as_u64(prng->state[i].s);
+		const uint64_t c[4] = { p[0], p[1], p[2], p[3] };
 
 		STATICASSERT_EQ(sizeof(prng->state[i].s), 4 * sizeof(*p));
 
-		p[0] ^= r[i % nr];
-		p[1] ^= r[p[0] % nr];
-		p[2] ^= r[p[1] % nr];
-		p[3] ^= r[p[2] % nr];
+		p[0] ^= r[c[3] % nr];
+		p[1] ^= r[c[2] % nr];
+		p[2] ^= r[c[1] % nr];
+		p[3] ^= r[c[0] % nr];
 	}
 }
 
 static void prandgen_try_reseed(struct silofs_prandgen *prng)
 {
-	if ((prng->ntake % 11) == 0) {
-		prandgen_reseed_by_lcg(prng);
-	} else if ((prng->ntake % 31) == 0) {
-		prandgen_reseed_with_entropy(prng);
+	if (prng->ntake > 0) {
+		if ((prng->ntake % 31) == 0) {
+			prandgen_reseed_with_entropy(prng);
+		} else if ((prng->ntake % 11) == 0) {
+			prandgen_reseed_by_time(prng);
+		}
 	}
 }
 

@@ -75,7 +75,7 @@ int silofs_probe_super2(const struct silofs_task_ctx *task);
 
 int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode          stg_mode,
-                        struct silofs_super_info    **out_sui);
+                        struct silofs_sbnode_info2  **out_sui);
 
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr);
@@ -83,10 +83,10 @@ int silofs_probe_spnode2(const struct silofs_task_ctx *task,
 int silofs_stage_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr,
                          enum silofs_stg_mode          stg_mode,
-                         struct silofs_space_info    **out_spi);
+                         struct silofs_spnode_info2  **out_spi);
 
 int silofs_spawn_spnode2(const struct silofs_task_ctx *task,
-                         struct silofs_space_info    **out_spi);
+                         struct silofs_spnode_info2  **out_spi);
 
 int silofs_probe_inode2(const struct silofs_task_ctx *task,
                         const struct silofs_vaddr    *vaddr);
@@ -203,18 +203,18 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
 
 int silofs_verify_super_node(const struct silofs_super_node *sun);
 
-void silofs_sui_setdirty(struct silofs_super_info *sui);
+void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sui);
 
-void silofs_sui_setup_spawned(struct silofs_super_info *sui);
+void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sui);
 
-int silofs_sui_check_avail(const struct silofs_super_info *sui,
-                           enum silofs_vtype               vtype);
+int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sui,
+                            enum silofs_vtype                 vtype);
 
-void silofs_sui_take_node(struct silofs_super_info *sui,
-                          enum silofs_vtype         vtype);
+void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sui,
+                           enum silofs_vtype           vtype);
 
-void silofs_sui_give_node(struct silofs_super_info *sui,
-                          enum silofs_vtype         vtype);
+void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sui,
+                           enum silofs_vtype           vtype);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* inode */

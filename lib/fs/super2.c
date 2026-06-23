@@ -329,60 +329,60 @@ static size_t vsize_of(enum silofs_vtype vtype)
 	return silofs_vtype_size(vtype);
 }
 
-void silofs_sui_setdirty(struct silofs_super_info *sui)
+void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi)
 {
-	silofs_vni_setdirty(&sui->sun_vni, nullptr);
+	silofs_vni_setdirty(&sbi->sbn_vni, nullptr);
 }
 
-static void sui_setup_btime_now(struct silofs_super_info *sui)
+static void sbi2_setup_btime_now(struct silofs_sbnode_info2 *sbi)
 {
 	struct tm now;
 
 	silofs_localtime_now(&now);
-	sun_set_btime(sui->sun, &now);
+	sun_set_btime(sbi->sbn, &now);
 }
 
-void silofs_sui_setup_spawned(struct silofs_super_info *sui)
+void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi)
 {
-	sun_init(sui->sun);
-	sui_setup_btime_now(sui);
-	silofs_sui_setdirty(sui);
+	sun_init(sbi->sbn);
+	sbi2_setup_btime_now(sbi);
+	silofs_sbi2_setdirty(sbi);
 }
 
-int silofs_sui_check_avail(const struct silofs_super_info *sui,
-                           enum silofs_vtype vtype)
+int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype vtype)
 {
 	constexpr size_t safezone = SILOFS_MEGA;
-	const size_t capacity     = sun_fs_capacity(sui->sun);
-	const size_t usage        = sun_fs_usage(sui->sun);
+	const size_t capacity     = sun_fs_capacity(sbi->sbn);
+	const size_t usage        = sun_fs_usage(sbi->sbn);
 	const size_t nwant        = vsize_of(vtype);
 
 	return ((usage + nwant + safezone) < capacity) ? 0 : -SILOFS_ENOSPC;
 }
 
-void silofs_sui_take_node(struct silofs_super_info *sui,
-                          enum silofs_vtype vtype)
+void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
+                           enum silofs_vtype vtype)
 {
-	const size_t capacity = sun_fs_capacity(sui->sun);
-	const size_t usage    = sun_fs_usage(sui->sun);
+	const size_t capacity = sun_fs_capacity(sbi->sbn);
+	const size_t usage    = sun_fs_usage(sbi->sbn);
 	const size_t ntake    = vsize_of(vtype);
 
 	silofs_assert_lt(usage + ntake, capacity);
 
-	sun_inc_nodes_count(sui->sun, vtype);
-	sun_set_fs_usage(sui->sun, usage + ntake);
-	silofs_sui_setdirty(sui);
+	sun_inc_nodes_count(sbi->sbn, vtype);
+	sun_set_fs_usage(sbi->sbn, usage + ntake);
+	silofs_sbi2_setdirty(sbi);
 }
 
-void silofs_sui_give_node(struct silofs_super_info *sui,
-                          enum silofs_vtype vtype)
+void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
+                           enum silofs_vtype vtype)
 {
-	const size_t usage = sun_fs_usage(sui->sun);
+	const size_t usage = sun_fs_usage(sbi->sbn);
 	const size_t ngive = vsize_of(vtype);
 
 	silofs_assert_ge(usage, ngive);
 
-	sun_dec_nodes_count(sui->sun, vtype);
-	sun_set_fs_usage(sui->sun, usage - ngive);
-	silofs_sui_setdirty(sui);
+	sun_dec_nodes_count(sbi->sbn, vtype);
+	sun_set_fs_usage(sbi->sbn, usage - ngive);
+	silofs_sbi2_setdirty(sbi);
 }

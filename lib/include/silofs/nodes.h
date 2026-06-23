@@ -587,13 +587,13 @@ struct silofs_vnode_info {
 };
 
 /* super node */
-struct silofs_super_info {
-	struct silofs_vnode_info  sun_vni;
-	struct silofs_super_node *sun;
+struct silofs_sbnode_info2 {
+	struct silofs_vnode_info  sbn_vni;
+	struct silofs_super_node *sbn;
 };
 
 /* space allocation node */
-struct silofs_space_info {
+struct silofs_spnode_info2 {
 	struct silofs_vnode_info  spn_vni;
 	struct silofs_space_node *spn;
 	/* in-memory only */
@@ -769,8 +769,8 @@ struct silofs_spnode_info *silofs_sni_from_uni(struct silofs_unode_info *uni);
 
 struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni);
 
-struct silofs_super_info * //
-silofs_sui_from_vni(struct silofs_vnode_info *vni);
+struct silofs_sbnode_info2 * //
+silofs_sbi2_from_vni(struct silofs_vnode_info *vni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

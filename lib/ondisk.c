@@ -410,7 +410,7 @@ static void validate_ondisk_inode(void)
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 }
 
-static void validate_ondisk_dir(void)
+static void validate_ondisk_dtree_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_dir_entry, de_ino, 0);
 	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash_dt, 8);
@@ -428,7 +428,7 @@ static void validate_ondisk_dir(void)
 	REQUIRE_SIZEOF_8K(struct silofs_dtree_node);
 }
 
-static void validate_ondisk_file(void)
+static void validate_ondisk_ftree_node(void)
 {
 	REQUIRE_NELEMS(struct silofs_ftree_node, fn_child,
 	               SILOFS_FTREE_NODE_NCHILDS);
@@ -445,6 +445,10 @@ static void validate_ondisk_file(void)
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);
 	REQUIRE_SIZEOF(struct silofs_ftree_node, SILOFS_FTREE_NODE_SIZE);
 	REQUIRE_SIZEOF_8K(struct silofs_ftree_node);
+}
+
+static void validate_ondisk_data_node(void)
+{
 	REQUIRE_SIZEOF(struct silofs_data_node1, SILOFS_FILE_DATA_NODE1_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_node4, SILOFS_FILE_DATA_NODE4_SIZE);
 	REQUIRE_SIZEOF(struct silofs_data_node64,
@@ -454,14 +458,14 @@ static void validate_ondisk_file(void)
 	REQUIRE_SIZEOF_64K(struct silofs_data_node64);
 }
 
-static void validate_ondisk_symlnk(void)
+static void validate_ondisk_symval_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_symval_node, svn_value, 64);
 	REQUIRE_SIZEOF(struct silofs_symval_node, SILOFS_SYMVAL_NODE_SIZE);
 	REQUIRE_SIZEOF_4K(struct silofs_symval_node);
 }
 
-static void validate_ondisk_xattr(void)
+static void validate_ondisk_xattr_node(void)
 {
 	REQUIRE_SIZEOF(struct silofs_xattr_entry, 8);
 	REQUIRE_OFFSET64(struct silofs_xattr_node, xa_hdr, 0);
@@ -499,9 +503,10 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_super();
 	validate_ondisk_lsmap();
 	validate_ondisk_inode();
-	validate_ondisk_dir();
-	validate_ondisk_file();
-	validate_ondisk_symlnk();
-	validate_ondisk_xattr();
+	validate_ondisk_dtree_node();
+	validate_ondisk_ftree_node();
+	validate_ondisk_data_node();
+	validate_ondisk_symval_node();
+	validate_ondisk_xattr_node();
 	validate_ioctl_types();
 }

@@ -278,7 +278,7 @@ int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
 static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
                                   const struct silofs_vaddr *vaddr,
                                   const struct silofs_vaddr *ref_vaddr,
-                                  struct silofs_space_info **out_spi)
+                                  struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
@@ -293,7 +293,7 @@ static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
 
 static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
                                     const struct silofs_vaddr *vaddr,
-                                    struct silofs_space_info **out_spi)
+                                    struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
@@ -308,7 +308,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 
 int silofs_fetch_spnode2_of(struct silofs_pexec_ctx *pexec,
                             const struct silofs_vaddr *ref_vaddr,
-                            struct silofs_space_info **out_spi)
+                            struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vaddr vaddr;
 
@@ -331,7 +331,7 @@ test_vtop_mapping(struct silofs_pexec_ctx *pexec,
 
 int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
                               const struct silofs_vaddr *ref_vaddr,
-                              struct silofs_space_info **out_spi)
+                              struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vaddr vaddr;
 	int err;
@@ -353,7 +353,7 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
 int silofs_mark_unwritten_at2(struct silofs_pexec_ctx *pexec,
                               const struct silofs_vaddr *ref_vaddr)
 {
-	struct silofs_space_info *spi = nullptr;
+	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
 	err = silofs_fetch_spnode2_of(pexec, ref_vaddr, &spi);
@@ -366,7 +366,7 @@ int silofs_mark_unwritten_at2(struct silofs_pexec_ctx *pexec,
 int silofs_clear_unwritten_at2(struct silofs_pexec_ctx *pexec,
                                const struct silofs_vaddr *ref_vaddr)
 {
-	struct silofs_space_info *spi = nullptr;
+	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
 	err = silofs_fetch_spnode2_of(pexec, ref_vaddr, &spi);

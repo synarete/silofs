@@ -868,152 +868,155 @@ struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *sui_to_vni(struct silofs_super_info *sui)
+static struct silofs_vnode_info *sbi2_to_vni(struct silofs_sbnode_info2 *sui)
 {
-	return likely(sui != nullptr) ? &sui->sun_vni : nullptr;
+	return likely(sui != nullptr) ? &sui->sbn_vni : nullptr;
 }
 
-static struct silofs_super_info *sui_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_sbnode_info2 *sbi2_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_super_info, sun_vni);
+	return mut_container_of(vni, struct silofs_sbnode_info2, sbn_vni);
 }
 
 static void
-sui_init(struct silofs_super_info *sui, const struct silofs_vaddr *vaddr)
+sbi2_init(struct silofs_sbnode_info2 *sui, const struct silofs_vaddr *vaddr)
 {
-	vni_init(&sui->sun_vni, vaddr);
+	vni_init(&sui->sbn_vni, vaddr);
 }
 
-static void sui_fini(struct silofs_super_info *sui)
+static void sbi2_fini(struct silofs_sbnode_info2 *sui)
 {
-	vni_fini(&sui->sun_vni);
+	vni_fini(&sui->sbn_vni);
 }
 
-static struct silofs_super_info *sui_malloc(struct silofs_alloc *alloc)
+static struct silofs_sbnode_info2 *sbi2_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_super_info *sui;
+	struct silofs_sbnode_info2 *sui;
 
 	sui = malloc_node_info(alloc, sizeof(*sui));
 	return sui;
 }
 
-static void sui_free(struct silofs_super_info *sui, struct silofs_alloc *alloc)
+static void
+sbi2_free(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 {
 	mfree_node_info(alloc, sui, sizeof(*sui));
 }
 
-static struct silofs_super_info *
-sui_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static struct silofs_sbnode_info2 *
+sbi2_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_super_info *sui;
+	struct silofs_sbnode_info2 *sui;
 
-	sui = sui_malloc(alloc);
+	sui = sbi2_malloc(alloc);
 	if (sui != nullptr) {
-		sui_init(sui, vaddr);
+		sbi2_init(sui, vaddr);
 	}
 	return sui;
 }
 
 static void
-sui_fini_free(struct silofs_super_info *sui, struct silofs_alloc *alloc)
+sbi2_fini_free(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 {
-	sui_fini(sui);
-	sui_free(sui, alloc);
+	sbi2_fini(sui);
+	sbi2_free(sui, alloc);
 }
 
 static int
-sui_attach_lview(struct silofs_super_info *sui, struct silofs_alloc *alloc)
+sbi2_attach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview;
 	int err;
 
-	err = vni_attach_lview(&sui->sun_vni, alloc);
+	err = vni_attach_lview(&sui->sbn_vni, alloc);
 	if (!err) {
-		lview    = silofs_vni_lview(&sui->sun_vni);
-		sui->sun = &lview->u.sun;
+		lview    = silofs_vni_lview(&sui->sbn_vni);
+		sui->sbn = &lview->u.sun;
 	}
 	return err;
 }
 
 static void
-sui_detach_lview(struct silofs_super_info *sui, struct silofs_alloc *alloc)
+sbi2_detach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 {
-	vni_detach_lview(&sui->sun_vni, alloc);
-	sui->sun = nullptr;
+	vni_detach_lview(&sui->sbn_vni, alloc);
+	sui->sbn = nullptr;
 }
 
-static struct silofs_super_info *
-sui_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static struct silofs_sbnode_info2 *
+sbi2_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_super_info *sui;
+	struct silofs_sbnode_info2 *sui;
 	int err;
 
-	sui = sui_malloc_init(alloc, vaddr);
+	sui = sbi2_malloc_init(alloc, vaddr);
 	if (sui == nullptr) {
 		return nullptr;
 	}
-	err = sui_attach_lview(sui, alloc);
+	err = sbi2_attach_lview(sui, alloc);
 	if (err) {
-		sui_fini_free(sui, alloc);
+		sbi2_fini_free(sui, alloc);
 		return nullptr;
 	}
 	return sui;
 }
 
-static void sui_del(struct silofs_super_info *sui, struct silofs_alloc *alloc)
+static void
+sbi2_del(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 {
-	sui_detach_lview(sui, alloc);
-	sui_fini_free(sui, alloc);
+	sbi2_detach_lview(sui, alloc);
+	sbi2_fini_free(sui, alloc);
 }
 
-struct silofs_super_info * //
-silofs_sui_from_vni(struct silofs_vnode_info *vni)
+struct silofs_sbnode_info2 * //
+silofs_sbi2_from_vni(struct silofs_vnode_info *vni)
 {
-	return sui_from_vni(vni);
+	return sbi2_from_vni(vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *spi_to_vni(struct silofs_space_info *spi)
+static struct silofs_vnode_info *spi_to_vni(struct silofs_spnode_info2 *spi)
 {
 	return likely(spi != nullptr) ? &spi->spn_vni : nullptr;
 }
 
-static struct silofs_space_info *spi_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_spnode_info2 *spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_space_info, spn_vni);
+	return mut_container_of(vni, struct silofs_spnode_info2, spn_vni);
 }
 
 static void
-spi_init(struct silofs_space_info *spi, const struct silofs_vaddr *vaddr)
+spi_init(struct silofs_spnode_info2 *spi, const struct silofs_vaddr *vaddr)
 {
 	vni_init(&spi->spn_vni, vaddr);
 	spi->spn_nused_ref = 0;
 }
 
-static void spi_fini(struct silofs_space_info *spi)
+static void spi_fini(struct silofs_spnode_info2 *spi)
 {
 	vni_fini(&spi->spn_vni);
 	spi->spn_nused_ref = UINT_MAX;
 }
 
-static struct silofs_space_info *spi_malloc(struct silofs_alloc *alloc)
+static struct silofs_spnode_info2 *spi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_space_info *spi;
+	struct silofs_spnode_info2 *spi;
 
 	spi = malloc_node_info(alloc, sizeof(*spi));
 	return spi;
 }
 
-static void spi_free(struct silofs_space_info *spi, struct silofs_alloc *alloc)
+static void
+spi_free(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 {
 	mfree_node_info(alloc, spi, sizeof(*spi));
 }
 
-static struct silofs_space_info *
+static struct silofs_spnode_info2 *
 spi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_space_info *spi;
+	struct silofs_spnode_info2 *spi;
 
 	spi = spi_malloc(alloc);
 	if (spi != nullptr) {
@@ -1023,14 +1026,14 @@ spi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 }
 
 static void
-spi_fini_free(struct silofs_space_info *spi, struct silofs_alloc *alloc)
+spi_fini_free(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 {
 	spi_fini(spi);
 	spi_free(spi, alloc);
 }
 
 static int
-spi_attach_lview(struct silofs_space_info *spi, struct silofs_alloc *alloc)
+spi_attach_lview(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview;
 	int err;
@@ -1044,16 +1047,16 @@ spi_attach_lview(struct silofs_space_info *spi, struct silofs_alloc *alloc)
 }
 
 static void
-spi_detach_lview(struct silofs_space_info *spi, struct silofs_alloc *alloc)
+spi_detach_lview(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 {
 	vni_detach_lview(&spi->spn_vni, alloc);
 	spi->spn = nullptr;
 }
 
-static struct silofs_space_info *
+static struct silofs_spnode_info2 *
 spi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_space_info *spi;
+	struct silofs_spnode_info2 *spi;
 	int err;
 
 	spi = spi_malloc_init(alloc, vaddr);
@@ -1068,7 +1071,8 @@ spi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	return spi;
 }
 
-static void spi_del(struct silofs_space_info *spi, struct silofs_alloc *alloc)
+static void
+spi_del(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 {
 	spi_detach_lview(spi, alloc);
 	spi_fini_free(spi, alloc);
@@ -1952,7 +1956,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 
 	switch (vtype) {
 	case SILOFS_VTYPE_SUPER2:
-		vni = sui_to_vni(sui_new(alloc, vaddr));
+		vni = sbi2_to_vni(sbi2_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 		vni = spi_to_vni(spi_new(alloc, vaddr));
@@ -1999,7 +2003,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 
 	switch (vtype) {
 	case SILOFS_VTYPE_SUPER2:
-		sui_del(sui_from_vni(vni), alloc);
+		sbi2_del(sbi2_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 		spi_del(spi_from_vni(vni), alloc);

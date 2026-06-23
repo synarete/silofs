@@ -259,21 +259,21 @@ static void vaddr_of_super(struct silofs_vaddr *out_vaddr)
 	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SUPER2, pos);
 }
 
-static struct silofs_super_info *vni_to_sui(struct silofs_vnode_info *vni)
+static struct silofs_sbnode_info2 *vni_to_sbi2(struct silofs_vnode_info *vni)
 {
-	struct silofs_super_info *sui = nullptr;
+	struct silofs_sbnode_info2 *sbi = nullptr;
 
 	if (unlikely(vni == nullptr)) {
 		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
-	sui = silofs_sui_from_vni(vni);
-	if (unlikely(sui == nullptr)) {
+	sbi = silofs_sbi2_from_vni(vni);
+	if (unlikely(sbi == nullptr)) {
 		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
 	}
-	if (unlikely(sui->sun == nullptr)) {
-		silofs_panic("missing sun: sui=%" PRIxPTR, (uintptr_t)sui);
+	if (unlikely(sbi->sbn == nullptr)) {
+		silofs_panic("missing sun: sui=%" PRIxPTR, (uintptr_t)sbi);
 	}
-	return sui;
+	return sbi;
 }
 
 int silofs_probe_super2(const struct silofs_task_ctx *task)
@@ -286,7 +286,7 @@ int silofs_probe_super2(const struct silofs_task_ctx *task)
 
 int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode stg_mode,
-                        struct silofs_super_info **out_sui)
+                        struct silofs_sbnode_info2 **out_sbi)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = nullptr;
@@ -296,15 +296,15 @@ int silofs_stage_super2(const struct silofs_task_ctx *task,
 	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
 	return_if_err(err);
 
-	*out_sui = vni_to_sui(vni);
+	*out_sbi = vni_to_sbi2(vni);
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_space_info *vni_to_spi(struct silofs_vnode_info *vni)
+static struct silofs_spnode_info2 *vni_to_spi(struct silofs_vnode_info *vni)
 {
-	struct silofs_space_info *spi = nullptr;
+	struct silofs_spnode_info2 *spi = nullptr;
 
 	if (unlikely(vni == nullptr)) {
 		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
@@ -329,7 +329,7 @@ int silofs_probe_spnode2(const struct silofs_task_ctx *task,
 int silofs_stage_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr *vaddr,
                          enum silofs_stg_mode stg_mode,
-                         struct silofs_space_info **out_spi)
+                         struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
@@ -343,7 +343,7 @@ int silofs_stage_spnode2(const struct silofs_task_ctx *task,
 }
 
 int silofs_spawn_spnode2(const struct silofs_task_ctx *task,
-                         struct silofs_space_info **out_spi)
+                         struct silofs_spnode_info2 **out_spi)
 {
 	struct silofs_vnode_info *vni = nullptr;
 	int err;

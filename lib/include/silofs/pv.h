@@ -384,38 +384,38 @@ struct silofs_vspace_ref {
 	enum silofs_spacef flags;
 };
 
-struct silofs_space_info *silofs_spi_from_vni(struct silofs_vnode_info *vni);
+struct silofs_spnode_info2 *silofs_spi_from_vni(struct silofs_vnode_info *vni);
 
-void silofs_spi_incref(struct silofs_space_info *spi);
+void silofs_spi_incref(struct silofs_spnode_info2 *spi);
 
-void silofs_spi_decref(struct silofs_space_info *spi);
+void silofs_spi_decref(struct silofs_spnode_info2 *spi);
 
-void silofs_spi_setup_spawned(struct silofs_space_info  *spi,
-                              const struct silofs_vaddr *ref_vaddr);
+void silofs_spi_setup_spawned(struct silofs_spnode_info2 *spi,
+                              const struct silofs_vaddr  *ref_vaddr);
 
-void silofs_spi_setup_staged(struct silofs_space_info *spi);
+void silofs_spi_setup_staged(struct silofs_spnode_info2 *spi);
 
-int silofs_spi_find_free(const struct silofs_space_info *spi,
-                         struct silofs_vaddr            *out_vaddr);
+int silofs_spi_find_free(const struct silofs_spnode_info2 *spi,
+                         struct silofs_vaddr              *out_vaddr);
 
-void silofs_spi_inc_allocated(struct silofs_space_info  *spi,
-                              const struct silofs_vaddr *vaddr);
+void silofs_spi_inc_allocated(struct silofs_spnode_info2 *spi,
+                              const struct silofs_vaddr  *vaddr);
 
-void silofs_spi_dec_allocated(struct silofs_space_info  *spi,
-                              const struct silofs_vaddr *vaddr);
+void silofs_spi_dec_allocated(struct silofs_spnode_info2 *spi,
+                              const struct silofs_vaddr  *vaddr);
 
-void silofs_spi_mark_unwritten(struct silofs_space_info  *spi,
-                               const struct silofs_vaddr *vaddr);
+void silofs_spi_mark_unwritten(struct silofs_spnode_info2 *spi,
+                               const struct silofs_vaddr  *vaddr);
 
-void silofs_spi_clear_unwritten(struct silofs_space_info  *spi,
-                                const struct silofs_vaddr *vaddr);
+void silofs_spi_clear_unwritten(struct silofs_spnode_info2 *spi,
+                                const struct silofs_vaddr  *vaddr);
 
-void silofs_spi_vspace_ref(const struct silofs_space_info *spi,
-                           const struct silofs_vaddr      *vaddr,
-                           struct silofs_vspace_ref       *out_vspref);
+void silofs_spi_vspace_ref(const struct silofs_spnode_info2 *spi,
+                           const struct silofs_vaddr        *vaddr,
+                           struct silofs_vspace_ref         *out_vspref);
 
-void silofs_spi_clone_from(struct silofs_space_info       *spi,
-                           const struct silofs_space_info *spi_other);
+void silofs_spi_clone_from(struct silofs_spnode_info2       *spi,
+                           const struct silofs_spnode_info2 *spi_other);
 
 int silofs_verify_space_node(const struct silofs_space_node *spn);
 
@@ -614,13 +614,13 @@ int silofs_unshare_vnode2_at(struct silofs_pexec_ctx   *pexec,
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
                              const struct silofs_vaddr *vaddr);
 
-int silofs_fetch_spnode2_of(struct silofs_pexec_ctx   *pexec,
-                            const struct silofs_vaddr *ref_vaddr,
-                            struct silofs_space_info **out_spi);
+int silofs_fetch_spnode2_of(struct silofs_pexec_ctx     *pexec,
+                            const struct silofs_vaddr   *ref_vaddr,
+                            struct silofs_spnode_info2 **out_spi);
 
-int silofs_require_spnode2_of(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *ref_vaddr,
-                              struct silofs_space_info **out_spi);
+int silofs_require_spnode2_of(struct silofs_pexec_ctx     *pexec,
+                              const struct silofs_vaddr   *ref_vaddr,
+                              struct silofs_spnode_info2 **out_spi);
 
 int silofs_mark_unwritten_at2(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *ref_vaddr);

@@ -80,7 +80,7 @@ static void cmd_error_print_progname(void)
 		fprintf(fp, "%s: ", cmd_global_params.name);
 	} else {
 		fprintf(fp, "%s %s: ", cmd_global_params.name,
-		        cmd_global_params.cmdi->name);
+			cmd_global_params.cmdi->name);
 	}
 	fflush(fp);
 }
@@ -89,7 +89,7 @@ static void cmd_setup_globals(int argc, char *argv[])
 {
 	constexpr enum silofs_log_level log_level = SILOFS_LOG_INFO;
 	constexpr enum silofs_log_flags log_flags = SILOFS_LOGF_STDOUT |
-	                                            SILOFS_LOGF_PROGNAME;
+						    SILOFS_LOGF_PROGNAME;
 
 	SILOFS_STATICASSERT_LT(sizeof(cmd_global_params), 1024);
 
@@ -177,7 +177,6 @@ static const struct cmd_info g_cmd_info[] = {
 	DEFCMD(prune),    //
 	DEFCMD(fsck),     //
 	DEFCMD(view),     //
-	DEFCMD(preserve), //
 };
 
 static bool equals(const char *s1, const char *s2)

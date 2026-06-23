@@ -207,18 +207,6 @@ _silofs_view() {
 	fi
 }
 
-_silofs_preserve() {
-	local options=""
-
-	if [[ "$cur" == -* ]]; then
-		options+="-n --into= "
-		options+="-h --help "
-		_silofs_complete_options "$options"
-	else
-		_silofs_complete_filedir
-	fi
-}
-
 _silofs_subcmd() {
 	case "${words[1]}" in
 		"init")    _silofs_init    ;;
@@ -234,8 +222,6 @@ _silofs_subcmd() {
 		"prune")   _silofs_prune   ;;
 		"fsck")    _silofs_fsck    ;;
 		"view")    _silofs_view    ;;
-		"archive") _silofs_archive ;;
-		"preserve") _silofs_preserve ;;
 	esac
 }
 

@@ -125,7 +125,6 @@ void cmd_execute_fsck(void);
 
 void cmd_execute_view(void);
 
-void cmd_execute_preserve(void);
 
 /* options-arguments parsing via getopt */
 void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods);
@@ -141,7 +140,7 @@ char *cmd_optarg_getcurr2(const struct cmd_optargs *opa, const char *id);
 char *cmd_optargs_getarg(struct cmd_optargs *opa, const char *arg_name);
 
 char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
-                          const char *default_val);
+			  const char *default_val);
 
 char *cmd_optargs_getpass(const struct cmd_optargs *opa);
 
@@ -150,7 +149,7 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 size_t cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
 uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
-                                  uint32_t vmax);
+				  uint32_t vmax);
 
 void cmd_optargs_endargs(const struct cmd_optargs *opa);
 
@@ -165,7 +164,7 @@ void cmd_atexit(void (*fn)(void));
 /* fatal-error handling */
 
 silofs_attr_dief(2, 0) void cmd_vdie(int     err, const char *restrict,
-                                     va_list ap);
+				     va_list ap);
 
 silofs_attr_dief(2, 3) void cmd_die(int err, const char *restrict, ...);
 
@@ -301,7 +300,7 @@ void cmd_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref);
 void cmd_inspect_fs(struct silofs_env *env, bool view);
 
 void cmd_preserve_fs(struct silofs_env *env, const struct silofs_fsref *fsref,
-                     struct silofs_fsref *out_fsref);
+		     struct silofs_fsref *out_fsref);
 
 /* mount-info */
 struct silofs_mntinfos *cmd_parse_mountinfo(void);
@@ -346,18 +345,18 @@ void cmd_spec_setup1(struct silofs_spec *spec, int flags);
 void cmd_spec_setup2(struct silofs_spec *spec, size_t fs_capacity, int flags);
 
 void cmd_spec_update_fsref(struct silofs_spec        *spec,
-                           const struct silofs_fsref *fsref);
+			   const struct silofs_fsref *fsref);
 
 void cmd_spec_own_passwd(struct silofs_spec *spec, char **passwd);
 
 void cmd_spec_set_baseref(struct silofs_spec *spec, const char *repodir,
-                          const char *refname);
+			  const char *refname);
 
 void cmd_spec_set_baseref2(struct silofs_spec *spec, const char *repodir,
-                           const char *refname);
+			   const char *refname);
 
 void cmd_spec_update_owner(struct silofs_spec *spec, const char *username,
-                           bool with_sup_groups);
+			   bool with_sup_groups);
 
 void cmd_spec_append_user(struct silofs_spec *spec, const char *username);
 

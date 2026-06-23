@@ -33,7 +33,6 @@ silofs_SOURCES += cmd_main.c
 silofs_SOURCES += cmd_mkfs.c
 silofs_SOURCES += cmd_mount.c
 silofs_SOURCES += cmd_optargs.c
-silofs_SOURCES += cmd_preserve.c
 silofs_SOURCES += cmd_prune.c
 silofs_SOURCES += cmd_restrict.c
 silofs_SOURCES += cmd_rmfs.c

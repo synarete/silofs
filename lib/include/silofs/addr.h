@@ -127,6 +127,8 @@ bool silofs_vtype_isvnode(enum silofs_vtype vtype);
 
 bool silofs_vtype_isdata(enum silofs_vtype vtype);
 
+bool silofs_vtype_usespmap(enum silofs_vtype vtype);
+
 size_t silofs_vtype_size(enum silofs_vtype vtype);
 
 ssize_t silofs_vtype_ssize(enum silofs_vtype vtype);

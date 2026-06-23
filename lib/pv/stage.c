@@ -824,21 +824,19 @@ static int stc_spawn_vnode(const struct silofs_stage_ctx *st_ctx,
 	int err;
 
 	err = stc_require_paddr_of(st_ctx, pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = stc_create_cached_vnode(st_ctx, vaddr, out_vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	stc_update_spawned_vnode(st_ctx, *out_vni, pnptr);
 	return 0;
 }
 
-int silofs_spawn_vnode2(struct silofs_pexec_ctx *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_pnptr *pnptr,
-                        struct silofs_vnode_info **out_vni)
+int silofs_spawn_vnode2_with(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_pnptr *pnptr,
+                             struct silofs_vnode_info **out_vni)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
@@ -973,11 +971,11 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_vnode2(struct silofs_pexec_ctx *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_pnptr *pnptr,
-                        enum silofs_spacef spacef,
-                        struct silofs_vnode_info **out_vni)
+int silofs_stage_vnode2_with(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_pnptr *pnptr,
+                             enum silofs_spacef spacef,
+                             struct silofs_vnode_info **out_vni)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
@@ -1028,9 +1026,9 @@ static int stc_detach_vnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_detach_vnode2(struct silofs_pexec_ctx *pexec,
-                         const struct silofs_vaddr *vaddr,
-                         const struct silofs_pnptr *pnptr)
+int silofs_detach_vnode2_at(struct silofs_pexec_ctx *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_pnptr *pnptr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;

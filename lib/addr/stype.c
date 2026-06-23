@@ -171,6 +171,36 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 	return ret;
 }
 
+bool silofs_vtype_usespmap(enum silofs_vtype vtype)
+{
+	bool ret;
+
+	switch (vtype) {
+	case SILOFS_VTYPE_LSMAP:
+	case SILOFS_VTYPE_INODE:
+	case SILOFS_VTYPE_XANODE:
+	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_VTYPE_DATA1K:
+	case SILOFS_VTYPE_DATA4K:
+	case SILOFS_VTYPE_DATA64K:
+		ret = true;
+		break;
+	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SUPER2:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_VTYPE_SPLEAF:
+	case SILOFS_VTYPE_NONE:
+	case SILOFS_VTYPE_LAST:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
+
 size_t silofs_vtype_size(enum silofs_vtype vtype)
 {
 	size_t size;

@@ -542,24 +542,24 @@ int silofs_stage_btnode(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_spawn_vnode2(struct silofs_pexec_ctx   *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_pnptr *pnptr,
-                        struct silofs_vnode_info **out_vni);
+int silofs_spawn_vnode2_with(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_pnptr *pnptr,
+                             struct silofs_vnode_info **out_vni);
 
 int silofs_claim_vnode2_space2(struct silofs_pexec_ctx   *pexec,
                                const struct silofs_vaddr *vaddr,
                                const struct silofs_pnptr *pnptr);
 
-int silofs_stage_vnode2(struct silofs_pexec_ctx   *pexec,
-                        const struct silofs_vaddr *vaddr,
-                        const struct silofs_pnptr *pnptr,
-                        enum silofs_spacef         spacef,
-                        struct silofs_vnode_info **out_vni);
+int silofs_stage_vnode2_with(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_pnptr *pnptr,
+                             enum silofs_spacef         spacef,
+                             struct silofs_vnode_info **out_vni);
 
-int silofs_detach_vnode2(struct silofs_pexec_ctx   *pexec,
-                         const struct silofs_vaddr *vaddr,
-                         const struct silofs_pnptr *pnptr);
+int silofs_detach_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_pnptr *pnptr);
 
 int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
                          const struct silofs_paddr *paddr);
@@ -590,13 +590,13 @@ int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vnode_info **out_vni);
 
-int silofs_create_vnode2(struct silofs_pexec_ctx   *pexec,
-                         enum silofs_vtype          vtype,
-                         struct silofs_vnode_info **out_vni);
+int silofs_spawn_vnode2(struct silofs_pexec_ctx   *pexec,
+                        enum silofs_vtype          vtype,
+                        struct silofs_vnode_info **out_vni);
 
-int silofs_create_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_vnode_info **out_vni);
+int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni);
 
 int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
                               enum silofs_vtype        vtype,
@@ -614,7 +614,7 @@ int silofs_unshare_vnode2_at(struct silofs_pexec_ctx   *pexec,
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
                              const struct silofs_vaddr *vaddr);
 
-int silofs_fetch_spnode2_of(struct silofs_pexec_ctx     *pexec,
+int silofs_stage_spnode2_of(struct silofs_pexec_ctx     *pexec,
                             const struct silofs_vaddr   *ref_vaddr,
                             struct silofs_spnode_info2 **out_spi);
 
@@ -631,6 +631,10 @@ int silofs_clear_unwritten_at2(struct silofs_pexec_ctx   *pexec,
 int silofs_test_unwritten_at2(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *ref_vaddr,
                               bool                      *out_unwritten);
+
+int silofs_test_vtop_mapping(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             bool                      *out_exists);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* format */

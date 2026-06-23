@@ -202,7 +202,7 @@ create_vnode(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype,
 {
 	int err;
 
-	err = silofs_create_vnode2(pexec, vtype, out_vni);
+	err = silofs_spawn_vnode2(pexec, vtype, out_vni);
 	if (err) {
 		log_err("failed to create vnode: vtype=%d err=%d", //
 		        vtype, err);
@@ -363,19 +363,20 @@ format_vspace_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	return 0;
 }
 
+static bool has_vspace_mapping(enum silofs_vtype vtype)
+{
+	return silofs_vtype_usespmap(vtype);
+}
+
 static int format_vspace_nodes(struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
 	int err;
 
 	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype) ||
-		    (vtype == SILOFS_VTYPE_SPNODE2)) {
-			continue;
-		}
-		err = format_vspace_node_of(pexec, vtype);
-		if (err) {
-			return err;
+		if (has_vspace_mapping(vtype)) {
+			err = format_vspace_node_of(pexec, vtype);
+			return_if_err(err);
 		}
 	}
 	return 0;
@@ -386,13 +387,11 @@ static int format_vspace(struct silofs_pexec_ctx *pexec)
 	int err;
 
 	err = format_vspace_roots(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_vspace_nodes(pexec);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -480,7 +479,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
 
-	err = silofs_fetch_spnode2_of(pexec, &vaddr, &spi);
+	err = silofs_stage_spnode2_of(pexec, &vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_vspace_ref(spi, &vaddr, &vspref);
@@ -500,12 +499,10 @@ static int reload_vspace_nodes(struct silofs_pexec_ctx *pexec)
 	int err;
 
 	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype) ||
-		    (vtype == SILOFS_VTYPE_SPNODE2)) {
-			continue;
+		if (has_vspace_mapping(vtype)) {
+			err = reload_node_zero_of(pexec, vtype);
+			return_if_err(err);
 		}
-		err = reload_node_zero_of(pexec, vtype);
-		return_if_err(err);
 	}
 	return 0;
 }

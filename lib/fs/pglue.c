@@ -141,7 +141,7 @@ spawn_vnode(const struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_create_vnode2(&pexec, vtype, out_vni);
+	err = silofs_spawn_vnode2(&pexec, vtype, out_vni);
 	finish_pexec(&pexec, pii);
 	return err;
 }

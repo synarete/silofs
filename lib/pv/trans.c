@@ -64,7 +64,7 @@ int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = resolve_spacef_of(pexec, vaddr, &spacef);
 	return_if_err(err);
 
-	err = silofs_stage_vnode2(pexec, vaddr, &pnptr, spacef, out_vni);
+	err = silofs_stage_vnode2_with(pexec, vaddr, &pnptr, spacef, out_vni);
 	return_if_err(err);
 
 	return 0;
@@ -88,20 +88,20 @@ static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_create_vnode2(struct silofs_pexec_ctx *pexec,
-                         enum silofs_vtype vtype,
-                         struct silofs_vnode_info **out_vni)
+int silofs_spawn_vnode2(struct silofs_pexec_ctx *pexec,
+                        enum silofs_vtype vtype,
+                        struct silofs_vnode_info **out_vni)
 {
 	struct silofs_vaddr vaddr;
 	int err;
 
 	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
-	return err ? err : silofs_create_vnode2_at(pexec, &vaddr, out_vni);
+	return err ? err : silofs_spawn_vnode2_at(pexec, &vaddr, out_vni);
 }
 
-int silofs_create_vnode2_at(struct silofs_pexec_ctx *pexec,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_vnode_info **out_vni)
+int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_vaddr *vaddr,
+                           struct silofs_vnode_info **out_vni)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -109,7 +109,7 @@ int silofs_create_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = carve_vtop_mapping(pexec, vaddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_vnode2(pexec, vaddr, &pnptr, out_vni);
+	err = silofs_spawn_vnode2_with(pexec, vaddr, &pnptr, out_vni);
 	return_if_err(err);
 
 	vni_setdirty(*out_vni);
@@ -178,7 +178,7 @@ static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
 	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_detach_vnode2(pexec, vaddr, &pnptr);
+	err = silofs_detach_vnode2_at(pexec, vaddr, &pnptr);
 	return_if_err(err);
 
 	err = silofs_remove_vtop_mapping(pexec, vaddr);
@@ -283,7 +283,7 @@ static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = silofs_create_vnode2_at(pexec, vaddr, &vni);
+	err = silofs_spawn_vnode2_at(pexec, vaddr, &vni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_vni(vni);
@@ -306,7 +306,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_fetch_spnode2_of(struct silofs_pexec_ctx *pexec,
+int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_spnode_info2 **out_spi)
 {
@@ -316,9 +316,9 @@ int silofs_fetch_spnode2_of(struct silofs_pexec_ctx *pexec,
 	return resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
 }
 
-static int
-test_vtop_mapping(struct silofs_pexec_ctx *pexec,
-                  const struct silofs_vaddr *vaddr, bool *out_exists)
+int silofs_test_vtop_mapping(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_vaddr *vaddr,
+                             bool *out_exists)
 {
 	struct silofs_pnptr pnptr;
 	int err;
@@ -338,7 +338,7 @@ int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
 	bool exists;
 
 	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
-	err = test_vtop_mapping(pexec, &vaddr, &exists);
+	err = silofs_test_vtop_mapping(pexec, &vaddr, &exists);
 	if (!err) {
 		if (exists) {
 			err = resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
@@ -356,7 +356,7 @@ int silofs_mark_unwritten_at2(struct silofs_pexec_ctx *pexec,
 	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
-	err = silofs_fetch_spnode2_of(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_of(pexec, ref_vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_mark_unwritten(spi, ref_vaddr);
@@ -369,7 +369,7 @@ int silofs_clear_unwritten_at2(struct silofs_pexec_ctx *pexec,
 	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
-	err = silofs_fetch_spnode2_of(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_of(pexec, ref_vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_clear_unwritten(spi, ref_vaddr);

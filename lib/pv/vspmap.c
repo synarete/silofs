@@ -19,3 +19,4 @@
 #include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>
+#include <silofs/fs.h>

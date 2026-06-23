@@ -931,7 +931,7 @@ sbi2_attach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 	err = vni_attach_lview(&sui->sbn_vni, alloc);
 	if (!err) {
 		lview    = silofs_vni_lview(&sui->sbn_vni);
-		sui->sbn = &lview->u.sun;
+		sui->sbn = &lview->u.sbn;
 	}
 	return err;
 }

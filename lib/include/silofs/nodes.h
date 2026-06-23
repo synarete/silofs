@@ -588,8 +588,8 @@ struct silofs_vnode_info {
 
 /* super node */
 struct silofs_sbnode_info2 {
-	struct silofs_vnode_info  sbn_vni;
-	struct silofs_super_node *sbn;
+	struct silofs_vnode_info   sbn_vni;
+	struct silofs_superb_node *sbn;
 };
 
 /* space allocation node */

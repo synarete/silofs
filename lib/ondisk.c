@@ -301,6 +301,22 @@ static void validate_ondisk_blob_desc(void)
 	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
 }
 
+static void validate_ondisk_superb_node(void)
+{
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_hdr, 0);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_magic, 32);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_version, 40);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_flags, 48);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_sw_version, 64);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_btime, 128);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_capacity, 256);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_usage, 264);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_nodes_count, 1024);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_apex_voff, 2048);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_reserved4, 3072);
+	REQUIRE_SIZEOF_4K(struct silofs_superb_node);
+}
+
 static void validate_ondisk_space_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_hdr, 0);
@@ -309,21 +325,6 @@ static void validate_ondisk_space_node(void)
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_flags, 1024);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_refcnt, 2048);
 	REQUIRE_SIZEOF_4K(struct silofs_space_node);
-}
-
-static void validate_ondisk_super_node(void)
-{
-	REQUIRE_OFFSET64(struct silofs_super_node, s_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_magic, 32);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_version, 40);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_flags, 48);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_sw_version, 64);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_btime, 128);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_fs_capacity, 256);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_fs_usage, 264);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_nodes_count, 272);
-	REQUIRE_OFFSET64(struct silofs_super_node, s_reserved3, 1024);
-	REQUIRE_SIZEOF_4K(struct silofs_super_node);
 }
 
 static void validate_ondisk_super(void)
@@ -499,7 +500,7 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_btree_node();
 	validate_ondisk_blob_desc();
 	validate_ondisk_space_node();
-	validate_ondisk_super_node();
+	validate_ondisk_superb_node();
 	validate_ondisk_super();
 	validate_ondisk_lsmap();
 	validate_ondisk_inode();

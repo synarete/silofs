@@ -246,7 +246,7 @@ size_t silofs_vtype_size(enum silofs_vtype vtype)
 		size = sizeof(struct silofs_space_node);
 		break;
 	case SILOFS_VTYPE_SUPER2:
-		size = sizeof(struct silofs_super_node);
+		size = sizeof(struct silofs_superb_node);
 		break;
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:

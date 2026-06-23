@@ -201,7 +201,7 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* super */
 
-int silofs_verify_super_node(const struct silofs_super_node *sun);
+int silofs_verify_superb_node(const struct silofs_superb_node *sun);
 
 void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sui);
 
@@ -215,6 +215,13 @@ void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sui,
 
 void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sui,
                            enum silofs_vtype           vtype);
+
+void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
+                         enum silofs_vtype                 vtype,
+                         struct silofs_vaddr              *out_vaddr);
+
+void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
+                             const struct silofs_vaddr  *vaddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* inode */

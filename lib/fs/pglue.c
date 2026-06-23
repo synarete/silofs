@@ -28,6 +28,12 @@ static int verify_lview_of(const struct silofs_lview *lview,
 	int ret;
 
 	switch (vaddr->vtype) {
+	case SILOFS_VTYPE_SUPER2:
+		ret = silofs_verify_superb_node(&lview->u.sbn);
+		break;
+	case SILOFS_VTYPE_SPNODE2:
+		ret = silofs_verify_space_node(&lview->u.spn);
+		break;
 	case SILOFS_VTYPE_INODE:
 		ret = silofs_verify_inode(&lview->u.in);
 		break;
@@ -42,12 +48,6 @@ static int verify_lview_of(const struct silofs_lview *lview,
 		break;
 	case SILOFS_VTYPE_FTNODE:
 		ret = silofs_verify_ftree_node(&lview->u.ftn);
-		break;
-	case SILOFS_VTYPE_SPNODE2:
-		ret = silofs_verify_space_node(&lview->u.spn);
-		break;
-	case SILOFS_VTYPE_SUPER2:
-		ret = silofs_verify_super_node(&lview->u.sun);
 		break;
 	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_DATA1K:

@@ -838,7 +838,7 @@ struct silofs_lsmap {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_super_node {
+struct silofs_superb_node {
 	struct silofs_header        s_hdr;
 	uint8_t                     s_reserved0[16];
 	uint64_t                    s_magic;
@@ -850,8 +850,10 @@ struct silofs_super_node {
 	uint8_t                     s_reserved2[64];
 	uint64_t                    s_fs_capacity;
 	uint64_t                    s_fs_usage;
-	uint64_t                    s_nodes_count[94];
-	uint8_t                     s_reserved3[3072];
+	uint8_t                     s_reserved3[752];
+	uint64_t                    s_nodes_count[128];
+	int64_t                     s_apex_voff[128];
+	uint8_t                     s_reserved4[1024];
 } silofs_attr_aligned64;
 
 struct silofs_inode_times {
@@ -1096,7 +1098,7 @@ struct silofs_pview {
 union silofs_lview_u {
 	struct silofs_header      hdr[2];
 	struct silofs_mbr1k       mbr;
-	struct silofs_super_node  sun;
+	struct silofs_superb_node sbn;
 	struct silofs_space_node  spn;
 	struct silofs_super_block sb;
 	struct silofs_spmap_node  sn;

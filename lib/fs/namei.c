@@ -238,17 +238,6 @@ static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)
 	return task->env->base.prng;
 }
 
-static struct silofs_sb_info *sbi_of(const struct silofs_task_ctx *task)
-{
-	return silofs_get_sbi(task);
-}
-
-static void inewp_set_generation(struct silofs_inew_params *inp,
-                                 struct silofs_sb_info *sbi)
-{
-	inp->generation = silofs_sbst_next_generation(sbi);
-}
-
 static void
 inewp_set_seed(struct silofs_inew_params *inp, struct silofs_prandgen *prng)
 {
@@ -259,15 +248,15 @@ inewp_set_seed(struct silofs_inew_params *inp, struct silofs_prandgen *prng)
 
 void silofs_inew_params_of(const struct silofs_task_ctx *task,
                            const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev,
+                           mode_t mode, dev_t rdev, uint64_t igen,
                            struct silofs_inew_params *out_inp)
 {
 	inewp_reset(out_inp);
-	out_inp->mode = mode;
-	out_inp->rdev = rdev;
+	out_inp->mode       = mode;
+	out_inp->rdev       = rdev;
+	out_inp->generation = igen;
 	inewp_set_creds(out_inp, &task->auth.creds);
 	inewp_set_ts(out_inp, &task->auth.ts);
-	inewp_set_generation(out_inp, sbi_of(task));
 	inewp_set_seed(out_inp, prng_of(task));
 	if (parent_dii != nullptr) {
 		inewp_update_by_parent(out_inp, parent_dii);
@@ -278,10 +267,18 @@ static int spawn_inode(struct silofs_task_ctx *task,
                        const struct silofs_inode_info *parent_dii, mode_t mode,
                        dev_t rdev, struct silofs_inode_info **out_ii)
 {
-	struct silofs_inew_params inp;
+	struct silofs_inew_params inp = {};
+	uint64_t igen;
+	int err;
 
-	silofs_inew_params_of(task, parent_dii, mode, rdev, &inp);
-	return silofs_spawn_inode_by(task, &inp, out_ii);
+	err = silofs_next_inogen(task, &igen);
+	return_if_err(err);
+
+	silofs_inew_params_of(task, parent_dii, mode, rdev, igen, &inp);
+	err = silofs_spawn_inode_by(task, &inp, out_ii);
+	return_if_err(err);
+
+	return 0;
 }
 
 static int spawn_dir_inode(struct silofs_task_ctx *task,
@@ -2706,4 +2703,16 @@ int silofs_forget_loose_ii(struct silofs_task_ctx *task,
 		ret = drop_unlinked(task, ii);
 	}
 	return ret;
+}
+
+int silofs_next_inogen(const struct silofs_task_ctx *task, uint64_t *out_igen)
+{
+	struct silofs_sbnode_info2 *sbi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi2(task, &sbi);
+	return_if_err(err);
+
+	*out_igen = silofs_sbi2_next_igen(sbi);
+	return 0;
 }

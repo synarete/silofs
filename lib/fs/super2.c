@@ -167,6 +167,17 @@ static void sbn_set_fs_usage(struct silofs_superb_node *sbn, size_t nbytes)
 	sbn->s_fs_usage = silofs_cpu_to_le64(nbytes);
 }
 
+static uint64_t sbn_ino_generation(const struct silofs_superb_node *sbn)
+{
+	return silofs_le64_to_cpu(sbn->s_ino_generation);
+}
+
+static void
+sbn_set_ino_generation(struct silofs_superb_node *sbn, uint64_t gen)
+{
+	sbn->s_ino_generation = silofs_cpu_to_le64(gen);
+}
+
 static size_t
 sbn_nodes_count_at(const struct silofs_superb_node *sbn, size_t slot)
 {
@@ -257,6 +268,7 @@ static void sbn_init(struct silofs_superb_node *sbn)
 	sbn_set_sw_version(sbn, &silofs_sw_vers);
 	sbn_set_fs_capacity(sbn, SILOFS_CAPACITY_SIZE_MIN);
 	sbn_set_fs_usage(sbn, 0);
+	sbn_set_ino_generation(sbn, 1);
 	sbn_reset_nodes_count(sbn);
 	sbn_reset_apex_voff(sbn);
 }
@@ -371,9 +383,14 @@ static size_t vsize_of(enum silofs_vtype vtype)
 	return silofs_vtype_size(vtype);
 }
 
-void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi)
+static void sbi_setdirty(struct silofs_sbnode_info2 *sbi)
 {
 	silofs_vni_setdirty(&sbi->sbn_vni, nullptr);
+}
+
+void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi)
+{
+	sbi_setdirty(sbi);
 }
 
 static void sbi2_setup_btime_now(struct silofs_sbnode_info2 *sbi)
@@ -399,7 +416,7 @@ void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi,
 	sbn_init(sbi->sbn);
 	sbi2_set_capacity(sbi, fs_capacity);
 	sbi2_setup_btime_now(sbi);
-	silofs_sbi2_setdirty(sbi);
+	sbi_setdirty(sbi);
 }
 
 int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
@@ -424,7 +441,7 @@ void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
 
 	sbn_inc_nodes_count(sbi->sbn, vtype);
 	sbn_set_fs_usage(sbi->sbn, usage + ntake);
-	silofs_sbi2_setdirty(sbi);
+	sbi_setdirty(sbi);
 }
 
 void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
@@ -437,7 +454,7 @@ void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
 
 	sbn_dec_nodes_count(sbi->sbn, vtype);
 	sbn_set_fs_usage(sbi->sbn, usage - ngive);
-	silofs_sbi2_setdirty(sbi);
+	sbi_setdirty(sbi);
 }
 
 void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
@@ -456,6 +473,16 @@ void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
 
 	if (vaddr->off > off) {
 		sbn_set_apex_voff(sbi->sbn, vaddr->vtype, vaddr->off);
-		silofs_sbi2_setdirty(sbi);
+		sbi_setdirty(sbi);
 	}
+}
+
+uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi)
+{
+	const uint64_t igen = sbn_ino_generation(sbi->sbn);
+
+	sbn_set_ino_generation(sbi->sbn, igen + 1);
+	sbi_setdirty(sbi);
+
+	return igen;
 }

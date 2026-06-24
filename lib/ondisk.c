@@ -311,6 +311,7 @@ static void validate_ondisk_superb_node(void)
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_btime, 128);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_capacity, 256);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_usage, 264);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_ino_generation, 272);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_nodes_count, 1024);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_apex_voff, 2048);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_reserved4, 3072);

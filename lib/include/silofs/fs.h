@@ -75,7 +75,7 @@ int silofs_probe_super2(const struct silofs_task_ctx *task);
 
 int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode          stg_mode,
-                        struct silofs_sbnode_info2  **out_sui);
+                        struct silofs_sbnode_info2  **out_sbi);
 
 int silofs_spawn_super2(const struct silofs_task_ctx *task,
                         struct silofs_sbnode_info2  **out_sbi);
@@ -226,6 +226,8 @@ void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
 
 void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
                              const struct silofs_vaddr  *vaddr);
+
+uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* inode */
@@ -458,7 +460,7 @@ int silofs_make_linkname(struct silofs_task_ctx         *task,
 
 void silofs_inew_params_of(const struct silofs_task_ctx   *task,
                            const struct silofs_inode_info *parent_dii,
-                           mode_t mode, dev_t rdev,
+                           mode_t mode, dev_t rdev, uint64_t igen,
                            struct silofs_inew_params *out_inp);
 
 int silofs_do_forget(struct silofs_task_ctx   *task,
@@ -569,6 +571,8 @@ int silofs_do_unrefs(struct silofs_task_ctx *task);
 
 int silofs_forget_loose_ii(struct silofs_task_ctx   *task,
                            struct silofs_inode_info *ii);
+
+int silofs_next_inogen(const struct silofs_task_ctx *task, uint64_t *out_igen);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* file */

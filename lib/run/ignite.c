@@ -266,53 +266,6 @@ static int format_spmaps(struct silofs_task_ctx *task)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int
-spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
-{
-	struct silofs_inew_params inp;
-	struct silofs_inode_info *ii;
-	int err;
-
-	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, &inp);
-	err = silofs_spawn_inode_by(task, &inp, &ii);
-	if (err) {
-		return err;
-	}
-	if (ii->i_ino != SILOFS_INO_ROOT) {
-		log_err("failed to format root-dir: ino=%ld", ii->i_ino);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	*out_ii = ii;
-	return 0;
-}
-
-static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
-{
-	silofs_ii_fixup_as_rootdir(rootd_ii);
-	if (utf8_names) {
-		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
-	} else {
-		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
-	}
-}
-
-static bool use_utf8_names(const struct silofs_task_ctx *task)
-{
-	return (task->ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
-}
-
-static int format_rootdir(struct silofs_task_ctx *task)
-{
-	struct silofs_inode_info *rootd_ii = nullptr;
-	int err;
-
-	err = spawn_rootdir(task, &rootd_ii);
-	return_if_err(err);
-
-	update_rootdir(rootd_ii, use_utf8_names(task));
-	return 0;
-}
-
 static int format_fs(struct silofs_task_ctx *task)
 {
 	int err;
@@ -323,15 +276,6 @@ static int format_fs(struct silofs_task_ctx *task)
 	err = format_spmaps(task);
 	return_if_err(err);
 
-	err = format_rootdir(task);
-	return_if_err(err);
-
-	return 0;
-}
-
-static int pre_format_fs(struct silofs_task_ctx *task)
-{
-	drop_relax_caches(task);
 	return 0;
 }
 
@@ -350,9 +294,6 @@ int silofs_exec_format_fs(struct silofs_task_ctx *task,
                           struct silofs_mbref *out_mbref)
 {
 	int err;
-
-	err = pre_format_fs(task);
-	return_if_err(err);
 
 	err = format_fs(task);
 	return_if_err(err);
@@ -417,34 +358,7 @@ static int reload_super(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int reload_rootd(struct silofs_task_ctx *task)
-{
-	struct silofs_inode_info *ii = nullptr;
-	int err;
-
-	err = silofs_stage_inode_of(task, SILOFS_INO_ROOT, SILOFS_STG_CUR,
-	                            &ii);
-	if (err) {
-		log_err("failed to reload root-inode: err=%d", err);
-		return err;
-	}
-	if (!silofs_ii_isdir(ii)) {
-		log_err("root-inode is not-a-dir: mode=0%o",
-		        silofs_ii_mode(ii));
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
 int silofs_exec_reload_fs(struct silofs_task_ctx *task)
 {
-	int err;
-
-	err = reload_super(task);
-	return_if_err(err);
-
-	err = reload_rootd(task);
-	return_if_err(err);
-
-	return 0;
+	return reload_super(task);
 }

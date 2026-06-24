@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/base.h>
 #include <silofs/pv.h>
-#include <silofs/fs/task.h>
+#include <silofs/fs.h>
 
 #include <silofs/run/env.h>
 
@@ -229,6 +229,12 @@ int silofs_task_submit(struct silofs_task_ctx *task, bool all)
 struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task)
 {
 	return task->env->sbi;
+}
+
+int silofs_curr_sbi2(const struct silofs_task_ctx *task,
+                     struct silofs_sbnode_info2 **out_sbi)
+{
+	return silofs_stage_super2(task, SILOFS_STG_CUR, out_sbi);
 }
 
 void silofs_make_pexec(const struct silofs_task_ctx *task,

@@ -442,11 +442,65 @@ static int format_super(struct silofs_task_ctx *task, size_t fs_capacity)
 	return 0;
 }
 
+static int
+spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
+{
+	struct silofs_inew_params inp = {};
+	struct silofs_inode_info *ii;
+	uint64_t igen;
+	int err;
+
+	err = silofs_next_inogen(task, &igen);
+	return_if_err(err);
+
+	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, igen, &inp);
+	err = silofs_spawn_inode_by(task, &inp, &ii);
+	return_if_err(err);
+
+	if (ii->i_ino != SILOFS_INO_ROOT) {
+		log_err("failed to format root-dir: ino=%ld", ii->i_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+
+	*out_ii = ii;
+	return 0;
+}
+
+static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
+{
+	silofs_ii_fixup_as_rootdir(rootd_ii);
+	if (utf8_names) {
+		silofs_dir_set_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
+	} else {
+		silofs_dir_unset_flag(rootd_ii, SILOFS_DIRF_NAME_UTF8);
+	}
+}
+
+static bool use_utf8_names(const struct silofs_task_ctx *task)
+{
+	return (task->ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
+}
+
+static int format_rootdir(struct silofs_task_ctx *task)
+{
+	struct silofs_inode_info *rootd_ii = nullptr;
+	int err;
+
+	err = spawn_rootdir(task, &rootd_ii);
+	return_if_err(err);
+
+	update_rootdir(rootd_ii, use_utf8_names(task));
+	return 0;
+}
+
 static int format_vfs(struct silofs_task_ctx *task, size_t fs_capacity)
 {
 	int err;
 
 	err = format_super(task, fs_capacity);
+	return_if_err(err);
+
+	err = format_rootdir(task);
 	return_if_err(err);
 
 	return 0;
@@ -600,11 +654,34 @@ static int reload_super(struct silofs_task_ctx *task)
 	return silofs_stage_super2(task, SILOFS_STG_CUR, &sbi);
 }
 
+static int reload_rootdir(struct silofs_task_ctx *task)
+{
+	struct silofs_inode_info *ii = nullptr;
+	constexpr ino_t ino          = SILOFS_INO_ROOT;
+	int err;
+
+	err = silofs_stage_inode_of(task, ino, SILOFS_STG_CUR, &ii);
+	if (err) {
+		log_err("failed to reload root-inode: err=%d", err);
+		return err;
+	}
+	if (!silofs_ii_isdir(ii)) {
+		const mode_t mode = silofs_ii_mode(ii);
+
+		log_err("root-inode is not-a-dir: mode=0%o", mode);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
 static int reload_vfs(struct silofs_task_ctx *task)
 {
 	int err;
 
 	err = reload_super(task);
+	return_if_err(err);
+
+	err = reload_rootdir(task);
 	return_if_err(err);
 
 	return 0;

@@ -93,6 +93,9 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
 
 struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
 
+int silofs_curr_sbi2(const struct silofs_task_ctx *task,
+                     struct silofs_sbnode_info2  **out_sbi);
+
 void silofs_make_pexec(const struct silofs_task_ctx *task,
                        struct silofs_pexec_ctx      *out_pexec);
 

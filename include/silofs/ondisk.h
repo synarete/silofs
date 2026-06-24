@@ -850,7 +850,8 @@ struct silofs_superb_node {
 	uint8_t                     s_reserved2[64];
 	uint64_t                    s_fs_capacity;
 	uint64_t                    s_fs_usage;
-	uint8_t                     s_reserved3[752];
+	uint64_t                    s_ino_generation;
+	uint8_t                     s_reserved3[744];
 	uint64_t                    s_nodes_count[128];
 	int64_t                     s_apex_voff[128];
 	uint8_t                     s_reserved4[1024];

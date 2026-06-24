@@ -28,7 +28,7 @@
 void silofs_env_refresh_root(struct silofs_env *env,
                              const struct silofs_pnptr *pnptr)
 {
-	silofs_mbi_set_root(&env->mbis.fs_mbi, pnptr);
+	silofs_mbi_set_root(&env->mbi, pnptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -51,8 +51,7 @@ static void
 env_update_root_sb(struct silofs_env *env, const struct silofs_sb_info *sbi)
 {
 	if (sbi != nullptr) {
-		silofs_mbi_set_sbaddr(&env->mbis.fs_mbi,
-		                      silofs_sbi_uaddr(sbi));
+		silofs_mbi_set_sbaddr(&env->mbi, silofs_sbi_uaddr(sbi));
 	}
 }
 
@@ -110,18 +109,13 @@ env_use_password(struct silofs_env *env, const struct silofs_password *pw,
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;
 
-	if (flags & SILOFS_F_NOPASSWD) {
-		return 0; /* password-less mode */
+	if ((flags & SILOFS_F_NOPASSWD) != SILOFS_F_NOPASSWD) {
+		err = silofs_derive_mbr_meta(pw, &mbr_meta);
+		return_if_err(err);
+
+		silofs_mbi_set_meta(&env->mbi, &mbr_meta);
 	}
-	err = silofs_derive_mbr_meta(pw, &mbr_meta);
-	if (err) {
-		return err;
-	}
-	mbr_meta.mode = SILOFS_MBR_FS;
-	err           = silofs_mbi_set_meta(&env->mbis.fs_mbi, &mbr_meta);
-	if (err) {
-		return err;
-	}
+
 	return 0;
 }
 
@@ -153,17 +147,17 @@ static int env_update_name(struct silofs_env *env, const char *fsname)
 
 	if (fsname == nullptr) {
 		silofs_strbuf_reset(&env->name);
-		return 0;
+		goto out;
 	}
+
 	err = silofs_namestr_init(&nstr, fsname);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_check_fsname(&nstr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_strbuf_setup(&env->name, &nstr.sv);
+out:
 	return 0;
 }
 
@@ -253,16 +247,15 @@ static void env_fini_commons(struct silofs_env *env)
 	env->sbi = nullptr;
 }
 
-static int env_init_mbis(struct silofs_env *env)
+static int env_init_mbi(struct silofs_env *env)
 {
-	silofs_mbi_init(&env->mbis.fs_mbi, SILOFS_MBR_FS);
+	silofs_mbi_init(&env->mbi);
 	return 0;
 }
 
-static void env_fini_mbis(struct silofs_env *env)
+static void env_fini_mbi(struct silofs_env *env)
 {
-	silofs_mbi_fini(&env->mbis.fs_mbi);
-	silofs_mbi_fini(&env->mbis.ar_mbi);
+	silofs_mbi_fini(&env->mbi);
 }
 
 static int env_init_locks(struct silofs_env *env)
@@ -333,7 +326,7 @@ int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc)
 	env_init_commons(env, alloc);
 	env_init_opstat(env);
 
-	err = env_init_mbis(env);
+	err = env_init_mbi(env);
 	return_if_err(err);
 
 	err = env_init_locks(env);
@@ -358,7 +351,7 @@ void silofs_env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypto(env);
 	env_fini_locks(env);
-	env_fini_mbis(env);
+	env_fini_mbi(env);
 	env_fini_commons(env);
 }
 
@@ -502,7 +495,7 @@ env_check_sb(const struct silofs_env *env, const struct silofs_sb_info *sbi)
 static void env_mbr_sb_addr(const struct silofs_env *env,
                             struct silofs_uaddr *out_sb_uabbr)
 {
-	silofs_mbi_sbaddr(&env->mbis.fs_mbi, out_sb_uabbr);
+	silofs_mbi_sbaddr(&env->mbi, out_sb_uabbr);
 }
 
 int silofs_env_reload_super(struct silofs_env *env)
@@ -610,7 +603,7 @@ static void sbi_mark_fossil(struct silofs_sb_info *sbi)
 static void
 env_curr_fs_mbref(const struct silofs_env *env, struct silofs_mbref *out_mbref)
 {
-	silofs_mbref_assign(out_mbref, &env->mbis.fs_mbi.mb_ref);
+	silofs_mbref_assign(out_mbref, &env->mbi.mb_ref);
 }
 
 static int
@@ -628,7 +621,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 		return err;
 	}
 
-	err = silofs_env_commit_fs_mbr(env, &out_mbrefs->fork);
+	err = silofs_env_commit_mbr(env, &out_mbrefs->fork);
 	if (err) {
 		return err;
 	}
@@ -638,7 +631,7 @@ env_do_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 		return err;
 	}
 
-	err = silofs_env_commit_fs_mbr(env, &out_mbrefs->main);
+	err = silofs_env_commit_mbr(env, &out_mbrefs->main);
 	if (err) {
 		return err;
 	}
@@ -656,13 +649,6 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	err = env_do_forkfs(env, out_mbrefs);
 	silofs_sbi_decref(sbi);
 	return err;
-}
-
-int silofs_env_export_ar_mbr(struct silofs_env *env,
-                             struct silofs_mbref *out_mbref,
-                             struct silofs_mbr1k *out_mbr1k)
-{
-	return silofs_mbi_export(&env->mbis.ar_mbi, out_mbref, out_mbr1k);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -685,16 +671,15 @@ env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 
 int silofs_env_reinit_ciphers(struct silofs_env *env)
 {
-	const struct silofs_mbr_info *fs_mbi = &env->mbis.fs_mbi;
+	const struct silofs_mbr_info *fs_mbi = &env->mbi;
 
 	return env_reinit_ciphers(env, &fs_mbi->mb_meta.nmeta.ciargs);
 }
 
-int silofs_env_commit_fs_mbr(struct silofs_env *env,
-                             struct silofs_mbref *out_mbref)
+int silofs_env_commit_mbr(struct silofs_env *env,
+                          struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(&env->mbis.fs_mbi, env->base.dstor,
-	                         out_mbref);
+	return silofs_commit_mbr(&env->mbi, env->base.dstor, out_mbref);
 }
 
 int silofs_env_sense_mbr(struct silofs_env *env,
@@ -703,20 +688,14 @@ int silofs_env_sense_mbr(struct silofs_env *env,
 	return silofs_sense_mbr(env->base.dstor, mbref);
 }
 
-int silofs_env_reload_fs_mbr(struct silofs_env *env,
-                             const struct silofs_mbref *mbref)
+int silofs_env_reload_mbr(struct silofs_env *env,
+                          const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(&env->mbis.fs_mbi, env->base.dstor, mbref);
+	return silofs_reload_mbr(&env->mbi, env->base.dstor, mbref);
 }
 
-int silofs_env_reload_ar_mbr(struct silofs_env *env,
-                             const struct silofs_mbref *mbref)
+int silofs_env_unref_mbr(struct silofs_env *env,
+                         const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(&env->mbis.ar_mbi, env->base.dstor, mbref);
-}
-
-int silofs_env_unref_fs_mbr(struct silofs_env *env,
-                            const struct silofs_mbref *mbref)
-{
-	return silofs_unref_mbr(&env->mbis.fs_mbi, env->base.dstor, mbref);
+	return silofs_unref_mbr(&env->mbi, env->base.dstor, mbref);
 }

@@ -26,9 +26,8 @@ struct silofs_env;
 
 /* mbr meta info */
 struct silofs_mbr_meta {
-	struct silofs_nmeta  nmeta;
-	struct silofs_ckey   hmac_key;
-	enum silofs_mbr_mode mode;
+	struct silofs_nmeta nmeta;
+	struct silofs_ckey  hmac_key;
 };
 
 /* main boot-record, in-memory representation */
@@ -40,18 +39,18 @@ struct silofs_mbr_info {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbi_init(struct silofs_mbr_info *mbi, enum silofs_mbr_mode mode);
+void silofs_mbi_init(struct silofs_mbr_info *mbi);
 
 void silofs_mbi_fini(struct silofs_mbr_info *mbi);
 
-int silofs_mbi_set_meta(struct silofs_mbr_info       *mbi,
-                        const struct silofs_mbr_meta *meta);
+void silofs_mbi_set_meta(struct silofs_mbr_info       *mbi,
+                         const struct silofs_mbr_meta *meta);
 
 int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
                          struct silofs_pnptr          *out_pnptr);
 
-int silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
-                        const struct silofs_pnptr *pnptr);
+void silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
+                         const struct silofs_pnptr *pnptr);
 
 int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
                       struct silofs_uaddr          *out_sb_uaddr);

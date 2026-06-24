@@ -301,12 +301,6 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* main boot-record sub-modes */
-enum silofs_mbr_mode {
-	SILOFS_MBR_NONE = 0,
-	SILOFS_MBR_FS   = 1,
-};
-
 /* meta-header flags */
 enum silofs_hdrf {
 	SILOFS_HDRF_NONE  = 0x00,

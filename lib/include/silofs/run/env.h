@@ -52,7 +52,6 @@ struct silofs_env_base {
 /* main boot-records info */
 struct silofs_env_mbis {
 	struct silofs_mbr_info fs_mbi;
-	struct silofs_mbr_info ar_mbi;
 };
 
 /* top-level environment object */
@@ -60,7 +59,7 @@ struct silofs_env {
 	struct silofs_strbuf           name;
 	struct silofs_alloc           *alloc;
 	struct silofs_env_base         base;
-	struct silofs_env_mbis         mbis;
+	struct silofs_mbr_info         mbi;
 	struct silofs_rwlock           rwlock;
 	struct silofs_mutex            mutex;
 	struct silofs_cipher_hd        enc_ci_hd;
@@ -127,10 +126,6 @@ int silofs_env_shut(struct silofs_env *env);
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 
-int silofs_env_export_ar_mbr(struct silofs_env   *env,
-                             struct silofs_mbref *out_mbref,
-                             struct silofs_mbr1k *out_mbr1k);
-
 bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -140,16 +135,13 @@ int silofs_env_sense_mbr(struct silofs_env         *env,
 
 int silofs_env_reinit_ciphers(struct silofs_env *env);
 
-int silofs_env_commit_fs_mbr(struct silofs_env   *env,
-                             struct silofs_mbref *out_mbref);
+int silofs_env_commit_mbr(struct silofs_env   *env,
+                          struct silofs_mbref *out_mbref);
 
-int silofs_env_reload_fs_mbr(struct silofs_env         *env,
-                             const struct silofs_mbref *mbref);
+int silofs_env_reload_mbr(struct silofs_env         *env,
+                          const struct silofs_mbref *mbref);
 
-int silofs_env_reload_ar_mbr(struct silofs_env         *env,
-                             const struct silofs_mbref *mbref);
-
-int silofs_env_unref_fs_mbr(struct silofs_env         *env,
-                            const struct silofs_mbref *mbref);
+int silofs_env_unref_mbr(struct silofs_env         *env,
+                         const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_ENV_H_ */

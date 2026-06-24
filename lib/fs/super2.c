@@ -384,9 +384,20 @@ static void sbi2_setup_btime_now(struct silofs_sbnode_info2 *sbi)
 	sbn_set_btime(sbi->sbn, &now);
 }
 
-void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi)
+static void
+sbi2_set_capacity(struct silofs_sbnode_info2 *sbi, size_t fs_capacity)
+{
+	silofs_assert_ge(fs_capacity, SILOFS_CAPACITY_SIZE_MIN);
+	silofs_assert_le(fs_capacity, SILOFS_CAPACITY_SIZE_MAX);
+
+	sbn_set_fs_capacity(sbi->sbn, fs_capacity);
+}
+
+void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi,
+                               size_t fs_capacity)
 {
 	sbn_init(sbi->sbn);
+	sbi2_set_capacity(sbi, fs_capacity);
 	sbi2_setup_btime_now(sbi);
 	silofs_sbi2_setdirty(sbi);
 }

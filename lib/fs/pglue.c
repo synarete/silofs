@@ -147,6 +147,20 @@ spawn_vnode(const struct silofs_task_ctx *task, struct silofs_inode_info *pii,
 }
 
 static int
+spawn_vnode_at(const struct silofs_task_ctx *task,
+               struct silofs_inode_info *pii, const struct silofs_vaddr *vaddr,
+               struct silofs_vnode_info **out_vni)
+{
+	struct silofs_pexec_ctx pexec;
+	int err;
+
+	start_pexec(&pexec, task, pii);
+	err = silofs_spawn_vnode2_at(&pexec, vaddr, out_vni);
+	finish_pexec(&pexec, pii);
+	return err;
+}
+
+static int
 claim_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
             struct silofs_inode_info *pii, struct silofs_vaddr *out_vaddr)
 {
@@ -294,6 +308,21 @@ int silofs_stage_super2(const struct silofs_task_ctx *task,
 
 	vaddr_of_super(&vaddr);
 	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
+	return_if_err(err);
+
+	*out_sbi = vni_to_sbi2(vni);
+	return 0;
+}
+
+int silofs_spawn_super2(const struct silofs_task_ctx *task,
+                        struct silofs_sbnode_info2 **out_sbi)
+{
+	struct silofs_vaddr vaddr     = {};
+	struct silofs_vnode_info *vni = nullptr;
+	int err;
+
+	vaddr_of_super(&vaddr);
+	err = spawn_vnode_at(task, nullptr, &vaddr, &vni);
 	return_if_err(err);
 
 	*out_sbi = vni_to_sbi2(vni);

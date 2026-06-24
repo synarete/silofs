@@ -176,44 +176,32 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format_pv(struct silofs_task_ctx *task)
+static int pre_format(struct silofs_task_ctx *task)
 {
 	return silofs_env_reinit_ciphers(task->env);
 }
 
 static int
-post_format_pv(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
+post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
 	silofs_env_refresh_root(task->env, pnptr);
 	return flush_destage_dirty(task);
 }
 
-static int
-do_format_pv(struct silofs_task_ctx *task, struct silofs_pnptr *out_pnptr)
-{
-	struct silofs_pexec_ctx pexec;
-
-	silofs_make_pexec(task, &pexec);
-	return silofs_format_pv(&pexec, out_pnptr);
-}
-
-int silofs_exec_format_pv(struct silofs_task_ctx *task)
+int silofs_exec_format(struct silofs_task_ctx *task, size_t fs_capacity)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = pre_format_pv(task);
-	if (err) {
-		return err;
-	}
-	err = do_format_pv(task, &pnptr);
-	if (err) {
-		return err;
-	}
-	err = post_format_pv(task, &pnptr);
-	if (err) {
-		return err;
-	}
+	err = pre_format(task);
+	return_if_err(err);
+
+	err = silofs_format(task, fs_capacity, &pnptr);
+	return_if_err(err);
+
+	err = post_format(task, &pnptr);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -319,15 +307,9 @@ static int format_rootdir(struct silofs_task_ctx *task)
 	int err;
 
 	err = spawn_rootdir(task, &rootd_ii);
-	if (err) {
-		return err;
-	}
-	update_rootdir(rootd_ii, use_utf8_names(task));
+	return_if_err(err);
 
-	err = flush_destage_dirty(task);
-	if (err) {
-		return err;
-	}
+	update_rootdir(rootd_ii, use_utf8_names(task));
 	return 0;
 }
 
@@ -336,17 +318,14 @@ static int format_fs(struct silofs_task_ctx *task)
 	int err;
 
 	err = format_super(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_spmaps(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_rootdir(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -373,21 +352,17 @@ int silofs_exec_format_fs(struct silofs_task_ctx *task,
 	int err;
 
 	err = pre_format_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = format_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = commit_mbr(task, out_mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = post_format_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -407,33 +382,21 @@ reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return silofs_env_reload_fs_mbr(task->env, mbref);
 }
 
-static int
-do_reload_pv(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
-{
-	struct silofs_pexec_ctx pexec;
-
-	silofs_make_pexec(task, &pexec);
-	return silofs_reload_pv(&pexec, pnptr);
-}
-
-int silofs_exec_reload_pv(struct silofs_task_ctx *task,
-                          const struct silofs_mbref *mbref)
+int silofs_exec_reload(struct silofs_task_ctx *task,
+                       const struct silofs_mbref *mbref)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
 	err = reload_mbr(task, mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = resolve_root_uber(task, &pnptr);
-	if (err) {
-		return err;
-	}
-	err = do_reload_pv(task, &pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
+	err = silofs_reload(task, &pnptr);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -478,13 +441,10 @@ int silofs_exec_reload_fs(struct silofs_task_ctx *task)
 	int err;
 
 	err = reload_super(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 
 	err = reload_rootd(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

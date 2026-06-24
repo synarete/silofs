@@ -1609,9 +1609,8 @@ static int dirc_spawn_setup_dnode(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_spawn_dtnode(d_ctx, out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dti_setup_dnode(*out_dti, d_ino, parent, dtn_index);
 	dirc_update_isizeblocks(d_ctx, dtn_index, true);
 	return 0;

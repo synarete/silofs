@@ -33,21 +33,25 @@ int silofs_probe_vnode2_at(struct silofs_pexec_ctx *pexec,
 	return silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
 }
 
+static bool uses_spmap(const struct silofs_vaddr *vaddr)
+{
+	return silofs_vtype_usespmap(vaddr->vtype);
+}
+
 static int resolve_spacef_of(struct silofs_pexec_ctx *pexec,
                              const struct silofs_vaddr *vaddr,
                              enum silofs_spacef *out_spacef)
 {
-	struct silofs_vspace_ref vspref = {};
-	int err;
+	struct silofs_vspace_ref vspref = {
+		.flags = SILOFS_SPACEF_NONE,
+	};
+	int ret;
 
-	*out_spacef = SILOFS_SPACEF_NONE;
-	if (vaddr->vtype != SILOFS_VTYPE_SPNODE2) {
-		err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
-		return_if_err(err);
-
-		*out_spacef = vspref.flags;
+	if (uses_spmap(vaddr)) {
+		ret = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
 	}
-	return 0;
+	*out_spacef = vspref.flags;
+	return ret;
 }
 
 int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,

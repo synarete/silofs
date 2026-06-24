@@ -83,7 +83,7 @@ static int appexec_reload_fs(struct silofs_task_ctx *task,
 	if (err) {
 		goto out;
 	}
-	err = silofs_exec_reload_pv(task, mbref);
+	err = silofs_exec_reload(task, mbref);
 	if (err) {
 		goto out;
 	}
@@ -171,7 +171,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	err = silofs_exec_reload_pv(task, mbref);
+	err = silofs_exec_reload(task, mbref);
 	if (err) {
 		return err;
 	}
@@ -453,21 +453,17 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_exec_reload_repo(&task);
-	if (err) {
-		goto out;
-	}
-	err = silofs_exec_format_pv(&task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
+	err = silofs_exec_format(&task, env->fscap);
+	goto_out_if_err(err);
+
 	err = silofs_exec_format_fs(&task, out_mbref);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	log_dbg("format-fs done: fscap=%zu", env->fscap);
 out:
 	return term_task(&task, err);
@@ -478,13 +474,11 @@ static int check_format_fs(struct silofs_env *env)
 	int err;
 
 	err = check_fs_capacity(env->fscap);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_owner_ids(env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 

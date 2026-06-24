@@ -77,6 +77,9 @@ int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode          stg_mode,
                         struct silofs_sbnode_info2  **out_sui);
 
+int silofs_spawn_super2(const struct silofs_task_ctx *task,
+                        struct silofs_sbnode_info2  **out_sbi);
+
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr);
 
@@ -201,19 +204,20 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* super */
 
-int silofs_verify_superb_node(const struct silofs_superb_node *sun);
+int silofs_verify_superb_node(const struct silofs_superb_node *sbn);
 
-void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sui);
+void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi);
 
-void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sui);
+void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi,
+                               size_t                      fs_capacity);
 
-int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sui,
+int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
                             enum silofs_vtype                 vtype);
 
-void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sui,
+void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
                            enum silofs_vtype           vtype);
 
-void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sui,
+void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
                            enum silofs_vtype           vtype);
 
 void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
@@ -810,5 +814,14 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/fs/flush.h>
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* format */
+
+int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
+                  struct silofs_pnptr *out_pnptr);
+
+int silofs_reload(struct silofs_task_ctx    *task,
+                  const struct silofs_pnptr *pnptr);
 
 #endif /* SILOFS_FS_H_ */

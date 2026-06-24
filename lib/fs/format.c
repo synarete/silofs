@@ -19,6 +19,7 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
+#include <silofs/fs.h>
 
 static void
 vaddr_of(const struct silofs_vnode_info *vni, struct silofs_vaddr *out_vaddr)
@@ -403,8 +404,8 @@ static void resolve_uber(const struct silofs_pexec_ctx *pexec,
 	silofs_pnptr_assign(out_pnptr, silofs_pni_self(&ubi->ub_pni));
 }
 
-int silofs_format_pv(struct silofs_pexec_ctx *pexec,
-                     struct silofs_pnptr *out_pnptr)
+static int
+do_format_pbs(struct silofs_pexec_ctx *pexec, struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
@@ -418,7 +419,54 @@ int silofs_format_pv(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
+static int
+format_pbs(struct silofs_task_ctx *task, struct silofs_pnptr *out_pnptr)
+{
+	struct silofs_pexec_ctx pexec;
+
+	silofs_make_pexec(task, &pexec);
+	return do_format_pbs(&pexec, out_pnptr);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int format_super(struct silofs_task_ctx *task, size_t fs_capacity)
+{
+	struct silofs_sbnode_info2 *sbi = nullptr;
+	int err;
+
+	err = silofs_spawn_super2(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi2_setup_spawned(sbi, fs_capacity);
+	return 0;
+}
+
+static int format_vfs(struct silofs_task_ctx *task, size_t fs_capacity)
+{
+	int err;
+
+	err = format_super(task, fs_capacity);
+	return_if_err(err);
+
+	return 0;
+}
+
+int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
+                  struct silofs_pnptr *out_pnptr)
+{
+	int err;
+
+	err = format_pbs(task, out_pnptr);
+	return_if_err(err);
+
+	err = format_vfs(task, fs_capacity);
+	return_if_err(err);
+
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int
 reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
@@ -520,8 +568,8 @@ static int reload_vspace(struct silofs_pexec_ctx *pexec)
 	return 0;
 }
 
-int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
-                     const struct silofs_pnptr *pnptr)
+static int
+do_reload_pbs(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 {
 	int err;
 
@@ -529,6 +577,48 @@ int silofs_reload_pv(struct silofs_pexec_ctx *pexec,
 	return_if_err(err);
 
 	err = reload_vspace(pexec);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int
+reload_pbs(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
+{
+	struct silofs_pexec_ctx pexec;
+
+	silofs_make_pexec(task, &pexec);
+	return do_reload_pbs(&pexec, pnptr);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int reload_super(struct silofs_task_ctx *task)
+{
+	struct silofs_sbnode_info2 *sbi = nullptr;
+
+	return silofs_stage_super2(task, SILOFS_STG_CUR, &sbi);
+}
+
+static int reload_vfs(struct silofs_task_ctx *task)
+{
+	int err;
+
+	err = reload_super(task);
+	return_if_err(err);
+
+	return 0;
+}
+
+int silofs_reload(struct silofs_task_ctx *task,
+                  const struct silofs_pnptr *pnptr)
+{
+	int err;
+
+	err = reload_pbs(task, pnptr);
+	return_if_err(err);
+
+	err = reload_vfs(task);
 	return_if_err(err);
 
 	return 0;

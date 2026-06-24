@@ -636,13 +636,4 @@ int silofs_test_vtop_mapping(struct silofs_pexec_ctx   *pexec,
                              const struct silofs_vaddr *vaddr,
                              bool                      *out_exists);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* format */
-
-int silofs_format_pv(struct silofs_pexec_ctx *pexec,
-                     struct silofs_pnptr     *out_pnptr);
-
-int silofs_reload_pv(struct silofs_pexec_ctx   *pexec,
-                     const struct silofs_pnptr *pnptr);
-
 #endif /* SILOFS_PV_H_ */

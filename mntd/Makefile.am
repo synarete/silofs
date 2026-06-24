@@ -19,7 +19,7 @@ silofs_mountd_LDADD += $(PTHREAD_LIBS)
 silofs_mountd_LDADD += $(LIBGCRYPT_LIBS)
 
 silofs_mountd_SOURCES = $(NULL)
-silofs_mountd_SOURCES += mntconf.c
+silofs_mountd_SOURCES += mntrules.c
 silofs_mountd_SOURCES += mountd.c
 silofs_mountd_SOURCES += mountd.h
 

@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/fs/flush.h>
+#include <silofs/fs.h>
 #include <silofs/run.h>
 
 static bool lni_isunode(const struct silofs_lnode_info *lni)

@@ -21,7 +21,7 @@
 
 #include <silofs/base.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/spmaps.h>
+#include <silofs/fs.h>
 
 static void lrange_of_spleaf(struct silofs_lrange *lrange, off_t voff)
 {

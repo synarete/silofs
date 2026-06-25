@@ -45,7 +45,7 @@ static int resolve_spacef_of(struct silofs_pexec_ctx *pexec,
 	struct silofs_vspace_ref vspref = {
 		.flags = SILOFS_SPACEF_NONE,
 	};
-	int ret;
+	int ret = 0;
 
 	if (uses_spmap(vaddr)) {
 		ret = silofs_probe_vspace_ref(pexec, vaddr, &vspref);

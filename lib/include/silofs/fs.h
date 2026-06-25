@@ -21,9 +21,13 @@
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 #include <silofs/base.h>
+#include <silofs/flags.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
+#include <silofs/pv.h>
 #include <silofs/vfs.h>
+
+struct silofs_env;
 
 /* stage operation control flags */
 enum silofs_stg_mode {
@@ -439,12 +443,469 @@ int silofs_lookup_cached_inode(struct silofs_task_ctx *task, ino_t ino,
                                struct silofs_inode_info **out_ii);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* lsmap */
 
-#include <silofs/fs/lsmap.h>
-#include <silofs/fs/task.h>
-#include <silofs/fs/super.h>
-#include <silofs/fs/lcache.h>
-#include <silofs/fs/spmaps.h>
+struct silofs_lsmap_info *silofs_lsi_from_vni(struct silofs_vnode_info *vni);
+
+void silofs_lsi_incref(struct silofs_lsmap_info *lsi);
+
+void silofs_lsi_decref(struct silofs_lsmap_info *lsi);
+
+enum silofs_vtype silofs_lsi_refvtype(const struct silofs_lsmap_info *lsi);
+
+void silofs_lsi_setup_spawned(struct silofs_lsmap_info *lsi,
+                              enum silofs_vtype refvtype, off_t beg);
+
+void silofs_lsi_update_nused(struct silofs_lsmap_info *lsi);
+
+size_t silofs_lsi_refcnt_at(const struct silofs_lsmap_info *lsi,
+                            const struct silofs_vaddr      *vaddr);
+
+int silofs_lsi_find_free_space(const struct silofs_lsmap_info *lsi,
+                               struct silofs_vaddr            *out_vaddr);
+
+void silofs_lsi_update_off_hint(struct silofs_lsmap_info  *lsi,
+                                const struct silofs_vaddr *vaddr);
+
+void silofs_lsi_mark_allocated_at(struct silofs_lsmap_info  *lsi,
+                                  const struct silofs_vaddr *vaddr);
+
+void silofs_lsi_unref_allocated_at(struct silofs_lsmap_info  *lsi,
+                                   const struct silofs_vaddr *vaddr);
+
+void silofs_lsi_reref_allocated_at(struct silofs_lsmap_info  *lsi,
+                                   const struct silofs_vaddr *vaddr);
+
+bool silofs_lsi_has_allocated_with(const struct silofs_lsmap_info *lsi,
+                                   const struct silofs_vaddr      *vaddr);
+
+bool silofs_lsi_is_last_allocated(const struct silofs_lsmap_info *lsi,
+                                  const struct silofs_vaddr      *vaddr);
+
+bool silofs_lsi_has_allocated_at(const struct silofs_lsmap_info *lsi,
+                                 const struct silofs_vaddr      *vaddr);
+
+bool silofs_lsi_has_unwritten_at(const struct silofs_lsmap_info *lsi,
+                                 const struct silofs_vaddr      *vaddr);
+
+void silofs_lsi_clear_unwritten_at(struct silofs_lsmap_info  *lsi,
+                                   const struct silofs_vaddr *vaddr);
+
+void silofs_lsi_mark_unwritten_at(struct silofs_lsmap_info  *lsi,
+                                  const struct silofs_vaddr *vaddr);
+
+int silofs_lsi_resolve_key(const struct silofs_lsmap_info *lsi,
+                           const struct silofs_vaddr      *vaddr,
+                           struct silofs_ckey             *out_key);
+
+int silofs_lsi_rebind_key(struct silofs_lsmap_info  *lsi,
+                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_ckey  *key);
+
+void silofs_lsi_vaddrs_at(const struct silofs_lsmap_info *lsi,
+                          const struct silofs_vaddr      *vaddr,
+                          struct silofs_vaddrs           *out_vaddrs);
+
+void silofs_lsi_clone_from(struct silofs_lsmap_info *lsi,
+                           struct silofs_lsmap_info *lsi_other);
+
+int silofs_verify_lsmap(const struct silofs_lsmap *lsm);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* super */
+struct silofs_spmap_lmap;
+
+int silofs_sb_check_version(const struct silofs_super_block *sb);
+
+bool silofs_sb_test_flags(const struct silofs_super_block *sb,
+                          enum silofs_superf               mask);
+
+int silofs_verify_super_block(const struct silofs_super_block *sb);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_uaddr *silofs_sbi_uaddr(const struct silofs_sb_info *sbi);
+
+const struct silofs_laddr *silofs_sbi_laddr(const struct silofs_sb_info *sbi);
+
+const struct silofs_blobid56b *
+silofs_sbi_lvid(const struct silofs_sb_info *sbi);
+
+void silofs_sbi_incref(struct silofs_sb_info *sbi);
+
+void silofs_sbi_decref(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setdirty(struct silofs_sb_info *sbi);
+
+void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi);
+
+int silofs_sbi_sproot_of(const struct silofs_sb_info *sbi,
+                         enum silofs_vtype            vtype,
+                         struct silofs_uaddr         *out_uaddr);
+
+int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
+                             enum silofs_vtype            vtype,
+                             struct silofs_uaddr         *out_uaddr);
+
+void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_vtype vtype,
+                           const struct silofs_uaddr *uaddr);
+
+void silofs_sbi_make_fork_of(struct silofs_sb_info       *sbi_new,
+                             const struct silofs_sb_info *sbi_cur);
+
+void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
+                             struct silofs_spmap_lmap    *out_lmap);
+
+void silofs_sbi_add_flags(struct silofs_sb_info *sbi,
+                          enum silofs_superf     flags);
+
+bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
+                           enum silofs_superf           flags);
+
+bool silofs_sbi_is_fossil(const struct silofs_sb_info *sbi);
+
+int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
+
+void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
+                            struct silofs_blobid        *out_blobid);
+
+void silofs_sbi_self_layerid(const struct silofs_sb_info *sbi,
+                             struct silofs_layerid       *out_layerid);
+
+int silofs_sbi_main_lseg(const struct silofs_sb_info *sbi,
+                         enum silofs_vtype            vspace,
+                         struct silofs_lsid          *out_lsid);
+
+void silofs_sbi_bind_main_lseg(struct silofs_sb_info    *sbi,
+                               enum silofs_vtype         vspace,
+                               const struct silofs_lsid *lsid);
+
+bool silofs_sbi_has_main_lseg(const struct silofs_sb_info *sbi,
+                              enum silofs_vtype            vspace);
+
+void silofs_sbi_resolve_main_at(const struct silofs_sb_info *sbi, off_t voff,
+                                enum silofs_vtype    vspace,
+                                struct silofs_uaddr *out_uaddr);
+
+bool silofs_sbi_ismutable_lsid(const struct silofs_sb_info *sbi,
+                               const struct silofs_lsid    *lsid);
+
+bool silofs_sbi_ismutable_laddr(const struct silofs_sb_info *sbi,
+                                const struct silofs_laddr   *laddr);
+
+struct silofs_sb_refs {
+	struct silofs_uaddr curr;
+	struct silofs_uaddr prev;
+};
+
+void silofs_sbi_resolve_refs(const struct silofs_sb_info *sbi,
+                             struct silofs_sb_refs       *out_refs);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);
+
+void silofs_sbst_setup_forked(struct silofs_sb_info       *sbi,
+                              const struct silofs_sb_info *sbi_from);
+
+void silofs_sbst_account_super(struct silofs_sb_info *sbi);
+
+void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity);
+
+off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
+
+uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi);
+
+void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
+                              enum silofs_vtype vtype, ssize_t take);
+
+void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
+                            enum silofs_vtype vtype, ssize_t take);
+
+void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
+                             enum silofs_vtype vtype, ssize_t take);
+
+bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant);
+
+bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant);
+
+bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
+                               size_t nbytes_want, bool new_file);
+
+void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi);
+
+void silofs_sbst_force_into_sb(struct silofs_sb_info *sbi);
+
+void silofs_sbst_fill_statvfs(const struct silofs_sb_info    *sbi,
+                              const struct silofs_uber_stats *ub_stats,
+                              struct statvfs                 *out_stv);
+
+void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
+                            struct silofs_query_spstats *out_qsp);
+
+int silofs_verify_space_stats(const struct silofs_space_stats1k *sp);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* spmaps */
+
+struct silofs_spnode_info;
+
+struct silofs_spmap_lmap {
+	struct silofs_laddr laddr[SILOFS_SPMAP_NCHILDS];
+	size_t              len[SILOFS_SPMAP_NCHILDS];
+	uint32_t            cnt;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+off_t silofs_sni_base_voff(const struct silofs_spnode_info *sni);
+
+enum silofs_height silofs_sni_height(const struct silofs_spnode_info *sni);
+
+const struct silofs_uaddr *
+silofs_sni_uaddr(const struct silofs_spnode_info *sni);
+
+const struct silofs_laddr *
+silofs_sni_laddr(const struct silofs_spnode_info *sni);
+
+void silofs_sni_incref(struct silofs_spnode_info *sni);
+
+void silofs_sni_decref(struct silofs_spnode_info *sni);
+
+void silofs_sni_setup_spawned(struct silofs_spnode_info *sni,
+                              const struct silofs_uaddr *parent, off_t voff);
+
+void silofs_sni_update_nactive(struct silofs_spnode_info *sni);
+
+void silofs_sni_clone_from(struct silofs_spnode_info       *sni,
+                           const struct silofs_spnode_info *sni_other);
+
+void silofs_sni_vspace_range(const struct silofs_spnode_info *sni,
+                             struct silofs_lrange            *lrange);
+
+void silofs_sni_active_lrange(const struct silofs_spnode_info *sni,
+                              struct silofs_lrange            *out_lrange);
+
+void silofs_sni_main_lseg(const struct silofs_spnode_info *sni,
+                          struct silofs_lsid              *out_lsid);
+
+void silofs_sni_bind_main_lseg(struct silofs_spnode_info *sni,
+                               const struct silofs_lsid  *lsid);
+
+void silofs_sni_resolve_main(const struct silofs_spnode_info *sni, off_t voff,
+                             struct silofs_uaddr *out_uaddr);
+
+void silofs_sni_bind_child(struct silofs_spnode_info *sni, off_t voff,
+                           const struct silofs_uaddr *uaddr);
+
+int silofs_sni_resolve_child(const struct silofs_spnode_info *sni, off_t voff,
+                             struct silofs_uaddr *out_uaddr);
+
+void silofs_sni_resolve_lmap(const struct silofs_spnode_info *sni,
+                             struct silofs_spmap_lmap        *out_lmap);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+const struct silofs_laddr *
+silofs_sli_laddr(const struct silofs_spleaf_info *sli);
+
+const struct silofs_uaddr *
+silofs_sli_uaddr(const struct silofs_spleaf_info *sli);
+
+enum silofs_vtype silofs_sli_refvtype(const struct silofs_spleaf_info *sli);
+
+void silofs_sli_incref(struct silofs_spleaf_info *sli);
+
+void silofs_sli_decref(struct silofs_spleaf_info *sli);
+
+void silofs_sli_setup_spawned(struct silofs_spleaf_info *sli,
+                              const struct silofs_uaddr *parent,
+                              enum silofs_vtype refvtype, off_t voff);
+
+void silofs_sli_get_lrange(const struct silofs_spleaf_info *sli,
+                           struct silofs_lrange            *out_lrange);
+
+off_t silofs_sli_base_voff(const struct silofs_spleaf_info *sli);
+
+void silofs_sli_lbk_vaddrs_at(const struct silofs_spleaf_info *sli,
+                              const struct silofs_vaddr       *vaddr,
+                              struct silofs_vaddrs            *out_vaddrs);
+
+void silofs_sli_main_lseg(const struct silofs_spleaf_info *sli,
+                          struct silofs_lsid              *out_lsid);
+
+void silofs_sli_bind_main_lseg(struct silofs_spleaf_info *sli,
+                               const struct silofs_lsid  *lsid);
+
+void silofs_sli_bind_child(struct silofs_spleaf_info *sli, off_t voff,
+                           const struct silofs_laddr *laddr);
+
+void silofs_sli_clone_from(struct silofs_spleaf_info       *sli,
+                           const struct silofs_spleaf_info *sli_other);
+
+int silofs_sli_resolve_main_lbk(const struct silofs_spleaf_info *sli,
+                                off_t voff, struct silofs_laddr *out_laddr);
+
+bool silofs_sli_has_child_lbk_at(const struct silofs_spleaf_info *sli,
+                                 const struct silofs_vaddr       *vaddr);
+
+int silofs_sli_resolve_child(const struct silofs_spleaf_info *sli, off_t voff,
+                             struct silofs_laddr *out_laddr);
+
+int silofs_sli_require_child(struct silofs_spleaf_info *sli,
+                             const struct silofs_vaddr *vaddr, bool *out_new);
+
+void silofs_sli_resolve_lmap(const struct silofs_spleaf_info *sli,
+                             struct silofs_spmap_lmap        *out_lmaps);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_verify_spmap_node(const struct silofs_spmap_node *sn);
+
+int silofs_verify_spmap_leaf(const struct silofs_spmap_leaf *sl);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* spxmap */
+
+/* short lifo of previously-allocated now-free space-addresses */
+struct silofs_spalifo {
+	off_t    sal_lifo[63];
+	uint32_t sal_size;
+	uint32_t sal_ulen;
+};
+
+/* map of previously-allocated now-free space (in-memory only) */
+struct silofs_spamap {
+	struct silofs_spalifo spa_lifo;
+	struct silofs_alloc  *spa_alloc;
+	struct silofs_avl     spa_avl;
+	off_t                 spa_hint;
+	unsigned int          spa_cap_max;
+	enum silofs_vtype     spa_vtype;
+};
+
+/* map of previously-allocated now-free space-addresses by vtype */
+struct silofs_spamaps {
+	struct silofs_spamap spa_lsmap;
+	struct silofs_spamap spa_inode;
+	struct silofs_spamap spa_xanode;
+	struct silofs_spamap spa_dtnode;
+	struct silofs_spamap spa_symval;
+	struct silofs_spamap spa_ftnode;
+	struct silofs_spamap spa_data1k;
+	struct silofs_spamap spa_data4k;
+	struct silofs_spamap spa_data64k;
+};
+
+/* key of in-memory uaddress-mapping */
+struct silofs_uakey {
+	off_t              voff;
+	enum silofs_height height;
+	enum silofs_vtype  vspace;
+};
+
+/* in-memory mapping of uaddr by (voff,height,vspace) */
+struct silofs_uamap {
+	struct silofs_listq      uam_lru;
+	struct silofs_alloc     *uam_alloc;
+	struct silofs_list_head *uam_htbl;
+	uint32_t                 uam_htbl_cap;
+	uint32_t                 uam_htbl_sz;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spamaps_init(struct silofs_spamaps *spam,
+                        struct silofs_alloc   *alloc);
+
+void silofs_spamaps_fini(struct silofs_spamaps *spam);
+
+void silofs_spamaps_drop(struct silofs_spamaps *spam);
+
+int silofs_spamaps_trypop(struct silofs_spamaps *spam, enum silofs_vtype vtype,
+                          size_t len, off_t *out_voff);
+
+int silofs_spamaps_store(struct silofs_spamaps *spam, enum silofs_vtype vtype,
+                         off_t voff, size_t len);
+
+int silofs_spamaps_baseof(const struct silofs_spamaps *spam,
+                          enum silofs_vtype vtype, off_t voff, off_t *out);
+
+off_t silofs_spamaps_get_hint(const struct silofs_spamaps *spam,
+                              enum silofs_vtype            vtype);
+
+void silofs_spamaps_set_hint(struct silofs_spamaps *spam,
+                             enum silofs_vtype vtype, off_t off);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_uakey_setup_by(struct silofs_uakey       *uakey,
+                           const struct silofs_uaddr *uaddr);
+
+void silofs_uakey_setup_by2(struct silofs_uakey        *uakey,
+                            const struct silofs_lrange *lrange,
+                            enum silofs_vtype           vspace);
+
+int silofs_uamap_init(struct silofs_uamap *uamap, struct silofs_alloc *alloc);
+
+void silofs_uamap_fini(struct silofs_uamap *uamap);
+
+const struct silofs_uaddr *
+silofs_uamap_lookup(const struct silofs_uamap *uamap,
+                    const struct silofs_uakey *uakey);
+
+void silofs_uamap_remove(struct silofs_uamap       *uamap,
+                         const struct silofs_uakey *uakey);
+
+int silofs_uamap_insert(struct silofs_uamap       *uamap,
+                        const struct silofs_uaddr *uaddr);
+
+void silofs_uamap_drop_all(struct silofs_uamap *uamap);
+
+bool silofs_uamap_drop_lru(struct silofs_uamap *uamap);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* lcache */
+
+/* in-memory caching */
+struct silofs_lcache {
+	struct silofs_alloc *lc_alloc;
+	struct silofs_hmapq  lc_uni_hmapq;
+	struct silofs_uamap  lc_uamap;
+	struct silofs_dirtyq lc_unis_dq;
+	struct silofs_vcache lc_vc;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_lcache_init(struct silofs_lcache *lcache,
+                       struct silofs_alloc  *alloc);
+
+void silofs_lcache_fini(struct silofs_lcache *lcache);
+
+void silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
+
+void silofs_lcache_drop(struct silofs_lcache *lcache);
+
+struct silofs_unode_info *
+silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
+                         const struct silofs_uaddr *uaddr);
+
+struct silofs_unode_info *
+silofs_lcache_create_uni(struct silofs_lcache      *lcache,
+                         const struct silofs_uaddr *uaddr);
+
+void silofs_lcache_forget_uni(struct silofs_lcache     *lcache,
+                              struct silofs_unode_info *uni);
+
+struct silofs_unode_info *
+silofs_lcache_find_uni_by(struct silofs_lcache      *lcache,
+                          const struct silofs_uakey *uakey);
+
+void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
+
+void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
+                                 struct silofs_cache_stats  *out_cstats);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* namei */
@@ -817,8 +1278,109 @@ void silofs_calc_cas_paddr(const struct silofs_mdigest_hd *md_hd,
                            struct silofs_paddr *out_paddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* flush */
 
-#include <silofs/fs/flush.h>
+#define SILOFS_SQENT_NREFS_MAX (32)
+#define SILOFS_COMMIT_LEN_MAX SILOFS_MEGA
+#define SILOFS_CID_ALL        UINT64_MAX
+
+/* submit reference into view within underlying block */
+struct silofs_submit_ref {
+	struct silofs_llink        llink;
+	const struct silofs_lview *view;
+	enum silofs_vtype          vtype;
+};
+
+/* submission queue entry */
+struct silofs_submitq_ent {
+	struct iovec              iov[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_lnode_info *lni[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_list_head   qlh;
+	struct silofs_env        *env;
+	struct silofs_alloc      *alloc;
+	struct silofs_laddr       laddr_base;
+	size_t                    len;
+	uint64_t                  uniq_id;
+	uint32_t                  cnt;
+	uint32_t                  tx_count;
+	uint32_t                  tx_index;
+	int                       hold_refs;
+	volatile int              status;
+	enum silofs_vtype         vtype;
+};
+
+/* submission flush queue */
+struct silofs_submitq {
+	struct silofs_listq  smq_listq;
+	struct silofs_mutex  smq_mutex;
+	struct silofs_alloc *smq_alloc;
+	uint64_t             smq_upper_id;
+};
+
+/* dirty-elements as ordered set */
+struct silofs_dset {
+	struct silofs_lnode_info *ds_preq;
+	struct silofs_lnode_info *ds_postq;
+	struct silofs_avl         ds_avl;
+};
+
+/* flush-to-stable controller */
+struct silofs_flusher {
+	struct silofs_submit_ref  sref[SILOFS_SQENT_NREFS_MAX];
+	struct silofs_dset        dset[3];
+	struct silofs_listq       txq;
+	struct silofs_submitq    *submitq;
+	struct silofs_task_ctx   *task;
+	struct silofs_sb_info    *sbi;
+	struct silofs_inode_info *ii;
+	uint32_t                  tx_count;
+	int                       flags;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_submitq_ent *silofs_sqe_from_qlh(struct silofs_list_head *qlh);
+
+bool silofs_sqe_append_ref(struct silofs_submitq_ent *sqe,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info  *lni);
+
+int silofs_sqe_assign_iovs(struct silofs_submitq_ent      *sqe,
+                           const struct silofs_submit_ref *refs_arr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_sqe_increfs(struct silofs_submitq_ent *sqe);
+
+int silofs_submitq_init(struct silofs_submitq *smq,
+                        struct silofs_alloc   *alloc);
+
+void silofs_submitq_fini(struct silofs_submitq *smq);
+
+void silofs_submitq_enqueue(struct silofs_submitq     *smq,
+                            struct silofs_submitq_ent *sqe);
+
+int silofs_submitq_new_sqe(struct silofs_submitq      *smq,
+                           struct silofs_submitq_ent **out_sqe);
+
+void silofs_submitq_del_sqe(struct silofs_submitq     *smq,
+                            struct silofs_submitq_ent *sqe);
+
+int silofs_submitq_apply(struct silofs_submitq *smq, uint64_t id);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_flusher_init(struct silofs_flusher *flusher,
+                        struct silofs_submitq *submitq);
+
+void silofs_flusher_fini(struct silofs_flusher *flusher);
+
+int silofs_flush_dirty(struct silofs_task_ctx   *task,
+                       struct silofs_inode_info *ii, int flags);
+
+int silofs_flush_dirty_now(struct silofs_task_ctx *task);
+
+int silofs_destage_dirty_by(struct silofs_task_ctx *task);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* format */
@@ -828,5 +1390,81 @@ int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
 
 int silofs_reload(struct silofs_task_ctx    *task,
                   const struct silofs_pnptr *pnptr);
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+/* task */
+
+/* execution-context authentication parameters */
+struct silofs_task_auth {
+	struct silofs_creds creds;
+	struct timespec     ts;
+	uint64_t            unique;
+	uint32_t            opcode;
+	pid_t               pid;
+};
+
+/* execution-context */
+struct silofs_task_ctx {
+	struct silofs_task_auth     auth;
+	struct silofs_env          *env;
+	const struct silofs_idsmap *idsm;
+	struct silofs_prandgen     *prng;
+	struct silofs_repo         *repo;
+	struct silofs_lcache       *lcache;
+	struct silofs_vcache       *vcache;
+	struct silofs_submitq      *submitq;
+	struct silofs_inode_info   *looseq;
+	struct silofs_uber_ref     *ubref;
+	uint64_t                    upper_id;
+	struct timespec             op_start_time;
+	volatile int8_t             interrupted;
+	volatile bool               fs_locked;
+	volatile bool               rw_locked;
+	bool                        exclusive;
+	bool                        priv_op;
+	bool                        kwrite;
+	bool                        runnable;
+	bool                        internal;
+};
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env);
+
+void silofs_task_fini(struct silofs_task_ctx *task);
+
+void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
+                              gid_t gid, mode_t umsk);
+
+void silofs_task_update_auth(struct silofs_task_ctx *task, pid_t pid,
+                             uint64_t unique, uint32_t opcode, bool exclusive);
+
+void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask);
+
+void silofs_task_update_times(struct silofs_task_ctx *task, bool rt);
+
+void silofs_task_update_id(struct silofs_task_ctx    *task,
+                           struct silofs_submitq_ent *sqe);
+
+int silofs_task_submit(struct silofs_task_ctx *task, bool all);
+
+void silofs_task_enq_loose(struct silofs_task_ctx   *task,
+                           struct silofs_inode_info *ii);
+
+void silofs_lock_fs_by(struct silofs_task_ctx *task);
+
+void silofs_unlock_fs_by(struct silofs_task_ctx *task);
+
+void silofs_rwlock_fs_by(struct silofs_task_ctx *task);
+
+void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
+
+struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
+
+int silofs_curr_sbi2(const struct silofs_task_ctx *task,
+                     struct silofs_sbnode_info2  **out_sbi);
+
+void silofs_make_pexec(const struct silofs_task_ctx *task,
+                       struct silofs_pexec_ctx      *out_pexec);
 
 #endif /* SILOFS_FS_H_ */

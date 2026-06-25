@@ -23,7 +23,7 @@
 #include <silofs/base.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/fs/lsmap.h>
+#include <silofs/fs.h>
 
 static size_t nkbs_of(const struct silofs_vaddr *vaddr)
 {

@@ -216,6 +216,8 @@ void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi);
 void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi,
                                size_t                      fs_capacity);
 
+int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi);
+
 int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
                             enum silofs_vtype                 vtype);
 
@@ -559,12 +561,7 @@ void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
 void silofs_sbi_add_flags(struct silofs_sb_info *sbi,
                           enum silofs_superf     flags);
 
-bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
-                           enum silofs_superf           flags);
-
 bool silofs_sbi_is_fossil(const struct silofs_sb_info *sbi);
-
-int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi);
 
 void silofs_sbi_self_blobid(const struct silofs_sb_info *sbi,
                             struct silofs_blobid        *out_blobid);
@@ -614,8 +611,6 @@ void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity);
 
 off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
 
-uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi);
-
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
                               enum silofs_vtype vtype, ssize_t take);
 
@@ -628,9 +623,6 @@ void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
 bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant);
 
 bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant);
-
-bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
-                               size_t nbytes_want, bool new_file);
 
 void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi);
 

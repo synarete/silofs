@@ -527,20 +527,9 @@ void silofs_sbi_add_flags(struct silofs_sb_info *sbi, enum silofs_superf flags)
 	silofs_sbi_setdirty(sbi);
 }
 
-bool silofs_sbi_test_flags(const struct silofs_sb_info *sbi,
-                           enum silofs_superf flags)
-{
-	return (sb_flags(sbi->sb) & flags) == flags;
-}
-
 bool silofs_sbi_is_fossil(const struct silofs_sb_info *sbi)
 {
 	return silofs_sb_test_flags(sbi->sb, SILOFS_SUPERF_FOSSIL);
-}
-
-int silof_sbi_check_mut_fs(const struct silofs_sb_info *sbi)
-{
-	return silofs_sbi_is_fossil(sbi) ? -SILOFS_EROFS : 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

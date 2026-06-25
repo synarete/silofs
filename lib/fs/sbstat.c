@@ -494,12 +494,6 @@ static void spst_assign(struct silofs_space_stats *spst,
 	spgs_assign(&spst->lsegs, &spst_other->lsegs);
 }
 
-static uint64_t spgs_inc_generation(struct silofs_space_stats *spst)
-{
-	spst->generation += 1;
-	return spst->generation;
-}
-
 static void spst_update_lsegs(struct silofs_space_stats *spst,
                               enum silofs_vtype vtype, ssize_t take)
 {
@@ -652,11 +646,6 @@ static fsfilcnt_t sbst_inodes_max(const struct silofs_sb_info *sbi)
 	return (sbst_capacity(sbi) / SILOFS_INODE_SIZE) >> 2;
 }
 
-uint64_t silofs_sbst_next_generation(struct silofs_sb_info *sbi)
-{
-	return spgs_inc_generation(&sbi->sb_spst_curr);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant)
@@ -674,25 +663,6 @@ bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant)
 	const size_t used_bytes = sbst_bytes_used(sbi);
 
 	return ((used_bytes + nwant) <= user_limit);
-}
-
-bool silofs_sbst_mayalloc_meta(const struct silofs_sb_info *sbi,
-                               size_t nbytes_want, bool new_file)
-{
-	const size_t limit = sbst_capacity(sbi);
-	const size_t nused = sbst_bytes_used(sbi);
-	fsfilcnt_t files_max;
-	fsfilcnt_t files_cur;
-	bool ret = true;
-
-	if ((nused + nbytes_want) > limit) {
-		ret = false;
-	} else if (new_file) {
-		files_max = sbst_inodes_max(sbi);
-		files_cur = sbst_inodes_used(sbi);
-		ret       = (files_cur < files_max);
-	}
-	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -285,7 +285,7 @@ static int spawn_dir_inode(struct silofs_task_ctx *task,
                            const struct silofs_inode_info *parent_dii,
                            mode_t mode, struct silofs_inode_info **out_ii)
 {
-	const mode_t ifmt     = S_IFMT;
+	constexpr mode_t ifmt = S_IFMT;
 	const mode_t dir_mode = (mode & ~ifmt) | S_IFDIR;
 
 	return spawn_inode(task, parent_dii, dir_mode, 0, out_ii);
@@ -295,7 +295,7 @@ static int spawn_reg_inode(struct silofs_task_ctx *task,
                            const struct silofs_inode_info *parent_dii,
                            mode_t mode, struct silofs_inode_info **out_ii)
 {
-	const mode_t ifmt     = S_IFMT;
+	constexpr mode_t ifmt = S_IFMT;
 	const mode_t reg_mode = (mode & ~ifmt) | S_IFREG;
 
 	return spawn_inode(task, parent_dii, reg_mode, 0, out_ii);
@@ -305,7 +305,7 @@ static int spawn_lnk_inode(struct silofs_task_ctx *task,
                            const struct silofs_inode_info *parent_dii,
                            struct silofs_inode_info **out_ii)
 {
-	const mode_t lnk_mode = S_IRWXU | S_IRWXG | S_IRWXO | S_IFLNK;
+	constexpr mode_t lnk_mode = S_IRWXU | S_IRWXG | S_IRWXO | S_IFLNK;
 
 	return spawn_inode(task, parent_dii, lnk_mode, 0, out_ii);
 }
@@ -327,6 +327,13 @@ spawn_inode_by_mode(struct silofs_task_ctx *task,
 		err = -SILOFS_EISDIR;
 	}
 	return err;
+}
+
+static int spawn_special_inode(struct silofs_task_ctx *task,
+                               struct silofs_inode_info *dir_ii, mode_t mode,
+                               dev_t rdev, struct silofs_inode_info **out_ii)
+{
+	return spawn_inode(task, dir_ii, mode, rdev, out_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -531,13 +538,11 @@ stage_by_name(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	int err;
 
 	err = lookup_by_name(task, dir_ii, name, &ino_dt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_stage_inode_of(task, ino_dt.ino, stg_mode, out_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -604,6 +609,34 @@ check_nodent(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return ret;
 }
 
+static int check_spawn_inode(const struct silofs_task_ctx *task)
+{
+	struct silofs_sbnode_info2 *sbi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi2(task, &sbi);
+	return_if_err(err);
+
+	err = silofs_sbi2_check_iavail(sbi);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int check_dir_add_dentry(const struct silofs_inode_info *dir_ii)
+{
+	if (!silofs_dir_may_add(dir_ii)) {
+		return -SILOFS_EMLINK;
+	}
+
+	/* Special case for directory which is still held by open fd */
+	if (silofs_ii_nlink(dir_ii) < 2) {
+		return -SILOFS_ENOENT;
+	}
+
+	return 0;
+}
+
 static int check_add_dentry(const struct silofs_task_ctx *task,
                             const struct silofs_inode_info *dir_ii,
                             const struct silofs_namestr *name)
@@ -611,16 +644,11 @@ static int check_add_dentry(const struct silofs_task_ctx *task,
 	int err;
 
 	err = check_dir_and_name(task, dir_ii, name);
-	if (err) {
-		return err;
-	}
-	if (!silofs_dir_may_add(dir_ii)) {
-		return -SILOFS_EMLINK;
-	}
-	/* Special case for directory which is still held by open fd */
-	if (silofs_ii_nlink(dir_ii) < 2) {
-		return -SILOFS_ENOENT;
-	}
+	return_if_err(err);
+
+	err = check_dir_add_dentry(dir_ii);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -724,6 +752,9 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = check_create(task, dir_ii, name, mode);
 	return_if_err(err);
 
+	err = check_spawn_inode(task);
+	return_if_err(err);
+
 	err = spawn_inode_by_mode(task, dir_ii, mode, 0, &ii);
 	return_if_err(err);
 
@@ -786,13 +817,6 @@ check_mknod(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
-static int create_special_inode(struct silofs_task_ctx *task,
-                                struct silofs_inode_info *dir_ii, mode_t mode,
-                                dev_t rdev, struct silofs_inode_info **out_ii)
-{
-	return spawn_inode(task, dir_ii, mode, rdev, out_ii);
-}
-
 static int
 do_mknod_reg(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
              const struct silofs_namestr *name, mode_t mode,
@@ -821,7 +845,10 @@ static int do_mknod_special(struct silofs_task_ctx *task,
 	err = check_mknod(task, dir_ii, name, mode, rdev);
 	return_if_err(err);
 
-	err = create_special_inode(task, dir_ii, mode, rdev, &ii);
+	err = check_spawn_inode(task);
+	return_if_err(err);
+
+	err = spawn_special_inode(task, dir_ii, mode, rdev, &ii);
 	return_if_err(err);
 
 	err = do_add_dentry(task, dir_ii, name, ii);
@@ -915,26 +942,21 @@ static int check_open_flags(const struct silofs_inode_info *ii, int o_flags)
 static int check_open(const struct silofs_task_ctx *task,
                       struct silofs_inode_info *ii, int o_flags)
 {
-	int err;
-	int rwx;
+	int rwx, err;
 
 	err = check_reg_or_fifo(ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_open_flags(ii, o_flags);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	rwx = o_flags_to_rwx(o_flags);
 	err = silofs_do_access(task, ii, rwx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_open_limit(task, ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -957,9 +979,7 @@ post_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 
 	if (o_flags & O_TRUNC) {
 		err = trunc_data(task, ii, kill_suidgid);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	if (kill_suidgid) {
 		silofs_ii_kill_suidgid(ii);
@@ -973,13 +993,11 @@ static int do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	int err;
 
 	err = check_open(task, ii, o_flags);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = post_open(task, ii, o_flags, kill_suidgid);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	post_create_open(task, ii, kill_suidgid);
 	return 0;
 }
@@ -1120,10 +1138,10 @@ static int try_prune_inode(struct silofs_task_ctx *task,
 	if (ii_isdropable(ii)) {
 		return drop_unlinked(task, ii);
 	}
+
 	err = try_prune_loose_data(task, ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if (update_ctime) {
 		silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
 	}
@@ -1331,6 +1349,9 @@ do_mkdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = check_mkdir(task, dir_ii, name);
 	return_if_err(err);
 
+	err = check_spawn_inode(task);
+	return_if_err(err);
+
 	err = spawn_dir_inode(task, dir_ii, mode, out_ii);
 	return_if_err(err);
 
@@ -1440,9 +1461,8 @@ static int create_lnk_inode(struct silofs_task_ctx *task,
 	int err;
 
 	err = spawn_lnk_inode(task, dir_ii, out_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_bind_symval(task, *out_ii, symval);
 	if (err) {
 		do_remove_inode(task, *out_ii);
@@ -1490,6 +1510,9 @@ do_symlink(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	int err;
 
 	err = check_symlink(task, dir_ii, name, symval);
+	return_if_err(err);
+
+	err = check_spawn_inode(task);
 	return_if_err(err);
 
 	err = create_lnk_inode(task, dir_ii, symval, &ii);

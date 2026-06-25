@@ -65,7 +65,7 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
 {
 	int err;
 
-	err = silofs_stage_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+	err = silofs_stage_spnode2_by(vs_ctx->pexec, ref_vaddr, out_spi);
 	if (err) {
 		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
 		        (int)ref_vaddr->vtype, ref_vaddr->off, err);
@@ -77,7 +77,7 @@ static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
                                   const struct silofs_vaddr *ref_vaddr,
                                   struct silofs_spnode_info2 **out_spi)
 {
-	return silofs_require_spnode2_of(vs_ctx->pexec, ref_vaddr, out_spi);
+	return silofs_require_spnode2_by(vs_ctx->pexec, ref_vaddr, out_spi);
 }
 
 static int vsc_claim_free_vspace_by_fvsqs(struct silofs_vspace_ctx *vs_ctx,

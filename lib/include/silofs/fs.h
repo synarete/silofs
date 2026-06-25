@@ -83,13 +83,14 @@ int silofs_spawn_super2(const struct silofs_task_ctx *task,
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr);
 
-int silofs_stage_spnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
-                         enum silofs_stg_mode          stg_mode,
-                         struct silofs_spnode_info2  **out_spi);
+int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr    *ref_vaddr,
+                            enum silofs_stg_mode          stg_mode,
+                            struct silofs_spnode_info2  **out_spi);
 
-int silofs_spawn_spnode2(const struct silofs_task_ctx *task,
-                         struct silofs_spnode_info2  **out_spi);
+int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr    *ref_vaddr,
+                            struct silofs_spnode_info2  **out_spi);
 
 int silofs_probe_inode2(const struct silofs_task_ctx *task,
                         const struct silofs_vaddr    *vaddr);

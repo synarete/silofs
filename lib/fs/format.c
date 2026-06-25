@@ -170,7 +170,7 @@ format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 	struct silofs_spnode_info2 *spi = nullptr;
 
 	silofs_vaddr_setup(&ref_vaddr, vtype, 0);
-	return silofs_require_spnode2_of(pexec, &ref_vaddr, &spi);
+	return silofs_spawn_spnode2_by(pexec, &ref_vaddr, &spi);
 }
 
 static int format_refetch_node_at(struct silofs_pexec_ctx *pexec,
@@ -581,7 +581,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
 
-	err = silofs_stage_spnode2_of(pexec, &vaddr, &spi);
+	err = silofs_stage_spnode2_by(pexec, &vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_vspace_ref(spi, &vaddr, &vspref);
@@ -654,6 +654,46 @@ static int reload_super(struct silofs_task_ctx *task)
 	return silofs_stage_super2(task, SILOFS_STG_CUR, &sbi);
 }
 
+static int reload_apex_spnode_at(struct silofs_task_ctx *task,
+                                 const struct silofs_vaddr *vaddr)
+{
+	struct silofs_spnode_info2 *spi = nullptr;
+
+	return silofs_stage_spnode2_of(task, vaddr, SILOFS_STG_CUR, &spi);
+}
+
+static int
+reload_apex_spnode_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
+{
+	struct silofs_vaddr vaddr;
+	struct silofs_sbnode_info2 *sbi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi2(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi2_apex_of(sbi, vtype, &vaddr);
+
+	err = reload_apex_spnode_at(task, &vaddr);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int reload_apex_spnodes(struct silofs_task_ctx *task)
+{
+	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
+	int err;
+
+	while (++vtype < SILOFS_VTYPE_LAST) {
+		if (has_vspace_mapping(vtype)) {
+			err = reload_apex_spnode_of(task, vtype);
+			return_if_err(err);
+		}
+	}
+	return 0;
+}
+
 static int reload_rootdir(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii = nullptr;
@@ -679,6 +719,9 @@ static int reload_vfs(struct silofs_task_ctx *task)
 	int err;
 
 	err = reload_super(task);
+	return_if_err(err);
+
+	err = reload_apex_spnodes(task);
 	return_if_err(err);
 
 	err = reload_rootdir(task);

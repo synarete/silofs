@@ -310,7 +310,7 @@ static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
+int silofs_stage_spnode2_by(struct silofs_pexec_ctx *pexec,
                             const struct silofs_vaddr *ref_vaddr,
                             struct silofs_spnode_info2 **out_spi)
 {
@@ -318,6 +318,16 @@ int silofs_stage_spnode2_of(struct silofs_pexec_ctx *pexec,
 
 	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
 	return resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
+}
+
+int silofs_spawn_spnode2_by(struct silofs_pexec_ctx *pexec,
+                            const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_spnode_info2 **out_spi)
+{
+	struct silofs_vaddr vaddr;
+
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+	return claim_spawn_spnode2_at(pexec, &vaddr, ref_vaddr, out_spi);
 }
 
 int silofs_test_vtop_mapping(struct silofs_pexec_ctx *pexec,
@@ -333,7 +343,7 @@ int silofs_test_vtop_mapping(struct silofs_pexec_ctx *pexec,
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
-int silofs_require_spnode2_of(struct silofs_pexec_ctx *pexec,
+int silofs_require_spnode2_by(struct silofs_pexec_ctx *pexec,
                               const struct silofs_vaddr *ref_vaddr,
                               struct silofs_spnode_info2 **out_spi)
 {
@@ -360,7 +370,7 @@ int silofs_mark_unwritten_at2(struct silofs_pexec_ctx *pexec,
 	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
-	err = silofs_stage_spnode2_of(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_by(pexec, ref_vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_mark_unwritten(spi, ref_vaddr);
@@ -373,7 +383,7 @@ int silofs_clear_unwritten_at2(struct silofs_pexec_ctx *pexec,
 	struct silofs_spnode_info2 *spi = nullptr;
 	int err;
 
-	err = silofs_stage_spnode2_of(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_by(pexec, ref_vaddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_clear_unwritten(spi, ref_vaddr);

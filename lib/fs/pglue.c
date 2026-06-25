@@ -355,29 +355,35 @@ int silofs_probe_spnode2(const struct silofs_task_ctx *task,
 	return probe_vnode(task, vaddr, nullptr);
 }
 
-int silofs_stage_spnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
-                         enum silofs_stg_mode stg_mode,
-                         struct silofs_spnode_info2 **out_spi)
+int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *ref_vaddr,
+                            enum silofs_stg_mode stg_mode,
+                            struct silofs_spnode_info2 **out_spi)
 {
+	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SPNODE2);
-	err = stage_verify_vnode(task, vaddr, nullptr, stg_mode, &vni);
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+
+	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
 	return_if_err(err);
 
 	*out_spi = vni_to_spi(vni);
 	return 0;
 }
 
-int silofs_spawn_spnode2(const struct silofs_task_ctx *task,
-                         struct silofs_spnode_info2 **out_spi)
+int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
+                            const struct silofs_vaddr *ref_vaddr,
+                            struct silofs_spnode_info2 **out_spi)
 {
+	struct silofs_vaddr vaddr;
 	struct silofs_vnode_info *vni = nullptr;
 	int err;
 
-	err = spawn_vnode(task, nullptr, SILOFS_VTYPE_SPNODE2, &vni);
+	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+
+	err = spawn_vnode_at(task, nullptr, &vaddr, &vni);
 	return_if_err(err);
 
 	*out_spi = vni_to_spi(vni);

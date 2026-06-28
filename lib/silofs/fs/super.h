@@ -1,0 +1,54 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * This file is part of silofs.
+ *
+ * Copyright (C) 2020-2026 Shachar Sharon
+ *
+ * Silofs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Silofs is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+#ifndef SILOFS_SUPER_H_
+#define SILOFS_SUPER_H_
+
+int silofs_verify_superb_node(const struct silofs_superb_node *sbn);
+
+void silofs_sbi2_incref(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_decref(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi, size_t fscap);
+
+int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi);
+
+int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype                 vtype);
+
+void silofs_sbi2_take_inode(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_give_inode(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
+                           enum silofs_vtype           vtype);
+
+void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
+                           enum silofs_vtype           vtype);
+
+void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
+                         enum silofs_vtype                 vtype,
+                         struct silofs_vaddr              *out_vaddr);
+
+void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
+                             const struct silofs_vaddr  *vaddr);
+
+uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi);
+
+#endif /* SILOFS_SUPER_H_ */

@@ -176,36 +176,7 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                   struct silofs_inode_info     *pii,
                                   bool                         *out_unwritten);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* super */
-
-int silofs_verify_superb_node(const struct silofs_superb_node *sbn);
-
-void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi);
-
-void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi,
-                               size_t                      fs_capacity);
-
-int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi);
-
-int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype                 vtype);
-
-void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype           vtype);
-
-void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype           vtype);
-
-void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
-                         enum silofs_vtype                 vtype,
-                         struct silofs_vaddr              *out_vaddr);
-
-void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
-                             const struct silofs_vaddr  *vaddr);
-
-uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi);
-
+#include <silofs/fs/super.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/inops.h>
 

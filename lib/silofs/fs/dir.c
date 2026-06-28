@@ -2061,7 +2061,7 @@ int silofs_add_dentry(struct silofs_task_ctx *task,
 static int dirc_stage_inode(const struct silofs_dir_ctx *d_ctx, ino_t ino,
                             struct silofs_inode_info **out_ii)
 {
-	return silofs_stage_inode_of(d_ctx->task, ino, d_ctx->stg_mode,
+	return silofs_stage_inode_by(d_ctx->task, ino, d_ctx->stg_mode,
 	                             out_ii);
 }
 

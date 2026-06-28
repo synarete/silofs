@@ -77,6 +77,22 @@ int silofs_spawn_inode_by(struct silofs_task_ctx *task,
 	return 0;
 }
 
+static void
+vaddr_of(const struct silofs_inode_info *ii, struct silofs_vaddr *out_vaddr)
+{
+	silofs_vaddr_assign(out_vaddr, silofs_ii_vaddr(ii));
+}
+
+int silofs_remove_inode_by(struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii)
+{
+	struct silofs_vaddr vaddr;
+
+	vaddr_of(ii, &vaddr);
+	silofs_ii_cleardirty(ii);
+	return silofs_remove_inode2(task, &vaddr);
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int resolve_inode_vaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
@@ -122,7 +138,7 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_stage_inode_of(struct silofs_task_ctx *task, ino_t ino,
+int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
                           enum silofs_stg_mode stg_mode,
                           struct silofs_inode_info **out_ii)
 {

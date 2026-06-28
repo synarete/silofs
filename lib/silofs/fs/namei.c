@@ -50,12 +50,6 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_PINNED;
 }
 
-static void ii_get_vaddr(const struct silofs_inode_info *ii,
-                         struct silofs_vaddr *out_vaddr)
-{
-	silofs_vaddr_assign(out_vaddr, silofs_ii_vaddr(ii));
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
@@ -540,7 +534,7 @@ stage_by_name(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = lookup_by_name(task, dir_ii, name, &ino_dt);
 	return_if_err(err);
 
-	err = silofs_stage_inode_of(task, ino_dt.ino, stg_mode, out_ii);
+	err = silofs_stage_inode_by(task, ino_dt.ino, stg_mode, out_ii);
 	return_if_err(err);
 
 	return 0;
@@ -711,11 +705,7 @@ static int add_namehash_dentry(struct silofs_task_ctx *task,
 static int
 do_remove_inode(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
-	struct silofs_vaddr vaddr;
-
-	ii_get_vaddr(ii, &vaddr);
-	silofs_ii_cleardirty(ii);
-	return silofs_remove_inode2(task, &vaddr);
+	return silofs_remove_inode_by(task, ii);
 }
 
 static int

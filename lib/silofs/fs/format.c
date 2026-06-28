@@ -700,7 +700,7 @@ static int reload_rootdir(struct silofs_task_ctx *task)
 	constexpr ino_t ino          = SILOFS_INO_ROOT;
 	int err;
 
-	err = silofs_stage_inode_of(task, ino, SILOFS_STG_CUR, &ii);
+	err = silofs_stage_inode_by(task, ino, SILOFS_STG_CUR, &ii);
 	if (err) {
 		log_err("failed to reload root-inode: err=%d", err);
 		return err;

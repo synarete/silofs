@@ -16,6 +16,7 @@ libsilofs_la_LDFLAGS += -version-info 0
 libsilofs_la_LIBADD = $(NULL)
 libsilofs_la_LIBADD += $(LIBS)
 libsilofs_la_LIBADD += $(PTHREAD_LIBS)
+
 libsilofs_la_SOURCES = $(NULL)
 libsilofs_la_SOURCES += ondisk.c
 libsilofs_la_SOURCES += version.c
@@ -40,11 +41,14 @@ libsilofs_la_SOURCES += base/times.c
 libsilofs_la_SOURCES += base/uconv.c
 libsilofs_la_SOURCES += base/uuid.c
 libsilofs_la_SOURCES += base/zcmpr.c
+libsilofs_la_SOURCES += base.h
+
 libsilofs_la_SOURCES += str/ascii.c
 libsilofs_la_SOURCES += str/strbuf.c
 libsilofs_la_SOURCES += str/strchr.c
 libsilofs_la_SOURCES += str/strspan.c
 libsilofs_la_SOURCES += str/strview.c
+
 libsilofs_la_SOURCES += crypt/cipher.c
 libsilofs_la_SOURCES += crypt/gcry.c
 libsilofs_la_SOURCES += crypt/hmac.c
@@ -53,6 +57,7 @@ libsilofs_la_SOURCES += crypt/kdf.c
 libsilofs_la_SOURCES += crypt/mdigest.c
 libsilofs_la_SOURCES += crypt/passwd.c
 libsilofs_la_SOURCES += crypt/prand.c
+
 libsilofs_la_SOURCES += addr/blobid.c
 libsilofs_la_SOURCES += addr/fsref.c
 libsilofs_la_SOURCES += addr/genid.c
@@ -71,6 +76,8 @@ libsilofs_la_SOURCES += addr/layerid.c
 libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/uidgid.c
 libsilofs_la_SOURCES += addr/vaddr.c
+libsilofs_la_SOURCES += addr.h
+
 libsilofs_la_SOURCES += nodes/dirtyq.c
 libsilofs_la_SOURCES += nodes/freesq.c
 libsilofs_la_SOURCES += nodes/hmapq.c
@@ -92,14 +99,18 @@ libsilofs_la_SOURCES += pv/trans.c
 libsilofs_la_SOURCES += pv/uber.c
 libsilofs_la_SOURCES += pv/vspace.c
 libsilofs_la_SOURCES += pv/vspmap.c
+
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/encdec1.c
 libsilofs_la_SOURCES += fs/file.c
 libsilofs_la_SOURCES += fs/flush.c
 libsilofs_la_SOURCES += fs/format.c
 libsilofs_la_SOURCES += fs/idsmap.c
+libsilofs_la_SOURCES += fs/idsmap.h
 libsilofs_la_SOURCES += fs/inode.c
+libsilofs_la_SOURCES += fs/inode.h
 libsilofs_la_SOURCES += fs/inops.c
+libsilofs_la_SOURCES += fs/inops.h
 libsilofs_la_SOURCES += fs/lcache.c
 libsilofs_la_SOURCES += fs/lsmap.c
 libsilofs_la_SOURCES += fs/pglue.c
@@ -114,26 +125,36 @@ libsilofs_la_SOURCES += fs/task.c
 libsilofs_la_SOURCES += fs/ustage.c
 libsilofs_la_SOURCES += fs/vstage.c
 libsilofs_la_SOURCES += fs/xattr.c
+libsilofs_la_SOURCES += fs.h
+
 libsilofs_la_SOURCES += mnt/mntconf.c
 libsilofs_la_SOURCES += mnt/mntsvc.c
 libsilofs_la_SOURCES += mnt/mstypes.h
+
 libsilofs_la_SOURCES += fuse/fqtypes.c
 libsilofs_la_SOURCES += fuse/fqtypes.h
 libsilofs_la_SOURCES += fuse/fuse_abi.h
 libsilofs_la_SOURCES += fuse/fuseq.c
+libsilofs_la_SOURCES += fuseq.h
+
 libsilofs_la_SOURCES += run/appexec.c
 libsilofs_la_SOURCES += run/delfs.c
 libsilofs_la_SOURCES += run/env.c
+libsilofs_la_SOURCES += run/env.h
 libsilofs_la_SOURCES += run/envinst.c
 libsilofs_la_SOURCES += run/ignite.c
 libsilofs_la_SOURCES += run/mbr.c
+libsilofs_la_SOURCES += run/mbr.h
 libsilofs_la_SOURCES += run/opers.c
+libsilofs_la_SOURCES += run/opers.h
 libsilofs_la_SOURCES += run/vfswrap.c
 libsilofs_la_SOURCES += run/walk.c
+libsilofs_la_SOURCES += run/walk.h
+libsilofs_la_SOURCES += run.h
+
+
 
 noinst_HEADERS = $(NULL)
-noinst_HEADERS += addr.h
-noinst_HEADERS += base.h
 noinst_HEADERS += base/atomic.h
 noinst_HEADERS += base/atomic.h
 noinst_HEADERS += base/avl.h
@@ -155,8 +176,6 @@ noinst_HEADERS += base/uuid.h
 noinst_HEADERS += base/zcmpr.h
 noinst_HEADERS += crypt.h
 noinst_HEADERS += flags.h
-noinst_HEADERS += fs.h
-noinst_HEADERS += fuseq.h
 noinst_HEADERS += nodes.h
 noinst_HEADERS += pv.h
 noinst_HEADERS += str.h
@@ -166,8 +185,3 @@ noinst_HEADERS += str/strchr.h
 noinst_HEADERS += str/strspan.h
 noinst_HEADERS += str/strview.h
 noinst_HEADERS += vfs.h
-noinst_HEADERS += run.h
-noinst_HEADERS += run/env.h
-noinst_HEADERS += run/mbr.h
-noinst_HEADERS += run/opers.h
-noinst_HEADERS += run/walk.h

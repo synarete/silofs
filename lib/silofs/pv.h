@@ -609,10 +609,12 @@ int silofs_share_vnode2_at(struct silofs_pexec_ctx   *pexec,
                            const struct silofs_vaddr *vaddr);
 
 int silofs_unshare_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr);
+                             const struct silofs_vaddr *vaddr, bool *out_last);
 
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr);
+                             const struct silofs_vaddr *vaddr, bool *out_last);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_stage_spnode2_by(struct silofs_pexec_ctx     *pexec,
                             const struct silofs_vaddr   *ref_vaddr,

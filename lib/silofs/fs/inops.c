@@ -61,46 +61,20 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	return ret;
 }
 
-static int get_sbi(const struct silofs_task_ctx *task,
-                   struct silofs_sbnode_info2 **out_sbi)
-{
-	int err;
-
-	err = silofs_curr_sbi2(task, out_sbi);
-	return_if_err(err);
-
-	silofs_sbi2_incref(*out_sbi);
-	return 0;
-}
-
-static void put_sbi(struct silofs_sbnode_info2 *sbi)
-{
-	if (sbi != nullptr) {
-		silofs_sbi2_decref(sbi);
-	}
-}
-
 int silofs_spawn_inode_by(struct silofs_task_ctx *task,
                           const struct silofs_inew_params *inp,
                           struct silofs_inode_info **out_ii)
 {
-	struct silofs_sbnode_info2 *sbi = nullptr;
 	int err;
-
-	err = get_sbi(task, &sbi);
-	goto_out_if_err(err);
 
 	err = check_itype(task, inp->mode);
 	return_if_err(err);
 
 	err = silofs_spawn_inode2(task, out_ii);
-	goto_out_if_err(err);
+	return_if_err(err);
 
 	silofs_ii_update_spawned(*out_ii, inp);
-	silofs_sbi2_take_inode(sbi);
-out:
-	put_sbi(sbi);
-	return err;
+	return 0;
 }
 
 static void
@@ -113,22 +87,11 @@ int silofs_remove_inode_by(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	struct silofs_vaddr vaddr;
-	struct silofs_sbnode_info2 *sbi = nullptr;
-	int err;
-
-	err = get_sbi(task, &sbi);
-	goto_out_if_err(err);
 
 	vaddr_of(ii, &vaddr);
 	silofs_ii_cleardirty(ii);
 
-	err = silofs_remove_inode2(task, &vaddr);
-	goto_out_if_err(err);
-
-	silofs_sbi2_give_inode(sbi);
-out:
-	put_sbi(sbi);
-	return err;
+	return silofs_remove_inode2(task, &vaddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

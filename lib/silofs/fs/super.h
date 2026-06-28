@@ -32,15 +32,11 @@ int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi);
 int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
                             enum silofs_vtype                 vtype);
 
-void silofs_sbi2_take_inode(struct silofs_sbnode_info2 *sbi);
+void silofs_sbi2_take_vnode(struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype           vtype);
 
-void silofs_sbi2_give_inode(struct silofs_sbnode_info2 *sbi);
-
-void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype           vtype);
-
-void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype           vtype);
+void silofs_sbi2_give_vnode(struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype           vtype);
 
 void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
                          enum silofs_vtype                 vtype,
@@ -50,5 +46,8 @@ void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
                              const struct silofs_vaddr  *vaddr);
 
 uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi);
+
+void silofs_sbi2_calc_statvfs(const struct silofs_sbnode_info2 *sbi,
+                              struct statvfs                   *out_stv);
 
 #endif /* SILOFS_SUPER_H_ */

@@ -238,11 +238,12 @@ static int
 reclaim_vnode(struct silofs_pexec_ctx *pexec, struct silofs_vnode_info *vni)
 {
 	struct silofs_vaddr vaddr;
+	bool last = false;
 	int err;
 
 	vaddr_of(vni, &vaddr);
-	err = silofs_reclaim_vnode2_at(pexec, &vaddr);
-	if (err) {
+	err = silofs_reclaim_vnode2_at(pexec, &vaddr, &last);
+	if (err || !last) {
 		log_err("failed to reclaim vnode: vtype=%d off=%zd err=%d",
 		        vaddr.vtype, vaddr.off, err);
 	}

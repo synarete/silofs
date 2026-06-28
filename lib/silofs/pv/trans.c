@@ -219,15 +219,14 @@ static void try_forget_cached_vni(struct silofs_pexec_ctx *pexec,
 }
 
 int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr)
+                             const struct silofs_vaddr *vaddr, bool *out_last)
 {
 	struct silofs_vnode_info *vni;
-	bool last = false;
 	int err;
 
 	vni = lookup_cached_vni(pexec, vaddr);
-	err = reclaim_vnode2_at(pexec, vaddr, &last);
-	if (!err && last) {
+	err = reclaim_vnode2_at(pexec, vaddr, out_last);
+	if (!err && *out_last) {
 		try_forget_cached_vni(pexec, vni);
 	}
 	return err;
@@ -262,16 +261,15 @@ int silofs_share_vnode2_at(struct silofs_pexec_ctx *pexec,
 }
 
 int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr)
+                             const struct silofs_vaddr *vaddr, bool *out_last)
 {
 	struct silofs_vspace_ref vspref;
-	bool last;
 	int err;
 
 	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
 	return_if_err(err);
 
-	err = reclaim_vnode2_at(pexec, vaddr, &last);
+	err = reclaim_vnode2_at(pexec, vaddr, out_last);
 	return_if_err(err);
 
 	return 0;

@@ -446,77 +446,6 @@ uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi)
 	return igen;
 }
 
-static fsfilcnt_t sbi_inodes_used(const struct silofs_sbnode_info2 *sbi)
-{
-	const size_t icount = sbn_nodes_count(sbi->sbn, SILOFS_VTYPE_INODE);
-
-	return (fsfilcnt_t)icount;
-}
-
-static fsfilcnt_t sbi_inodes_max(const struct silofs_sbnode_info2 *sbi)
-{
-	const size_t fs_capacity = sbn_fs_capacity(sbi->sbn);
-	const size_t inode_size  = vsize_of(SILOFS_VTYPE_INODE);
-
-	return (fs_capacity / inode_size) >> 2;
-}
-
-int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi)
-{
-	const fsfilcnt_t iuse = sbi_inodes_used(sbi);
-	const fsfilcnt_t imax = sbi_inodes_max(sbi);
-
-	return iuse < imax ? 0 : -SILOFS_ENOSPC;
-}
-
-int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype vtype)
-{
-	constexpr size_t safezone = SILOFS_MEGA;
-	const size_t capacity     = sbn_fs_capacity(sbi->sbn);
-	const size_t usage        = sbn_fs_usage(sbi->sbn);
-	const size_t nwant        = vsize_of(vtype);
-
-	return ((usage + nwant + safezone) < capacity) ? 0 : -SILOFS_ENOSPC;
-}
-
-void silofs_sbi2_take_inode(struct silofs_sbnode_info2 *sbi)
-{
-	silofs_sbi2_take_node(sbi, SILOFS_VTYPE_INODE);
-}
-
-void silofs_sbi2_give_inode(struct silofs_sbnode_info2 *sbi)
-{
-	silofs_sbi2_give_node(sbi, SILOFS_VTYPE_INODE);
-}
-
-void silofs_sbi2_take_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype vtype)
-{
-	const size_t capacity = sbn_fs_capacity(sbi->sbn);
-	const size_t usage    = sbn_fs_usage(sbi->sbn);
-	const size_t ntake    = vsize_of(vtype);
-
-	silofs_assert_lt(usage + ntake, capacity);
-
-	sbn_inc_nodes_count(sbi->sbn, vtype);
-	sbn_set_fs_usage(sbi->sbn, usage + ntake);
-	sbi_setdirty(sbi);
-}
-
-void silofs_sbi2_give_node(struct silofs_sbnode_info2 *sbi,
-                           enum silofs_vtype vtype)
-{
-	const size_t usage = sbn_fs_usage(sbi->sbn);
-	const size_t ngive = vsize_of(vtype);
-
-	silofs_assert_ge(usage, ngive);
-
-	sbn_dec_nodes_count(sbi->sbn, vtype);
-	sbn_set_fs_usage(sbi->sbn, usage - ngive);
-	sbi_setdirty(sbi);
-}
-
 void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
                          enum silofs_vtype vtype,
                          struct silofs_vaddr *out_vaddr)
@@ -535,4 +464,115 @@ void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
 		sbn_set_apex_voff(sbi->sbn, vaddr->vtype, vaddr->off);
 		sbi_setdirty(sbi);
 	}
+}
+
+static size_t sbi_fs_capacity(const struct silofs_sbnode_info2 *sbi)
+{
+	return sbn_fs_capacity(sbi->sbn);
+}
+
+static size_t sbi_fs_usage(const struct silofs_sbnode_info2 *sbi)
+{
+	return sbn_fs_usage(sbi->sbn);
+}
+
+static fsfilcnt_t sbi_inodes_usage(const struct silofs_sbnode_info2 *sbi)
+{
+	const size_t icount = sbn_nodes_count(sbi->sbn, SILOFS_VTYPE_INODE);
+
+	return (fsfilcnt_t)icount;
+}
+
+static fsfilcnt_t sbi_inodes_limit(const struct silofs_sbnode_info2 *sbi)
+{
+	const size_t fs_capacity = sbi_fs_capacity(sbi);
+	const size_t inode_size  = vsize_of(SILOFS_VTYPE_INODE);
+
+	return (fs_capacity / inode_size) >> 2;
+}
+
+int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi)
+{
+	const fsfilcnt_t iuse = sbi_inodes_usage(sbi);
+	const fsfilcnt_t imax = sbi_inodes_limit(sbi);
+
+	return iuse < imax ? 0 : -SILOFS_ENOSPC;
+}
+
+int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype vtype)
+{
+	constexpr size_t ext     = SILOFS_MEGA;
+	const size_t fs_capacity = sbi_fs_capacity(sbi);
+	const size_t fs_usage    = sbi_fs_usage(sbi);
+	const size_t nwant       = vsize_of(vtype);
+
+	return ((fs_usage + nwant + ext) < fs_capacity) ? 0 : -SILOFS_ENOSPC;
+}
+
+void silofs_sbi2_take_vnode(struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype vtype)
+{
+	const size_t fs_capacity = sbi_fs_capacity(sbi);
+	const size_t fs_usage    = sbi_fs_usage(sbi);
+	const size_t ntake       = vsize_of(vtype);
+
+	silofs_assert_lt(fs_usage + ntake, fs_capacity);
+
+	sbn_inc_nodes_count(sbi->sbn, vtype);
+	sbn_set_fs_usage(sbi->sbn, fs_usage + ntake);
+	sbi_setdirty(sbi);
+}
+
+void silofs_sbi2_give_vnode(struct silofs_sbnode_info2 *sbi,
+                            enum silofs_vtype vtype)
+{
+	const size_t usage = sbi_fs_usage(sbi);
+	const size_t ngive = vsize_of(vtype);
+
+	silofs_assert_ge(usage, ngive);
+
+	sbn_dec_nodes_count(sbi->sbn, vtype);
+	sbn_set_fs_usage(sbi->sbn, usage - ngive);
+	sbi_setdirty(sbi);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * TODO-0067: Use statvfs.f_bsize=BK (64K) and KB to statvfs.f_frsize=KB (1K)
+ *
+ * The semantics of statvfs and statfs are not entirely clear; in particular,
+ * statvfs(3p) states that statvfs.f_blocks define the file-system's size in
+ * f_frsize units, where f_bfree is number of free blocks (but without stating
+ * explicit units). For now, we force 4K units to both, but need more
+ * investigations before changing, especially with respect to various
+ * user-space tools.
+ */
+static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
+{
+	return (fsblkcnt_t)nbytes / unit;
+}
+
+void silofs_sbi2_calc_statvfs(const struct silofs_sbnode_info2 *sbi,
+                              struct statvfs *out_stv)
+{
+	constexpr size_t bsize      = 4096;
+	constexpr size_t frsize     = 4096;
+	const size_t fs_capacity    = sbi_fs_capacity(sbi);
+	const size_t fs_usage       = sbi_fs_usage(sbi);
+	const size_t fs_avail       = fs_capacity - fs_usage;
+	const fsfilcnt_t nfiles_max = sbi_inodes_limit(sbi);
+	const fsfilcnt_t nfiles_cur = sbi_inodes_usage(sbi);
+
+	silofs_memzero(out_stv, sizeof(*out_stv));
+	out_stv->f_bsize   = bsize;
+	out_stv->f_frsize  = frsize;
+	out_stv->f_blocks  = bytes_to_fsblkcnt(fs_capacity, frsize);
+	out_stv->f_bfree   = bytes_to_fsblkcnt(fs_avail, bsize);
+	out_stv->f_bavail  = out_stv->f_bfree;
+	out_stv->f_files   = nfiles_max;
+	out_stv->f_ffree   = nfiles_max - nfiles_cur;
+	out_stv->f_favail  = out_stv->f_ffree;
+	out_stv->f_namemax = SILOFS_NAME_MAX;
+	out_stv->f_fsid    = SILOFS_FSID_MAGIC;
 }

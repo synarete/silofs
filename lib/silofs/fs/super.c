@@ -782,7 +782,6 @@ void silofs_sbi_make_fork_of(struct silofs_sb_info *sbi_new,
 	sbi_make_fork_of(sbi_new, sbi_cur);
 	sbi_set_lv_birth(sbi_new);
 	silofs_sbst_setup_forked(sbi_new, sbi_cur);
-	silofs_sbst_account_super(sbi_new);
 	silofs_sbst_force_into_sb(sbi_new);
 }
 

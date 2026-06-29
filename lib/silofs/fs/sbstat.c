@@ -405,30 +405,6 @@ static void spgs_update_take(struct silofs_space_gauges *spgs,
 	}
 }
 
-static ssize_t spgs_ninodes(const struct silofs_space_gauges *spgs)
-{
-	const ssize_t *cnt = spgs_gauge_of(spgs, SILOFS_VTYPE_INODE);
-
-	return likely(cnt != nullptr) ? *cnt : 0;
-}
-
-static ssize_t spgs_sum(const struct silofs_space_gauges *spgs)
-{
-	const ssize_t *cnt      = nullptr;
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	ssize_t ssz             = 0;
-	ssize_t sum             = 0;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		cnt = spgs_gauge_of(spgs, vtype);
-		if (likely(cnt != nullptr)) {
-			ssz = silofs_vtype_ssize(vtype);
-			sum += *cnt * ssz;
-		}
-	}
-	return sum;
-}
-
 static void spgs_accum(struct silofs_space_gauges *spgs,
                        const struct silofs_space_gauges *spgs_other)
 {
@@ -441,22 +417,6 @@ static void spgs_accum(struct silofs_space_gauges *spgs,
 		dst = spgs_mut_gauge_of(spgs, vtype);
 		if ((src != nullptr) && (dst != nullptr)) {
 			*dst += *src;
-		}
-	}
-}
-
-static void spgs_export(const struct silofs_space_gauges *spgs,
-                        struct silofs_space_gauges256 *out_spg)
-{
-	uint64_t *dst           = nullptr;
-	const ssize_t *src      = nullptr;
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		src = spgs_gauge_of(spgs, vtype);
-		dst = spgs256_gauge_of2(out_spg, vtype);
-		if ((src != nullptr) && (dst != nullptr)) {
-			*dst = silofs_cpu_to_gauge(*src);
 		}
 	}
 }
@@ -500,43 +460,12 @@ static void spst_update_lsegs(struct silofs_space_stats *spst,
 	spgs_update_take(&spst->lsegs, vtype, take);
 }
 
-static void spst_update_objs(struct silofs_space_stats *spst,
-                             enum silofs_vtype vtype, ssize_t take)
-{
-	spgs_update_take(&spst->objs, vtype, take);
-}
-
-static void spst_update_bks(struct silofs_space_stats *spst,
-                            enum silofs_vtype vtype, ssize_t take)
-{
-	spgs_update_take(&spst->bks, vtype, take);
-}
-
-static ssize_t spst_ninodes(const struct silofs_space_stats *spst)
-{
-	return spgs_ninodes(&spst->objs);
-}
-
 static void spst_accum_gauges(struct silofs_space_stats *spst,
                               const struct silofs_space_stats *spst_other)
 {
 	spgs_accum(&spst->lsegs, &spst_other->lsegs);
 	spgs_accum(&spst->bks, &spst_other->bks);
 	spgs_accum(&spst->objs, &spst_other->objs);
-}
-
-static void spst_export(const struct silofs_space_stats *spst,
-                        struct silofs_space_stats1k *out_spst)
-{
-	silofs_memzero(out_spst, sizeof(*out_spst));
-	out_spst->sp_btime      = (uint64_t)spst->btime;
-	out_spst->sp_ctime      = (uint64_t)spst->ctime;
-	out_spst->sp_capacity   = spst->capacity;
-	out_spst->sp_vspacesize = spst->vspacesize;
-	out_spst->sp_generation = spst->generation;
-	spgs_export(&spst->lsegs, &out_spst->sp_lsegs);
-	spgs_export(&spst->bks, &out_spst->sp_bks);
-	spgs_export(&spst->objs, &out_spst->sp_objs);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -565,25 +494,7 @@ void silofs_sbst_setup_forked(struct silofs_sb_info *sbi,
 	silofs_sbi_setdirty(sbi);
 }
 
-void silofs_sbst_account_super(struct silofs_sb_info *sbi)
-{
-	silofs_sbst_update_lsegs(sbi, SILOFS_VTYPE_SUPER, 1);
-	silofs_sbst_update_bks(sbi, SILOFS_VTYPE_SUPER, 1);
-	silofs_sbst_update_objs(sbi, SILOFS_VTYPE_SUPER, 1);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static size_t sbst_capacity(const struct silofs_sb_info *sbi)
-{
-	return sbi->sb_spst_curr.capacity;
-}
-
-void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity)
-{
-	sbi->sb_spst_curr.capacity = capacity;
-	silofs_sbi_setdirty(sbi);
-}
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
                               enum silofs_vtype vtype, ssize_t take)
@@ -594,138 +505,12 @@ void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
 	}
 }
 
-void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
-                            enum silofs_vtype vtype, ssize_t take)
-{
-	if (take != 0) {
-		spst_update_bks(&sbi->sb_spst_curr, vtype, take);
-		silofs_sbi_setdirty(sbi);
-	}
-}
-
-void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
-                             enum silofs_vtype vtype, ssize_t take)
-{
-	if (take != 0) {
-		spst_update_objs(&sbi->sb_spst_curr, vtype, take);
-		silofs_sbi_setdirty(sbi);
-	}
-}
-
 off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi)
 {
 	return (off_t)(sbi->sb_spst_curr.vspacesize);
 }
 
-static size_t sbst_bytes_used(const struct silofs_sb_info *sbi)
-{
-	struct silofs_space_stats spst = { .btime = 0 };
-	ssize_t total;
-
-	/*
-	 * TODO-0046: Cache nbytes-used as volatile member
-	 *
-	 * Do not collect-stats for each call; speed-up using cached in-memory
-	 * counter.
-	 */
-	sbst_collect_stats(sbi, &spst);
-	total = spgs_sum(&spst.objs);
-	return (size_t)total;
-}
-
-static fsfilcnt_t sbst_inodes_used(const struct silofs_sb_info *sbi)
-{
-	const ssize_t ninodes_base = spst_ninodes(&sbi->sb_spst_prev);
-	const ssize_t ninodes_curr = spst_ninodes(&sbi->sb_spst_curr);
-
-	return (fsfilcnt_t)(ninodes_base + ninodes_curr);
-}
-
-static fsfilcnt_t sbst_inodes_max(const struct silofs_sb_info *sbi)
-{
-	return (sbst_capacity(sbi) / SILOFS_INODE_SIZE) >> 2;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant)
-{
-	const size_t nbytes_used = sbst_bytes_used(sbi);
-	const size_t nbytes_cap  = sbst_capacity(sbi);
-	const size_t nbytes_pad  = SILOFS_LBK_SIZE;
-
-	return ((nwant + nbytes_used + nbytes_pad) < nbytes_cap);
-}
-
-bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant)
-{
-	const size_t user_limit = (31 * sbst_capacity(sbi)) / 32;
-	const size_t used_bytes = sbst_bytes_used(sbi);
-
-	return ((used_bytes + nwant) <= user_limit);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-/*
- * TODO-0028: Use statvfs.f_bsize=BK (64K) and KB to statvfs.f_frsize=KB (1K)
- *
- * The semantics of statvfs and statfs are not entirely clear; in particular,
- * statvfs(3p) states that statvfs.f_blocks define the file-system's size in
- * f_frsize units, where f_bfree is number of free blocks (but without stating
- * explicit units). For now, we force 4K units to both, but need more
- * investigations before changing, especially with respect to various
- * user-space tools.
- */
-static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
-{
-	return (fsblkcnt_t)nbytes / unit;
-}
-
-void silofs_sbst_fill_statvfs(const struct silofs_sb_info *sbi,
-                              const struct silofs_uber_stats *ub_stats,
-                              struct statvfs *out_stv)
-{
-	constexpr size_t funit  = 4096;
-	constexpr size_t bsize  = funit;
-	constexpr size_t frsize = funit;
-	size_t nbytes_max, nbytes_use, nbytes_free, vtype_size;
-	fsfilcnt_t nfiles_max, nfiles_cur;
-	enum silofs_vtype vtype;
-
-	nbytes_max = sbst_capacity(sbi);
-	nbytes_use = sbst_bytes_used(sbi);
-	nbytes_use = 0;
-	for (vtype = SILOFS_VTYPE_NONE; vtype < SILOFS_VTYPE_LAST; ++vtype) {
-		vtype_size = silofs_vtype_size(vtype);
-		nbytes_use += ub_stats->st[vtype].vn * vtype_size;
-	}
-	nbytes_free = nbytes_max - nbytes_use;
-
-	nfiles_max = sbst_inodes_max(sbi);
-	nfiles_cur = sbst_inodes_used(sbi);
-	nfiles_cur = ub_stats->st[SILOFS_VTYPE_INODE].vn;
-
-	silofs_memzero(out_stv, sizeof(*out_stv));
-	out_stv->f_bsize   = bsize;
-	out_stv->f_frsize  = frsize;
-	out_stv->f_blocks  = bytes_to_fsblkcnt(nbytes_max, frsize);
-	out_stv->f_bfree   = bytes_to_fsblkcnt(nbytes_free, bsize);
-	out_stv->f_bavail  = out_stv->f_bfree;
-	out_stv->f_files   = nfiles_max;
-	out_stv->f_ffree   = nfiles_max - nfiles_cur;
-	out_stv->f_favail  = out_stv->f_ffree;
-	out_stv->f_namemax = SILOFS_NAME_MAX;
-	out_stv->f_fsid    = SILOFS_FSID_MAGIC;
-}
-
-void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
-                            struct silofs_query_spstats *out_qsp)
-{
-	struct silofs_space_stats spst;
-
-	sbst_collect_stats(sbi, &spst);
-	spst_export(&spst, &out_qsp->spst);
-}
 
 void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi)
 {

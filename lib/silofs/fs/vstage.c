@@ -338,15 +338,6 @@ vstgc_make_lsid_of_vdata(const struct silofs_vstage_ctx *vstg_ctx, off_t voff,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vstgc_update_space_stats(const struct silofs_vstage_ctx *vstg_ctx,
-                                     const struct silofs_uaddr *uaddr)
-{
-	const enum silofs_vtype vtype = silofs_uaddr_vtype(uaddr);
-
-	silofs_sbst_update_objs(vstg_ctx->sbi, vtype, 1);
-	silofs_sbst_update_bks(vstg_ctx->sbi, vtype, 1);
-}
-
 static int
 vstgc_spawn_super_main_lseg(const struct silofs_vstage_ctx *vstg_ctx)
 {
@@ -723,7 +714,7 @@ static int vstgc_spawn_spnode4(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
+
 	return 0;
 }
 
@@ -911,7 +902,6 @@ static int vstgc_spawn_spnode3(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1094,7 +1084,6 @@ static int vstgc_spawn_spnode2(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1277,7 +1266,6 @@ static int vstgc_spawn_spnode1(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, silofs_sni_uaddr(*out_sni));
 	return 0;
 }
 
@@ -1489,7 +1477,6 @@ static int vstgc_spawn_spleaf(const struct silofs_vstage_ctx *vstg_ctx,
 	if (err) {
 		return err;
 	}
-	vstgc_update_space_stats(vstg_ctx, silofs_sli_uaddr(*out_sli));
 	return 0;
 }
 

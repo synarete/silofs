@@ -2187,12 +2187,6 @@ int silofs_do_rename(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void fill_spstats(const struct silofs_sb_info *sbi,
-                         struct silofs_query_spstats *qsp)
-{
-	silofs_sbst_fill_qspst(sbi, qsp);
-}
-
 static void
 fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 {
@@ -2319,7 +2313,13 @@ static void fill_query_proc(const struct silofs_task_ctx *task,
 static void fill_query_spstats(const struct silofs_task_ctx *task,
                                struct silofs_ioc_query *query)
 {
-	fill_spstats(task->env->sbi, &query->u.spstats);
+	/*
+	 * TODO-0069: Export space-stats properly.
+	 */
+	struct silofs_query_spstats *spst = &query->u.spstats;
+
+	memset(spst, 0, sizeof(*spst));
+	silofs_unused(task);
 }
 
 static int

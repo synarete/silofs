@@ -341,35 +341,14 @@ void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);
 void silofs_sbst_setup_forked(struct silofs_sb_info       *sbi,
                               const struct silofs_sb_info *sbi_from);
 
-void silofs_sbst_account_super(struct silofs_sb_info *sbi);
-
-void silofs_sbst_set_capacity(struct silofs_sb_info *sbi, size_t capacity);
-
 off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
                               enum silofs_vtype vtype, ssize_t take);
 
-void silofs_sbst_update_bks(struct silofs_sb_info *sbi,
-                            enum silofs_vtype vtype, ssize_t take);
-
-void silofs_sbst_update_objs(struct silofs_sb_info *sbi,
-                             enum silofs_vtype vtype, ssize_t take);
-
-bool silofs_sbst_mayalloc_some(const struct silofs_sb_info *sbi, size_t nwant);
-
-bool silofs_sbst_mayalloc_data(const struct silofs_sb_info *sbi, size_t nwant);
-
 void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi);
 
 void silofs_sbst_force_into_sb(struct silofs_sb_info *sbi);
-
-void silofs_sbst_fill_statvfs(const struct silofs_sb_info    *sbi,
-                              const struct silofs_uber_stats *ub_stats,
-                              struct statvfs                 *out_stv);
-
-void silofs_sbst_fill_qspst(const struct silofs_sb_info *sbi,
-                            struct silofs_query_spstats *out_qsp);
 
 int silofs_verify_space_stats(const struct silofs_space_stats1k *sp);
 

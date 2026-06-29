@@ -450,8 +450,8 @@ static int env_spawn_super(struct silofs_env *env, size_t capacity,
 	if (err) {
 		return err;
 	}
-	silofs_sbst_set_capacity(sbi, capacity);
 	*out_sbi = sbi;
+	(void)capacity;
 	return 0;
 }
 
@@ -464,7 +464,6 @@ int silofs_env_format_super(struct silofs_env *env, size_t capacity)
 	if (err) {
 		return err;
 	}
-	silofs_sbst_account_super(sbi);
 	env_update_sb(env, sbi);
 	return 0;
 }

@@ -26,8 +26,8 @@ static void ut_statfs_empty(struct ut_env *ute)
 	size_t used_files  = 0;
 
 	ut_statfs(ute, UT_ROOT_INO, &stv);
-	ut_expect_le(stv.f_bsize, UT_64K); /* TODO: needs to be eq one day */
-	ut_expect_ge(stv.f_frsize, UT_1K); /* TODO: needs to be eq one day */
+	ut_expect_eq(stv.f_bsize, UT_4K);
+	ut_expect_eq(stv.f_frsize, UT_4K);
 	ut_expect_gt(stv.f_blocks, 0);
 	ut_expect_gt(stv.f_blocks, stv.f_bfree);
 	ut_expect_gt(stv.f_files, stv.f_ffree);
@@ -36,12 +36,11 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_eq(fs_size, ute->fs_capacity);
 
 	used_bytes = (stv.f_blocks - stv.f_bfree) * stv.f_frsize;
-	ut_expect_gt(used_bytes, SILOFS_SB_SIZE);
+	ut_expect_gt(used_bytes, SILOFS_INODE_SIZE);
 	ut_expect_lt(used_bytes, ute->fs_capacity);
 
-	/* 2 used inodes: anon-allocation at voff=0 and root-dir */
 	used_files = stv.f_files - stv.f_ffree;
-	ut_expect_eq(used_files, 2);
+	ut_expect_eq(used_files, 1);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -185,12 +184,35 @@ static void ut_statfs_bfree(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct ut_testdef ut_local_tests[] = {
+static void ut_statfs_symlnk(struct ut_env *ute)
+{
+	struct statvfs stv1, stv2;
+	const char *name   = UT_NAME;
+	const char *symval = UT_NAME;
+	ino_t dino = 0, sino = 0;
 
+	ut_mkdir_at_root(ute, name, &dino);
+	ut_statfs(ute, dino, &stv1);
+	ut_symlink(ute, dino, name, symval, &sino);
+	ut_lookup_exists(ute, dino, name, sino, S_IFLNK);
+	ut_statfs(ute, sino, &stv2);
+	ut_expect_gt(stv1.f_bfree, stv2.f_bfree);
+	ut_expect_gt(stv1.f_ffree, stv2.f_ffree);
+	ut_unlink(ute, dino, name);
+	ut_statfs(ute, dino, &stv2);
+	ut_expect_eq(stv1.f_bfree, stv2.f_bfree);
+	ut_expect_eq(stv1.f_ffree, stv2.f_ffree);
+	ut_rmdir_at_root(ute, name);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST1(ut_statfs_empty), //
 	UT_DEFTEST(ut_statfs_files),  //
 	UT_DEFTEST(ut_statfs_dirs),   //
 	UT_DEFTEST(ut_statfs_bfree),  //
+	UT_DEFTEST(ut_statfs_symlnk), //
 };
 
 const struct ut_testdefs ut_tdefs_statfs = UT_MKTESTS(ut_local_tests);

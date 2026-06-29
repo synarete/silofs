@@ -52,6 +52,27 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int get_sbi(const struct silofs_task_ctx *task,
+                   struct silofs_sbnode_info2 **out_sbi)
+{
+	int err;
+
+	err = silofs_curr_sbi2(task, out_sbi);
+	return_if_err(err);
+
+	silofs_sbi2_incref(*out_sbi);
+	return 0;
+}
+
+static void put_sbi(struct silofs_sbnode_info2 *sbi)
+{
+	if (sbi != nullptr) {
+		silofs_sbi2_decref(sbi);
+	}
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
 {
 	return (task->ubref->ctl_flags & SILOFS_F_NLOOKUP) > 0;
@@ -2199,11 +2220,21 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 static int
 do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 {
-	const struct silofs_sb_info *sbi = silofs_get_sbi(task);
 	struct silofs_uber_stats ub_stats;
+	struct silofs_sbnode_info2 *sbi = nullptr;
+	int err;
 
+	/*
+	 * TODO-0068: Export uber stats via dedicated ioctl.
+	 */
 	silofs_ubi_collect_stats(task->ubref->ubi, &ub_stats);
-	silofs_sbst_fill_statvfs(sbi, &ub_stats, out_stv);
+
+	err = get_sbi(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi2_calc_statvfs(sbi, out_stv);
+
+	put_sbi(sbi);
 	return 0;
 }
 

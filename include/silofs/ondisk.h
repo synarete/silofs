@@ -533,8 +533,7 @@ struct silofs_blobid56b {
 	struct silofs_uniqid  uniqid;
 	uint8_t               ptype;
 	uint8_t               vtype;
-	uint8_t               height;
-	uint8_t               reserved[19];
+	uint8_t               reserved[20];
 	uint16_t              vers;
 } silofs_attr_aligned8;
 
@@ -549,27 +548,7 @@ struct silofs_paddr64b {
 	int64_t                 pos;
 } silofs_attr_aligned64;
 
-/* logical volume's segment identifier */
-struct silofs_lsid64b {
-	struct silofs_blobid56b blobid56b;
-	uint32_t                lsize;
-	uint32_t                vindex;
-} silofs_attr_aligned16;
-
-/* logical address */
-struct silofs_laddr96b {
-	struct silofs_lsid64b lsid;
-	int64_t               pos;
-	uint8_t               reserved[24];
-} silofs_attr_aligned32;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_lrange128 {
-	int64_t  beg;
-	uint64_t len_height;
-} silofs_attr_aligned16;
-
+/* virtual address (compact) */
 struct silofs_vaddr56 {
 	uint8_t b[7];
 };

@@ -36,7 +36,6 @@ static void blobid_clear(struct silofs_blobid *blobid)
 	silofs_uniqid_reset(&blobid->uniqid);
 	blobid->stype.ptype = SILOFS_PTYPE_NONE;
 	blobid->stype.vtype = SILOFS_VTYPE_NONE;
-	blobid->height      = SILOFS_HEIGHT_NONE;
 	blobid->vers        = 0;
 }
 
@@ -49,7 +48,6 @@ void silofs_blobid_init(struct silofs_blobid *blobid,
 	silofs_uniqid_assignx(&blobid->uniqid, uniqid);
 	blobid->stype.ptype = stype->ptype;
 	blobid->stype.vtype = stype->vtype;
-	blobid->height      = SILOFS_HEIGHT_NONE;
 	blobid->vers        = SILOFS_FMT_VERSION;
 }
 
@@ -70,7 +68,6 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 	silofs_uniqid_assign(&blobid->uniqid, &other->uniqid);
 	blobid->stype.ptype = other->stype.ptype;
 	blobid->stype.vtype = other->stype.vtype;
-	blobid->height      = other->height;
 	blobid->vers        = other->vers;
 }
 
@@ -79,14 +76,6 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 {
 	long cmp;
 
-	cmp = silofs_layerid_compare(&blobid->layerid, &other->layerid);
-	if (cmp != 0) {
-		return cmp;
-	}
-	cmp = silofs_uniqid_compare(&blobid->uniqid, &other->uniqid);
-	if (cmp != 0) {
-		return cmp;
-	}
 	cmp = (long)blobid->stype.ptype - (long)other->stype.ptype;
 	if (cmp != 0) {
 		return cmp;
@@ -95,7 +84,11 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 	if (cmp != 0) {
 		return cmp;
 	}
-	cmp = (long)blobid->height - (long)other->height;
+	cmp = silofs_layerid_compare(&blobid->layerid, &other->layerid);
+	if (cmp != 0) {
+		return cmp;
+	}
+	cmp = silofs_uniqid_compare(&blobid->uniqid, &other->uniqid);
 	if (cmp != 0) {
 		return cmp;
 	}
@@ -130,10 +123,9 @@ void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,
 	memset(blobid56, 0, sizeof(*blobid56));
 	silofs_layerid_assign(&blobid56->layerid, &blobid->layerid);
 	silofs_uniqid_assign(&blobid56->uniqid, &blobid->uniqid);
-	blobid56->ptype  = (uint8_t)blobid->stype.ptype;
-	blobid56->vtype  = (uint8_t)blobid->stype.vtype;
-	blobid56->height = (uint8_t)blobid->height;
-	blobid56->vers   = silofs_cpu_to_le16(blobid->vers);
+	blobid56->ptype = (uint8_t)blobid->stype.ptype;
+	blobid56->vtype = (uint8_t)blobid->stype.vtype;
+	blobid56->vers  = silofs_cpu_to_le16(blobid->vers);
 }
 
 void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
@@ -143,7 +135,6 @@ void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
 	silofs_uniqid_assign(&blobid->uniqid, &blobid56->uniqid);
 	blobid->stype.ptype = (enum silofs_ptype)blobid56->ptype;
 	blobid->stype.vtype = (enum silofs_vtype)blobid56->vtype;
-	blobid->height      = (enum silofs_height)blobid56->height;
 	blobid->vers        = silofs_le16_to_cpu(blobid56->vers);
 }
 

@@ -71,7 +71,6 @@ libsilofs_la_SOURCES += addr/fsref.c
 libsilofs_la_SOURCES += addr/genid.c
 libsilofs_la_SOURCES += addr/hash.c
 libsilofs_la_SOURCES += addr/htox.c
-libsilofs_la_SOURCES += addr/laddr.c
 libsilofs_la_SOURCES += addr/mbref.c
 libsilofs_la_SOURCES += addr/namestr.c
 libsilofs_la_SOURCES += addr/nmeta.c

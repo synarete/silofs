@@ -237,7 +237,6 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 {
 	lni_init(&vni->vn_lni, vaddr->vtype);
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
-	silofs_llink_reset(&vni->vn_llink);
 	silofs_paddr_reset(&vni->vn_curr_paddr);
 	vni->vn_asyncwr        = 0;
 	vni->vn_use_pn_vnis_dq = false;
@@ -311,23 +310,13 @@ bool silofs_vni_isdirty(const struct silofs_vnode_info *vni)
 	return silofs_lni_isdirty(&vni->vn_lni);
 }
 
-static void
-vni_update_dq_by(struct silofs_vnode_info *vni, struct silofs_inode_info *ii)
-{
-	if (ii != nullptr && !vni->vn_use_pn_vnis_dq) {
-		/* XXX disable per-ii dirtyq
-		silofs_vni_set_dq(vni, &ii->i_dq_vnis);
-		*/
-	}
-}
-
 void silofs_vni_setdirty(struct silofs_vnode_info *vni,
                          struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(vni);
+	silofs_unused(ii);
 
 	if (!silofs_vni_isdirty(vni)) {
-		vni_update_dq_by(vni, ii);
 		silofs_lni_setdirty(&vni->vn_lni);
 	}
 }

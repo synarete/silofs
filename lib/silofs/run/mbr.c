@@ -21,6 +21,39 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
+static void
+calc_cas_paddr(const struct silofs_mdigest_hd *md_hd, enum silofs_ptype ptype,
+               enum silofs_vtype vtype, const struct iovec *iov,
+               size_t iov_cnt, struct silofs_paddr *out_paddr)
+{
+	struct silofs_hash256 hash;
+	struct silofs_blobid blobid;
+	struct silofs_layerid layerid;
+	struct silofs_uniqid uniqid;
+	const struct silofs_stype stype = {
+		.ptype = ptype,
+		.vtype = vtype,
+	};
+
+	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
+
+	silofs_layerid_reset(&layerid);
+	silofs_uniqid_setup_by(&uniqid, &hash);
+	silofs_blobid_init(&blobid, &stype, &layerid, &uniqid);
+
+	silofs_paddr_init(out_paddr, &blobid, 0);
+}
+
+static void
+calc_mbr_cas_paddr(const struct silofs_mdigest_hd *md_hd,
+                   const struct iovec *iov, struct silofs_paddr *out_paddr)
+{
+	calc_cas_paddr(md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_NONE, //
+	               iov, 1, out_paddr);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static bool pnptr_isuber(const struct silofs_pnptr *pnptr)
 {
 	return pnptr->paddr.blobid.stype.ptype == SILOFS_PTYPE_UBER;
@@ -364,8 +397,7 @@ mbraux_calc_mbref(struct silofs_mbraux *aux, const struct silofs_mbr1k *mbr1k,
 		.iov_len  = sizeof(*mbr1k),
 	};
 
-	silofs_calc_cas_paddr(&aux->md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_NONE,
-	                      &iov, 1, &paddr);
+	calc_mbr_cas_paddr(&aux->md_hd, &iov, &paddr);
 	silofs_mbref_derive(out_mbref, &aux->md_hd, &paddr);
 }
 

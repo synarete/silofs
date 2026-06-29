@@ -665,167 +665,15 @@ struct silofs_uber_node {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* number of sub-refs per each space-mapping node */
-#define SILOFS_SPNODE_NREFS (512U)
-
-struct silofs_space_node {
-	struct silofs_header sp_hdr;
-	int64_t              sp_base_off;
-	uint8_t              sp_ref_vtype;
-	uint8_t              sp_reserved[39];
-	uint8_t              sp_reserved2[960];
-	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
-	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_sb_sproots {
-	struct silofs_uaddr128b sb_sproot_lsmap;
-	struct silofs_uaddr128b sb_sproot_inode;
-	struct silofs_uaddr128b sb_sproot_xanode;
-	struct silofs_uaddr128b sb_sproot_dtnode;
-	struct silofs_uaddr128b sb_sproot_ftnode;
-	struct silofs_uaddr128b sb_sproot_symval;
-	struct silofs_uaddr128b sb_sproot_data1k;
-	struct silofs_uaddr128b sb_sproot_data4k;
-	struct silofs_uaddr128b sb_sproot_data64k;
-	uint8_t                 sb_reserved[896];
-} silofs_attr_aligned64;
-
-struct silofs_sb_lsids {
-	struct silofs_lsid64b sb_silofs_lsid_lsmap;
-	struct silofs_lsid64b sb_silofs_lsid_inode;
-	struct silofs_lsid64b sb_silofs_lsid_xanode;
-	struct silofs_lsid64b sb_silofs_lsid_dtnode;
-	struct silofs_lsid64b sb_silofs_lsid_ftnode;
-	struct silofs_lsid64b sb_silofs_lsid_symval;
-	struct silofs_lsid64b sb_silofs_lsid_data1k;
-	struct silofs_lsid64b sb_silofs_lsid_data4k;
-	struct silofs_lsid64b sb_silofs_lsid_data64k;
-	uint8_t               sb_reserved[448];
-} silofs_attr_aligned64;
-
-struct silofs_space_gauges256 {
-	uint64_t sg_nsuper;
-	uint64_t sg_nspnode;
-	uint64_t sg_nspleaf;
-	uint64_t sg_nlsmap;
-	uint64_t sg_ninode;
-	uint64_t sg_nxanode;
-	uint64_t sg_ndtnode;
-	uint64_t sg_nsymval;
-	uint64_t sg_nftnode;
-	uint64_t sg_ndata1k;
-	uint64_t sg_ndata4k;
-	uint64_t sg_ndata64k;
-	uint64_t sg_reserved2[20];
-} silofs_attr_aligned64;
-
 struct silofs_space_stats1k {
-	uint64_t                      sp_btime;
-	uint64_t                      sp_ctime;
-	uint64_t                      sp_capacity;
-	uint64_t                      sp_vspacesize;
-	uint64_t                      sp_generation;
-	uint8_t                       sp_reserved[216];
-	struct silofs_space_gauges256 sp_lsegs;
-	struct silofs_space_gauges256 sp_bks;
-	struct silofs_space_gauges256 sp_objs;
+	uint64_t sp_btime;
+	uint64_t sp_ctime;
+	uint64_t sp_capacity;
+	uint64_t sp_vspacesize;
+	uint64_t sp_generation;
+	uint8_t  sp_reserved[216];
+	uint8_t  sp_reserved2[768];
 } silofs_attr_aligned64;
-
-struct silofs_super_block {
-	/* 0..512 */
-	struct silofs_header sb_hdr;
-	uint8_t              sb_reserved0[16];
-	uint64_t             sb_magic;
-	uint64_t             sb_version;
-	uint32_t             sb_flags;
-	uint8_t              sb_reserved1[4];
-	uint8_t              sb_endianness;
-	uint8_t              sb_reserved2[7];
-	uint8_t              sb_sw_version[64];
-	uint8_t              sb_reserved3[368];
-	/* 512..1K */
-	struct silofs_tm64b     sb_btime_curr;
-	struct silofs_tm64b     sb_btime_prev;
-	struct silofs_tm64b     sb_btime_base;
-	struct silofs_blobid56b sb_lv_curr;
-	struct silofs_blobid56b sb_lv_prev;
-	struct silofs_lrange128 sb_lrange;
-	uint8_t                 sb_reserved4[192];
-	/* 1K..3K */
-	struct silofs_sb_sproots sb_sproots;
-	/* 3K..4K */
-	struct silofs_sb_lsids sb_main_lsid;
-	/* 4K..6K */
-	struct silofs_space_stats1k sb_space_stats_curr;
-	struct silofs_space_stats1k sb_space_stats_prev;
-	/* 6K..8K */
-	uint8_t            sb_reserved6[1536];
-	struct silofs_name sb_name;
-} silofs_attr_aligned64;
-
-struct silofs_spmap_ref {
-	struct silofs_uaddr128b sr_uaddr;
-} silofs_attr_aligned32;
-
-struct silofs_spmap_node {
-	struct silofs_header    sn_hdr;
-	uint8_t                 sn_reserved0[16];
-	struct silofs_lsid64b   sn_main_lsid;
-	struct silofs_lrange128 sn_lrange;
-	struct silofs_uaddr128b sn_parent;
-	struct silofs_uaddr128b sn_self;
-	uint8_t                 sn_reserved3[704 - 64];
-	uint8_t                 sn_reserved4[1024];
-	struct silofs_spmap_ref sn_subrefs[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 sl_reserved5[6144];
-} silofs_attr_aligned64;
-
-struct silofs_lbk_ref {
-	struct silofs_laddr96b lbr_subref;
-	uint8_t                lbr_reserved[64];
-} silofs_attr_aligned16;
-
-struct silofs_spmap_leaf {
-	struct silofs_header    sl_hdr;
-	uint8_t                 sl_reserved0[16];
-	struct silofs_lrange128 sl_lrange;
-	uint16_t                sl_refvtype;
-	uint8_t                 sl_reserved1[14];
-	struct silofs_lsid64b   sl_main_lsid;
-	struct silofs_uaddr128b sl_parent;
-	struct silofs_uaddr128b sl_self;
-	uint8_t                 sl_reserved3[640];
-	struct silofs_lbk_ref   sl_lbrs[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 sl_reserved4[5120];
-} silofs_attr_aligned64;
-
-struct silofs_lbk_state {
-	uint64_t state;
-} silofs_attr_aligned8;
-
-struct silofs_lbk_meta {
-	struct silofs_lbk_state lbm_allocated;
-	struct silofs_lbk_state lbm_unwritten;
-	uint64_t                lbm_refcnt;
-	uint8_t                 lbm_reserved[32];
-} silofs_attr_aligned8;
-
-struct silofs_lsmap {
-	struct silofs_header    lsm_hdr;
-	uint8_t                 lsm_reserved0[16];
-	struct silofs_lrange128 lsm_lrange;
-	uint8_t                 lsm_refvtype;
-	uint8_t                 lsm_reserved1[15];
-	struct silofs_lbk_meta  lsm_lbms[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 lsm_reserved2[448];
-	struct silofs_ckey      lsm_keys[SILOFS_SPMAP_NCHILDS];
-	uint8_t                 lsm_reserved3[57344];
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_superb_node {
 	struct silofs_header        s_hdr;
@@ -845,6 +693,23 @@ struct silofs_superb_node {
 	int64_t                     s_apex_voff[128];
 	uint8_t                     s_reserved4[1024];
 } silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* number of sub-refs per each space-mapping node */
+#define SILOFS_SPNODE_NREFS (512U)
+
+struct silofs_space_node {
+	struct silofs_header sp_hdr;
+	int64_t              sp_base_off;
+	uint8_t              sp_ref_vtype;
+	uint8_t              sp_reserved[39];
+	uint8_t              sp_reserved2[960];
+	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
+	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
+} silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_inode_times {
 	struct silofs_timespec btime;
@@ -1090,10 +955,6 @@ union silofs_lview_u {
 	struct silofs_mbr1k       mbr;
 	struct silofs_superb_node sbn;
 	struct silofs_space_node  spn;
-	struct silofs_super_block sb;
-	struct silofs_spmap_node  sn;
-	struct silofs_spmap_leaf  sl;
-	struct silofs_lsmap       lsm;
 	struct silofs_inode       in;
 	struct silofs_dtree_node  dtn;
 	struct silofs_ftree_node  ftn;

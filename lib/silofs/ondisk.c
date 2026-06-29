@@ -36,8 +36,6 @@
 #define MEMBER_NELEMS(type, member) \
 	SILOFS_ARRAY_SIZE(((const type *)nullptr)->member)
 
-#define MEMBER_NBITS(type, member) BITS_SIZE(((const type *)nullptr)->member)
-
 #define SWORD(a) ((long)(a))
 
 #define REQUIRE_EQ(a, b) SILOFS_STATICASSERT_EQ(SWORD(a), SWORD(b))
@@ -72,7 +70,8 @@
 #define REQUIRE_NELEMS(type, f, nelems) \
 	REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
 
-#define REQUIRE_NBITS(type, f, nbits) REQUIRE_EQ(MEMBER_NBITS(type, f), nbits)
+#define REQUIRE_SIZEOF_NBITS(type, nbits) \
+	REQUIRE_EQ(BITS_SIZE(sizeof(type)), nbits)
 
 #define ISALIGNED32(off) (((off) % 4) == 0)
 
@@ -105,6 +104,8 @@ static void validate_fundamental_types(void)
 	REQUIRE_SIZEOF(size_t, 8);
 	REQUIRE_SIZEOF(off_t, 8);
 	REQUIRE_SIZEOF(ino_t, 8);
+
+	REQUIRE_SIZEOF_NBITS(uint64_t, 64);
 }
 
 static void validate_external_constants(void)
@@ -215,31 +216,6 @@ static void validate_ondisk_headers(void)
 	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METAFILE_SIZE);
 }
 
-static void validate_ondisk_spmaps(void)
-{
-	REQUIRE_OFFSET64(struct silofs_spmap_ref, sr_uaddr, 0);
-	REQUIRE_SIZEOF(struct silofs_spmap_ref, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_main_lsid, 32);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_lrange, 96);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_parent, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_self, 256);
-	REQUIRE_OFFSET64(struct silofs_spmap_node, sn_subrefs, 2048);
-	REQUIRE_SIZEOF(struct silofs_spmap_node, SILOFS_SPMAP_SIZE);
-	REQUIRE_OFFSET64(struct silofs_lbk_ref, lbr_subref, 0);
-	REQUIRE_SIZEOF(struct silofs_lbk_ref, 160);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lrange, 32);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_refvtype, 48);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_main_lsid, 64);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_parent, 128);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_self, 256);
-	REQUIRE_OFFSET64(struct silofs_spmap_leaf, sl_lbrs, 1024);
-	REQUIRE_SIZEOF(struct silofs_spmap_leaf, SILOFS_SPMAP_SIZE);
-	REQUIRE_SIZEOF_16K(struct silofs_spmap_node);
-	REQUIRE_SIZEOF_16K(struct silofs_spmap_leaf);
-}
-
 static void validate_ondisk_mbr(void)
 {
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_magic, 0);
@@ -313,6 +289,7 @@ static void validate_ondisk_superb_node(void)
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_usage, 264);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_ino_generation, 272);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_nodes_count, 1024);
+	REQUIRE_MEMBER_SIZE(struct silofs_superb_node, s_nodes_count, 1024);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_apex_voff, 2048);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_reserved4, 3072);
 	REQUIRE_SIZEOF_4K(struct silofs_superb_node);
@@ -326,59 +303,6 @@ static void validate_ondisk_space_node(void)
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_flags, 1024);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_refcnt, 2048);
 	REQUIRE_SIZEOF_4K(struct silofs_space_node);
-}
-
-static void validate_ondisk_super(void)
-{
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_magic, 32);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_version, 40);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_sw_version, 64);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_curr, 512);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_prev, 576);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_btime_base, 640);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_curr, 704);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lv_prev, 760);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_lrange, 816);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_sproots, 1024);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_main_lsid, 3072);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_curr, 4096);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_space_stats_prev, 5120);
-	REQUIRE_OFFSET64(struct silofs_super_block, sb_name, 7680);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_btime, 0);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_ctime, 8);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_capacity, 16);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_vspacesize, 24);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_generation, 32);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_lsegs, 256);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_bks, 512);
-	REQUIRE_OFFSET64(struct silofs_space_stats1k, sp_objs, 768);
-	REQUIRE_SIZEOF(struct silofs_sb_sproots, 2048);
-	REQUIRE_SIZEOF(struct silofs_sb_lsids, 1024);
-	REQUIRE_SIZEOF(struct silofs_space_gauges256, 256);
-	REQUIRE_SIZEOF(struct silofs_space_stats1k, 1024);
-	REQUIRE_SIZEOF(struct silofs_super_block, SILOFS_SB_SIZE);
-	REQUIRE_SIZEOF_8K(struct silofs_super_block);
-}
-
-static void validate_ondisk_lsmap(void)
-{
-	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_allocated,
-	              SILOFS_NKB_IN_LBK);
-	REQUIRE_NBITS(struct silofs_lbk_meta, lbm_unwritten,
-	              SILOFS_NKB_IN_LBK);
-	REQUIRE_MEMBER_SIZE(struct silofs_lbk_meta, lbm_refcnt, 8);
-	REQUIRE_SIZEOF(struct silofs_lbk_state, 8);
-	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_allocated, 0);
-	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_unwritten, 8);
-	REQUIRE_OFFSET64(struct silofs_lbk_meta, lbm_refcnt, 16);
-	REQUIRE_SIZEOF(struct silofs_lbk_meta, 56);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lrange, 32);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_refvtype, 48);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_lbms, 64);
-	REQUIRE_OFFSET64(struct silofs_lsmap, lsm_keys, 4096);
-	REQUIRE_SIZEOF_64K(struct silofs_lsmap);
 }
 
 static void validate_ondisk_inode(void)
@@ -495,15 +419,12 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_pnptr();
 	validate_ondisk_spdesc();
 	validate_ondisk_headers();
-	validate_ondisk_spmaps();
 	validate_ondisk_mbr();
 	validate_ondisk_uber_node();
 	validate_ondisk_btree_node();
 	validate_ondisk_blob_desc();
 	validate_ondisk_space_node();
 	validate_ondisk_superb_node();
-	validate_ondisk_super();
-	validate_ondisk_lsmap();
 	validate_ondisk_inode();
 	validate_ondisk_dtree_node();
 	validate_ondisk_ftree_node();

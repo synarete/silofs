@@ -368,8 +368,9 @@ xan_search(const struct silofs_xattr_node *xan,
            const struct silofs_strview *str)
 {
 	struct silofs_xattr_entry *xe = nullptr;
-	const size_t nmin             = xe_calc_nents(str->len, 0);
+	size_t nmin;
 
+	nmin = xe_calc_nents(str->len, 0);
 	if (xan_nents(xan) >= nmin) {
 		xe = xe_search(xan_beg(xan), xan_tip(xan), str);
 	}
@@ -1367,12 +1368,10 @@ int silofs_verify_xattr_node(const struct silofs_xattr_node *xan)
 	int err;
 
 	err = silofs_verify_ino(xan_ino(xan));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xan_verify(xan);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

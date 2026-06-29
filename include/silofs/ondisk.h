@@ -565,12 +565,6 @@ struct silofs_laddr96b {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_uaddr128b {
-	struct silofs_laddr96b laddr;
-	int64_t                voff;
-	uint8_t                pad[24];
-} silofs_attr_aligned32;
-
 struct silofs_lrange128 {
 	int64_t  beg;
 	uint64_t len_height;

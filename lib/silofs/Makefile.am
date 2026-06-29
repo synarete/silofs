@@ -79,7 +79,6 @@ libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/spdesc.c
 libsilofs_la_SOURCES += addr/stype.c
 libsilofs_la_SOURCES += addr/layerid.c
-libsilofs_la_SOURCES += addr/uaddr.c
 libsilofs_la_SOURCES += addr/uidgid.c
 libsilofs_la_SOURCES += addr/vaddr.c
 libsilofs_la_SOURCES += addr.h

@@ -34,7 +34,6 @@
 enum silofs_hkey_type {
 	SILOFS_HKEY_NONE,
 	SILOFS_HKEY_PADDR,
-	SILOFS_HKEY_UADDR,
 	SILOFS_HKEY_VADDR,
 };
 
@@ -80,9 +79,6 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 
 void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
                           const struct silofs_paddr *paddr);
-
-void silofs_hkey_by_uaddr(struct silofs_hkey        *hkey,
-                          const struct silofs_uaddr *uaddr);
 
 void silofs_hkey_by_vaddr(struct silofs_hkey        *hkey,
                           const struct silofs_vaddr *vaddr);
@@ -444,12 +440,6 @@ struct silofs_lnode_info {
 	enum silofs_vtype         ln_vtype;
 };
 
-/* unode */
-struct silofs_unode_info {
-	struct silofs_lnode_info un_lni;
-	struct silofs_uaddr      un_uaddr;
-};
-
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info vn_lni;
@@ -562,40 +552,6 @@ struct silofs_lnode_info *
 silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
 
 struct silofs_hmapq_elem *silofs_lni_to_hmqe(struct silofs_lnode_info *lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_lview *silofs_uni_lview(const struct silofs_unode_info *uni);
-
-void silofs_uni_incref(struct silofs_unode_info *uni);
-
-void silofs_uni_decref(struct silofs_unode_info *uni);
-
-void silofs_uni_setdirty(struct silofs_unode_info *uni);
-
-void silofs_uni_cleardirty(struct silofs_unode_info *uni);
-
-bool silofs_uni_isevictable(const struct silofs_unode_info *uni);
-
-bool silofs_uni_isactive(const struct silofs_unode_info *uni);
-
-void silofs_uni_set_active(struct silofs_unode_info *uni);
-
-void silofs_uni_seal_view(struct silofs_unode_info *uni);
-
-void silofs_uni_set_dq(struct silofs_unode_info *uni,
-                       struct silofs_dirtyq     *dq);
-
-enum silofs_vtype silofs_uni_vtype(const struct silofs_unode_info *uni);
-
-const struct silofs_uaddr *
-silofs_uni_uaddr(const struct silofs_unode_info *uni);
-
-const struct silofs_laddr *
-silofs_uni_laddr(const struct silofs_unode_info *uni);
-
-struct silofs_unode_info *
-silofs_uni_from_lni(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

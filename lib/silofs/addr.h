@@ -534,6 +534,7 @@ void silofs_lrange128_xtoh(const struct silofs_lrange128 *vrng,
 
 ssize_t silofs_height_to_space_span(enum silofs_height height);
 
+#if 0
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* uaddr */
 
@@ -552,13 +553,13 @@ bool silofs_uaddr_isnull(const struct silofs_uaddr *uaddr);
 void silofs_uaddr_reset(struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_assign(struct silofs_uaddr       *uaddr,
-                         const struct silofs_uaddr *other);
+			 const struct silofs_uaddr *other);
 
 long silofs_uaddr_compare(const struct silofs_uaddr *uaddr1,
-                          const struct silofs_uaddr *uaddr2);
+			  const struct silofs_uaddr *uaddr2);
 
 bool silofs_uaddr_isequal(const struct silofs_uaddr *uaddr1,
-                          const struct silofs_uaddr *uaddr2);
+			  const struct silofs_uaddr *uaddr2);
 
 const struct silofs_blobid *
 silofs_uaddr_blobid(const struct silofs_uaddr *uaddr);
@@ -570,16 +571,18 @@ enum silofs_vtype silofs_uaddr_vtype(const struct silofs_uaddr *uaddr);
 enum silofs_height silofs_uaddr_height(const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr_setup(struct silofs_uaddr      *uaddr,
-                        const struct silofs_lsid *lsid, off_t bpos,
-                        off_t voff);
+			const struct silofs_lsid *lsid, off_t bpos,
+			off_t voff);
 
 void silofs_uaddr128b_reset(struct silofs_uaddr128b *uaddr128);
 
 void silofs_uaddr128b_htox(struct silofs_uaddr128b   *uaddr128,
-                           const struct silofs_uaddr *uaddr);
+			   const struct silofs_uaddr *uaddr);
 
 void silofs_uaddr128b_xtoh(const struct silofs_uaddr128b *uaddr128,
-                           struct silofs_uaddr           *uaddr);
+			   struct silofs_uaddr           *uaddr);
+
+#endif
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vaddr */

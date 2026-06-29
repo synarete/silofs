@@ -286,13 +286,11 @@ static int slc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 		size_t len, ncp;
 
 		err = lnk_get_value_part(lnk_ii, i, &vaddr);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = slc_stage_symval(sl_ctx, &vaddr, &svi);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		len = sv_dsc->parts[i].len;
 		ncp = silofs_bytebuf_append(bbuf, svn_value(svi->svn), len);
 		if (ncp != len) {
@@ -331,13 +329,11 @@ static int slc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
 	int err;
 
 	err = slc_check_symlnk(sl_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_extern_symval(sl_ctx, bbuf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -383,9 +379,8 @@ static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	int err;
 
 	err = slc_spawn_symval(sl_ctx, out_svi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	svi_setup_by(*out_svi, sl_ctx->lnk_ii, sv);
 	return 0;
 }
@@ -420,14 +415,14 @@ slc_bind_symval_part(const struct silofs_symlnk_ctx *sl_ctx, size_t slot,
 static int slc_assign_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
                                    const struct silofs_symval_desc *sv_dsc)
 {
-	struct silofs_symval_info *syi = nullptr;
 	int err;
 
 	for (size_t slot = 0; slot < sv_dsc->nparts; ++slot) {
+		struct silofs_symval_info *syi = nullptr;
+
 		err = slc_create_symval(sl_ctx, &sv_dsc->parts[slot], &syi);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		slc_bind_symval_part(sl_ctx, slot, syi);
 	}
 	return 0;
@@ -442,17 +437,14 @@ static int slc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 	int err;
 
 	err = symval_desc_setup(&sv_dsc, symval->str, symval->len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_assign_symval_head(sl_ctx, &sv_dsc);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_assign_symval_parts(sl_ctx, &sv_dsc);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -578,12 +570,10 @@ int silofs_verify_symval_node(const struct silofs_symval_node *svn)
 	int err;
 
 	err = svn_verify_parent(svn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = svn_verify_length(svn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

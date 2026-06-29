@@ -103,21 +103,6 @@ static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 	return x ^ blobid_hash64(&paddr->blobid);
 }
 
-static uint64_t hash_of_lsid(const struct silofs_lsid *lsid)
-{
-	return silofs_lsid_hash64(lsid);
-}
-
-static uint64_t hash_of_uaddr(const struct silofs_uaddr *uaddr)
-{
-	const uint64_t uoff = (uint64_t)uaddr->voff;
-	const uint64_t upos = (uint64_t)uaddr->laddr.pos;
-	const uint64_t h1   = 0x646f72616e646f6dULL - upos;
-	const uint64_t h2   = hash_of_lsid(&uaddr->laddr.lsid);
-
-	return uoff ^ h1 ^ h2;
-}
-
 static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
 {
 	const uint64_t off = (uint64_t)vaddr->off;
@@ -148,12 +133,6 @@ static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
 	return silofs_paddr_compare(hkey1->keyu.paddr, hkey2->keyu.paddr);
 }
 
-static long hkey_compare_as_uaddr(const struct silofs_hkey *hkey1,
-                                  const struct silofs_hkey *hkey2)
-{
-	return silofs_uaddr_compare(hkey1->keyu.uaddr, hkey2->keyu.uaddr);
-}
-
 static long hkey_compare_as_vaddr(const struct silofs_hkey *hkey1,
                                   const struct silofs_hkey *hkey2)
 {
@@ -168,9 +147,6 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 	switch (hkey1->type) {
 	case SILOFS_HKEY_PADDR:
 		cmp = hkey_compare_as_paddr(hkey1, hkey2);
-		break;
-	case SILOFS_HKEY_UADDR:
-		cmp = hkey_compare_as_uaddr(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_VADDR:
 		cmp = hkey_compare_as_vaddr(hkey1, hkey2);
@@ -210,9 +186,6 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 	case SILOFS_HKEY_PADDR:
 		hash = hash_of_paddr(key);
 		break;
-	case SILOFS_HKEY_UADDR:
-		hash = hash_of_uaddr(key);
-		break;
 	case SILOFS_HKEY_VADDR:
 		hash = hash_of_vaddr(key);
 		break;
@@ -234,12 +207,6 @@ void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
                           const struct silofs_paddr *paddr)
 {
 	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
-}
-
-void silofs_hkey_by_uaddr(struct silofs_hkey *hkey,
-                          const struct silofs_uaddr *uaddr)
-{
-	hkey_setup_by(hkey, SILOFS_HKEY_UADDR, uaddr);
 }
 
 void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,

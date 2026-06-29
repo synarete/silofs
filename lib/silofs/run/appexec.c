@@ -35,19 +35,7 @@ static void relax_caches(struct silofs_task_ctx *task, bool now)
 
 static int flush_dirty(struct silofs_task_ctx *task)
 {
-	int err;
-
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		log_err("failed to flush dirty: err=%d", err);
-		return err;
-	}
-	err = silofs_destage_dirty_by(task);
-	if (err) {
-		log_err("failed to destage dirty: err=%d", err);
-		return err;
-	}
-	return 0;
+	return silofs_destage_dirty_by(task);
 }
 
 static void drop_caches(struct silofs_task_ctx *task)

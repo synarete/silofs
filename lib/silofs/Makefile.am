@@ -123,6 +123,7 @@ libsilofs_la_SOURCES += fs/super2.c
 libsilofs_la_SOURCES += fs/super.h
 libsilofs_la_SOURCES += fs/symlink.c
 libsilofs_la_SOURCES += fs/task.c
+libsilofs_la_SOURCES += fs/task.h
 libsilofs_la_SOURCES += fs/ustage.c
 libsilofs_la_SOURCES += fs/vstage.c
 libsilofs_la_SOURCES += fs/xattr.c

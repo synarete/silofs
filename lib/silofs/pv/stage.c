@@ -1715,21 +1715,28 @@ static void postop_cleanup(struct silofs_pexec_ctx *pexec)
 	dsc_fini(&ds_ctx);
 }
 
+static void postop_report(const struct silofs_pexec_ctx *pexec, int status)
+{
+	if (status != 0) {
+		log_err("destage failure: status=%d", status);
+	}
+	unused(pexec);
+}
+
 int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec)
 {
 	int err;
 
 	/* Leaf nodes. */
 	err = destage_vnodes(pexec);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	/* Internal mapping nodes */
 	err = destage_pnodes(pexec);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 out:
 	postop_cleanup(pexec);
+	postop_report(pexec, err);
 	return err;
 }

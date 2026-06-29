@@ -59,24 +59,13 @@ void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
 	}
 }
 
-void silofs_task_update_id(struct silofs_task_ctx *task,
-                           struct silofs_submitq_ent *sqe)
-{
-	if (sqe->uniq_id > task->upper_id) {
-		task->upper_id = sqe->uniq_id;
-	}
-}
-
 static int task_apply(const struct silofs_task_ctx *task, bool all)
 {
-	int ret = 0;
+	/* TODO: is it needed? XXX */
+	silofs_unused(task);
+	silofs_unused(all);
 
-	if (all) {
-		ret = silofs_submitq_apply(task->submitq, SILOFS_CID_ALL);
-	} else if (task->upper_id) {
-		ret = silofs_submitq_apply(task->submitq, task->upper_id);
-	}
-	return ret;
+	return 0;
 }
 
 void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
@@ -90,7 +79,6 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->repo        = env->base.repo;
 	task->lcache      = env->base.lcache;
 	task->vcache      = &env->base.lcache->lc_vc;
-	task->submitq     = env->base.submitq;
 	task->looseq      = nullptr;
 	task->ubref       = &env->ubref;
 	task->upper_id    = 0;
@@ -114,7 +102,6 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	task->repo     = nullptr;
 	task->lcache   = nullptr;
 	task->vcache   = nullptr;
-	task->submitq  = nullptr;
 	task->runnable = false;
 }
 

@@ -44,8 +44,6 @@ struct silofs_env_base {
 	struct silofs_freevsqs *fvsqs;
 	struct silofs_freepaqs *fpaqs;
 	struct silofs_spamaps  *spamaps;
-	struct silofs_submitq  *submitq;
-	struct silofs_flusher  *flusher;
 	struct silofs_idsmap   *idsmap;
 };
 

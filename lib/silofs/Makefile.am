@@ -110,7 +110,6 @@ libsilofs_la_SOURCES += fs/inode.c
 libsilofs_la_SOURCES += fs/inode.h
 libsilofs_la_SOURCES += fs/inops.c
 libsilofs_la_SOURCES += fs/inops.h
-libsilofs_la_SOURCES += fs/lcache.c
 libsilofs_la_SOURCES += fs/pglue.c
 libsilofs_la_SOURCES += fs/namei.c
 libsilofs_la_SOURCES += fs/spmaps.c

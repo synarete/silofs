@@ -33,7 +33,6 @@ struct silofs_task_ctx {
 	const struct silofs_idsmap *idsm;
 	struct silofs_prandgen     *prng;
 	struct silofs_repo         *repo;
-	struct silofs_lcache       *lcache;
 	struct silofs_vcache       *vcache;
 	struct silofs_inode_info   *looseq;
 	struct silofs_uber_ref     *ubref;

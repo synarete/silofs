@@ -2484,7 +2484,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 static void relax_post_forkfs(const struct silofs_task_ctx *task)
 {
-	silofs_lcache_relax(task->lcache, SILOFS_CTLF_NOW);
+	silofs_vcache_relax(task->vcache, SILOFS_CTLF_NOW);
 }
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,

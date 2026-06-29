@@ -77,8 +77,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->prng        = env->base.prng;
 	task->idsm        = env->base.idsmap;
 	task->repo        = env->base.repo;
-	task->lcache      = env->base.lcache;
-	task->vcache      = &env->base.lcache->lc_vc;
+	task->vcache      = env->base.vcache;
 	task->looseq      = nullptr;
 	task->ubref       = &env->ubref;
 	task->upper_id    = 0;
@@ -100,7 +99,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	task->env      = nullptr;
 	task->idsm     = nullptr;
 	task->repo     = nullptr;
-	task->lcache   = nullptr;
+	task->vcache   = nullptr;
 	task->vcache   = nullptr;
 	task->runnable = false;
 }
@@ -228,7 +227,7 @@ void silofs_make_pexec(const struct silofs_task_ctx *task,
 	out_pexec->prng      = task->env->base.prng;
 	out_pexec->dstor     = task->env->base.dstor;
 	out_pexec->pcache    = task->env->base.pcache;
-	out_pexec->vcache    = &task->env->base.lcache->lc_vc;
+	out_pexec->vcache    = task->env->base.vcache;
 	out_pexec->fvsqs     = task->env->base.fvsqs;
 	out_pexec->fpaqs     = task->env->base.fpaqs;
 	out_pexec->md_hd     = &task->env->md_hd;

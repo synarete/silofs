@@ -315,7 +315,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 void silofs_collect_stats(const struct silofs_env *env,
                           struct silofs_cache_stats *out_cstats)
 {
-	silofs_lcache_collect_stats(env->base.lcache, out_cstats);
+	silofs_vcache_collect_stats(env->base.vcache, out_cstats);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

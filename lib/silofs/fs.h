@@ -500,10 +500,11 @@ void silofs_uamap_drop_all(struct silofs_uamap *uamap);
 bool silofs_uamap_drop_lru(struct silofs_uamap *uamap);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* lcache */
+/* vcache */
 
+#if 0
 /* in-memory caching */
-struct silofs_lcache {
+struct silofs_vcache {
 	struct silofs_alloc *lc_alloc;
 	struct silofs_hmapq  lc_uni_hmapq;
 	struct silofs_uamap  lc_uamap;
@@ -513,34 +514,36 @@ struct silofs_lcache {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_lcache_init(struct silofs_lcache *lcache,
-                       struct silofs_alloc  *alloc);
+int silofs_vcache_init(struct silofs_vcache *vcache,
+		       struct silofs_alloc  *alloc);
 
-void silofs_lcache_fini(struct silofs_lcache *lcache);
+void silofs_vcache_fini(struct silofs_vcache *vcache);
 
-void silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
+void silofs_vcache_relax(struct silofs_vcache *vcache, int flags);
 
-void silofs_lcache_drop(struct silofs_lcache *lcache);
-
-struct silofs_unode_info *
-silofs_lcache_lookup_uni(struct silofs_lcache      *lcache,
-                         const struct silofs_uaddr *uaddr);
+void silofs_vcache_drop(struct silofs_vcache *vcache);
 
 struct silofs_unode_info *
-silofs_lcache_create_uni(struct silofs_lcache      *lcache,
-                         const struct silofs_uaddr *uaddr);
-
-void silofs_lcache_forget_uni(struct silofs_lcache     *lcache,
-                              struct silofs_unode_info *uni);
+silofs_vcache_lookup_uni(struct silofs_vcache      *vcache,
+			 const struct silofs_uaddr *uaddr);
 
 struct silofs_unode_info *
-silofs_lcache_find_uni_by(struct silofs_lcache      *lcache,
-                          const struct silofs_uakey *uakey);
+silofs_vcache_create_uni(struct silofs_vcache      *vcache,
+			 const struct silofs_uaddr *uaddr);
 
-void silofs_lcache_drop_uamap(struct silofs_lcache *lcache);
+void silofs_vcache_forget_uni(struct silofs_vcache     *vcache,
+			      struct silofs_unode_info *uni);
 
-void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
-                                 struct silofs_cache_stats  *out_cstats);
+struct silofs_unode_info *
+silofs_vcache_find_uni_by(struct silofs_vcache      *vcache,
+			  const struct silofs_uakey *uakey);
+
+void silofs_vcache_drop_uamap(struct silofs_vcache *vcache);
+
+void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
+				 struct silofs_cache_stats  *out_cstats);
+
+#endif
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* namei */

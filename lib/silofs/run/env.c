@@ -356,7 +356,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 	silofs_freepaqs_drop(env->base.fpaqs);
 	silofs_freevsqs_drop(env->base.fvsqs);
 	silofs_spamaps_drop(env->base.spamaps);
-	silofs_lcache_drop(env->base.lcache);
+	silofs_vcache_drop(env->base.vcache);
 	silofs_pcache_drop(env->base.pcache);
 	silofs_repo_drop_some(env->base.repo);
 }
@@ -371,7 +371,7 @@ int silofs_env_shut(struct silofs_env *env)
 void silofs_env_relax_caches(const struct silofs_env *env, int flags)
 {
 	silofs_pcache_relax(env->base.pcache, flags);
-	silofs_lcache_relax(env->base.lcache, flags);
+	silofs_vcache_relax(env->base.vcache, flags);
 	if (flags & SILOFS_CTLF_IDLE) {
 		silofs_repo_relax(env->base.repo);
 	}

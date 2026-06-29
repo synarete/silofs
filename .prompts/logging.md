@@ -68,7 +68,7 @@ string formatting, and correctness of the RFC-5424 level mapping.
 
 ## Input Files
 
-- `lib/base/logging.c`
+- `lib/silofs/base/logging.c`
 - `include/silofs/logging.h`
 
 ## Required Output

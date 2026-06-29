@@ -143,11 +143,11 @@ shared session state.
 
 ## Input Files
 
-- `lib/include/silofs/fuseq.h` (internal header)
-- `lib/fuse/fqtypes.c` (internal types checker)
-- `lib/fuse/fqtypes.h` (internal types header)
-- `lib/fuse/fuseq.c` (implementation)
-- `lib/fuse/fuse_abi.h` (kernel interface)
+- `lib/silofs/fuseq.h` (internal header)
+- `lib/silofs/fuse/fqtypes.c` (internal types checker)
+- `lib/silofs/fuse/fqtypes.h` (internal types header)
+- `lib/silofs/fuse/fuseq.c` (implementation)
+- `lib/silofs/fuse/fuse_abi.h` (kernel interface)
 
 ## Required Output
 

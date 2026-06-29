@@ -80,8 +80,7 @@ separation mechanism. Focus on:
 
 - `mntd/`
 - `include/silofs/mntsvc.h`
-- `lib/mnt/`
-- `lib/include/silofs/mnt/`
+- `lib/silofs/mnt/`
 - `mntd/systemd/silofs-mountd.service.in`
 
 ## Required Output

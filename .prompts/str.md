@@ -108,16 +108,16 @@ Ensure that the abstractions correctly maintain their invariants (e.g.,
 
 ## Input Files
 
-- `lib/str/ascii.c`
-- `lib/str/strbuf.c`
-- `lib/str/strchr.c`
-- `lib/str/strspan.c`
-- `lib/str/strview.c`
-- `lib/include/silofs/str/ascii.h`
-- `lib/include/silofs/str/strbuf.h`
-- `lib/include/silofs/str/strchr.h`
-- `lib/include/silofs/str/strspan.h`
-- `lib/include/silofs/str/strview.h`
+- `lib/silofs/str/ascii.c`
+- `lib/silofs/str/strbuf.c`
+- `lib/silofs/str/strchr.c`
+- `lib/silofs/str/strspan.c`
+- `lib/silofs/str/strview.c`
+- `lib/silofs/str/ascii.h`
+- `lib/silofs/str/strbuf.h`
+- `lib/silofs/str/strchr.h`
+- `lib/silofs/str/strspan.h`
+- `lib/silofs/str/strview.h`
 - `test/utests/ut_strings.c`
 
 ## Required Output

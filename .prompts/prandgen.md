@@ -46,8 +46,8 @@ Identify weaknesses in the PRNG design that could lead to:
 
 ## Input Files
 
-- `lib/crypto/prand.c`
-- `lib/include/silofs/crypto/prand.h`
+- `lib/silofs/crypt/prand.c`
+- `include/silofs/` (no dedicated header; crypto interfaces via `crypt.h`)
 
 ## Required Output
 

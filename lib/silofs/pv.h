@@ -376,6 +376,8 @@ void silofs_ubref_update(struct silofs_uber_ref  *ubref,
 void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
                                enum silofs_flags       ctl_flags);
 
+bool silofs_ubref_is_rdonly(const struct silofs_uber_ref *ubref);
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spnode */
 

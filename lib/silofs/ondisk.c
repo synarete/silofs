@@ -248,7 +248,7 @@ static void validate_ondisk_mbr(void)
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_mode, 32);
 	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_flags, 36);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_root, 256);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_sb_addr, 512);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_reserved3, 512);
 	REQUIRE_SIZEOF_1K(struct silofs_mbr1k);
 	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
 }

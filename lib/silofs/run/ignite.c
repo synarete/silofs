@@ -163,14 +163,13 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 	if (task->repo->re_opened) {
 		return 0; /* no-op */
 	}
+
 	err = pre_reload_repo(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = open_repo(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -188,7 +187,7 @@ post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 	return flush_destage_dirty(task);
 }
 
-int silofs_exec_format(struct silofs_task_ctx *task, size_t fs_capacity)
+int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -207,101 +206,26 @@ int silofs_exec_format(struct silofs_task_ctx *task, size_t fs_capacity)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int format_super(struct silofs_task_ctx *task)
-{
-	return silofs_env_format_super(task->env, task->env->fscap);
-}
-
-static int
-require_spmaps_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	struct silofs_vaddr vaddr;
-	struct silofs_spleaf_info *sli = nullptr;
-
-	silofs_vaddr_setup(&vaddr, vtype, 0);
-	return silofs_require_spleaf_of(task, &vaddr, SILOFS_STG_COW, &sli);
-}
-
-static int
-format_spmaps_of(struct silofs_task_ctx *task, enum silofs_vtype vtype)
-{
-	int err;
-
-	err = require_spmaps_of(task, vtype);
-	if (err) {
-		log_err("format spmaps failed: vtype=%d err=%d", vtype, err);
-		return err;
-	}
-	err = flush_destage_dirty(task);
-	if (err) {
-		return err;
-	}
-	log_dbg("format spmaps of: vtype=%d", vtype);
-	return 0;
-}
-
-static int format_spmaps(struct silofs_task_ctx *task)
-{
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-	int err;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (!silofs_vtype_isvnode(vtype)) {
-			continue;
-		}
-		if (vtype == SILOFS_VTYPE_SPNODE2) {
-			continue;
-		}
-		if (vtype == SILOFS_VTYPE_SUPER2) {
-			continue;
-		}
-		err = format_spmaps_of(task, vtype);
-		if (err) {
-			return err;
-		}
-		drop_relax_caches(task);
-	}
-	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int format_fs(struct silofs_task_ctx *task)
-{
-	int err;
-
-	err = format_super(task);
-	return_if_err(err);
-
-	err = format_spmaps(task);
-	return_if_err(err);
-
-	return 0;
-}
-
 static int
 commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
 	return silofs_env_commit_mbr(task->env, out_mbref);
 }
 
-static int post_format_fs(struct silofs_task_ctx *task)
+static int post_commit_mbr(struct silofs_task_ctx *task)
 {
 	return flush_destage_dirty(task);
 }
 
-int silofs_exec_format_fs(struct silofs_task_ctx *task,
-                          struct silofs_mbref *out_mbref)
+int silofs_exec_commit_mbr(struct silofs_task_ctx *task,
+                           struct silofs_mbref *out_mbref)
 {
 	int err;
-
-	err = format_fs(task);
-	return_if_err(err);
 
 	err = commit_mbr(task, out_mbref);
 	return_if_err(err);
 
-	err = post_format_fs(task);
+	err = post_commit_mbr(task);
 	return_if_err(err);
 
 	return 0;
@@ -321,8 +245,8 @@ reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 	return silofs_env_reload_mbr(task->env, mbref);
 }
 
-int silofs_exec_reload(struct silofs_task_ctx *task,
-                       const struct silofs_mbref *mbref)
+int silofs_exec_reload_meta(struct silofs_task_ctx *task,
+                            const struct silofs_mbref *mbref)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
@@ -337,26 +261,4 @@ int silofs_exec_reload(struct silofs_task_ctx *task,
 	return_if_err(err);
 
 	return 0;
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static int reload_super(struct silofs_task_ctx *task)
-{
-	int err;
-
-	err = silofs_env_reload_sb_lseg(task->env);
-	if (err) {
-		return err;
-	}
-	err = silofs_env_reload_super(task->env);
-	if (err) {
-		return err;
-	}
-	return 0;
-}
-
-int silofs_exec_reload_fs(struct silofs_task_ctx *task)
-{
-	return reload_super(task);
 }

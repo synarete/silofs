@@ -74,8 +74,6 @@ static bool stage_cow(enum silofs_stg_mode stg_mode)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void
 sbi_bind_child_spnode(struct silofs_sb_info *sbi, enum silofs_vtype vspace,
                       const struct silofs_spnode_info *sni_child)
@@ -266,7 +264,7 @@ vstgc_setup(struct silofs_vstage_ctx *vstg_ctx, struct silofs_task_ctx *task,
 	memset(vstg_ctx, 0, sizeof(*vstg_ctx));
 	vstg_ctx->task     = task;
 	vstg_ctx->env      = task->env;
-	vstg_ctx->sbi      = task->env->sbi;
+	vstg_ctx->sbi      = nullptr;
 	vstg_ctx->vaddr    = vaddr;
 	vstg_ctx->stg_mode = stg_mode;
 	vstg_ctx->vspace   = vaddr->vtype;

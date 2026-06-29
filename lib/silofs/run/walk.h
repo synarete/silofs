@@ -23,8 +23,8 @@
 #include <silofs/pv.h>
 #include <silofs/fs.h>
 
-int silofs_walkfs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi);
+int silofs_traverse_fs(struct silofs_task_ctx *task);
 
-int silofs_unrefs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi);
+int silofs_delete_fs(struct silofs_task_ctx *task);
 
 #endif /* SILOFS_WALK_H_ */

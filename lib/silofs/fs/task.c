@@ -226,11 +226,6 @@ int silofs_task_submit(struct silofs_task_ctx *task, bool all)
 	return ret;
 }
 
-struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task)
-{
-	return task->env->sbi;
-}
-
 int silofs_curr_sbi2(const struct silofs_task_ctx *task,
                      struct silofs_sbnode_info2 **out_sbi)
 {

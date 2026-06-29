@@ -52,12 +52,6 @@ int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
 void silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
                          const struct silofs_pnptr *pnptr);
 
-int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
-                      struct silofs_uaddr          *out_sb_uaddr);
-
-int silofs_mbi_set_sbaddr(struct silofs_mbr_info    *mbi,
-                          const struct silofs_uaddr *sb_uaddr);
-
 int silofs_mbi_export(const struct silofs_mbr_info *mbi,
                       struct silofs_mbref          *out_mbref,
                       struct silofs_mbr1k          *out_mbr1k);

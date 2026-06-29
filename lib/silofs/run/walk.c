@@ -34,9 +34,8 @@
  * Extend fsck logic to enable file-system repair.
  */
 
-int silofs_walkfs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi)
+int silofs_traverse_fs(struct silofs_task_ctx *task)
 {
 	silofs_unused(task);
-	silofs_unused(sbi);
 	return 0;
 }

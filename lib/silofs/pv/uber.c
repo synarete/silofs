@@ -625,3 +625,14 @@ void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
 	ubref->ctl_flags = ctl_flags;
 	ubref_derive_ms_flags(ubref);
 }
+
+static bool ubref_has_ctlflags(const struct silofs_uber_ref *ubref,
+                               enum silofs_flags ctl_flags_mask)
+{
+	return (ubref->ctl_flags & ctl_flags_mask) == ctl_flags_mask;
+}
+
+bool silofs_ubref_is_rdonly(const struct silofs_uber_ref *ubref)
+{
+	return ubref_has_ctlflags(ubref, SILOFS_F_RDONLY);
+}

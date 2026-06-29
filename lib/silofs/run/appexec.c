@@ -80,20 +80,13 @@ static int appexec_reload_fs(struct silofs_task_ctx *task,
 	int err;
 
 	err = silofs_exec_reload_repo(task);
-	if (err) {
-		goto out;
-	}
-	err = silofs_exec_reload(task, mbref);
-	if (err) {
-		goto out;
-	}
-	err = silofs_exec_reload_fs(task);
-	if (err) {
-		goto out;
-	}
+	return_if_err(err);
+
+	err = silofs_exec_reload_meta(task, mbref);
+	return_if_err(err);
+
 	drop_caches(task);
-out:
-	return err;
+	return 0;
 }
 
 static int
@@ -170,10 +163,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	err = silofs_exec_reload_repo(task);
 	return_if_err(err);
 
-	err = silofs_exec_reload(task, mbref);
-	return_if_err(err);
-
-	err = silofs_exec_reload_fs(task);
+	err = silofs_exec_reload_meta(task, mbref);
 	return_if_err(err);
 
 	err = silofs_exec_unrefs(task);
@@ -452,10 +442,10 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 	err = silofs_exec_reload_repo(&task);
 	goto_out_if_err(err);
 
-	err = silofs_exec_format(&task, env->fscap);
+	err = silofs_exec_format_meta(&task, env->fscap);
 	goto_out_if_err(err);
 
-	err = silofs_exec_format_fs(&task, out_mbref);
+	err = silofs_exec_commit_mbr(&task, out_mbref);
 	goto_out_if_err(err);
 
 	log_dbg("format-fs done: fscap=%zu", env->fscap);

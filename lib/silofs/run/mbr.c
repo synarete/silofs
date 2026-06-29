@@ -102,18 +102,6 @@ static void mbr1k_reset_root(struct silofs_mbr1k *mbr1k)
 	mbr1k_set_root(mbr1k, silofs_pnptr_none());
 }
 
-static void mbr1k_sb_addr(const struct silofs_mbr1k *mbr1k,
-                          struct silofs_uaddr *out_sb_addr)
-{
-	silofs_uaddr128b_xtoh(&mbr1k->mbr_sb_addr, out_sb_addr);
-}
-
-static void mbr1k_set_sb_addr(struct silofs_mbr1k *mbr1k,
-                              const struct silofs_uaddr *sb_addr)
-{
-	silofs_uaddr128b_htox(&mbr1k->mbr_sb_addr, sb_addr);
-}
-
 static int mbr1k_check_base(const struct silofs_mbr1k *mbr1k)
 {
 	const uint64_t magic   = mbr1k_magic(mbr1k);
@@ -137,27 +125,6 @@ static int mbr1k_check_base(const struct silofs_mbr1k *mbr1k)
 	return (errcnt == 2) ? -SILOFS_EKEYEXPIRED : err;
 }
 
-static int mbr1k_check_uaddr_sb(const struct silofs_mbr1k *mbr1k)
-{
-	struct silofs_uaddr uaddr;
-	enum silofs_height height;
-	enum silofs_vtype vtype;
-
-	mbr1k_sb_addr(mbr1k, &uaddr);
-	if (silofs_uaddr_isnull(&uaddr)) {
-		return 0;
-	}
-	height = silofs_uaddr_height(&uaddr);
-	vtype  = silofs_uaddr_vtype(&uaddr);
-	if ((vtype != SILOFS_VTYPE_SUPER) || (height != SILOFS_HEIGHT_SUPER) ||
-	    (uaddr.voff != 0)) {
-		log_dbg("bad mbr uaddr-sb: voff=%ld vtype=%d height=%d",
-		        uaddr.voff, (int)vtype, (int)height);
-		return -SILOFS_EBADMBR;
-	}
-	return 0;
-}
-
 static int mbr1k_check_root(const struct silofs_mbr1k *mbr1k)
 {
 	struct silofs_pnptr pnptr;
@@ -171,17 +138,11 @@ static int mbr1k_check(const struct silofs_mbr1k *mbr1k)
 	int err;
 
 	err = mbr1k_check_base(mbr1k);
-	if (err) {
-		return err;
-	}
-	err = mbr1k_check_uaddr_sb(mbr1k);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mbr1k_check_root(mbr1k);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -232,13 +193,11 @@ static int mbr1k_verify(const struct silofs_mbr1k *mbr1k,
 	int err;
 
 	err = mbr1k_check(mbr1k);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mbr1k_check_hash(mbr1k, md);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -360,20 +319,17 @@ mbraux_init(struct silofs_mbraux *aux, const struct silofs_mbr_meta *meta)
 
 	silofs_memzero(aux, sizeof(*aux));
 	err = silofs_mdigest_init(&aux->md_hd);
-	if (err) {
-		goto out_err;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_hmac_init(&aux->hmac_hd);
-	if (err) {
-		goto out_err;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_cipher_init(&aux->ci_hd);
-	if (err) {
-		goto out_err;
-	}
+	goto_out_if_err(err);
+
 	aux->meta = meta;
 	return 0;
-out_err:
+out:
 	mbraux_fini(aux);
 	return err;
 }
@@ -570,20 +526,6 @@ void silofs_mbi_set_root(struct silofs_mbr_info *mbi,
 	mbr1k_set_root(&mbi->mb_mbr1k, pnptr);
 }
 
-int silofs_mbi_sbaddr(const struct silofs_mbr_info *mbi,
-                      struct silofs_uaddr *out_sb_uaddr)
-{
-	mbr1k_sb_addr(&mbi->mb_mbr1k, out_sb_uaddr);
-	return 0;
-}
-
-int silofs_mbi_set_sbaddr(struct silofs_mbr_info *mbi,
-                          const struct silofs_uaddr *sb_uaddr)
-{
-	mbr1k_set_sb_addr(&mbi->mb_mbr1k, sb_uaddr);
-	return 0;
-}
-
 static void mbi_get_mbr1k(const struct silofs_mbr_info *mbi,
                           struct silofs_mbr1k *out_mbr1k)
 {
@@ -600,13 +542,11 @@ int silofs_mbi_export(const struct silofs_mbr_info *mbi,
 
 	mbi_get_mbr1k(mbi, &mbr1k);
 	err = mbraux_init(&aux, &mbi->mb_meta);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mbraux_encode_mbr1k(&aux, &mbr1k, out_mbr1k_enc);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	mbraux_calc_mbref(&aux, out_mbr1k_enc, out_mbref);
 out:
 	mbraux_fini(&aux);

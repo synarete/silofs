@@ -28,11 +28,6 @@ static bool lni_isvnode(const struct silofs_lnode_info *lni)
 	return silofs_vtype_isvnode(lni->ln_vtype);
 }
 
-static bool uni_issuper(const struct silofs_unode_info *uni)
-{
-	return silofs_vtype_issuper(silofs_uni_vtype(uni));
-}
-
 static struct silofs_unode_info *
 uni_from_lni(const struct silofs_lnode_info *lni)
 {
@@ -409,18 +404,6 @@ static struct silofs_env *flusher_env(const struct silofs_flusher *flusher)
 	return flusher->task->env;
 }
 
-static int flusher_require_mutable_llink(const struct silofs_flusher *flusher,
-                                         const struct silofs_llink *llink)
-{
-	const struct silofs_env *env = flusher_env(flusher);
-	bool mut;
-
-	mut = silofs_sbi_ismutable_laddr(env->sbi, &llink->laddr);
-	silofs_assert(mut);
-
-	return mut ? 0 : -SILOFS_EROFS;
-}
-
 static void flusher_unode_nmeta(const struct silofs_flusher *flusher,
                                 struct silofs_nmeta *out_nmeta)
 {
@@ -436,9 +419,6 @@ static int flusher_resolve_llink_of_uni(const struct silofs_flusher *flusher,
 
 	flusher_unode_nmeta(flusher, &nmeta);
 	silofs_llink_of_uni(uni, &nmeta, out_llink);
-	if (!uni_issuper(uni)) {
-		ret = flusher_require_mutable_llink(flusher, out_llink);
-	}
 	return ret;
 }
 
@@ -804,7 +784,7 @@ flusher_rebind(struct silofs_flusher *flusher, struct silofs_task_ctx *task,
 {
 	flusher_reinit_dsets(flusher);
 	flusher->task     = task;
-	flusher->sbi      = silofs_get_sbi(task);
+	flusher->sbi      = nullptr;
 	flusher->ii       = ii;
 	flusher->tx_count = 0;
 	flusher->flags    = flags;

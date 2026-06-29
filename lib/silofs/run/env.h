@@ -67,7 +67,6 @@ struct silofs_env {
 	struct silofs_mdigest_hd       md_hd;
 	struct silofs_env_opstat       opstat;
 	struct silofs_uber_ref         ubref;
-	struct silofs_sb_info         *sbi;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;
 	struct silofs_cred             owner_cred;
@@ -104,12 +103,6 @@ void silofs_env_rwunlock(struct silofs_env *env);
 void silofs_env_refresh_root(struct silofs_env         *env,
                              const struct silofs_pnptr *pnptr);
 
-int silofs_env_format_super(struct silofs_env *env, size_t capacity);
-
-int silofs_env_reload_super(struct silofs_env *env);
-
-int silofs_env_reload_sb_lseg(struct silofs_env *env);
-
 void silofs_env_relax_caches(const struct silofs_env *env, int flags);
 
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
@@ -119,14 +112,10 @@ void silofs_env_allocstat(const struct silofs_env  *env,
 
 void silofs_env_drop_caches(struct silofs_env *env);
 
-bool silofs_env_hasflag(const struct silofs_env *env, enum silofs_flags f);
-
 int silofs_env_shut(struct silofs_env *env);
 
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
-
-bool silofs_env_isrdonlyfs(const struct silofs_env *env);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

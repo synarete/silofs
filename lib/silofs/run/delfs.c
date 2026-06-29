@@ -19,15 +19,11 @@
 #include <silofs/base.h>
 #include <silofs/pv.h>
 #include <silofs/fs.h>
+#include <silofs/run.h>
 
-#include <silofs/run/mbr.h>
-#include <silofs/run/env.h>
-#include <silofs/run/walk.h>
-
-int silofs_unrefs_at(struct silofs_task_ctx *task, struct silofs_sb_info *sbi)
+int silofs_delete_fs(struct silofs_task_ctx *task)
 {
 	/* XXX FIXME */
 	silofs_unused(task);
-	silofs_unused(sbi);
 	return 0;
 }

@@ -505,11 +505,6 @@ void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
 	}
 }
 
-off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi)
-{
-	return (off_t)(sbi->sb_spst_curr.vspacesize);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_sbst_fetch_from_sb(struct silofs_sb_info *sbi)

@@ -430,7 +430,7 @@ int silofs_do_access(const struct silofs_task_ctx *task,
 
 static int check_on_writable_fs(const struct silofs_task_ctx *task)
 {
-	return silofs_env_isrdonlyfs(task->env) ? -SILOFS_ERDONLY : 0;
+	return silofs_ubref_is_rdonly(task->ubref) ? -SILOFS_ERDONLY : 0;
 }
 
 static int
@@ -2482,23 +2482,8 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
-static int
-do_forkfs_of(struct silofs_task_ctx *task, struct silofs_sb_info *sbi_cur,
-             struct silofs_inode_info *dir_ii, int flags,
-             struct silofs_mbrefs *out_mbrefs)
+static void relax_post_forkfs(const struct silofs_task_ctx *task)
 {
-	int err;
-
-	silofs_sbi_incref(sbi_cur);
-	err = do_forkfs(task, dir_ii, flags, out_mbrefs);
-	silofs_sbi_decref(sbi_cur);
-	return err;
-}
-
-static void forget_and_relax_post_forkfs(const struct silofs_task_ctx *task,
-                                         struct silofs_sb_info *sbi)
-{
-	silofs_lcache_forget_uni(task->lcache, &sbi->sb_uni);
 	silofs_lcache_relax(task->lcache, SILOFS_CTLF_NOW);
 }
 
@@ -2506,17 +2491,12 @@ static int do_forkfs_and_relex(struct silofs_task_ctx *task,
                                struct silofs_inode_info *dir_ii, int flags,
                                struct silofs_mbrefs *out_mbrefs)
 {
-	struct silofs_sb_info *sbi_cur = silofs_get_sbi(task);
 	int err;
 
-	if (unlikely(sbi_cur == nullptr)) {
-		return -SILOFS_EPERM;
-	}
-
-	err = do_forkfs_of(task, sbi_cur, dir_ii, flags, out_mbrefs);
+	err = do_forkfs(task, dir_ii, flags, out_mbrefs);
 	return_if_err(err);
 
-	forget_and_relax_post_forkfs(task, sbi_cur);
+	relax_post_forkfs(task);
 	return 0;
 }
 

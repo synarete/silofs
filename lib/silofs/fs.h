@@ -288,9 +288,6 @@ int silofs_sbi_resolve_child(const struct silofs_sb_info *sbi,
 void silofs_sbi_bind_child(struct silofs_sb_info *sbi, enum silofs_vtype vtype,
                            const struct silofs_uaddr *uaddr);
 
-void silofs_sbi_make_fork_of(struct silofs_sb_info       *sbi_new,
-                             const struct silofs_sb_info *sbi_cur);
-
 void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,
                              struct silofs_spmap_lmap    *out_lmap);
 
@@ -340,8 +337,6 @@ void silofs_sbst_setup_spawned(struct silofs_sb_info *sbi);
 
 void silofs_sbst_setup_forked(struct silofs_sb_info       *sbi,
                               const struct silofs_sb_info *sbi_from);
-
-off_t silofs_sbst_vspace_end(const struct silofs_sb_info *sbi);
 
 void silofs_sbst_update_lsegs(struct silofs_sb_info *sbi,
                               enum silofs_vtype vtype, ssize_t take);
@@ -1164,8 +1159,6 @@ void silofs_unlock_fs_by(struct silofs_task_ctx *task);
 void silofs_rwlock_fs_by(struct silofs_task_ctx *task);
 
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
-
-struct silofs_sb_info *silofs_get_sbi(const struct silofs_task_ctx *task);
 
 int silofs_curr_sbi2(const struct silofs_task_ctx *task,
                      struct silofs_sbnode_info2  **out_sbi);

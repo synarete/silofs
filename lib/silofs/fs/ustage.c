@@ -213,28 +213,6 @@ forget_cached_uni(const struct silofs_env *env, struct silofs_unode_info *uni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool silofs_lsid_rw_mode(const struct silofs_env *env,
-                                const struct silofs_lsid *lsid)
-{
-	const struct silofs_sb_info *sbi = env->sbi;
-	bool rw_mode;
-
-	if (unlikely(sbi == nullptr) || silofs_sbi_ismutable_lsid(sbi, lsid)) {
-		rw_mode = true;
-	} else {
-		/*
-		 * TODO-0054: Allow read-only mode to lseg.
-		 *
-		 * When staging logical-segment which is not part of active
-		 * main file-system, stage it as read-only. Currently, this
-		 * logic has an issue with (off-line) snapshots, thus forcing
-		 * read-write mode.
-		 */
-		rw_mode = likely(env != nullptr) ? true : false;
-	}
-	return rw_mode;
-}
-
 static int
 lookup_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
@@ -247,7 +225,7 @@ static int
 stage_lseg(const struct silofs_env *env, const struct silofs_lsid *lsid)
 {
 	int err;
-	const bool rw = silofs_lsid_rw_mode(env, lsid);
+	const bool rw = true;
 
 	err = silofs_repo_stage_lseg(env->base.repo, rw, lsid);
 	if (err && (err != -SILOFS_ENOENT)) {

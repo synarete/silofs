@@ -36,19 +36,6 @@ static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 	tm64->tm_reserved = 0;
 }
 
-static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
-{
-	tm->tm_sec    = (int)silofs_le16_to_cpu(tm64->tm_sec);
-	tm->tm_min    = (int)silofs_le16_to_cpu(tm64->tm_min);
-	tm->tm_hour   = (int)(tm64->tm_hour);
-	tm->tm_mday   = (int)(tm64->tm_mday);
-	tm->tm_mon    = (int)(tm64->tm_mon);
-	tm->tm_wday   = (int)(tm64->tm_wday);
-	tm->tm_year   = (int)silofs_le32_to_cpu(tm64->tm_year);
-	tm->tm_yday   = (int)silofs_le32_to_cpu(tm64->tm_yday);
-	tm->tm_gmtoff = (long)silofs_le64_to_cpu(tm64->tm_gmtoff);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static uint64_t sb_magic(const struct silofs_super_block *sb)
@@ -357,20 +344,6 @@ static void sb_reset_sproots(struct silofs_super_block *sb)
 	}
 }
 
-static void sb_clone_sproots(struct silofs_super_block *sb,
-                             const struct silofs_super_block *sb_other)
-{
-	struct silofs_uaddr uaddr;
-	enum silofs_vtype vtype = SILOFS_VTYPE_NONE;
-
-	while (++vtype < SILOFS_VTYPE_LAST) {
-		if (silofs_vtype_isvnode(vtype)) {
-			sb_sproot_of(sb_other, vtype, &uaddr);
-			sb_set_sproot_of(sb, vtype, &uaddr);
-		}
-	}
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
@@ -386,11 +359,6 @@ sb_init(struct silofs_super_block *sb, const struct silofs_blobid *blobid)
 	sb_reset_main_lsids(sb);
 }
 
-static void sb_btime_curr(const struct silofs_super_block *sb, struct tm *tm)
-{
-	tm64b_xtoh(&sb->sb_btime_curr, tm);
-}
-
 static void
 sb_set_btime_curr(struct silofs_super_block *sb, const struct tm *tm)
 {
@@ -401,11 +369,6 @@ static void
 sb_set_btime_prev(struct silofs_super_block *sb, const struct tm *tm)
 {
 	tm64b_htox(&sb->sb_btime_prev, tm);
-}
-
-static void sb_btime_base(const struct silofs_super_block *sb, struct tm *tm)
-{
-	tm64b_xtoh(&sb->sb_btime_base, tm);
 }
 
 static void
@@ -420,30 +383,6 @@ sb_set_birth_tms(struct silofs_super_block *sb, const struct tm *tm)
 	sb_set_btime_curr(sb, tm);
 	sb_set_btime_prev(sb, tm);
 	sb_set_btime_base(sb, tm);
-}
-
-static void sb_clone_tms(struct silofs_super_block *sb,
-                         const struct silofs_super_block *sb_other)
-{
-	struct tm tm;
-
-	sb_btime_base(sb_other, &tm);
-	sb_set_btime_base(sb, &tm);
-
-	sb_btime_curr(sb_other, &tm);
-	sb_set_btime_prev(sb, &tm);
-}
-
-static void sb_clone_raw(struct silofs_super_block *sb,
-                         const struct silofs_super_block *sb_other)
-{
-	struct silofs_blobid blobid;
-
-	sb_lv_curr(sb, &blobid);
-	memcpy(sb, sb_other, sizeof(*sb));
-	sb_set_lv_curr(sb, &blobid);
-	sb_lv_curr(sb_other, &blobid);
-	sb_set_lv_prev(sb, &blobid);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -732,15 +671,6 @@ static void sbi_setup_birth_tms_now(struct silofs_sb_info *sbi)
 	silofs_sbi_setdirty(sbi);
 }
 
-static void sbi_set_lv_birth(struct silofs_sb_info *sbi)
-{
-	struct tm now;
-
-	silofs_localtime_now(&now);
-	sb_set_btime_curr(sbi->sb, &now);
-	silofs_sbi_setdirty(sbi);
-}
-
 static void sbi_assign_vspace_span(struct silofs_sb_info *sbi)
 {
 	struct silofs_lrange lrange;
@@ -761,28 +691,6 @@ void silofs_sbi_setup_spawned(struct silofs_sb_info *sbi)
 	sbi_setup_birth_tms_now(sbi);
 	sbi_assign_vspace_span(sbi);
 	silofs_sbi_setdirty(sbi);
-}
-
-static void sbi_make_fork_of(struct silofs_sb_info *sbi,
-                             const struct silofs_sb_info *sbi_other)
-{
-	struct silofs_super_block *sb             = sbi->sb;
-	const struct silofs_super_block *sb_other = sbi_other->sb;
-
-	sb_clone_raw(sb, sb_other);
-	sb_clone_sproots(sb, sb_other);
-	sb_clone_tms(sb, sb_other);
-	sb_reset_main_lsids(sb);
-	silofs_sbi_setdirty(sbi);
-}
-
-void silofs_sbi_make_fork_of(struct silofs_sb_info *sbi_new,
-                             const struct silofs_sb_info *sbi_cur)
-{
-	sbi_make_fork_of(sbi_new, sbi_cur);
-	sbi_set_lv_birth(sbi_new);
-	silofs_sbst_setup_forked(sbi_new, sbi_cur);
-	silofs_sbst_force_into_sb(sbi_new);
 }
 
 void silofs_sbi_resolve_lmap(const struct silofs_sb_info *sbi,

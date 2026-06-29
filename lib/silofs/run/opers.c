@@ -142,11 +142,6 @@ static int symval_to_str(const char *symval, struct silofs_strview *out_sv)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static const struct silofs_sb_info *sbi_of(const struct silofs_task_ctx *task)
-{
-	return silofs_get_sbi(task);
-}
-
 static bool op_is_kernel(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds = &task->auth.creds;
@@ -165,7 +160,7 @@ static bool op_is_kernel(const struct silofs_task_ctx *task)
 
 static bool op_is_admin(const struct silofs_task_ctx *task)
 {
-	return (sbi_of(task) == nullptr) || op_is_kernel(task);
+	return op_is_kernel(task);
 }
 
 static bool op_is_fsowner(const struct silofs_task_ctx *task)
@@ -196,7 +191,7 @@ static bool op_allow_other(const struct silofs_task_ctx *task)
 
 static int op_authorize(const struct silofs_task_ctx *task)
 {
-	if (sbi_of(task) == nullptr) {
+	if (op_is_admin(task)) {
 		return 0; /* case off-line operation XXX */
 	}
 	if (op_is_kernel(task)) {

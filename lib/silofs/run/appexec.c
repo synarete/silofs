@@ -99,15 +99,11 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 	int err;
 
 	err = silofs_repo_fsync_all(task->repo);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 	drop_relax_caches(task);
 
 	err = silofs_env_shut(task->env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 	drop_relax_caches(task);
 
 	return 0;

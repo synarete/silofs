@@ -723,8 +723,8 @@ static bool dstor_isopen(const struct silofs_dstor *dstor)
 
 static void blobs_pathname(struct silofs_strbuf *sbuf)
 {
-	const char *dots = SILOFS_REPO_DOTS_DIRNAME;
-	const char *subd = SILOFS_REPO_BLOBS_DIRNAME;
+	const char *dots = SILOFS_REPO_DOTSDIR_NAME;
+	const char *subd = SILOFS_REPO_BLOBSDIR_NAME;
 
 	silofs_strbuf_sprintf(sbuf, "%s/%s", dots, subd);
 }

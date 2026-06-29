@@ -32,7 +32,6 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_PCACHE   = SILOFS_BIT(4),
 	SILOFS_ENVIF_VCACHE   = SILOFS_BIT(5),
 	SILOFS_ENVIF_FREESQS  = SILOFS_BIT(6),
-	SILOFS_ENVIF_SPAMAPS  = SILOFS_BIT(7),
 	SILOFS_ENVIF_IDSMAP   = SILOFS_BIT(9),
 	SILOFS_ENVIF_FUSEQ    = SILOFS_BIT(11),
 	SILOFS_ENVIF_ENV      = SILOFS_BIT(12),
@@ -53,7 +52,6 @@ struct silofs_env_inst {
 	struct silofs_vcache vcache;
 	struct silofs_freevsqs fvsqs;
 	struct silofs_freepaqs fpaqs;
-	struct silofs_spamaps spamaps;
 	struct silofs_idsmap idsmap;
 	struct silofs_env env;
 	struct silofs_alloc *alloc;
@@ -388,25 +386,6 @@ static void envi_fini_freesqs(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_spamaps(struct silofs_env_inst *envi)
-{
-	int err;
-
-	err = silofs_spamaps_init(&envi->spamaps, envi->alloc);
-	return_if_err(err);
-
-	envi->initf |= SILOFS_ENVIF_SPAMAPS;
-	return 0;
-}
-
-static void envi_fini_spamaps(struct silofs_env_inst *envi)
-{
-	if (envi->initf & SILOFS_ENVIF_SPAMAPS) {
-		silofs_spamaps_fini(&envi->spamaps);
-		envi->initf &= ~SILOFS_ENVIF_SPAMAPS;
-	}
-}
-
 static int envi_init_idsmap(struct silofs_env_inst *envi)
 {
 	struct silofs_idsmap *idsmap = &envi->idsmap;
@@ -433,16 +412,15 @@ static void envi_fini_idsmap(struct silofs_env_inst *envi)
 static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
-		.prng    = &envi->prandgen,
-		.nilbk   = envi->nilbk,
-		.repo    = &envi->repo,
-		.dstor   = &envi->repo.re_dstor,
-		.pcache  = &envi->pcache,
-		.vcache  = &envi->vcache,
-		.fvsqs   = &envi->fvsqs,
-		.fpaqs   = &envi->fpaqs,
-		.spamaps = &envi->spamaps,
-		.idsmap  = &envi->idsmap,
+		.prng   = &envi->prandgen,
+		.nilbk  = envi->nilbk,
+		.repo   = &envi->repo,
+		.dstor  = &envi->repo.re_dstor,
+		.pcache = &envi->pcache,
+		.vcache = &envi->vcache,
+		.fvsqs  = &envi->fvsqs,
+		.fpaqs  = &envi->fpaqs,
+		.idsmap = &envi->idsmap,
 	};
 	struct silofs_env *env = &envi->env;
 	int err;
@@ -489,7 +467,6 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_unbind_fuseq(envi);
 	envi_fini_env(envi);
 	envi_fini_idsmap(envi);
-	envi_fini_spamaps(envi);
 	envi_fini_freesqs(envi);
 	envi_fini_vcache(envi);
 	envi_fini_pcache(envi);
@@ -523,9 +500,6 @@ static int envi_init(struct silofs_env_inst *envi, size_t memwant,
 	goto_out_if_err(err);
 
 	err = envi_init_freesqs(envi);
-	goto_out_if_err(err);
-
-	err = envi_init_spamaps(envi);
 	goto_out_if_err(err);
 
 	err = envi_init_idsmap(envi);

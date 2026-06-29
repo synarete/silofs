@@ -355,7 +355,6 @@ void silofs_env_drop_caches(struct silofs_env *env)
 {
 	silofs_freepaqs_drop(env->base.fpaqs);
 	silofs_freevsqs_drop(env->base.fvsqs);
-	silofs_spamaps_drop(env->base.spamaps);
 	silofs_vcache_drop(env->base.vcache);
 	silofs_pcache_drop(env->base.pcache);
 	silofs_repo_drop_some(env->base.repo);

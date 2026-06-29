@@ -1,0 +1,143 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * This file is part of silofs.
+ *
+ * Copyright (C) 2020-2026 Shachar Sharon
+ *
+ * Silofs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Silofs is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+#ifndef SILOFS_NAMEI_H_
+#define SILOFS_NAMEI_H_
+
+int silofs_make_xattrname(struct silofs_task_ctx         *task,
+                          const struct silofs_inode_info *ii, const char *s,
+                          struct silofs_namestr *out_nstr);
+
+int silofs_make_linkname(struct silofs_task_ctx         *task,
+                         const struct silofs_inode_info *dir_ii, const char *s,
+                         struct silofs_namestr *out_nstr);
+
+void silofs_inew_params_of(const struct silofs_task_ctx   *task,
+                           const struct silofs_inode_info *parent_dii,
+                           mode_t mode, dev_t rdev, uint64_t igen,
+                           struct silofs_inew_params *out_inp);
+
+int silofs_do_forget(struct silofs_task_ctx   *task,
+                     struct silofs_inode_info *ii, size_t nlookup);
+
+int silofs_do_statvfs(const struct silofs_task_ctx *task,
+                      struct silofs_inode_info *ii, struct statvfs *out_stvfs);
+
+int silofs_do_access(const struct silofs_task_ctx *task,
+                     struct silofs_inode_info *ii, int mode);
+
+int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
+                   int o_flags, bool kill_suidgid);
+
+int silofs_do_release(struct silofs_task_ctx   *task,
+                      struct silofs_inode_info *ii, bool flush);
+
+int silofs_do_mkdir(struct silofs_task_ctx      *task,
+                    struct silofs_inode_info    *dir_ii,
+                    const struct silofs_namestr *name, mode_t mode,
+                    struct silofs_inode_info **out_ii);
+
+int silofs_do_rmdir(struct silofs_task_ctx      *task,
+                    struct silofs_inode_info    *dir_ii,
+                    const struct silofs_namestr *name);
+
+int silofs_do_rename(struct silofs_task_ctx      *task,
+                     struct silofs_inode_info    *dir_ii,
+                     const struct silofs_namestr *name,
+                     struct silofs_inode_info    *newdir_ii,
+                     const struct silofs_namestr *newname, int flags);
+
+int silofs_do_symlink(struct silofs_task_ctx      *task,
+                      struct silofs_inode_info    *dir_ii,
+                      const struct silofs_namestr *name,
+                      const struct silofs_strview *symval,
+                      struct silofs_inode_info   **out_ii);
+
+int silofs_do_link(struct silofs_task_ctx      *task,
+                   struct silofs_inode_info    *dir_ii,
+                   const struct silofs_namestr *name,
+                   struct silofs_inode_info    *ii);
+
+int silofs_do_unlink(struct silofs_task_ctx      *task,
+                     struct silofs_inode_info    *dir_ii,
+                     const struct silofs_namestr *name);
+
+int silofs_do_create(struct silofs_task_ctx      *task,
+                     struct silofs_inode_info    *dir_ii,
+                     const struct silofs_namestr *name, mode_t mode,
+                     bool kill_suidgid, struct silofs_inode_info **out_ii);
+
+int silofs_do_mknod(struct silofs_task_ctx      *task,
+                    struct silofs_inode_info    *dir_ii,
+                    const struct silofs_namestr *name, mode_t mode, dev_t dev,
+                    struct silofs_inode_info **out_ii);
+
+int silofs_do_lookup(struct silofs_task_ctx      *task,
+                     struct silofs_inode_info    *dir_ii,
+                     const struct silofs_namestr *name,
+                     struct silofs_inode_info   **out_ii);
+
+int silofs_do_opendir(struct silofs_task_ctx   *task,
+                      struct silofs_inode_info *dir_ii, int o_flags);
+
+int silofs_do_readdir(struct silofs_task_ctx    *task,
+                      struct silofs_inode_info  *dir_ii,
+                      struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_do_readdirplus(struct silofs_task_ctx    *task,
+                          struct silofs_inode_info  *dir_ii,
+                          struct silofs_readdir_ctx *rd_ctx);
+
+int silofs_do_releasedir(struct silofs_task_ctx   *task,
+                         struct silofs_inode_info *dir_ii, int o_flags,
+                         bool flush);
+
+int silofs_do_fsyncdir(struct silofs_task_ctx   *task,
+                       struct silofs_inode_info *dir_ii, bool dsync);
+
+int silofs_do_fsync(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
+                    bool datasync);
+
+int silofs_do_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
+                    bool now);
+
+int silofs_do_query(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
+                    enum silofs_query_type   qtype,
+                    struct silofs_ioc_query *out_qry);
+
+int silofs_do_forkfs(struct silofs_task_ctx   *task,
+                     struct silofs_inode_info *dir_ii, int flags,
+                     struct silofs_mbrefs *out_paddrs);
+
+int silofs_do_tune(struct silofs_task_ctx   *task,
+                   struct silofs_inode_info *dir_ii, int iflags_want,
+                   int iflags_dont);
+
+int silofs_do_syncfs(struct silofs_task_ctx   *task,
+                     struct silofs_inode_info *ii, int flags);
+
+int silofs_do_maintain(struct silofs_task_ctx *task, int flags);
+
+int silofs_do_walkfs(struct silofs_task_ctx *task);
+
+int silofs_do_unrefs(struct silofs_task_ctx *task);
+
+int silofs_forget_loose_ii(struct silofs_task_ctx   *task,
+                           struct silofs_inode_info *ii);
+
+int silofs_next_inogen(const struct silofs_task_ctx *task, uint64_t *out_igen);
+
+#endif /* SILOFS_NAMEI_H_ */

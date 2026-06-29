@@ -23,81 +23,7 @@
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* dirtyq */
-
-/* dirty/destage queue element */
-struct silofs_dq_elem {
-	struct silofs_list_head drq_lh;
-	struct silofs_list_head dsq_lh;
-	struct silofs_dirtyq   *drq;
-	uint32_t                sz;
-	bool                    in_drq;
-	bool                    in_dsq;
-};
-
-/* dirty elements' queue */
-struct silofs_dirtyq {
-	struct silofs_listq drq;
-	size_t              drq_accum;
-};
-
-/* de-stage elements' queue */
-struct silofs_destageq {
-	struct silofs_listq dsq;
-};
-
-typedef int (*silofs_dqe_compare_fn)(const struct silofs_dq_elem *dqe1,
-                                     const struct silofs_dq_elem *dqe2);
-
-typedef int (*silofs_dqe_execute_fn)(struct silofs_dq_elem *dqe, void *userp);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_dqe_init(struct silofs_dq_elem *dqe, size_t sz);
-
-void silofs_dqe_fini(struct silofs_dq_elem *dqe);
-
-bool silofs_dqe_isinq(const struct silofs_dq_elem *dqe);
-
-void silofs_dqe_set_dirtyq(struct silofs_dq_elem *dqe,
-                           struct silofs_dirtyq  *drq);
-
-void silofs_dqe_setdirty(struct silofs_dq_elem *dqe);
-
-void silofs_dqe_cleardirty(struct silofs_dq_elem *dqe);
-
-bool silofs_dqe_isdirty(const struct silofs_dq_elem *dqe);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_dirtyq_init(struct silofs_dirtyq *drq);
-
-void silofs_dirtyq_fini(struct silofs_dirtyq *drq);
-
-struct silofs_dq_elem * //
-silofs_dirtyq_front(const struct silofs_dirtyq *drq);
-
-struct silofs_dq_elem * //
-silofs_dirtyq_nextof(const struct silofs_dirtyq  *drq,
-                     const struct silofs_dq_elem *dqe);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_destageq_init(struct silofs_destageq *dsq);
-
-void silofs_destageq_fini(struct silofs_destageq *dsq);
-
-void silofs_destageq_populate(struct silofs_destageq     *dsq,
-                              const struct silofs_dirtyq *drq);
-
-void silofs_destageq_depopulate(struct silofs_destageq *dsq);
-
-void silofs_destageq_sort(struct silofs_destageq *dsq,
-                          silofs_dqe_compare_fn   dqe_cmp_fn);
-
-int silofs_destageq_foreach(const struct silofs_destageq *dsq,
-                            silofs_dqe_execute_fn dqe_exec_fn, void *usep);
+#include <silofs/nodes/dirtyq.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hmapq */
@@ -524,55 +450,6 @@ struct silofs_unode_info {
 	struct silofs_uaddr      un_uaddr;
 };
 
-/* space accounting per sub-type */
-struct silofs_space_gauges {
-	ssize_t nsuper;
-	ssize_t nspnode;
-	ssize_t nspleaf;
-	ssize_t nlsmap;
-	ssize_t ninode;
-	ssize_t nxanode;
-	ssize_t ndtnode;
-	ssize_t nsymval;
-	ssize_t nftnode;
-	ssize_t ndata1k;
-	ssize_t ndata4k;
-	ssize_t ndata64k;
-};
-
-/* space accounting per sub-kind + sub-type */
-struct silofs_space_stats {
-	time_t                     btime;
-	time_t                     ctime;
-	size_t                     capacity;
-	size_t                     vspacesize;
-	uint64_t                   generation;
-	struct silofs_space_gauges lsegs;
-	struct silofs_space_gauges bks;
-	struct silofs_space_gauges objs;
-};
-
-/* super-block */
-struct silofs_sb_info {
-	struct silofs_unode_info   sb_uni;
-	struct silofs_space_stats  sb_spst_curr;
-	struct silofs_space_stats  sb_spst_prev;
-	struct silofs_super_block *sb;
-};
-
-/* space-node */
-struct silofs_spnode_info {
-	struct silofs_unode_info  sn_uni;
-	struct silofs_spmap_node *sn;
-	size_t                    sn_nactive_subs;
-};
-
-/* space-leaf */
-struct silofs_spleaf_info {
-	struct silofs_unode_info  sl_uni;
-	struct silofs_spmap_leaf *sl;
-};
-
 /* vnode */
 struct silofs_vnode_info {
 	struct silofs_lnode_info vn_lni;
@@ -763,12 +640,6 @@ silofs_vni_from_lni(const struct silofs_lnode_info *lni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_sb_info *silofs_sbi_from_uni(struct silofs_unode_info *uni);
-
-struct silofs_spnode_info *silofs_sni_from_uni(struct silofs_unode_info *uni);
-
-struct silofs_spleaf_info *silofs_sli_from_uni(struct silofs_unode_info *uni);
-
 struct silofs_sbnode_info2 * //
 silofs_sbi2_from_vni(struct silofs_vnode_info *vni);
 
@@ -793,12 +664,6 @@ struct silofs_ftnode_info *silofs_fti_from_vni(struct silofs_vnode_info *vni);
 struct silofs_fdnode_info *silofs_fdi_from_vni(struct silofs_vnode_info *vni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-struct silofs_unode_info *
-silofs_new_unode(struct silofs_alloc *alloc, const struct silofs_uaddr *uaddr);
-
-void silofs_del_unode(struct silofs_unode_info *uni,
-                      struct silofs_alloc      *alloc);
 
 struct silofs_vnode_info *
 silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);

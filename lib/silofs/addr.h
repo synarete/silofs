@@ -113,15 +113,7 @@ size_t silofs_ptype_size(enum silofs_ptype ptype);
 
 bool silofs_vtype_isnone(enum silofs_vtype vtype);
 
-bool silofs_vtype_issuper(enum silofs_vtype vtype);
-
-bool silofs_vtype_isspnode(enum silofs_vtype vtype);
-
-bool silofs_vtype_isspleaf(enum silofs_vtype vtype);
-
 bool silofs_vtype_isinode(enum silofs_vtype vtype);
-
-bool silofs_vtype_isunode(enum silofs_vtype vtype);
 
 bool silofs_vtype_isvnode(enum silofs_vtype vtype);
 
@@ -619,9 +611,6 @@ void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
 
 void silofs_vaddr_advance(const struct silofs_vaddr *vaddr, size_t nsteps,
                           struct silofs_vaddr *out_vaddr);
-
-void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
-                           enum silofs_vtype refvtype, off_t off);
 
 void silofs_vaddr_assign(struct silofs_vaddr       *vaddr,
                          const struct silofs_vaddr *other);

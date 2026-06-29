@@ -107,32 +107,6 @@ void silofs_vaddr_advance(const struct silofs_vaddr *vaddr, size_t nsteps,
 	silofs_vaddr_setup(out_vaddr, vaddr->vtype, off);
 }
 
-void silofs_vaddr_of_lsmap(struct silofs_vaddr *vaddr,
-                           enum silofs_vtype refvtype, off_t pos)
-{
-	constexpr ssize_t step = sizeof(struct silofs_lsmap);
-	ssize_t lseg_idx;
-	ssize_t refl_idx;
-	ssize_t span;
-	off_t off;
-
-	// All sorts of hidden assumptions here. FIXME: document and clean up.
-	STATICASSERT_EQ(SILOFS_VTYPE_INODE, 5);
-	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K - SILOFS_VTYPE_INODE + 1, 10);
-	STATICASSERT_EQ(SILOFS_VTYPE_DATA64K + 1, SILOFS_VTYPE_LAST);
-	STATICASSERT_EQ(sizeof(struct silofs_lsmap), SILOFS_LBK_SIZE);
-
-	silofs_assert_ge(refvtype, SILOFS_VTYPE_INODE);
-	silofs_assert_le(refvtype, SILOFS_VTYPE_DATA64K);
-
-	lseg_idx = pos / SILOFS_LSEG_SIZE_MAX;
-	refl_idx = (ssize_t)refvtype - SILOFS_VTYPE_INODE;
-	span     = SILOFS_VTYPE_DATA64K - SILOFS_VTYPE_INODE + 1;
-	off = ((lseg_idx * span) + refl_idx + 1) * step; /* zero is reserved */
-
-	silofs_vaddr_setup(vaddr, SILOFS_VTYPE_LSMAP, off);
-}
-
 void silofs_vaddr_assign(struct silofs_vaddr *vaddr,
                          const struct silofs_vaddr *other)
 {

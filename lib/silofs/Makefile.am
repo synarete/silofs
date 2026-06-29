@@ -20,12 +20,17 @@ libsilofs_la_LIBADD += $(PTHREAD_LIBS)
 libsilofs_la_SOURCES = $(NULL)
 libsilofs_la_SOURCES += ondisk.c
 libsilofs_la_SOURCES += version.c
+
 libsilofs_la_SOURCES += sys/syscall.c
 libsilofs_la_SOURCES += sys/syscallx.c
+
+libsilofs_la_SOURCES += base/atomic.h
 libsilofs_la_SOURCES += base/avl.c
+libsilofs_la_SOURCES += base/avl.h
 libsilofs_la_SOURCES += base/base64.c
 libsilofs_la_SOURCES += base/bytebuf.c
 libsilofs_la_SOURCES += base/iovec.c
+libsilofs_la_SOURCES += base/iovec.h
 libsilofs_la_SOURCES += base/hamming.c
 libsilofs_la_SOURCES += base/hashfn.c
 libsilofs_la_SOURCES += base/list.c
@@ -34,6 +39,7 @@ libsilofs_la_SOURCES += base/memalloc.c
 libsilofs_la_SOURCES += base/panic.c
 libsilofs_la_SOURCES += base/pipe.c
 libsilofs_la_SOURCES += base/qalloc.c
+libsilofs_la_SOURCES += base/qalloc.h
 libsilofs_la_SOURCES += base/snprintf.c
 libsilofs_la_SOURCES += base/socket.c
 libsilofs_la_SOURCES += base/thread.c
@@ -79,6 +85,7 @@ libsilofs_la_SOURCES += addr/vaddr.c
 libsilofs_la_SOURCES += addr.h
 
 libsilofs_la_SOURCES += nodes/dirtyq.c
+libsilofs_la_SOURCES += nodes/dirtyq.h
 libsilofs_la_SOURCES += nodes/freesq.c
 libsilofs_la_SOURCES += nodes/hmapq.c
 libsilofs_la_SOURCES += nodes/nodeview.c
@@ -149,18 +156,17 @@ libsilofs_la_SOURCES += run.h
 
 
 noinst_HEADERS = $(NULL)
-noinst_HEADERS += base/atomic.h
-noinst_HEADERS += base/atomic.h
-noinst_HEADERS += base/avl.h
+
+
 noinst_HEADERS += base/base64.h
 noinst_HEADERS += base/bytebuf.h
-noinst_HEADERS += base/iovec.h
+
 noinst_HEADERS += base/hamming.h
 noinst_HEADERS += base/hashfn.h
 noinst_HEADERS += base/list.h
 noinst_HEADERS += base/pipe.h
 noinst_HEADERS += base/private.h
-noinst_HEADERS += base/qalloc.h
+
 noinst_HEADERS += base/socket.h
 noinst_HEADERS += base/thread.h
 noinst_HEADERS += base/times.h

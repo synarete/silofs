@@ -49,16 +49,12 @@ static int verify_lview_of(const struct silofs_lview *lview,
 	case SILOFS_VTYPE_FTNODE:
 		ret = silofs_verify_ftree_node(&lview->u.ftn);
 		break;
-	case SILOFS_VTYPE_LSMAP:
 	case SILOFS_VTYPE_DATA1K:
 	case SILOFS_VTYPE_DATA4K:
 	case SILOFS_VTYPE_DATA64K:
 		ret = 0;
 		break;
 	case SILOFS_VTYPE_NONE:
-	case SILOFS_VTYPE_SUPER:
-	case SILOFS_VTYPE_SPNODE:
-	case SILOFS_VTYPE_SPLEAF:
 	case SILOFS_VTYPE_LAST:
 	default:
 		silofs_panic("non vnode: vtype=%d off=%zd", //

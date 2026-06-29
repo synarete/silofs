@@ -733,8 +733,7 @@ int silofs_do_syncfs(struct silofs_task_ctx   *task,
 
 int silofs_do_maintain(struct silofs_task_ctx *task, int flags);
 
-int silofs_do_walkfs(struct silofs_task_ctx            *task,
-                     const struct silofs_laddr_visitor *lvis);
+int silofs_do_walkfs(struct silofs_task_ctx *task);
 
 int silofs_do_unrefs(struct silofs_task_ctx *task);
 

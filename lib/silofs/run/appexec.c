@@ -168,29 +168,23 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	int err;
 
 	err = silofs_exec_reload_repo(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_exec_reload(task, mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_exec_reload_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_exec_unrefs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = remove_mbr(task, mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = shutdown_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -506,13 +500,11 @@ static int do_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 	int err;
 
 	err = check_format_fs(env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = exec_format_fs(env, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	encode_fsref(&mbref, out_fsref);
 	return 0;
 }
@@ -534,14 +526,13 @@ exec_sense_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_exec_reload_repo(&task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = appexec_sense_fs(&task, mbref);
+	goto_out_if_err(err);
 out:
 	return term_task(&task, err);
 }
@@ -553,13 +544,11 @@ do_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	int err;
 
 	err = decode_fsref(fsref, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = exec_sense_fs(env, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -580,13 +569,11 @@ do_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	int err;
 
 	err = decode_fsref(fsref, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = exec_reload_fs(env, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -665,21 +652,16 @@ exec_reload_remove_fs(struct silofs_env *env, const struct silofs_mbref *mbref)
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_exec_reload_repo(&task);
-	if (err) {
-		return err;
-	}
+	goto_out_if_err(err);
+
 	err = appexec_reload_fs(&task, mbref);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = appexec_remove_fs(&task, mbref);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
 out:
 	return term_task(&task, err);
 }
@@ -691,13 +673,11 @@ do_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	int err;
 
 	err = decode_fsref(fsref, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = exec_reload_remove_fs(env, &mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -711,46 +691,31 @@ int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 	return err;
 }
 
-static int exec_inspect_fs(struct silofs_env *env,
-                           const struct silofs_laddr_visitor *lvis)
+static int exec_inspect_fs(struct silofs_env *env)
 {
 	struct silofs_task_ctx task;
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_exec_reload_repo(&task);
-	if (err) {
-		goto out;
-	}
-	err = silofs_exec_walkfs(&task, lvis);
+	goto_out_if_err(err);
+
+	err = silofs_exec_walkfs(&task);
+	goto_out_if_err(err);
 out:
 	return term_task(&task, err);
 }
 
-static int
-inspect_view(void *ctx, const struct silofs_laddr *laddr, size_t len)
-{
-	/* FIXME */
-	silofs_unused(laddr);
-	silofs_unused(len);
-	silofs_unused(ctx);
-	return 0;
-}
-
 int silofs_inspect_fs(struct silofs_env *env, bool view)
 {
-	const struct silofs_laddr_visitor lvis = {
-		.hook  = view ? inspect_view : nullptr,
-		.userp = nullptr,
-	};
 	int err;
 
 	silofs_env_lock(env);
-	err = exec_inspect_fs(env, &lvis);
+	err = exec_inspect_fs(env);
 	silofs_env_unlock(env);
+	(void)view;
 	return err;
 }
 
@@ -788,25 +753,20 @@ static int check_endianess(void)
 	int err;
 
 	err = check_endianess64(SILOFS_REPO_META_MAGIC, "#SILOFS#");
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_endianess64(SILOFS_MBR_MAGIC, "@SILOFS@");
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_endianess64(SILOFS_SUPER_MAGIC, "@silofs@");
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_endianess32(SILOFS_FSID_MAGIC, "SILO");
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_endianess32(SILOFS_META_MAGIC, "silo");
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -936,13 +896,11 @@ static int do_init_lib(const struct silofs_init_args *init_args)
 	int err;
 
 	err = silofs_init_times();
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = init_gcrypt(init_args);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	init_panic(init_args);
 	return 0;
 }

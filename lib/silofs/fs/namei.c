@@ -2602,16 +2602,14 @@ int silofs_do_tune(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_do_walkfs(struct silofs_task_ctx *task,
-                     const struct silofs_laddr_visitor *lvis)
+int silofs_do_walkfs(struct silofs_task_ctx *task)
 {
 	int err;
 
 	err = silofs_flush_dirty_now(task);
 	return_if_err(err);
 
-	err = silofs_walkfs_at(task, silofs_get_sbi(task), lvis);
-	return_if_err(err);
+	/* TODO: FIXME */
 
 	return 0;
 }
@@ -2623,8 +2621,7 @@ int silofs_do_unrefs(struct silofs_task_ctx *task)
 	err = silofs_flush_dirty_now(task);
 	return_if_err(err);
 
-	err = silofs_unrefs_at(task, silofs_get_sbi(task));
-	return_if_err(err);
+	/* TODO: FIXME */
 
 	return 0;
 }

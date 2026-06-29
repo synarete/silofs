@@ -1628,8 +1628,7 @@ out:
 	return op_finish(task, err);
 }
 
-int silofs_exec_walkfs(struct silofs_task_ctx *task,
-                       const struct silofs_laddr_visitor *lvis)
+int silofs_exec_walkfs(struct silofs_task_ctx *task)
 {
 	int err;
 
@@ -1642,7 +1641,7 @@ int silofs_exec_walkfs(struct silofs_task_ctx *task,
 	err = op_map_creds(task);
 	ok_or_goto_out(err);
 
-	err = silofs_do_walkfs(task, lvis);
+	err = silofs_do_walkfs(task);
 	ok_or_goto_out(err);
 out:
 	return op_finish(task, err);

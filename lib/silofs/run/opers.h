@@ -173,8 +173,7 @@ int silofs_exec_rdwr_post(const struct silofs_task_ctx *task, int wr_mode,
 
 int silofs_exec_idle(struct silofs_task_ctx *task, int flags);
 
-int silofs_exec_walkfs(struct silofs_task_ctx            *task,
-                       const struct silofs_laddr_visitor *lvis);
+int silofs_exec_walkfs(struct silofs_task_ctx *task);
 
 int silofs_exec_unrefs(struct silofs_task_ctx *task);
 

@@ -108,7 +108,7 @@ void silofs_task_enq_loose(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
-	silofs_assert_eq(ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_PINNED, 0);
+	silofs_assert_eq(ii->i_vni.vn_flags & SILOFS_VNF_PINNED, 0);
 
 	if (!ii->i_in_looseq) {
 		ii->i_looseq_next = task->looseq;
@@ -144,8 +144,7 @@ static void task_forget_looseq(struct silofs_task_ctx *task)
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
 			             "ino=%ld flags=%x err=%d",
-			             ii->i_ino, ii->i_vni.vn_lni.ln_flags,
-			             err);
+			             ii->i_ino, ii->i_vni.vn_flags, err);
 		}
 		ii = task_deq_loose(task);
 	}

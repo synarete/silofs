@@ -209,7 +209,7 @@ static bool vni_has_lviewx(const struct silofs_vnode_info *vni)
 
 static size_t vni_lview_size(const struct silofs_vnode_info *vni)
 {
-	return silofs_ni_view_size(&vni->vn_lni.ln_base);
+	return silofs_ni_view_size(&vni->vn_ni);
 }
 
 static const struct silofs_paddr *
@@ -227,13 +227,13 @@ static void vni_update_curr_paddr(struct silofs_vnode_info *vni,
 static int
 vni_attach_viewx(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
 {
-	return silofs_ni_attach_viewx(&vni->vn_lni.ln_base, alloc);
+	return silofs_ni_attach_viewx(&vni->vn_ni, alloc);
 }
 
 static void
 vni_detach_viewx(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
 {
-	silofs_ni_detach_viewx(&vni->vn_lni.ln_base, alloc);
+	silofs_ni_detach_viewx(&vni->vn_ni, alloc);
 }
 
 static bool vni_has_asyncwr(const struct silofs_vnode_info *vni)
@@ -385,7 +385,7 @@ static int stc_decrypt_verify_pnode(struct silofs_stage_ctx *st_ctx,
 	if (err) {
 		return err;
 	}
-	err = silofs_verify_pnode(pni);
+	err = silofs_verify_pview_of(pni);
 	if (err) {
 		return err;
 	}
@@ -901,7 +901,7 @@ static int stc_decrypt_verify_vnode(struct silofs_stage_ctx *st_ctx,
 		silofs_assert_ok(err);
 		return err;
 	}
-	err = silofs_verify_lnode(&vni->vn_lni);
+	err = silofs_verify_lview_of(vni);
 	if (err) {
 		silofs_assert_ok(err);
 		return err;
@@ -1174,7 +1174,7 @@ static int dsc_seal_encrypt_pnode(const struct silofs_destage_ctx *ds_ctx,
                                   const struct silofs_pnode_info *pni,
                                   struct silofs_ctag *out_ctag)
 {
-	silofs_seal_pnode(pni);
+	silofs_seal_pview_of(pni);
 	return dsc_encrypt_pnode(ds_ctx, pni, out_ctag);
 }
 

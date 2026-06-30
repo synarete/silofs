@@ -78,13 +78,13 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
-                          const struct silofs_paddr *paddr);
+			  const struct silofs_paddr *paddr);
 
 void silofs_hkey_by_vaddr(struct silofs_hkey        *hkey,
-                          const struct silofs_vaddr *vaddr);
+			  const struct silofs_vaddr *vaddr);
 
 long silofs_hkey_compare(const struct silofs_hkey *hkey1,
-                         const struct silofs_hkey *hkey2);
+			 const struct silofs_hkey *hkey2);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -103,30 +103,30 @@ void silofs_hmqe_decref(struct silofs_hmapq_elem *hmqe);
 size_t silofs_hmapq_nslots_by(const struct silofs_alloc *alloc, uint8_t fac);
 
 int silofs_hmapq_init(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc,
-                      size_t nslots);
+		      size_t nslots);
 
 void silofs_hmapq_fini(struct silofs_hmapq *hmapq, struct silofs_alloc *alloc);
 
 struct silofs_hmapq_elem *silofs_hmapq_lookup(const struct silofs_hmapq *hmapq,
-                                              const struct silofs_hkey  *hkey);
+					      const struct silofs_hkey  *hkey);
 
 void silofs_hmapq_store(struct silofs_hmapq      *hmapq,
-                        struct silofs_hmapq_elem *hmqe);
+			struct silofs_hmapq_elem *hmqe);
 
 void silofs_hmapq_promote(struct silofs_hmapq      *hmapq,
-                          struct silofs_hmapq_elem *hmqe, bool now);
+			  struct silofs_hmapq_elem *hmqe, bool now);
 
 void silofs_hmapq_unmap(struct silofs_hmapq      *hmapq,
-                        struct silofs_hmapq_elem *hmqe);
+			struct silofs_hmapq_elem *hmqe);
 
 void silofs_hmapq_remove(struct silofs_hmapq      *hmapq,
-                         struct silofs_hmapq_elem *hmqe);
+			 struct silofs_hmapq_elem *hmqe);
 
 struct silofs_hmapq_elem *
 silofs_hmapq_get_lru(const struct silofs_hmapq *hmapq);
 
 void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
-                           silofs_hmapq_elem_fn cb, void *arg);
+			   silofs_hmapq_elem_fn cb, void *arg);
 
 size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq);
 
@@ -138,16 +138,16 @@ struct silofs_list_head *
 silofs_new_lh_array(struct silofs_alloc *alloc, size_t nelems);
 
 void silofs_del_lh_array(struct silofs_list_head *lista, size_t nelems,
-                         struct silofs_alloc *alloc);
+			 struct silofs_alloc *alloc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* nodeview */
 
 void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags);
+		      enum silofs_hdrf flags);
 
 int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags);
+		      enum silofs_hdrf flags);
 
 void silofs_hdr_seal(struct silofs_header *hdr);
 
@@ -156,40 +156,40 @@ void silofs_hdr_seal(struct silofs_header *hdr);
 void silofs_lview_setup(struct silofs_lview *lview, enum silofs_vtype vtype);
 
 struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
-                                      enum silofs_vtype vtype, int flags);
+				      enum silofs_vtype vtype, int flags);
 
 void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
-                      enum silofs_vtype vtype, int flags);
+		      enum silofs_vtype vtype, int flags);
 
 void silofs_lview_seal(struct silofs_lview *lview);
 
 int silofs_lview_verify(const struct silofs_lview *lview,
-                        enum silofs_vtype          vtype);
+			enum silofs_vtype          vtype);
 
 int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_civkey    *civkey,
-                         const struct silofs_lview     *lview,
-                         enum silofs_vtype vtype, void *ptr);
+			 const struct silofs_civkey    *civkey,
+			 const struct silofs_lview     *lview,
+			 enum silofs_vtype vtype, void *ptr);
 
 int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_civkey    *civkey,
-                         const struct silofs_lview     *lview,
-                         enum silofs_vtype vtype, void *ptr);
+			 const struct silofs_civkey    *civkey,
+			 const struct silofs_lview     *lview,
+			 enum silofs_vtype vtype, void *ptr);
 
 int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
-                          const struct silofs_civkey    *civkey,
-                          const struct silofs_lview     *lview,
-                          struct silofs_lview *lview_enc, size_t len);
+			  const struct silofs_civkey    *civkey,
+			  const struct silofs_lview     *lview,
+			  struct silofs_lview *lview_enc, size_t len);
 
 int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
-                          const struct silofs_civkey    *civkey,
-                          const struct silofs_lview     *lview_enc,
-                          struct silofs_lview *lview, size_t len);
+			  const struct silofs_civkey    *civkey,
+			  const struct silofs_lview     *lview_enc,
+			  struct silofs_lview *lview, size_t len);
 
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
-                                const struct silofs_civkey    *civkey,
-                                struct silofs_lview           *lview,
-                                enum silofs_vtype              vtype);
+				const struct silofs_civkey    *civkey,
+				struct silofs_lview           *lview,
+				enum silofs_vtype              vtype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -198,21 +198,21 @@ void silofs_pview_setup(struct silofs_pview *pview, enum silofs_ptype ptype);
 void silofs_pview_seal(struct silofs_pview *pview);
 
 int silofs_pview_verify(const struct silofs_pview *pview,
-                        enum silofs_ptype          ptype);
+			enum silofs_ptype          ptype);
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_civkey    *civkey,
-                         const struct silofs_caad      *caad,
-                         const struct silofs_pview     *pview_in,
-                         struct silofs_pview           *pview_out,
-                         struct silofs_ctag *ctag_out, size_t pview_len);
+			 const struct silofs_civkey    *civkey,
+			 const struct silofs_caad      *caad,
+			 const struct silofs_pview     *pview_in,
+			 struct silofs_pview           *pview_out,
+			 struct silofs_ctag *ctag_out, size_t pview_len);
 
 int silofs_decrypt_pview(const struct silofs_cipher_hd *ci_hd,
-                         const struct silofs_civkey    *civkey,
-                         const struct silofs_caad      *caad,
-                         const struct silofs_ctag      *ctag_in,
-                         const struct silofs_pview     *pview_in,
-                         struct silofs_pview *pview_out, size_t pview_len);
+			 const struct silofs_civkey    *civkey,
+			 const struct silofs_caad      *caad,
+			 const struct silofs_ctag      *ctag_in,
+			 const struct silofs_pview     *pview_in,
+			 struct silofs_pview *pview_out, size_t pview_len);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -251,16 +251,16 @@ bool silofs_ni_ispinned(const struct silofs_node_info *ni);
 size_t silofs_ni_view_size(const struct silofs_node_info *ni);
 
 int silofs_ni_attach_view(struct silofs_node_info *ni,  //
-                          struct silofs_alloc *alloc, bool bzero);
+			  struct silofs_alloc *alloc, bool bzero);
 
 void silofs_ni_detach_view(struct silofs_node_info *ni, //
-                           struct silofs_alloc *alloc, bool bzero);
+			   struct silofs_alloc *alloc, bool bzero);
 
 int silofs_ni_attach_viewx(struct silofs_node_info *ni,
-                           struct silofs_alloc     *alloc);
+			   struct silofs_alloc     *alloc);
 
 void silofs_ni_detach_viewx(struct silofs_node_info *ni,
-                            struct silofs_alloc     *alloc);
+			    struct silofs_alloc     *alloc);
 
 const struct silofs_node_info * //
 silofs_ni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
@@ -324,7 +324,7 @@ void silofs_pni_incref(struct silofs_pnode_info *pni);
 void silofs_pni_decref(struct silofs_pnode_info *pni);
 
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
-                       struct silofs_dirtyq     *dq);
+		       struct silofs_dirtyq     *dq);
 
 struct silofs_pview * //
 silofs_pni_pview(const struct silofs_pnode_info *pni);
@@ -360,7 +360,7 @@ const struct silofs_pnode_info * //
 silofs_pni_from_ni(const struct silofs_node_info *ni);
 
 void silofs_pni_update_ctag(struct silofs_pnode_info *pni,
-                            const struct silofs_ctag *ctag);
+			    const struct silofs_ctag *ctag);
 
 void silofs_pni_apply_ctag(struct silofs_pnode_info *pni);
 
@@ -378,14 +378,14 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_pnode_info *silofs_new_pnode(const struct silofs_pnptr *pnptr, //
-                                           struct silofs_alloc       *alloc);
+					   struct silofs_alloc       *alloc);
 
 void silofs_del_pnode(struct silofs_pnode_info *pni,
-                      struct silofs_alloc      *alloc);
+		      struct silofs_alloc      *alloc);
 
-int silofs_verify_pnode(const struct silofs_pnode_info *pni);
+int silofs_verify_pview_of(const struct silofs_pnode_info *pni);
 
-void silofs_seal_pnode(const struct silofs_pnode_info *pni);
+void silofs_seal_pview_of(const struct silofs_pnode_info *pni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* pcache */
@@ -397,7 +397,7 @@ struct silofs_pcache {
 };
 
 int silofs_pcache_init(struct silofs_pcache *pcache,
-                       struct silofs_alloc  *alloc);
+		       struct silofs_alloc  *alloc);
 
 void silofs_pcache_fini(struct silofs_pcache *pcache);
 
@@ -412,221 +412,19 @@ silofs_pcache_dq_front(const struct silofs_pcache *pcache);
 
 struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_pnptr *pnptr);
+			   const struct silofs_pnptr *pnptr);
 
 struct silofs_pnode_info *
 silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_paddr *paddr);
+			   const struct silofs_paddr *paddr);
 
 void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
-                                struct silofs_pnode_info *pni);
+				struct silofs_pnode_info *pni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vnodes */
 
-enum silofs_lnflags {
-	SILOFS_LNF_RECHECK = SILOFS_BIT(0),
-	SILOFS_LNF_PINNED  = SILOFS_BIT(1),
-	SILOFS_LNF_ACTIVE  = SILOFS_BIT(2),
-	SILOFS_LNF_LOOSE   = SILOFS_BIT(3),
-};
-
-/* lnode: base object of all logical-nodes */
-struct silofs_lnode_info {
-	struct silofs_node_info   ln_base;
-	struct silofs_avl_node    ln_ds_avl_node;
-	struct silofs_lnode_info *ln_ds_next;
-	enum silofs_lnflags       ln_flags;
-	enum silofs_vtype         ln_vtype;
-};
-
-/* vnode */
-struct silofs_vnode_info {
-	struct silofs_lnode_info vn_lni;
-	struct silofs_vaddr      vn_vaddr;
-	struct silofs_paddr      vn_curr_paddr;
-	uint64_t                 vn_magic;
-	int                      vn_asyncwr;
-	bool                     vn_use_pn_vnis_dq;
-
-	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
-};
-
-/* super node */
-struct silofs_sbnode_info2 {
-	struct silofs_vnode_info   sbn_vni;
-	struct silofs_superb_node *sbn;
-};
-
-/* space allocation node */
-struct silofs_spnode_info2 {
-	struct silofs_vnode_info  spn_vni;
-	struct silofs_space_node *spn;
-	/* in-memory only */
-	unsigned spn_nused_ref;
-};
-
-/* logical-space map */
-struct silofs_lsmap_info {
-	struct silofs_vnode_info ls_vni;
-	struct silofs_lsmap     *lsm;
-	size_t                   ls_nused_bytes;
-	off_t                    ls_off_hint;
-};
-
-/* inode */
-struct silofs_inode_info {
-	struct silofs_vnode_info  i_vni;
-	struct silofs_dirtyq      i_dq_vnis;
-	struct silofs_inode      *inode;
-	struct silofs_inode_info *i_looseq_next;
-	struct timespec           i_atime_lazy;
-	ino_t                     i_ino;
-	long                      i_nopen;
-	long                      i_nlookup;
-	bool                      i_in_looseq;
-};
-
-/* xattr node */
-struct silofs_xanode_info {
-	struct silofs_vnode_info  xan_vni;
-	struct silofs_xattr_node *xan;
-};
-
-/* symbolic-link value node */
-struct silofs_symval_info {
-	struct silofs_vnode_info   svn_vni;
-	struct silofs_symval_node *svn;
-};
-
-/* dir tree node */
-struct silofs_dtnode_info {
-	struct silofs_vnode_info  dtn_vni;
-	struct silofs_dtree_node *dtn;
-};
-
-/* file tree node */
-struct silofs_ftnode_info {
-	struct silofs_vnode_info  ftn_vni;
-	struct silofs_ftree_node *ftn;
-};
-
-/* file data node */
-union silofs_fdnode_u {
-	struct silofs_data_node1  *dn1;
-	struct silofs_data_node4  *dn4;
-	struct silofs_data_node64 *dn64;
-};
-
-struct silofs_fdnode_info {
-	struct silofs_vnode_info fdn_vni;
-	union silofs_fdnode_u    fdn;
-};
-
-struct silofs_lview *silofs_lni_lview(const struct silofs_lnode_info *lni);
-
-size_t silofs_lni_refcnt(const struct silofs_lnode_info *lni);
-
-void silofs_lni_incref(struct silofs_lnode_info *lni);
-
-void silofs_lni_decref(struct silofs_lnode_info *lni);
-
-void silofs_lni_setdirty(struct silofs_lnode_info *lni);
-
-void silofs_lni_cleardirty(struct silofs_lnode_info *lni);
-
-void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-                            struct silofs_hmapq      *hmapq);
-
-bool silofs_lni_isevictable(const struct silofs_lnode_info *lni);
-
-bool silofs_lni_isdirty(const struct silofs_lnode_info *lni);
-
-int silofs_verify_lnode(const struct silofs_lnode_info *lni);
-
-struct silofs_lnode_info *
-silofs_lni_from_dqe(const struct silofs_dq_elem *dqe);
-
-struct silofs_lnode_info *
-silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe);
-
-struct silofs_hmapq_elem *silofs_lni_to_hmqe(struct silofs_lnode_info *lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_lview * //
-silofs_vni_lview(const struct silofs_vnode_info *vni);
-
-struct silofs_lview * //
-silofs_vni_lviewx(const struct silofs_vnode_info *vni);
-
-size_t silofs_vni_refcnt(const struct silofs_vnode_info *vni);
-
-void silofs_vni_incref(struct silofs_vnode_info *vni);
-
-void silofs_vni_decref(struct silofs_vnode_info *vni);
-
-bool silofs_vni_isdirty(const struct silofs_vnode_info *vni);
-
-void silofs_vni_setdirty(struct silofs_vnode_info *vni,
-                         struct silofs_inode_info *ii);
-
-void silofs_vni_cleardirty(struct silofs_vnode_info *vni);
-
-bool silofs_vni_isevictable(const struct silofs_vnode_info *vni);
-
-void silofs_vni_set_dq(struct silofs_vnode_info *vni,
-                       struct silofs_dirtyq     *dq);
-
-bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni);
-
-void silofs_vni_set_rechecked(struct silofs_vnode_info *vni);
-
-enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni);
-
-const struct silofs_vaddr *
-silofs_vni_vaddr(const struct silofs_vnode_info *vni);
-
-struct silofs_vnode_info * //
-silofs_vni_from_dqe(const struct silofs_dq_elem *dqe);
-
-struct silofs_vnode_info *
-silofs_vni_from_lni(const struct silofs_lnode_info *lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_sbnode_info2 * //
-silofs_sbi2_from_vni(struct silofs_vnode_info *vni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_inode_info *
-silofs_ii_from_lni(const struct silofs_lnode_info *lni);
-
-struct silofs_inode_info *
-silofs_ii_from_vni(const struct silofs_vnode_info *vni);
-
-struct silofs_inode_info *silofs_ii_from_dqe(struct silofs_dq_elem *dqe);
-
-struct silofs_xanode_info *silofs_xai_from_vni(struct silofs_vnode_info *vni);
-
-struct silofs_symval_info *silofs_svi_from_vni(struct silofs_vnode_info *vni);
-
-struct silofs_dtnode_info *silofs_dti_from_vni(struct silofs_vnode_info *vni);
-
-struct silofs_ftnode_info *silofs_fti_from_vni(struct silofs_vnode_info *vni);
-
-struct silofs_fdnode_info *silofs_fdi_from_vni(struct silofs_vnode_info *vni);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-struct silofs_vnode_info *
-silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
-
-void silofs_del_vnode(struct silofs_vnode_info *vni,
-                      struct silofs_alloc      *alloc);
-
-void silofs_seal_vnode(const struct silofs_vnode_info *vni);
+#include <silofs/nodes/vnodes.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vcache */
@@ -641,7 +439,7 @@ struct silofs_vcache {
 };
 
 int silofs_vcache_init(struct silofs_vcache *vcache,
-                       struct silofs_alloc  *alloc);
+		       struct silofs_alloc  *alloc);
 
 void silofs_vcache_fini(struct silofs_vcache *vcache);
 
@@ -654,20 +452,20 @@ silofs_vcache_dq_front(const struct silofs_vcache *vcache);
 
 struct silofs_vnode_info *
 silofs_vcache_lookup_vnode(struct silofs_vcache      *vcache,
-                           const struct silofs_vaddr *vaddr);
+			   const struct silofs_vaddr *vaddr);
 
 struct silofs_vnode_info *
 silofs_vcache_create_vnode(struct silofs_vcache      *vcache,
-                           const struct silofs_vaddr *vaddr, bool pn);
+			   const struct silofs_vaddr *vaddr, bool pn);
 
 void silofs_vcache_forget_vnode(struct silofs_vcache     *vcache,
-                                struct silofs_vnode_info *vni);
+				struct silofs_vnode_info *vni);
 
 void silofs_vcache_rebind_vnode(struct silofs_vcache     *vcache,
-                                struct silofs_vnode_info *vni);
+				struct silofs_vnode_info *vni);
 
 void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
-                                 struct silofs_cache_stats  *out_cstats);
+				 struct silofs_cache_stats  *out_cstats);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* freesq */
@@ -704,18 +502,18 @@ struct silofs_freevsqs {
 };
 
 int silofs_freevsqs_init(struct silofs_freevsqs *fvsqs,
-                         struct silofs_alloc    *alloc);
+			 struct silofs_alloc    *alloc);
 
 void silofs_freevsqs_fini(struct silofs_freevsqs *fvsqs);
 
 void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs);
 
 int silofs_freevsqs_push(struct silofs_freevsqs    *fvsqs,
-                         const struct silofs_vaddr *vaddr);
+			 const struct silofs_vaddr *vaddr);
 
 int silofs_freevsqs_pull(struct silofs_freevsqs *fvsqs,
-                         enum silofs_vtype       vtype,
-                         struct silofs_vaddr    *out_vaddr);
+			 enum silofs_vtype       vtype,
+			 struct silofs_vaddr    *out_vaddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -737,17 +535,17 @@ struct silofs_freepaqs {
 };
 
 void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,
-                          struct silofs_alloc    *alloc);
+			  struct silofs_alloc    *alloc);
 
 void silofs_freepaqs_fini(struct silofs_freepaqs *fpaqs);
 
 void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs);
 
 int silofs_freepaqs_push(struct silofs_freepaqs    *fpaqs,
-                         const struct silofs_paddr *paddr);
+			 const struct silofs_paddr *paddr);
 
 int silofs_freepaqs_pull(struct silofs_freepaqs    *fpaqs,
-                         const struct silofs_stype *stype,
-                         struct silofs_paddr       *out_paddr);
+			 const struct silofs_stype *stype,
+			 struct silofs_paddr       *out_paddr);
 
 #endif /* SILOFS_NODES_H_ */

@@ -36,189 +36,12 @@ static void mfree_node_info(struct silofs_alloc *alloc, void *p, size_t n)
 	silofs_memfree(alloc, p, n, 0);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static struct silofs_lnode_info *
-lni_unconst(const struct silofs_lnode_info *lni)
-{
-	return silofs_unconst(lni);
-}
-
-static void lni_init(struct silofs_lnode_info *lni, enum silofs_vtype vtype)
-{
-	const size_t vsize = silofs_vtype_size(vtype);
-
-	silofs_ni_init(&lni->ln_base, vsize);
-	silofs_avl_node_init(&lni->ln_ds_avl_node);
-	lni->ln_vtype   = vtype;
-	lni->ln_ds_next = nullptr;
-	lni->ln_flags   = 0;
-}
-
-static void lni_fini(struct silofs_lnode_info *lni)
-{
-	silofs_ni_fini(&lni->ln_base);
-	silofs_avl_node_fini(&lni->ln_ds_avl_node);
-	lni->ln_ds_next = nullptr;
-}
-
-struct silofs_lview *silofs_lni_lview(const struct silofs_lnode_info *lni)
-{
-	return lni->ln_base.view.lview;
-}
-
-static struct silofs_lnode_info *lni_from_ni(const struct silofs_node_info *ni)
-{
-	const struct silofs_lnode_info *lni = nullptr;
-
-	if (likely(ni != nullptr)) {
-		lni = container_of(ni, struct silofs_lnode_info, ln_base);
-	}
-	return lni_unconst(lni);
-}
-
-struct silofs_lnode_info *
-silofs_lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
-{
-	return lni_from_ni(silofs_ni_from_hmqe(hmqe));
-}
-
-struct silofs_lnode_info *silofs_lni_from_dqe(const struct silofs_dq_elem *dqe)
-{
-	const struct silofs_node_info *ni;
-
-	ni = silofs_ni_from_dqe(dqe);
-	return lni_from_ni(ni);
-}
-
-struct silofs_hmapq_elem *silofs_lni_to_hmqe(struct silofs_lnode_info *lni)
-{
-	return &lni->ln_base.hmqe;
-}
-
-static bool lni_hasflags(const struct silofs_lnode_info *lni,
-                         const enum silofs_lnflags mask)
-{
-	return ((lni->ln_flags & mask) == mask);
-}
-
-static bool lni_ispinned(const struct silofs_lnode_info *lni)
-{
-	return lni_hasflags(lni, SILOFS_LNF_PINNED) ||
-	       silofs_ni_ispinned(&lni->ln_base);
-}
-
-bool silofs_lni_isevictable(const struct silofs_lnode_info *lni)
-{
-	return !lni_ispinned(lni);
-}
-
-size_t silofs_lni_refcnt(const struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni);
-
-	return silofs_ni_refcnt(&lni->ln_base);
-}
-
-void silofs_lni_incref(struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni);
-
-	silofs_ni_incref(&lni->ln_base);
-}
-
-void silofs_lni_decref(struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni);
-
-	silofs_ni_decref(&lni->ln_base);
-}
-
-static enum silofs_vtype lni_vtype(const struct silofs_lnode_info *lni)
-{
-	return lni->ln_vtype;
-}
-
-static bool lni_isdata(const struct silofs_lnode_info *lni)
-{
-	return silofs_vtype_isdata(lni_vtype(lni));
-}
-
-static int
-lni_attach_lview(struct silofs_lnode_info *lni, struct silofs_alloc *alloc)
-{
-	int err;
-
-	err = silofs_ni_attach_view(&lni->ln_base, alloc, !lni_isdata(lni));
-	if (!err) {
-		silofs_lview_setup(lni->ln_base.view.lview, lni_vtype(lni));
-	}
-	return err;
-}
-
-static void
-lni_detach_lview(struct silofs_lnode_info *lni, struct silofs_alloc *alloc)
-{
-	silofs_ni_detach_view(&lni->ln_base, alloc, false);
-}
-
-void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-                            struct silofs_hmapq *hmapq)
-{
-	silofs_hmapq_remove(hmapq, silofs_lni_to_hmqe(lni));
-}
-
-static struct silofs_dq_elem *lni_mut_dqe(struct silofs_lnode_info *lni)
-{
-	return &lni->ln_base.dqe;
-}
-
-static const struct silofs_dq_elem *
-lni_dqe(const struct silofs_lnode_info *lni)
-{
-	return &lni->ln_base.dqe;
-}
-
-static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
-{
-	struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
-
-	silofs_dqe_set_dirtyq(dqe, dq);
-}
-
-bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
-{
-	const struct silofs_dq_elem *dqe = lni_dqe(lni);
-
-	return silofs_dqe_isdirty(dqe);
-}
-
-void silofs_lni_setdirty(struct silofs_lnode_info *lni)
-{
-	if (!silofs_lni_isdirty(lni)) {
-		struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
-
-		silofs_dqe_setdirty(dqe);
-	}
-}
-
-void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
-{
-	if (silofs_lni_isdirty(lni)) {
-		struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
-
-		silofs_dqe_cleardirty(dqe);
-	}
-}
-
-int silofs_verify_lnode(const struct silofs_lnode_info *lni)
-{
-	const struct silofs_lview *lview = silofs_lni_lview(lni);
-
-	return silofs_lview_verify(lview, lni->ln_vtype);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static size_t vsize_of(const struct silofs_vaddr *vaddr)
+{
+	return silofs_vtype_size(vaddr->vtype);
+}
 
 static struct silofs_vnode_info *
 vni_unconst(const struct silofs_vnode_info *vni)
@@ -226,7 +49,7 @@ vni_unconst(const struct silofs_vnode_info *vni)
 	return silofs_unconst(vni);
 }
 
-static void vni_verify(const struct silofs_vnode_info *vni)
+static void vni_debug_check(const struct silofs_vnode_info *vni)
 {
 	silofs_assert_not_null(vni);
 	silofs_assert_eq(vni->vn_magic, SILOFS_VI_MAGIC);
@@ -235,7 +58,9 @@ static void vni_verify(const struct silofs_vnode_info *vni)
 static void
 vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 {
-	lni_init(&vni->vn_lni, vaddr->vtype);
+	silofs_ni_init(&vni->vn_ni, vsize_of(vaddr));
+	vni->vn_flags = 0;
+
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_paddr_reset(&vni->vn_curr_paddr);
 	vni->vn_asyncwr        = 0;
@@ -247,129 +72,45 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 
 static void vni_fini(struct silofs_vnode_info *vni)
 {
-	vni_verify(vni);
+	vni_debug_check(vni);
 	silofs_assert_eq(vni->vn_asyncwr, 0);
 
-	lni_fini(&vni->vn_lni);
+	silofs_ni_fini(&vni->vn_ni);
 	silofs_vaddr_reset(&vni->vn_vaddr);
 	silofs_paddr_reset(&vni->vn_curr_paddr);
 	vni->vn_magic = UINT64_MAX;
 }
 
-struct silofs_lview *silofs_vni_lview(const struct silofs_vnode_info *vni)
-{
-	return silofs_lni_lview(&vni->vn_lni);
-}
-
-struct silofs_lview *silofs_vni_lviewx(const struct silofs_vnode_info *vni)
-{
-	silofs_assume_not_null(vni);
-	return vni->vn_lni.ln_base.viewx.lview;
-}
-
-static int
-vni_attach_lview(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
-{
-	return lni_attach_lview(&vni->vn_lni, alloc);
-}
-
-static void
-vni_detach_lview(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
-{
-	lni_detach_lview(&vni->vn_lni, alloc);
-}
-
-size_t silofs_vni_refcnt(const struct silofs_vnode_info *vni)
-{
-	silofs_assert_not_null(vni);
-
-	return silofs_lni_refcnt(&vni->vn_lni);
-}
-
-void silofs_vni_incref(struct silofs_vnode_info *vni)
-{
-	if (likely(vni != nullptr)) {
-		silofs_lni_incref(&vni->vn_lni);
-	}
-}
-
-void silofs_vni_decref(struct silofs_vnode_info *vni)
-{
-	if (likely(vni != nullptr)) {
-		silofs_lni_decref(&vni->vn_lni);
-	}
-}
-
-void silofs_vni_set_dq(struct silofs_vnode_info *vni, struct silofs_dirtyq *dq)
-{
-	lni_set_dq(&vni->vn_lni, dq);
-}
-
-bool silofs_vni_isdirty(const struct silofs_vnode_info *vni)
-{
-	return silofs_lni_isdirty(&vni->vn_lni);
-}
-
-void silofs_vni_setdirty(struct silofs_vnode_info *vni,
-                         struct silofs_inode_info *ii)
-{
-	silofs_assert_not_null(vni);
-	silofs_unused(ii);
-
-	if (!silofs_vni_isdirty(vni)) {
-		silofs_lni_setdirty(&vni->vn_lni);
-	}
-}
-
-void silofs_vni_cleardirty(struct silofs_vnode_info *vni)
-{
-	silofs_assert_not_null(vni);
-
-	if (silofs_vni_isdirty(vni)) {
-
-		silofs_lni_cleardirty(&vni->vn_lni);
-	}
-}
-
-struct silofs_vnode_info *
-silofs_vni_from_lni(const struct silofs_lnode_info *lni)
+static struct silofs_vnode_info *vni_from_ni(const struct silofs_node_info *ni)
 {
 	const struct silofs_vnode_info *vni = nullptr;
 
-	if (lni != nullptr) {
-		vni = container_of(lni, struct silofs_vnode_info, vn_lni);
-		vni_verify(vni);
+	if (likely(ni != nullptr)) {
+		vni = container_of(ni, struct silofs_vnode_info, vn_ni);
 	}
 	return vni_unconst(vni);
 }
 
+static struct silofs_vnode_info *
+vni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
+{
+	return vni_from_ni(silofs_ni_from_hmqe(hmqe));
+}
+
+static struct silofs_vnode_info *vni_from_dqe(const struct silofs_dq_elem *dqe)
+{
+	return vni_from_ni(silofs_ni_from_dqe(dqe));
+}
+
 struct silofs_vnode_info *silofs_vni_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	return silofs_vni_from_lni(silofs_lni_from_dqe(dqe));
+	return vni_from_dqe(dqe);
 }
 
-static bool
-vni_has_vtype(const struct silofs_vnode_info *vni, enum silofs_vtype vtype)
+struct silofs_vnode_info * //
+silofs_vni_from_hmqe(struct silofs_hmapq_elem *hmqe)
 {
-	return silofs_vni_vtype(vni) == vtype;
-}
-
-bool silofs_vni_isevictable(const struct silofs_vnode_info *vni)
-{
-	return silofs_lni_isevictable(&vni->vn_lni);
-}
-
-bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni)
-{
-	const enum silofs_lnflags flags = vni->vn_lni.ln_flags;
-	const enum silofs_lnflags mask  = SILOFS_LNF_RECHECK;
-
-	return (flags & mask) != mask;
-}
-
-void silofs_vni_set_rechecked(struct silofs_vnode_info *vni)
-{
-	vni->vn_lni.ln_flags |= SILOFS_LNF_RECHECK;
+	return vni_from_hmqe(hmqe);
 }
 
 const struct silofs_vaddr *
@@ -393,9 +134,171 @@ enum silofs_vtype silofs_vni_vtype(const struct silofs_vnode_info *vni)
 
 static bool vni_isdata(const struct silofs_vnode_info *vni)
 {
-	enum silofs_vtype vtype = silofs_vni_vtype(vni);
+	return silofs_vtype_isdata(vni_vtype(vni));
+}
 
-	return silofs_vtype_isdata(vtype);
+struct silofs_lview *silofs_vni_lview(const struct silofs_vnode_info *vni)
+{
+	return vni->vn_ni.view.lview;
+}
+
+struct silofs_lview *silofs_vni_lviewx(const struct silofs_vnode_info *vni)
+{
+	silofs_assume_not_null(vni);
+	return vni->vn_ni.viewx.lview;
+}
+
+static int
+vni_attach_lview(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
+{
+	int err;
+
+	err = silofs_ni_attach_view(&vni->vn_ni, alloc, !vni_isdata(vni));
+	return_if_err(err);
+
+	silofs_lview_setup(vni->vn_ni.view.lview, vni_vtype(vni));
+	return 0;
+}
+
+static void
+vni_detach_lview(struct silofs_vnode_info *vni, struct silofs_alloc *alloc)
+{
+	silofs_ni_detach_view(&vni->vn_ni, alloc, false);
+}
+
+size_t silofs_vni_refcnt(const struct silofs_vnode_info *vni)
+{
+	silofs_assert_not_null(vni);
+
+	return silofs_ni_refcnt(&vni->vn_ni);
+}
+
+void silofs_vni_incref(struct silofs_vnode_info *vni)
+{
+	if (likely(vni != nullptr)) {
+		silofs_ni_incref(&vni->vn_ni);
+	}
+}
+
+void silofs_vni_decref(struct silofs_vnode_info *vni)
+{
+	if (likely(vni != nullptr)) {
+		silofs_ni_decref(&vni->vn_ni);
+	}
+}
+
+static const struct silofs_dq_elem *
+vni_dqe(const struct silofs_vnode_info *vni)
+{
+	return &vni->vn_ni.dqe;
+}
+
+static struct silofs_dq_elem *vni_mut_dqe(struct silofs_vnode_info *vni)
+{
+	return &vni->vn_ni.dqe;
+}
+
+static bool vni_isdirty(const struct silofs_vnode_info *vni)
+{
+	return silofs_dqe_isdirty(vni_dqe(vni));
+}
+
+static void vni_setdirty(struct silofs_vnode_info *vni)
+{
+	if (!vni_isdirty(vni)) {
+		silofs_dqe_setdirty(vni_mut_dqe(vni));
+	}
+}
+
+static void vni_cleardirty(struct silofs_vnode_info *vni)
+{
+	if (vni_isdirty(vni)) {
+		silofs_dqe_cleardirty(vni_mut_dqe(vni));
+	}
+}
+
+static void vni_set_dq(struct silofs_vnode_info *vni, struct silofs_dirtyq *dq)
+{
+	struct silofs_dq_elem *dqe = vni_mut_dqe(vni);
+
+	silofs_dqe_set_dirtyq(dqe, dq);
+}
+
+void silofs_vni_set_dq(struct silofs_vnode_info *vni, struct silofs_dirtyq *dq)
+{
+	vni_set_dq(vni, dq);
+}
+
+bool silofs_vni_isdirty(const struct silofs_vnode_info *vni)
+{
+	silofs_assert_not_null(vni);
+
+	return vni_isdirty(vni);
+}
+
+void silofs_vni_setdirty(struct silofs_vnode_info *vni,
+                         struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(vni);
+	silofs_unused(ii);
+
+	vni_setdirty(vni);
+}
+
+void silofs_vni_cleardirty(struct silofs_vnode_info *vni)
+{
+	silofs_assert_not_null(vni);
+
+	vni_cleardirty(vni);
+}
+
+static bool
+vni_has_vtype(const struct silofs_vnode_info *vni, enum silofs_vtype vtype)
+{
+	return silofs_vni_vtype(vni) == vtype;
+}
+
+static bool vni_hasflags(const struct silofs_vnode_info *vni,
+                         const enum silofs_vni_flags mask)
+{
+	return ((vni->vn_flags & mask) == mask);
+}
+
+static bool vni_ispinned(const struct silofs_vnode_info *vni)
+{
+	return vni_hasflags(vni, SILOFS_VNF_PINNED) ||
+	       silofs_ni_ispinned(&vni->vn_ni);
+}
+
+bool silofs_vni_isevictable(const struct silofs_vnode_info *vni)
+{
+	return !vni_ispinned(vni);
+}
+
+bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni)
+{
+	const enum silofs_vni_flags flags = vni->vn_flags;
+	const enum silofs_vni_flags mask  = SILOFS_VNF_RECHECK;
+
+	return (flags & mask) != mask;
+}
+
+void silofs_vni_set_rechecked(struct silofs_vnode_info *vni)
+{
+	vni->vn_flags |= SILOFS_VNF_RECHECK;
+}
+
+void silofs_vni_remove_from(struct silofs_vnode_info *vni,
+                            struct silofs_hmapq *hmapq)
+{
+	silofs_hmapq_remove(hmapq, &vni->vn_ni.hmqe);
+}
+
+int silofs_verify_lview_of(const struct silofs_vnode_info *vni)
+{
+	const struct silofs_lview *lview = silofs_vni_lview(vni);
+
+	return silofs_lview_verify(lview, vni_vtype(vni));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -727,12 +630,6 @@ static void ii_del(struct silofs_inode_info *ii, struct silofs_alloc *alloc)
 	vni_detach_lview(&ii->i_vni, alloc);
 	ii_detach_lview(ii, alloc);
 	ii_fini_free(ii, alloc);
-}
-
-struct silofs_inode_info *
-silofs_ii_from_lni(const struct silofs_lnode_info *lni)
-{
-	return silofs_ii_from_vni(silofs_vni_from_lni(lni));
 }
 
 struct silofs_inode_info *

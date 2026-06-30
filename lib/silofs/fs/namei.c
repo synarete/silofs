@@ -32,22 +32,22 @@
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vni.vn_lni.ln_flags);
+	const int flags = (int)(ii->i_vni.vn_flags);
 
-	return (flags & SILOFS_LNF_PINNED) > 0;
+	return (flags & SILOFS_VNF_PINNED) > 0;
 }
 
 static void ii_unpin(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_vni.vn_lni.ln_flags);
+	const int flags = (int)(ii->i_vni.vn_flags);
 
-	ii->i_vni.vn_lni.ln_flags =
-		(enum silofs_lnflags)(flags & ~SILOFS_LNF_PINNED);
+	ii->i_vni.vn_flags =
+		(enum silofs_vni_flags)(flags & ~SILOFS_VNF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_PINNED;
+	ii->i_vni.vn_flags |= SILOFS_VNF_PINNED;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

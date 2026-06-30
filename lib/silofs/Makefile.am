@@ -93,6 +93,7 @@ libsilofs_la_SOURCES += nodes/pcache.c
 libsilofs_la_SOURCES += nodes/pnodes.c
 libsilofs_la_SOURCES += nodes/vcache.c
 libsilofs_la_SOURCES += nodes/vnodes.c
+libsilofs_la_SOURCES += nodes/vnodes.h
 
 libsilofs_la_SOURCES += pv/bldesc.c
 libsilofs_la_SOURCES += pv/btnode.c

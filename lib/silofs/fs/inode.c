@@ -510,12 +510,12 @@ bool silofs_is_rootdir(const struct silofs_inode_info *ii)
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
 {
-	ii->i_vni.vn_lni.ln_flags |= SILOFS_LNF_LOOSE;
+	ii->i_vni.vn_flags |= SILOFS_VNF_LOOSE;
 }
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii)
 {
-	return (ii->i_vni.vn_lni.ln_flags & SILOFS_LNF_LOOSE) > 0;
+	return (ii->i_vni.vn_flags & SILOFS_VNF_LOOSE) > 0;
 }
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii)

@@ -639,14 +639,14 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	}
 }
 
-void silofs_seal_pnode(const struct silofs_pnode_info *pni)
+void silofs_seal_pview_of(const struct silofs_pnode_info *pni)
 {
 	struct silofs_pview *pview = silofs_pni_pview(pni);
 
 	silofs_pview_seal(pview);
 }
 
-int silofs_verify_pnode(const struct silofs_pnode_info *pni)
+int silofs_verify_pview_of(const struct silofs_pnode_info *pni)
 {
 	struct silofs_pview *pview = silofs_pni_pview(pni);
 

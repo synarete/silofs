@@ -134,7 +134,7 @@ int silofs_decrypt_pnode(const struct silofs_pexec_ctx *pexec,
 
 static size_t vni_lview_len(const struct silofs_vnode_info *vni)
 {
-	return silofs_ni_view_size(&vni->vn_lni.ln_base);
+	return silofs_ni_view_size(&vni->vn_ni);
 }
 
 static const struct silofs_lview * //

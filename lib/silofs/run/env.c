@@ -89,7 +89,7 @@ env_use_password(struct silofs_env *env, const struct silofs_password *pw,
 
 static int env_update_fscap(struct silofs_env *env, size_t cap_want)
 {
-	const size_t align_size = SILOFS_LSEG_SIZE_MAX;
+	const size_t align_size = SILOFS_MEGA;
 	const size_t fscap      = (cap_want / align_size) * align_size;
 
 	if (cap_want == 0) {

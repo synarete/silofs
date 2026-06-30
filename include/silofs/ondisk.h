@@ -124,9 +124,6 @@
 /* maximal file-system capacity, in bytes (64T) */
 #define SILOFS_CAPACITY_SIZE_MAX (64L * SILOFS_TERA)
 
-/* maximal size of virtual address space (256P) */
-#define SILOFS_VSPACE_SIZE_MAX (1L << 58)
-
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE (1024)
 
@@ -138,9 +135,6 @@
 
 /* number of 1K blocks in logical block */
 #define SILOFS_NKB_IN_LBK (SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
-
-/* maximal size in bytes of single logical segment (4M) */
-#define SILOFS_LSEG_SIZE_MAX (SILOFS_SPMAP_NCHILDS * SILOFS_LBK_SIZE)
 
 /* non-valid ("NIL") logical byte address */
 #define SILOFS_OFF_NULL (-1)

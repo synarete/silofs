@@ -27,13 +27,13 @@ static size_t flush_threshold_of(int flags)
 	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_IDLE | SILOFS_CTLF_FSYNC)) {
 		threshold = 0;
 	} else if (flags & SILOFS_CTLF_RELEASE) {
-		threshold = SILOFS_LSEG_SIZE_MAX / 2;
+		threshold = SILOFS_MEGA / 2;
 	} else if (flags & SILOFS_CTLF_INTERN) {
-		threshold = SILOFS_LSEG_SIZE_MAX;
+		threshold = SILOFS_MEGA;
 	} else if (flags & SILOFS_CTLF_OPSTART) {
-		threshold = 2 * SILOFS_LSEG_SIZE_MAX;
+		threshold = 2 * SILOFS_MEGA;
 	} else {
-		threshold = 4 * SILOFS_LSEG_SIZE_MAX;
+		threshold = 4 * SILOFS_MEGA;
 	}
 	return threshold;
 }

@@ -71,8 +71,8 @@ bool silofs_vtype_isvnode(enum silofs_vtype vtype)
 	bool ret;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_SUPER2:
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_INODE:
 	case SILOFS_VTYPE_XANODE:
 	case SILOFS_VTYPE_SYMVAL:
@@ -102,8 +102,8 @@ bool silofs_vtype_isdata(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_VTYPE_SUPER2:
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_INODE:
 	case SILOFS_VTYPE_XANODE:
 	case SILOFS_VTYPE_DTNODE:
@@ -133,8 +133,8 @@ bool silofs_vtype_usespmap(enum silofs_vtype vtype)
 	case SILOFS_VTYPE_DATA64K:
 		ret = true;
 		break;
-	case SILOFS_VTYPE_SUPER2:
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SUPER:
+	case SILOFS_VTYPE_SPNODE:
 	case SILOFS_VTYPE_NONE:
 	case SILOFS_VTYPE_LAST:
 	default:
@@ -149,10 +149,10 @@ size_t silofs_vtype_size(enum silofs_vtype vtype)
 	size_t size;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_SUPER2:
+	case SILOFS_VTYPE_SUPER:
 		size = sizeof(struct silofs_superb_node);
 		break;
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SPNODE:
 		size = sizeof(struct silofs_space_node);
 		break;
 	case SILOFS_VTYPE_INODE:

@@ -63,9 +63,8 @@ vni_init(struct silofs_vnode_info *vni, const struct silofs_vaddr *vaddr)
 
 	silofs_vaddr_assign(&vni->vn_vaddr, vaddr);
 	silofs_paddr_reset(&vni->vn_curr_paddr);
-	vni->vn_asyncwr        = 0;
-	vni->vn_use_pn_vnis_dq = false;
-	vni->vn_magic          = SILOFS_VI_MAGIC;
+	vni->vn_asyncwr = 0;
+	vni->vn_magic   = SILOFS_VI_MAGIC;
 
 	vni->isevictable_fn = silofs_vni_isevictable;
 }
@@ -410,47 +409,47 @@ silofs_sbi_from_vni(struct silofs_vnode_info *vni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_vnode_info *spi_to_vni(struct silofs_spnode_info2 *spi)
+static struct silofs_vnode_info *spi_to_vni(struct silofs_spnode_info *spi)
 {
 	return likely(spi != nullptr) ? &spi->spn_vni : nullptr;
 }
 
-static struct silofs_spnode_info2 *spi_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_spnode_info *spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_spnode_info2, spn_vni);
+	return mut_container_of(vni, struct silofs_spnode_info, spn_vni);
 }
 
 static void
-spi_init(struct silofs_spnode_info2 *spi, const struct silofs_vaddr *vaddr)
+spi_init(struct silofs_spnode_info *spi, const struct silofs_vaddr *vaddr)
 {
 	vni_init(&spi->spn_vni, vaddr);
 	spi->spn_nused_ref = 0;
 }
 
-static void spi_fini(struct silofs_spnode_info2 *spi)
+static void spi_fini(struct silofs_spnode_info *spi)
 {
 	vni_fini(&spi->spn_vni);
 	spi->spn_nused_ref = UINT_MAX;
 }
 
-static struct silofs_spnode_info2 *spi_malloc(struct silofs_alloc *alloc)
+static struct silofs_spnode_info *spi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_spnode_info2 *spi;
+	struct silofs_spnode_info *spi;
 
 	spi = malloc_node_info(alloc, sizeof(*spi));
 	return spi;
 }
 
 static void
-spi_free(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
+spi_free(struct silofs_spnode_info *spi, struct silofs_alloc *alloc)
 {
 	mfree_node_info(alloc, spi, sizeof(*spi));
 }
 
-static struct silofs_spnode_info2 *
+static struct silofs_spnode_info *
 spi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spnode_info2 *spi;
+	struct silofs_spnode_info *spi;
 
 	spi = spi_malloc(alloc);
 	if (spi != nullptr) {
@@ -460,14 +459,14 @@ spi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 }
 
 static void
-spi_fini_free(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
+spi_fini_free(struct silofs_spnode_info *spi, struct silofs_alloc *alloc)
 {
 	spi_fini(spi);
 	spi_free(spi, alloc);
 }
 
 static int
-spi_attach_lview(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
+spi_attach_lview(struct silofs_spnode_info *spi, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview;
 	int err;
@@ -481,16 +480,16 @@ spi_attach_lview(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
 }
 
 static void
-spi_detach_lview(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
+spi_detach_lview(struct silofs_spnode_info *spi, struct silofs_alloc *alloc)
 {
 	vni_detach_lview(&spi->spn_vni, alloc);
 	spi->spn = nullptr;
 }
 
-static struct silofs_spnode_info2 *
+static struct silofs_spnode_info *
 spi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spnode_info2 *spi;
+	struct silofs_spnode_info *spi;
 	int err;
 
 	spi = spi_malloc_init(alloc, vaddr);
@@ -505,8 +504,7 @@ spi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	return spi;
 }
 
-static void
-spi_del(struct silofs_spnode_info2 *spi, struct silofs_alloc *alloc)
+static void spi_del(struct silofs_spnode_info *spi, struct silofs_alloc *alloc)
 {
 	spi_detach_lview(spi, alloc);
 	spi_fini_free(spi, alloc);
@@ -1203,10 +1201,10 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 	const enum silofs_vtype vtype = vaddr->vtype;
 
 	switch (vtype) {
-	case SILOFS_VTYPE_SUPER2:
+	case SILOFS_VTYPE_SUPER:
 		vni = sbi_to_vni(sbi_new(alloc, vaddr));
 		break;
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SPNODE:
 		vni = spi_to_vni(spi_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_INODE:
@@ -1244,10 +1242,10 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 	const enum silofs_vtype vtype = silofs_vni_vtype(vni);
 
 	switch (vtype) {
-	case SILOFS_VTYPE_SUPER2:
+	case SILOFS_VTYPE_SUPER:
 		sbi_del(sbi_from_vni(vni), alloc);
 		break;
-	case SILOFS_VTYPE_SPNODE2:
+	case SILOFS_VTYPE_SPNODE:
 		spi_del(spi_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_INODE:

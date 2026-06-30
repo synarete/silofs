@@ -320,17 +320,17 @@ int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_stage_spnode2_by(struct silofs_pexec_ctx     *pexec,
-                            const struct silofs_vaddr   *ref_vaddr,
-                            struct silofs_spnode_info2 **out_spi);
+int silofs_stage_spnode2_by(struct silofs_pexec_ctx    *pexec,
+                            const struct silofs_vaddr  *ref_vaddr,
+                            struct silofs_spnode_info **out_spi);
 
-int silofs_spawn_spnode2_by(struct silofs_pexec_ctx     *pexec,
-                            const struct silofs_vaddr   *ref_vaddr,
-                            struct silofs_spnode_info2 **out_spi);
+int silofs_spawn_spnode2_by(struct silofs_pexec_ctx    *pexec,
+                            const struct silofs_vaddr  *ref_vaddr,
+                            struct silofs_spnode_info **out_spi);
 
-int silofs_require_spnode2_by(struct silofs_pexec_ctx     *pexec,
-                              const struct silofs_vaddr   *ref_vaddr,
-                              struct silofs_spnode_info2 **out_spi);
+int silofs_require_spnode2_by(struct silofs_pexec_ctx    *pexec,
+                              const struct silofs_vaddr  *ref_vaddr,
+                              struct silofs_spnode_info **out_spi);
 
 int silofs_mark_unwritten_at2(struct silofs_pexec_ctx   *pexec,
                               const struct silofs_vaddr *ref_vaddr);

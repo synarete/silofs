@@ -167,7 +167,7 @@ static int
 format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr ref_vaddr;
-	struct silofs_spnode_info2 *spi = nullptr;
+	struct silofs_spnode_info *spi = nullptr;
 
 	silofs_vaddr_setup(&ref_vaddr, vtype, 0);
 	return silofs_spawn_spnode2_by(pexec, &ref_vaddr, &spi);
@@ -576,8 +576,8 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
 {
 	struct silofs_vaddr vaddr;
 	struct silofs_vspace_ref vspref;
-	struct silofs_spnode_info2 *spi = nullptr;
-	struct silofs_vnode_info *vni   = nullptr;
+	struct silofs_spnode_info *spi = nullptr;
+	struct silofs_vnode_info *vni  = nullptr;
 	int err;
 
 	silofs_vaddr_setup(&vaddr, vtype, 0);
@@ -658,7 +658,7 @@ static int reload_super(struct silofs_task_ctx *task)
 static int reload_apex_spnode_at(struct silofs_task_ctx *task,
                                  const struct silofs_vaddr *vaddr)
 {
-	struct silofs_spnode_info2 *spi = nullptr;
+	struct silofs_spnode_info *spi = nullptr;
 
 	return silofs_stage_spnode2_of(task, vaddr, SILOFS_STG_CUR, &spi);
 }

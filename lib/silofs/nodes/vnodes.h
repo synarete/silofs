@@ -37,7 +37,6 @@ struct silofs_vnode_info {
 	uint64_t                vn_magic;
 	uint32_t                vn_flags;
 	int                     vn_asyncwr;
-	bool                    vn_use_pn_vnis_dq;
 
 	bool (*isevictable_fn)(const struct silofs_vnode_info *vni);
 };
@@ -49,19 +48,11 @@ struct silofs_sbnode_info {
 };
 
 /* space allocation node */
-struct silofs_spnode_info2 {
+struct silofs_spnode_info {
 	struct silofs_vnode_info  spn_vni;
 	struct silofs_space_node *spn;
 	/* in-memory only */
 	unsigned spn_nused_ref;
-};
-
-/* logical-space map */
-struct silofs_lsmap_info {
-	struct silofs_vnode_info ls_vni;
-	struct silofs_lsmap     *lsm;
-	size_t                   ls_nused_bytes;
-	off_t                    ls_off_hint;
 };
 
 /* inode */

@@ -323,8 +323,8 @@ enum silofs_ptype {
 /* v-elements sub-types */
 enum silofs_vtype {
 	SILOFS_VTYPE_NONE    = 0,
-	SILOFS_VTYPE_SUPER2  = 1,
-	SILOFS_VTYPE_SPNODE2 = 2,
+	SILOFS_VTYPE_SUPER   = 1,
+	SILOFS_VTYPE_SPNODE  = 2,
 	SILOFS_VTYPE_INODE   = 3,
 	SILOFS_VTYPE_XANODE  = 4,
 	SILOFS_VTYPE_SYMVAL  = 5,

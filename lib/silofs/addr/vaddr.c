@@ -238,11 +238,11 @@ void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
 	ref_index = ref_voff / ref_vsize;
 
 	spnode_index = ref_index / SILOFS_SPNODE_NREFS;
-	spnode_vsize = silofs_vtype_size(SILOFS_VTYPE_SPNODE2);
+	spnode_vsize = silofs_vtype_size(SILOFS_VTYPE_SPNODE);
 	spnode_off   = spnode_index * spnode_vsize;
 
 	off = (off_t)((ref_vtype << 56) | spnode_off);
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SPNODE2, off);
+	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SPNODE, off);
 
 	/* TODO: Remove debug assertions after stabilization. */
 	silofs_assert_ge(ref_vsize, 1024);

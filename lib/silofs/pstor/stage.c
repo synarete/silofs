@@ -1499,13 +1499,11 @@ static int dsc_update_vnode_parent(const struct silofs_destage_ctx *ds_ctx,
 	int err;
 
 	err = dsc_resolve_vnode_parent(ds_ctx, vni, &parent);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dsc_update_parent_btnode_at(ds_ctx, &parent, cur, alt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1520,21 +1518,17 @@ static int dsc_prepare_vnode(const struct silofs_destage_ctx *ds_ctx,
 	silofs_assert(!asyncwr);
 
 	err = dsc_resolve_vnode(ds_ctx, vni, &pnptr_cur);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dsc_attach_lviewx(ds_ctx, vni);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dsc_seal_encrypt_vnode(ds_ctx, vni, &pnptr_cur, &pnptr_alt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dsc_update_vnode_parent(ds_ctx, vni, &pnptr_cur, &pnptr_alt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	vni_update_curr_paddr(vni, &pnptr_alt.paddr);
 	return 0;
 }
@@ -1570,10 +1564,8 @@ static int dsc_stain_vnode_parents(const struct silofs_destage_ctx *ds_ctx,
 	int err;
 
 	err = silofs_resolve_vtop_bpath(ds_ctx->pexec, vni_vaddr(vni), &bpath);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
+	return_if_err(err);
+
 	for (size_t i = 0; i < bpath.cnt; ++i) {
 		struct silofs_btnode_info *bti = bpath.bti[i];
 

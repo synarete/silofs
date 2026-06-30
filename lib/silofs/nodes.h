@@ -40,7 +40,6 @@ enum silofs_hkey_type {
 /* addresses as mapping-key */
 union silofs_hkey_u {
 	const struct silofs_paddr *paddr;
-	const struct silofs_uaddr *uaddr;
 	const struct silofs_vaddr *vaddr;
 	const void                *key;
 };

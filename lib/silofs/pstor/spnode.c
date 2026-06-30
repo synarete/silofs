@@ -258,31 +258,31 @@ int silofs_verify_space_node(const struct silofs_space_node *spn)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_spnode_info2 *silofs_spi_from_vni(struct silofs_vnode_info *vni)
+struct silofs_spnode_info *silofs_spi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_spnode_info2, spn_vni);
+	return mut_container_of(vni, struct silofs_spnode_info, spn_vni);
 }
 
-void silofs_spi_incref(struct silofs_spnode_info2 *spi)
+void silofs_spi_incref(struct silofs_spnode_info *spi)
 {
 	if (likely(spi != nullptr)) {
 		silofs_vni_incref(&spi->spn_vni);
 	}
 }
 
-void silofs_spi_decref(struct silofs_spnode_info2 *spi)
+void silofs_spi_decref(struct silofs_spnode_info *spi)
 {
 	if (likely(spi != nullptr)) {
 		silofs_vni_decref(&spi->spn_vni);
 	}
 }
 
-static void spi_setdirty(struct silofs_spnode_info2 *spi)
+static void spi_setdirty(struct silofs_spnode_info *spi)
 {
 	silofs_vni_setdirty(&spi->spn_vni, nullptr);
 }
 
-void silofs_spi_setup_spawned(struct silofs_spnode_info2 *spi,
+void silofs_spi_setup_spawned(struct silofs_spnode_info *spi,
                               const struct silofs_vaddr *ref_vaddr)
 {
 	const off_t base_off =
@@ -293,17 +293,17 @@ void silofs_spi_setup_spawned(struct silofs_spnode_info2 *spi,
 	spi_setdirty(spi);
 }
 
-void silofs_spi_setup_staged(struct silofs_spnode_info2 *spi)
+void silofs_spi_setup_staged(struct silofs_spnode_info *spi)
 {
 	spi->spn_nused_ref = (unsigned)spn_nused_refs(spi->spn);
 }
 
-static bool spi_cap_allocate(const struct silofs_spnode_info2 *spi)
+static bool spi_cap_allocate(const struct silofs_spnode_info *spi)
 {
 	return spi->spn_nused_ref < ARRAY_SIZE(spi->spn->sp_refcnt);
 }
 
-static void spi_vaddr_at(const struct silofs_spnode_info2 *spi, size_t slot,
+static void spi_vaddr_at(const struct silofs_spnode_info *spi, size_t slot,
                          struct silofs_vaddr *out_vaddr)
 {
 	const off_t off = spn_slot_to_off(spi->spn, slot);
@@ -311,7 +311,7 @@ static void spi_vaddr_at(const struct silofs_spnode_info2 *spi, size_t slot,
 	silofs_vaddr_setup(out_vaddr, spn_ref_vtype(spi->spn), off);
 }
 
-int silofs_spi_find_free(const struct silofs_spnode_info2 *spi,
+int silofs_spi_find_free(const struct silofs_spnode_info *spi,
                          struct silofs_vaddr *out_vaddr)
 {
 	const struct silofs_space_node *spn = spi->spn;
@@ -330,7 +330,7 @@ int silofs_spi_find_free(const struct silofs_spnode_info2 *spi,
 	return 0;
 }
 
-static size_t spi_slot_of(const struct silofs_spnode_info2 *spi,
+static size_t spi_slot_of(const struct silofs_spnode_info *spi,
                           const struct silofs_vaddr *vaddr)
 {
 	const enum silofs_vtype ref_vtype = spn_ref_vtype(spi->spn);
@@ -340,12 +340,12 @@ static size_t spi_slot_of(const struct silofs_spnode_info2 *spi,
 	return spn_off_to_slot(spi->spn, vaddr->off);
 }
 
-static size_t spi_refcnt_at(const struct silofs_spnode_info2 *spi, size_t slot)
+static size_t spi_refcnt_at(const struct silofs_spnode_info *spi, size_t slot)
 {
 	return spn_refcnt_at(spi->spn, slot);
 }
 
-static void spi_update_nused_ref(struct silofs_spnode_info2 *spi, int c)
+static void spi_update_nused_ref(struct silofs_spnode_info *spi, int c)
 {
 	if (c > 0) {
 		silofs_assert_le(spi->spn_nused_ref + (unsigned)c,
@@ -358,23 +358,22 @@ static void spi_update_nused_ref(struct silofs_spnode_info2 *spi, int c)
 }
 
 static bool
-spi_test_unwritten_at(const struct silofs_spnode_info2 *spi, size_t slot)
+spi_test_unwritten_at(const struct silofs_spnode_info *spi, size_t slot)
 {
 	return spn_test_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
 }
 
-static void spi_mark_unwritten_at(struct silofs_spnode_info2 *spi, size_t slot)
+static void spi_mark_unwritten_at(struct silofs_spnode_info *spi, size_t slot)
 {
 	spn_set_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
 }
 
-static void
-spi_clear_unwritten_at(struct silofs_spnode_info2 *spi, size_t slot)
+static void spi_clear_unwritten_at(struct silofs_spnode_info *spi, size_t slot)
 {
 	spn_clear_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
 }
 
-void silofs_spi_inc_allocated(struct silofs_spnode_info2 *spi,
+void silofs_spi_inc_allocated(struct silofs_spnode_info *spi,
                               const struct silofs_vaddr *vaddr)
 {
 	const size_t slot = spi_slot_of(spi, vaddr);
@@ -393,7 +392,7 @@ out:
 	spi_setdirty(spi);
 }
 
-void silofs_spi_dec_allocated(struct silofs_spnode_info2 *spi,
+void silofs_spi_dec_allocated(struct silofs_spnode_info *spi,
                               const struct silofs_vaddr *vaddr)
 {
 	const size_t slot = spi_slot_of(spi, vaddr);
@@ -407,7 +406,7 @@ void silofs_spi_dec_allocated(struct silofs_spnode_info2 *spi,
 	spi_setdirty(spi);
 }
 
-void silofs_spi_mark_unwritten(struct silofs_spnode_info2 *spi,
+void silofs_spi_mark_unwritten(struct silofs_spnode_info *spi,
                                const struct silofs_vaddr *vaddr)
 {
 	const size_t slot = spi_slot_of(spi, vaddr);
@@ -418,7 +417,7 @@ void silofs_spi_mark_unwritten(struct silofs_spnode_info2 *spi,
 	}
 }
 
-void silofs_spi_clear_unwritten(struct silofs_spnode_info2 *spi,
+void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
                                 const struct silofs_vaddr *vaddr)
 {
 	const size_t slot = spi_slot_of(spi, vaddr);
@@ -429,7 +428,7 @@ void silofs_spi_clear_unwritten(struct silofs_spnode_info2 *spi,
 	}
 }
 
-void silofs_spi_vspace_ref(const struct silofs_spnode_info2 *spi,
+void silofs_spi_vspace_ref(const struct silofs_spnode_info *spi,
                            const struct silofs_vaddr *vaddr,
                            struct silofs_vspace_ref *out_vspref)
 {
@@ -439,8 +438,8 @@ void silofs_spi_vspace_ref(const struct silofs_spnode_info2 *spi,
 	out_vspref->flags  = spn_flags_at(spi->spn, slot);
 }
 
-void silofs_spi_clone_from(struct silofs_spnode_info2 *spi,
-                           const struct silofs_spnode_info2 *spi_other)
+void silofs_spi_clone_from(struct silofs_spnode_info *spi,
+                           const struct silofs_spnode_info *spi_other)
 {
 	spn_clone(spi->spn, spi_other->spn);
 	spi->spn_nused_ref = spi_other->spn_nused_ref;

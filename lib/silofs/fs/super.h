@@ -19,35 +19,35 @@
 
 int silofs_verify_superb_node(const struct silofs_superb_node *sbn);
 
-void silofs_sbi2_incref(struct silofs_sbnode_info2 *sbi);
+void silofs_sbi_incref(struct silofs_sbnode_info *sbi);
 
-void silofs_sbi2_decref(struct silofs_sbnode_info2 *sbi);
+void silofs_sbi_decref(struct silofs_sbnode_info *sbi);
 
-void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi);
+void silofs_sbi_setdirty(struct silofs_sbnode_info *sbi);
 
-void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi, size_t fscap);
+void silofs_sbi_setup_spawned(struct silofs_sbnode_info *sbi, size_t fscap);
 
-int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi);
+int silofs_sbi_check_iavail(const struct silofs_sbnode_info *sbi);
 
-int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype                 vtype);
+int silofs_sbi_check_avail(const struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype                vtype);
 
-void silofs_sbi2_take_vnode(struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype           vtype);
+void silofs_sbi_take_vnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype          vtype);
 
-void silofs_sbi2_give_vnode(struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype           vtype);
+void silofs_sbi_give_vnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype          vtype);
 
-void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
-                         enum silofs_vtype                 vtype,
-                         struct silofs_vaddr              *out_vaddr);
+void silofs_sbi_apex_of(const struct silofs_sbnode_info *sbi,
+                        enum silofs_vtype                vtype,
+                        struct silofs_vaddr             *out_vaddr);
 
-void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
-                             const struct silofs_vaddr  *vaddr);
+void silofs_sbi_update_apex(struct silofs_sbnode_info *sbi,
+                            const struct silofs_vaddr *vaddr);
 
-uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi);
+uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi);
 
-void silofs_sbi2_calc_statvfs(const struct silofs_sbnode_info2 *sbi,
-                              struct statvfs                   *out_stv);
+void silofs_sbi_calc_statvfs(const struct silofs_sbnode_info *sbi,
+                             struct statvfs                  *out_stv);
 
 #endif /* SILOFS_SUPER_H_ */

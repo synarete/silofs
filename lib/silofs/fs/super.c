@@ -391,27 +391,27 @@ static size_t vsize_of(enum silofs_vtype vtype)
 	return silofs_vtype_size(vtype);
 }
 
-void silofs_sbi2_incref(struct silofs_sbnode_info2 *sbi)
+void silofs_sbi_incref(struct silofs_sbnode_info *sbi)
 {
 	silofs_vni_incref(&sbi->sbn_vni);
 }
 
-void silofs_sbi2_decref(struct silofs_sbnode_info2 *sbi)
+void silofs_sbi_decref(struct silofs_sbnode_info *sbi)
 {
 	silofs_vni_decref(&sbi->sbn_vni);
 }
 
-static void sbi_setdirty(struct silofs_sbnode_info2 *sbi)
+static void sbi_setdirty(struct silofs_sbnode_info *sbi)
 {
 	silofs_vni_setdirty(&sbi->sbn_vni, nullptr);
 }
 
-void silofs_sbi2_setdirty(struct silofs_sbnode_info2 *sbi)
+void silofs_sbi_setdirty(struct silofs_sbnode_info *sbi)
 {
 	sbi_setdirty(sbi);
 }
 
-static void sbi2_setup_btime_now(struct silofs_sbnode_info2 *sbi)
+static void sbi_setup_btime_now(struct silofs_sbnode_info *sbi)
 {
 	struct tm now;
 
@@ -420,7 +420,7 @@ static void sbi2_setup_btime_now(struct silofs_sbnode_info2 *sbi)
 }
 
 static void
-sbi2_set_capacity(struct silofs_sbnode_info2 *sbi, size_t fs_capacity)
+sbi_set_capacity(struct silofs_sbnode_info *sbi, size_t fs_capacity)
 {
 	silofs_assert_ge(fs_capacity, SILOFS_CAPACITY_SIZE_MIN);
 	silofs_assert_le(fs_capacity, SILOFS_CAPACITY_SIZE_MAX);
@@ -428,15 +428,15 @@ sbi2_set_capacity(struct silofs_sbnode_info2 *sbi, size_t fs_capacity)
 	sbn_set_fs_capacity(sbi->sbn, fs_capacity);
 }
 
-void silofs_sbi2_setup_spawned(struct silofs_sbnode_info2 *sbi, size_t fscap)
+void silofs_sbi_setup_spawned(struct silofs_sbnode_info *sbi, size_t fscap)
 {
 	sbn_init(sbi->sbn);
-	sbi2_set_capacity(sbi, fscap);
-	sbi2_setup_btime_now(sbi);
+	sbi_set_capacity(sbi, fscap);
+	sbi_setup_btime_now(sbi);
 	sbi_setdirty(sbi);
 }
 
-uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi)
+uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi)
 {
 	const uint64_t igen = sbn_ino_generation(sbi->sbn);
 
@@ -446,17 +446,17 @@ uint64_t silofs_sbi2_next_igen(struct silofs_sbnode_info2 *sbi)
 	return igen;
 }
 
-void silofs_sbi2_apex_of(const struct silofs_sbnode_info2 *sbi,
-                         enum silofs_vtype vtype,
-                         struct silofs_vaddr *out_vaddr)
+void silofs_sbi_apex_of(const struct silofs_sbnode_info *sbi,
+                        enum silofs_vtype vtype,
+                        struct silofs_vaddr *out_vaddr)
 {
 	const off_t off = sbn_apex_voff(sbi->sbn, vtype);
 
 	silofs_vaddr_setup(out_vaddr, vtype, off);
 }
 
-void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
-                             const struct silofs_vaddr *vaddr)
+void silofs_sbi_update_apex(struct silofs_sbnode_info *sbi,
+                            const struct silofs_vaddr *vaddr)
 {
 	const off_t off = sbn_apex_voff(sbi->sbn, vaddr->vtype);
 
@@ -466,24 +466,24 @@ void silofs_sbi2_update_apex(struct silofs_sbnode_info2 *sbi,
 	}
 }
 
-static size_t sbi_fs_capacity(const struct silofs_sbnode_info2 *sbi)
+static size_t sbi_fs_capacity(const struct silofs_sbnode_info *sbi)
 {
 	return sbn_fs_capacity(sbi->sbn);
 }
 
-static size_t sbi_fs_usage(const struct silofs_sbnode_info2 *sbi)
+static size_t sbi_fs_usage(const struct silofs_sbnode_info *sbi)
 {
 	return sbn_fs_usage(sbi->sbn);
 }
 
-static fsfilcnt_t sbi_inodes_usage(const struct silofs_sbnode_info2 *sbi)
+static fsfilcnt_t sbi_inodes_usage(const struct silofs_sbnode_info *sbi)
 {
 	const size_t icount = sbn_nodes_count(sbi->sbn, SILOFS_VTYPE_INODE);
 
 	return (fsfilcnt_t)icount;
 }
 
-static fsfilcnt_t sbi_inodes_limit(const struct silofs_sbnode_info2 *sbi)
+static fsfilcnt_t sbi_inodes_limit(const struct silofs_sbnode_info *sbi)
 {
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
 	const size_t inode_size  = vsize_of(SILOFS_VTYPE_INODE);
@@ -491,7 +491,7 @@ static fsfilcnt_t sbi_inodes_limit(const struct silofs_sbnode_info2 *sbi)
 	return (fs_capacity / inode_size) >> 2;
 }
 
-int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi)
+int silofs_sbi_check_iavail(const struct silofs_sbnode_info *sbi)
 {
 	const fsfilcnt_t iuse = sbi_inodes_usage(sbi);
 	const fsfilcnt_t imax = sbi_inodes_limit(sbi);
@@ -499,8 +499,8 @@ int silofs_sbi2_check_iavail(const struct silofs_sbnode_info2 *sbi)
 	return iuse < imax ? 0 : -SILOFS_ENOSPC;
 }
 
-int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype vtype)
+int silofs_sbi_check_avail(const struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype vtype)
 {
 	constexpr size_t ext     = SILOFS_MEGA;
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
@@ -510,8 +510,8 @@ int silofs_sbi2_check_avail(const struct silofs_sbnode_info2 *sbi,
 	return ((fs_usage + nwant + ext) < fs_capacity) ? 0 : -SILOFS_ENOSPC;
 }
 
-void silofs_sbi2_take_vnode(struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype vtype)
+void silofs_sbi_take_vnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype vtype)
 {
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
 	const size_t fs_usage    = sbi_fs_usage(sbi);
@@ -524,8 +524,8 @@ void silofs_sbi2_take_vnode(struct silofs_sbnode_info2 *sbi,
 	sbi_setdirty(sbi);
 }
 
-void silofs_sbi2_give_vnode(struct silofs_sbnode_info2 *sbi,
-                            enum silofs_vtype vtype)
+void silofs_sbi_give_vnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_vtype vtype)
 {
 	const size_t usage = sbi_fs_usage(sbi);
 	const size_t ngive = vsize_of(vtype);
@@ -553,8 +553,8 @@ static fsblkcnt_t bytes_to_fsblkcnt(size_t nbytes, size_t unit)
 	return (fsblkcnt_t)nbytes / unit;
 }
 
-void silofs_sbi2_calc_statvfs(const struct silofs_sbnode_info2 *sbi,
-                              struct statvfs *out_stv)
+void silofs_sbi_calc_statvfs(const struct silofs_sbnode_info *sbi,
+                             struct statvfs *out_stv)
 {
 	constexpr size_t bsize      = 4096;
 	constexpr size_t frsize     = 4096;

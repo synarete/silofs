@@ -53,21 +53,21 @@ static void ii_set_pinned(struct silofs_inode_info *ii)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int get_sbi(const struct silofs_task_ctx *task,
-                   struct silofs_sbnode_info2 **out_sbi)
+                   struct silofs_sbnode_info **out_sbi)
 {
 	int err;
 
-	err = silofs_curr_sbi2(task, out_sbi);
+	err = silofs_curr_sbi(task, out_sbi);
 	return_if_err(err);
 
-	silofs_sbi2_incref(*out_sbi);
+	silofs_sbi_incref(*out_sbi);
 	return 0;
 }
 
-static void put_sbi(struct silofs_sbnode_info2 *sbi)
+static void put_sbi(struct silofs_sbnode_info *sbi)
 {
 	if (sbi != nullptr) {
-		silofs_sbi2_decref(sbi);
+		silofs_sbi_decref(sbi);
 	}
 }
 
@@ -626,13 +626,13 @@ check_nodent(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 static int check_spawn_inode(const struct silofs_task_ctx *task)
 {
-	struct silofs_sbnode_info2 *sbi = nullptr;
+	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
 
-	err = silofs_curr_sbi2(task, &sbi);
+	err = silofs_curr_sbi(task, &sbi);
 	return_if_err(err);
 
-	err = silofs_sbi2_check_iavail(sbi);
+	err = silofs_sbi_check_iavail(sbi);
 	return_if_err(err);
 
 	return 0;
@@ -2215,7 +2215,7 @@ static int
 do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 {
 	struct silofs_uber_stats ub_stats;
-	struct silofs_sbnode_info2 *sbi = nullptr;
+	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
 
 	/*
@@ -2226,7 +2226,7 @@ do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 	err = get_sbi(task, &sbi);
 	return_if_err(err);
 
-	silofs_sbi2_calc_statvfs(sbi, out_stv);
+	silofs_sbi_calc_statvfs(sbi, out_stv);
 
 	put_sbi(sbi);
 	return 0;
@@ -2728,12 +2728,12 @@ int silofs_forget_loose_ii(struct silofs_task_ctx *task,
 
 int silofs_next_inogen(const struct silofs_task_ctx *task, uint64_t *out_igen)
 {
-	struct silofs_sbnode_info2 *sbi = nullptr;
+	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
 
-	err = silofs_curr_sbi2(task, &sbi);
+	err = silofs_curr_sbi(task, &sbi);
 	return_if_err(err);
 
-	*out_igen = silofs_sbi2_next_igen(sbi);
+	*out_igen = silofs_sbi_next_igen(sbi);
 	return 0;
 }

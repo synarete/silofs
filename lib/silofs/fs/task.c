@@ -211,8 +211,8 @@ int silofs_task_submit(struct silofs_task_ctx *task, bool all)
 	return ret;
 }
 
-int silofs_curr_sbi2(const struct silofs_task_ctx *task,
-                     struct silofs_sbnode_info2 **out_sbi)
+int silofs_curr_sbi(const struct silofs_task_ctx *task,
+                    struct silofs_sbnode_info **out_sbi)
 {
 	return silofs_stage_super2(task, SILOFS_STG_CUR, out_sbi);
 }

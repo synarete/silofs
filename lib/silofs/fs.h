@@ -49,10 +49,10 @@ int silofs_probe_super2(const struct silofs_task_ctx *task);
 
 int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode          stg_mode,
-                        struct silofs_sbnode_info2  **out_sbi);
+                        struct silofs_sbnode_info   **out_sbi);
 
 int silofs_spawn_super2(const struct silofs_task_ctx *task,
-                        struct silofs_sbnode_info2  **out_sbi);
+                        struct silofs_sbnode_info   **out_sbi);
 
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
                          const struct silofs_vaddr    *vaddr);

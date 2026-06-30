@@ -303,62 +303,62 @@ int silofs_verify_lview_of(const struct silofs_vnode_info *vni)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_vnode_info *sbi2_to_vni(struct silofs_sbnode_info2 *sui)
+static struct silofs_vnode_info *sbi_to_vni(struct silofs_sbnode_info *sui)
 {
 	return likely(sui != nullptr) ? &sui->sbn_vni : nullptr;
 }
 
-static struct silofs_sbnode_info2 *sbi2_from_vni(struct silofs_vnode_info *vni)
+static struct silofs_sbnode_info *sbi_from_vni(struct silofs_vnode_info *vni)
 {
-	return mut_container_of(vni, struct silofs_sbnode_info2, sbn_vni);
+	return mut_container_of(vni, struct silofs_sbnode_info, sbn_vni);
 }
 
 static void
-sbi2_init(struct silofs_sbnode_info2 *sui, const struct silofs_vaddr *vaddr)
+sbi_init(struct silofs_sbnode_info *sui, const struct silofs_vaddr *vaddr)
 {
 	vni_init(&sui->sbn_vni, vaddr);
 }
 
-static void sbi2_fini(struct silofs_sbnode_info2 *sui)
+static void sbi_fini(struct silofs_sbnode_info *sui)
 {
 	vni_fini(&sui->sbn_vni);
 }
 
-static struct silofs_sbnode_info2 *sbi2_malloc(struct silofs_alloc *alloc)
+static struct silofs_sbnode_info *sbi_malloc(struct silofs_alloc *alloc)
 {
-	struct silofs_sbnode_info2 *sui;
+	struct silofs_sbnode_info *sui;
 
 	sui = malloc_node_info(alloc, sizeof(*sui));
 	return sui;
 }
 
 static void
-sbi2_free(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
+sbi_free(struct silofs_sbnode_info *sui, struct silofs_alloc *alloc)
 {
 	mfree_node_info(alloc, sui, sizeof(*sui));
 }
 
-static struct silofs_sbnode_info2 *
-sbi2_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static struct silofs_sbnode_info *
+sbi_malloc_init(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_sbnode_info2 *sui;
+	struct silofs_sbnode_info *sui;
 
-	sui = sbi2_malloc(alloc);
+	sui = sbi_malloc(alloc);
 	if (sui != nullptr) {
-		sbi2_init(sui, vaddr);
+		sbi_init(sui, vaddr);
 	}
 	return sui;
 }
 
 static void
-sbi2_fini_free(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
+sbi_fini_free(struct silofs_sbnode_info *sui, struct silofs_alloc *alloc)
 {
-	sbi2_fini(sui);
-	sbi2_free(sui, alloc);
+	sbi_fini(sui);
+	sbi_free(sui, alloc);
 }
 
 static int
-sbi2_attach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
+sbi_attach_lview(struct silofs_sbnode_info *sui, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview;
 	int err;
@@ -372,41 +372,40 @@ sbi2_attach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
 }
 
 static void
-sbi2_detach_lview(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
+sbi_detach_lview(struct silofs_sbnode_info *sui, struct silofs_alloc *alloc)
 {
 	vni_detach_lview(&sui->sbn_vni, alloc);
 	sui->sbn = nullptr;
 }
 
-static struct silofs_sbnode_info2 *
-sbi2_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
+static struct silofs_sbnode_info *
+sbi_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 {
-	struct silofs_sbnode_info2 *sui;
+	struct silofs_sbnode_info *sui;
 	int err;
 
-	sui = sbi2_malloc_init(alloc, vaddr);
+	sui = sbi_malloc_init(alloc, vaddr);
 	if (sui == nullptr) {
 		return nullptr;
 	}
-	err = sbi2_attach_lview(sui, alloc);
+	err = sbi_attach_lview(sui, alloc);
 	if (err) {
-		sbi2_fini_free(sui, alloc);
+		sbi_fini_free(sui, alloc);
 		return nullptr;
 	}
 	return sui;
 }
 
-static void
-sbi2_del(struct silofs_sbnode_info2 *sui, struct silofs_alloc *alloc)
+static void sbi_del(struct silofs_sbnode_info *sui, struct silofs_alloc *alloc)
 {
-	sbi2_detach_lview(sui, alloc);
-	sbi2_fini_free(sui, alloc);
+	sbi_detach_lview(sui, alloc);
+	sbi_fini_free(sui, alloc);
 }
 
-struct silofs_sbnode_info2 * //
-silofs_sbi2_from_vni(struct silofs_vnode_info *vni)
+struct silofs_sbnode_info * //
+silofs_sbi_from_vni(struct silofs_vnode_info *vni)
 {
-	return sbi2_from_vni(vni);
+	return sbi_from_vni(vni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1205,7 +1204,7 @@ silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 
 	switch (vtype) {
 	case SILOFS_VTYPE_SUPER2:
-		vni = sbi2_to_vni(sbi2_new(alloc, vaddr));
+		vni = sbi_to_vni(sbi_new(alloc, vaddr));
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 		vni = spi_to_vni(spi_new(alloc, vaddr));
@@ -1246,7 +1245,7 @@ void silofs_del_vnode(struct silofs_vnode_info *vni,
 
 	switch (vtype) {
 	case SILOFS_VTYPE_SUPER2:
-		sbi2_del(sbi2_from_vni(vni), alloc);
+		sbi_del(sbi_from_vni(vni), alloc);
 		break;
 	case SILOFS_VTYPE_SPNODE2:
 		spi_del(spi_from_vni(vni), alloc);

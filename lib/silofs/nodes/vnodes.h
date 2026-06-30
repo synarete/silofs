@@ -43,7 +43,7 @@ struct silofs_vnode_info {
 };
 
 /* super node */
-struct silofs_sbnode_info2 {
+struct silofs_sbnode_info {
 	struct silofs_vnode_info   sbn_vni;
 	struct silofs_superb_node *sbn;
 };
@@ -160,8 +160,8 @@ int silofs_verify_lview_of(const struct silofs_vnode_info *vni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_sbnode_info2 * //
-silofs_sbi2_from_vni(struct silofs_vnode_info *vni);
+struct silofs_sbnode_info * //
+silofs_sbi_from_vni(struct silofs_vnode_info *vni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

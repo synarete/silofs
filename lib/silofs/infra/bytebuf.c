@@ -19,8 +19,8 @@
 #include <stdint.h>
 
 #include <silofs/ccattr.h>
-#include <silofs/base/utility.h>
-#include <silofs/base/bytebuf.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/bytebuf.h>
 
 void silofs_bytebuf_init(struct silofs_bytebuf *bb, void *p, size_t n)
 {

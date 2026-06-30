@@ -17,7 +17,7 @@
 #ifndef SILOFS_DSTOR_H_
 #define SILOFS_DSTOR_H_
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 

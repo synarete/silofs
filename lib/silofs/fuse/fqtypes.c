@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/vfs.h>
 #include "fqtypes.h"

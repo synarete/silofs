@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/ccattr.h>
 #include <silofs/memalloc.h>
-#include <silofs/base/list.h>
+#include <silofs/infra/list.h>
 
 void silofs_list_head_set(struct silofs_list_head *lh,
                           struct silofs_list_head *prv,

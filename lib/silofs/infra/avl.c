@@ -19,8 +19,8 @@
 #include <silofs/macros.h>
 #include <silofs/panic.h>
 
-#include <silofs/base/utility.h>
-#include <silofs/base/avl.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/avl.h>
 
 #define AVL_MAGIC 0x6176
 

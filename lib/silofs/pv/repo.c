@@ -20,7 +20,7 @@
 #include <sys/file.h>
 #include <fcntl.h>
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/nodes.h>
 #include <silofs/pv.h>
 

@@ -19,7 +19,7 @@
 
 #include <silofs/macros.h>
 #include <silofs/ondisk.h>
-#include <silofs/base/uuid.h>
+#include <silofs/infra/uuid.h>
 
 void silofs_uuid_generate(struct silofs_uuid *uu)
 {

@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/types.h>
 #include <silofs/errors.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/nodes.h>
 #include <silofs/fs.h>
 

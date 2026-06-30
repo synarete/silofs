@@ -25,7 +25,7 @@
 #include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/panic.h>
-#include <silofs/base/times.h>
+#include <silofs/infra/times.h>
 
 static struct timespec silofs_start_ts_mono;
 

@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

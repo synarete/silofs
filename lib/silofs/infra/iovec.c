@@ -20,7 +20,7 @@
 #include <silofs/ccattr.h>
 #include <silofs/syscall.h>
 #include <silofs/errors.h>
-#include <silofs/base/iovec.h>
+#include <silofs/infra/iovec.h>
 
 void silofs_iovec_reset(struct silofs_iovec *iov)
 {

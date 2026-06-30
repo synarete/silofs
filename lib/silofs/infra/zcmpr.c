@@ -18,7 +18,7 @@
 #include <zstd.h>
 
 #include <silofs/errors.h>
-#include <silofs/base/zcmpr.h>
+#include <silofs/infra/zcmpr.h>
 
 #if (ZSTD_VERSION_NUMBER >= 10502)
 #define ZCOMP_ZSTD_DEFAULT_CLEVEL (ZSTD_defaultCLevel())

@@ -39,7 +39,7 @@
 #include <silofs/panic.h>
 #include <silofs/snprintf.h>
 #include <silofs/logging.h>
-#include <silofs/base/utility.h>
+#include <silofs/infra/utility.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

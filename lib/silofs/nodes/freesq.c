@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 

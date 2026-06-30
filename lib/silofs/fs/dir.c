@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <dirent.h>
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
 #include <silofs/fs.h>

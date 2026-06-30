@@ -22,7 +22,7 @@
 
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/pv.h>
 
 /*

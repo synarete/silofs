@@ -19,7 +19,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 

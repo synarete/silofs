@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #include <silofs/ondisk.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/vfs.h>
 #include "fuse_abi.h"
 

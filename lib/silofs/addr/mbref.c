@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 
 void silofs_mbref_reset(struct silofs_mbref *mbref)

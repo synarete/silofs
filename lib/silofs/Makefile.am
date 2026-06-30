@@ -20,43 +20,61 @@ libsilofs_la_LIBADD += $(PTHREAD_LIBS)
 libsilofs_la_SOURCES = $(NULL)
 libsilofs_la_SOURCES += ondisk.c
 libsilofs_la_SOURCES += version.c
+libsilofs_la_SOURCES += flags.h
 
 libsilofs_la_SOURCES += sys/syscall.c
 libsilofs_la_SOURCES += sys/syscallx.c
 
-libsilofs_la_SOURCES += base/atomic.h
-libsilofs_la_SOURCES += base/avl.c
-libsilofs_la_SOURCES += base/avl.h
-libsilofs_la_SOURCES += base/base64.c
-libsilofs_la_SOURCES += base/base64.h
-libsilofs_la_SOURCES += base/bytebuf.c
-libsilofs_la_SOURCES += base/iovec.c
-libsilofs_la_SOURCES += base/iovec.h
-libsilofs_la_SOURCES += base/hamming.c
-libsilofs_la_SOURCES += base/hashfn.c
-libsilofs_la_SOURCES += base/list.c
-libsilofs_la_SOURCES += base/logging.c
-libsilofs_la_SOURCES += base/memalloc.c
-libsilofs_la_SOURCES += base/panic.c
-libsilofs_la_SOURCES += base/pipe.c
-libsilofs_la_SOURCES += base/qalloc.c
-libsilofs_la_SOURCES += base/qalloc.h
-libsilofs_la_SOURCES += base/snprintf.c
-libsilofs_la_SOURCES += base/socket.c
-libsilofs_la_SOURCES += base/thread.c
-libsilofs_la_SOURCES += base/thread.h
-libsilofs_la_SOURCES += base/times.c
-libsilofs_la_SOURCES += base/uconv.c
-libsilofs_la_SOURCES += base/uconv.h
-libsilofs_la_SOURCES += base/uuid.c
-libsilofs_la_SOURCES += base/zcmpr.c
-libsilofs_la_SOURCES += base.h
+libsilofs_la_SOURCES += infra/atomic.h
+libsilofs_la_SOURCES += infra/avl.c
+libsilofs_la_SOURCES += infra/avl.h
+libsilofs_la_SOURCES += infra/base64.c
+libsilofs_la_SOURCES += infra/base64.h
+libsilofs_la_SOURCES += infra/bytebuf.c
+libsilofs_la_SOURCES += infra/bytebuf.h
+libsilofs_la_SOURCES += infra/iovec.c
+libsilofs_la_SOURCES += infra/iovec.h
+libsilofs_la_SOURCES += infra/hamming.c
+libsilofs_la_SOURCES += infra/hamming.h
+libsilofs_la_SOURCES += infra/hashfn.c
+libsilofs_la_SOURCES += infra/hashfn.h
+libsilofs_la_SOURCES += infra/list.c
+libsilofs_la_SOURCES += infra/list.h
+libsilofs_la_SOURCES += infra/logging.c
+libsilofs_la_SOURCES += infra/memalloc.c
+libsilofs_la_SOURCES += infra/panic.c
+libsilofs_la_SOURCES += infra/pipe.c
+libsilofs_la_SOURCES += infra/pipe.h
+libsilofs_la_SOURCES += infra/private.h
+libsilofs_la_SOURCES += infra/qalloc.c
+libsilofs_la_SOURCES += infra/qalloc.h
+libsilofs_la_SOURCES += infra/snprintf.c
+libsilofs_la_SOURCES += infra/socket.c
+libsilofs_la_SOURCES += infra/socket.h
+libsilofs_la_SOURCES += infra/thread.c
+libsilofs_la_SOURCES += infra/thread.h
+libsilofs_la_SOURCES += infra/times.c
+libsilofs_la_SOURCES += infra/times.h
+libsilofs_la_SOURCES += infra/uconv.c
+libsilofs_la_SOURCES += infra/uconv.h
+libsilofs_la_SOURCES += infra/utility.h
+libsilofs_la_SOURCES += infra/uuid.c
+libsilofs_la_SOURCES += infra/uuid.h
+libsilofs_la_SOURCES += infra/zcmpr.c
+libsilofs_la_SOURCES += infra/zcmpr.h
+libsilofs_la_SOURCES += infra.h
 
 libsilofs_la_SOURCES += str/ascii.c
+libsilofs_la_SOURCES += str/ascii.h
 libsilofs_la_SOURCES += str/strbuf.c
+libsilofs_la_SOURCES += str/strbuf.h
 libsilofs_la_SOURCES += str/strchr.c
+libsilofs_la_SOURCES += str/strchr.h
 libsilofs_la_SOURCES += str/strspan.c
+libsilofs_la_SOURCES += str/strspan.h
 libsilofs_la_SOURCES += str/strview.c
+libsilofs_la_SOURCES += str/strview.h
+libsilofs_la_SOURCES += str.h
 
 libsilofs_la_SOURCES += crypt/cipher.c
 libsilofs_la_SOURCES += crypt/gcry.c
@@ -114,6 +132,7 @@ libsilofs_la_SOURCES += pv/trans.c
 libsilofs_la_SOURCES += pv/uber.c
 libsilofs_la_SOURCES += pv/vspace.c
 libsilofs_la_SOURCES += pv/vspmap.c
+libsilofs_la_SOURCES += pv.h
 
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/file.c
@@ -135,6 +154,7 @@ libsilofs_la_SOURCES += fs/task.c
 libsilofs_la_SOURCES += fs/task.h
 libsilofs_la_SOURCES += fs/xattr.c
 libsilofs_la_SOURCES += fs.h
+libsilofs_la_SOURCES += vfs.h
 
 libsilofs_la_SOURCES += mnt/mntconf.c
 libsilofs_la_SOURCES += mnt/mntsvc.c
@@ -160,34 +180,3 @@ libsilofs_la_SOURCES += run/vfswrap.c
 libsilofs_la_SOURCES += run/walk.c
 libsilofs_la_SOURCES += run/walk.h
 libsilofs_la_SOURCES += run.h
-
-
-
-noinst_HEADERS = $(NULL)
-
-
-
-noinst_HEADERS += base/bytebuf.h
-
-noinst_HEADERS += base/hamming.h
-noinst_HEADERS += base/hashfn.h
-noinst_HEADERS += base/list.h
-noinst_HEADERS += base/pipe.h
-noinst_HEADERS += base/private.h
-
-noinst_HEADERS += base/socket.h
-noinst_HEADERS += base/times.h
-noinst_HEADERS += base/utility.h
-noinst_HEADERS += base/uuid.h
-noinst_HEADERS += base/zcmpr.h
-
-
-noinst_HEADERS += flags.h
-noinst_HEADERS += pv.h
-noinst_HEADERS += str.h
-noinst_HEADERS += str/ascii.h
-noinst_HEADERS += str/strbuf.h
-noinst_HEADERS += str/strchr.h
-noinst_HEADERS += str/strspan.h
-noinst_HEADERS += str/strview.h
-noinst_HEADERS += vfs.h

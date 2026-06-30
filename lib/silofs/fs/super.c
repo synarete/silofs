@@ -18,7 +18,7 @@
 #include <inttypes.h>
 
 #include <silofs/version.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/fs.h>

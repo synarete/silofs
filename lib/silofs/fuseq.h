@@ -18,7 +18,7 @@
 #define SILOFS_FUSEQ_H_
 
 #include <stdint.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/flags.h>
 #include <silofs/vfs.h>
 

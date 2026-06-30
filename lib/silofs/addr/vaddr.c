@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 
 static uint64_t cpu_to_off_vtype(off_t off, enum silofs_vtype vtype)

@@ -17,7 +17,7 @@
 #ifndef SILOFS_RUN_H_
 #define SILOFS_RUN_H_
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/crypt.h>
 #include <silofs/nodes.h>

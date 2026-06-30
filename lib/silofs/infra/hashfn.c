@@ -20,7 +20,7 @@
 #include <xxhash.h>
 
 #include <silofs/macros.h>
-#include <silofs/base/hashfn.h>
+#include <silofs/infra/hashfn.h>
 
 uint64_t silofs_twang64(uint64_t n)
 {

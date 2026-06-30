@@ -18,7 +18,7 @@
 #include <gcrypt.h>
 
 #include <silofs/errors.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/crypt.h>
 
 static void mac_reset(struct silofs_mac *mac)

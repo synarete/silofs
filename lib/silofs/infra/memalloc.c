@@ -27,8 +27,8 @@
 #include <silofs/syscall.h>
 #include <silofs/memalloc.h>
 #include <silofs/panic.h>
-#include <silofs/base/utility.h>
-#include <silofs/base/atomic.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/atomic.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -21,7 +21,7 @@
 #include <sys/statvfs.h>
 
 #include <silofs/ioctls.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/addr.h>
 
 /* extended inode stat */

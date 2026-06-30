@@ -25,7 +25,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/mntsvc.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/str.h>
 
 enum silofs_mntcmd {

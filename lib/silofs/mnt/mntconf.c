@@ -25,7 +25,7 @@
 #include <silofs/errors.h>
 #include <silofs/mntsvc.h>
 #include <silofs/appexec.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/fs.h>
 

@@ -17,7 +17,7 @@
 #ifndef SILOFS_DIRTYQ_H_
 #define SILOFS_DIRTYQ_H_
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 
 /* dirty/destage queue element */
 struct silofs_dq_elem {

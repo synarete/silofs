@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <silofs/base/hamming.h>
+#include <silofs/infra/hamming.h>
 
 /*
  * Hamming12 code: transforms 8-bits data message into 12-bits code-word

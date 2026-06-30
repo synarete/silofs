@@ -33,8 +33,8 @@
 #include <stdio.h>
 
 #include <silofs/syscall.h>
-#include <silofs/base/utility.h>
-#include <silofs/base/socket.h>
+#include <silofs/infra/utility.h>
+#include <silofs/infra/socket.h>
 
 uint16_t silofs_htons(uint16_t n)
 {

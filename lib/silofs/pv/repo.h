@@ -17,7 +17,7 @@
 #ifndef SILOFS_REPO_H_
 #define SILOFS_REPO_H_
 
-#include <silofs/base.h>
+#include <silofs/infra.h>
 
 /* repository */
 struct silofs_repo {

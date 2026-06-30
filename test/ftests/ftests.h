@@ -29,7 +29,7 @@
 #include <limits.h>
 
 #include <silofs/api.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 
 struct dirent64;
 struct utimbuf;

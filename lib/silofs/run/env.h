@@ -18,7 +18,7 @@
 #define SILOFS_ENV_H_
 
 #include <silofs/appexec.h>
-#include <silofs/base.h>
+#include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/pv.h>

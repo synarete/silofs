@@ -336,20 +336,6 @@ enum silofs_vtype {
 	SILOFS_VTYPE_LAST    = 11, /* keep last */
 };
 
-/* logical heights of unode mappings */
-enum silofs_height {
-	SILOFS_HEIGHT_NONE    = 0,
-	SILOFS_HEIGHT_VDATA   = 1,
-	SILOFS_HEIGHT_SPLEAF  = 2,
-	SILOFS_HEIGHT_SPNODE1 = 3,
-	SILOFS_HEIGHT_SPNODE2 = 4,
-	SILOFS_HEIGHT_SPNODE3 = 5,
-	SILOFS_HEIGHT_SPNODE4 = 6,
-	SILOFS_HEIGHT_SUPER   = 7,
-	SILOFS_HEIGHT_BOOT    = 8,
-	SILOFS_HEIGHT_LAST    = 9, /* keep last */
-};
-
 /* btree-node flags */
 enum silofs_btnodef {
 	SILOFS_BTNODEF_NONE = 0x00,

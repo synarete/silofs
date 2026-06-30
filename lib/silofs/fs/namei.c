@@ -1639,7 +1639,7 @@ static int flush_dirty_of(struct silofs_task_ctx *task,
 {
 	int ret = 0;
 
-	if (silofs_ii_isdirty(ii) || ii->i_dq_vnis.drq.sz) {
+	if (silofs_ii_isdirty(ii)) {
 		ret = silofs_flush_dirty(task, ii, flags);
 	}
 	return ret;

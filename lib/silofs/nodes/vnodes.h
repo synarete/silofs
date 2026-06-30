@@ -22,7 +22,6 @@
 #include <silofs/base.h>
 #include <silofs/addr.h>
 
-
 enum silofs_vni_flags {
 	SILOFS_VNF_RECHECK = SILOFS_BIT(0),
 	SILOFS_VNF_PINNED  = SILOFS_BIT(1),
@@ -68,7 +67,6 @@ struct silofs_lsmap_info {
 /* inode */
 struct silofs_inode_info {
 	struct silofs_vnode_info  i_vni;
-	struct silofs_dirtyq      i_dq_vnis;
 	struct silofs_inode      *inode;
 	struct silofs_inode_info *i_looseq_next;
 	struct timespec           i_atime_lazy;
@@ -131,14 +129,14 @@ void silofs_vni_decref(struct silofs_vnode_info *vni);
 bool silofs_vni_isdirty(const struct silofs_vnode_info *vni);
 
 void silofs_vni_setdirty(struct silofs_vnode_info *vni,
-			 struct silofs_inode_info *ii);
+                         struct silofs_inode_info *ii);
 
 void silofs_vni_cleardirty(struct silofs_vnode_info *vni);
 
 bool silofs_vni_isevictable(const struct silofs_vnode_info *vni);
 
 void silofs_vni_set_dq(struct silofs_vnode_info *vni,
-		       struct silofs_dirtyq     *dq);
+                       struct silofs_dirtyq     *dq);
 
 bool silofs_vni_need_recheck(const struct silofs_vnode_info *vni);
 
@@ -156,7 +154,7 @@ struct silofs_vnode_info * //
 silofs_vni_from_hmqe(struct silofs_hmapq_elem *hmqe);
 
 void silofs_vni_remove_from(struct silofs_vnode_info *vni,
-			    struct silofs_hmapq      *hmapq);
+                            struct silofs_hmapq      *hmapq);
 
 int silofs_verify_lview_of(const struct silofs_vnode_info *vni);
 
@@ -188,7 +186,7 @@ struct silofs_vnode_info *
 silofs_new_vnode(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr);
 
 void silofs_del_vnode(struct silofs_vnode_info *vni,
-		      struct silofs_alloc      *alloc);
+                      struct silofs_alloc      *alloc);
 
 void silofs_seal_vnode(const struct silofs_vnode_info *vni);
 

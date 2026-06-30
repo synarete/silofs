@@ -788,16 +788,9 @@ static int stc_create_cached_vnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_vaddr *vaddr,
                                    struct silofs_vnode_info **out_vni)
 {
-	*out_vni = silofs_vcache_create_vnode(st_ctx->vcache, vaddr, true);
+	*out_vni = silofs_vcache_create_vnode(st_ctx->vcache, vaddr);
 
 	return (*out_vni == nullptr) ? -SILOFS_ENOMEM : 0;
-}
-
-static void stc_rebind_vnode(const struct silofs_stage_ctx *st_ctx,
-                             struct silofs_vnode_info *vni)
-{
-	vni->vn_use_pn_vnis_dq = true;
-	silofs_vcache_rebind_vnode(st_ctx->vcache, vni);
 }
 
 static void stc_update_claimed_vnode(const struct silofs_stage_ctx *st_ctx,
@@ -812,7 +805,6 @@ static void stc_update_spawned_vnode(const struct silofs_stage_ctx *st_ctx,
                                      struct silofs_vnode_info *vni,
                                      const struct silofs_pnptr *pnptr)
 {
-	stc_rebind_vnode(st_ctx, vni);
 	stc_update_claimed_vnode(st_ctx, vni_vaddr(vni), pnptr);
 }
 
@@ -947,25 +939,20 @@ static int stc_stage_vnode(struct silofs_stage_ctx *st_ctx,
 	if (!err) {
 		goto out_ok; /* OK -- cache hit */
 	}
+
 	err = stc_access_pnode_of(st_ctx, pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = stc_create_cached_vnode(st_ctx, vaddr, &vni);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
+	return_if_err(err);
+
 	if (st_ctx->spacef & SILOFS_SPACEF_UNWRITTEN) {
-		goto out_rebind;
+		goto out_ok;
 	}
+
 	err = stc_fetch_decrypt_vnode(st_ctx, pnptr, vni);
-	if (err) {
-		silofs_assert_ok(err);
-		return err;
-	}
-out_rebind:
-	stc_rebind_vnode(st_ctx, vni);
+	return_if_err(err);
+
 out_ok:
 	*out_vni = vni;
 	return 0;
@@ -1086,7 +1073,7 @@ static void
 dsc_initv(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
 {
 	dsc_init(ds_ctx, pexec);
-	ds_ctx->drq = &pexec->vcache->vc_pn_vnis_dq;
+	ds_ctx->drq = &pexec->vcache->vc_dirtyq;
 }
 
 static void dsc_fini(struct silofs_destage_ctx *ds_ctx)

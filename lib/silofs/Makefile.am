@@ -28,6 +28,7 @@ libsilofs_la_SOURCES += base/atomic.h
 libsilofs_la_SOURCES += base/avl.c
 libsilofs_la_SOURCES += base/avl.h
 libsilofs_la_SOURCES += base/base64.c
+libsilofs_la_SOURCES += base/base64.h
 libsilofs_la_SOURCES += base/bytebuf.c
 libsilofs_la_SOURCES += base/iovec.c
 libsilofs_la_SOURCES += base/iovec.h
@@ -65,6 +66,7 @@ libsilofs_la_SOURCES += crypt/kdf.c
 libsilofs_la_SOURCES += crypt/mdigest.c
 libsilofs_la_SOURCES += crypt/passwd.c
 libsilofs_la_SOURCES += crypt/prand.c
+libsilofs_la_SOURCES += crypt.h
 
 libsilofs_la_SOURCES += addr/blobid.c
 libsilofs_la_SOURCES += addr/fsref.c
@@ -92,8 +94,10 @@ libsilofs_la_SOURCES += nodes/nodeview.c
 libsilofs_la_SOURCES += nodes/pcache.c
 libsilofs_la_SOURCES += nodes/pnodes.c
 libsilofs_la_SOURCES += nodes/vcache.c
+libsilofs_la_SOURCES += nodes/vcache.h
 libsilofs_la_SOURCES += nodes/vnodes.c
 libsilofs_la_SOURCES += nodes/vnodes.h
+libsilofs_la_SOURCES += nodes.h
 
 libsilofs_la_SOURCES += pv/bldesc.c
 libsilofs_la_SOURCES += pv/btnode.c
@@ -162,7 +166,7 @@ libsilofs_la_SOURCES += run.h
 noinst_HEADERS = $(NULL)
 
 
-noinst_HEADERS += base/base64.h
+
 noinst_HEADERS += base/bytebuf.h
 
 noinst_HEADERS += base/hamming.h
@@ -177,9 +181,8 @@ noinst_HEADERS += base/utility.h
 noinst_HEADERS += base/uuid.h
 noinst_HEADERS += base/zcmpr.h
 
-noinst_HEADERS += crypt.h
+
 noinst_HEADERS += flags.h
-noinst_HEADERS += nodes.h
 noinst_HEADERS += pv.h
 noinst_HEADERS += str.h
 noinst_HEADERS += str/ascii.h

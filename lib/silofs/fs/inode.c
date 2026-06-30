@@ -534,19 +534,11 @@ ii_times(const struct silofs_inode_info *ii, struct silofs_itimes *tms)
 	inode_ctime(inode, &tms->ctime);
 }
 
-static size_t ii_dq_vnis_size(const struct silofs_inode_info *ii)
-{
-	return ii->i_dq_vnis.drq.sz;
-}
-
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 {
-	const size_t dq_vnis_sz = ii_dq_vnis_size(ii);
-	bool ret;
+	bool ret = false;
 
-	if ((dq_vnis_sz > 0) || (ii->i_nopen > 0)) {
-		ret = false;
-	} else {
+	if (ii->i_nopen == 0) {
 		ret = silofs_vni_isevictable(&ii->i_vni);
 	}
 	return ret;
@@ -1459,19 +1451,8 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 
 void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii)
 {
-	struct silofs_dq_elem *dqe;
-	struct silofs_vnode_info *vni;
-	struct silofs_dirtyq *dq = &ii->i_dq_vnis;
-
-	dqe = silofs_dirtyq_front(dq);
-	while (dqe != nullptr) {
-		silofs_assert_gt(dq->drq.sz, 0);
-		vni = silofs_vni_from_dqe(dqe);
-		if (likely(vni != nullptr)) {
-			silofs_vni_cleardirty(vni);
-		}
-		dqe = silofs_dirtyq_front(dq);
-	}
+	/* TODO: re-consider */
+	silofs_unused(ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

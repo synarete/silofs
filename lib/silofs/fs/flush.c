@@ -40,7 +40,11 @@ static size_t flush_threshold_of(int flags)
 
 static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 {
-	struct silofs_alloc_stat alst = { .nbytes_use = 0, .nbytes_max = 0 };
+	struct silofs_alloc_stat alst = {
+		.nbytes_use = 0,
+		.nbytes_max = 0,
+	};
+	size_t flush_threshold;
 
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
@@ -49,30 +53,18 @@ static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}
+	flush_threshold = flush_threshold_of(flags); /* XXX CRAP FIXME */
+	if (flush_threshold == 0) {
+		return true;
+	}
 	return false;
-}
-
-static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
-{
-	size_t ndirty;
-	size_t thresh;
-
-	thresh = flush_threshold_of(flags);
-	ndirty = ii->i_dq_vnis.drq_accum;
-	return (ndirty > thresh);
 }
 
 static bool need_flush_by(const struct silofs_task_ctx *task,
                           const struct silofs_inode_info *ii, int flags)
 {
-	bool ret = false;
-
-	if (need_flush_now(task, flags)) {
-		ret = true;
-	} else if (ii != nullptr) {
-		ret = need_flush_by_ii(ii, flags);
-	}
-	return ret;
+	silofs_unused(ii);
+	return need_flush_now(task, flags);
 }
 
 static int do_flush_dirty(struct silofs_task_ctx *task,

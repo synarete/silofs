@@ -529,7 +529,6 @@ static void
 ii_init(struct silofs_inode_info *ii, const struct silofs_vaddr *vaddr)
 {
 	vni_init(&ii->i_vni, vaddr);
-	silofs_dirtyq_init(&ii->i_dq_vnis);
 	ii->inode         = nullptr;
 	ii->i_looseq_next = nullptr;
 	ii->i_ino         = SILOFS_INO_NULL;
@@ -540,12 +539,10 @@ ii_init(struct silofs_inode_info *ii, const struct silofs_vaddr *vaddr)
 
 static void ii_fini(struct silofs_inode_info *ii)
 {
-	silofs_assert_eq(ii->i_dq_vnis.drq.sz, 0);
 	silofs_assert(!ii->i_in_looseq);
 	silofs_assert_null(ii->i_looseq_next);
 
 	vni_fini(&ii->i_vni);
-	silofs_dirtyq_fini(&ii->i_dq_vnis);
 	ii->inode   = nullptr;
 	ii->i_ino   = SILOFS_INO_NULL;
 	ii->i_nopen = INT_MIN;
@@ -624,7 +621,6 @@ ii_new(struct silofs_alloc *alloc, const struct silofs_vaddr *vaddr)
 
 static void ii_del(struct silofs_inode_info *ii, struct silofs_alloc *alloc)
 {
-	silofs_assert_eq(ii->i_dq_vnis.drq.sz, 0);
 	silofs_assert_ge(ii->i_nopen, 0);
 
 	vni_detach_lview(&ii->i_vni, alloc);

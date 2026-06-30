@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <sys/mount.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static void
 ubs_btroot(const struct silofs_uber_sub *ubs, struct silofs_pnptr *out_pnptr)

@@ -22,7 +22,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 /* local functions */
 static int repo_close(struct silofs_repo *repo);

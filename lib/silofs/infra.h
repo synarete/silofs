@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_BASE_H_
-#define SILOFS_BASE_H_
+#ifndef SILOFS_INFRA_H_
+#define SILOFS_INFRA_H_
 
 #include <silofs/ccattr.h>
 #include <silofs/consts.h>
@@ -50,4 +50,4 @@
 #include <silofs/infra/private.h>
 #endif
 
-#endif /* SILOFS_BASE_H_ */
+#endif /* SILOFS_INFRA_H_ */

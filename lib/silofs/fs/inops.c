@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 
 static bool isock_allowed(const struct silofs_task_ctx *task)

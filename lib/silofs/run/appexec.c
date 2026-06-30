@@ -22,7 +22,7 @@
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
 #include <silofs/infra.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
 #include <silofs/run.h>

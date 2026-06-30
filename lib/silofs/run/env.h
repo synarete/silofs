@@ -21,7 +21,7 @@
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/run/mbr.h>
 

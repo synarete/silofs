@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/ondisk.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

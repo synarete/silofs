@@ -16,7 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <silofs/types.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static const struct silofs_layerid *
 top_layerid(const struct silofs_pexec_ctx *pexec)

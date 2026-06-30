@@ -18,7 +18,7 @@
 #include <sys/resource.h>
 
 #include <silofs/ioctls.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
 #include <silofs/run.h>

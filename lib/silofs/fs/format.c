@@ -18,7 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 
 static void

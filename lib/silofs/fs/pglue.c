@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 
 static int verify_lview_of(const struct silofs_lview *lview,

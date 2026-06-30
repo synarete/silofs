@@ -14,16 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PV_H_
-#define SILOFS_PV_H_
+#ifndef SILOFS_PSTOR_H_
+#define SILOFS_PSTOR_H_
 
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-#include <silofs/pv/dstor.h>
-#include <silofs/pv/repo.h>
+#include <silofs/pstor/dstor.h>
+#include <silofs/pstor/repo.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* bldesc */
@@ -117,135 +117,11 @@ void silofs_clone_btnode(const struct silofs_btnode_info *bti,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* uber */
-
-/* uber stat per sub-type */
-struct silofs_uber_stat {
-	size_t bn;
-	size_t vn;
-};
-
-struct silofs_uber_stats {
-	struct silofs_uber_stat st[SILOFS_VTYPE_LAST];
-};
-
-const struct silofs_pnptr *silofs_ubi_self(const struct silofs_uber_info *ubi);
-
-const struct silofs_layerid *
-silofs_ubi_layerid(const struct silofs_uber_info *ubi);
-
-void silofs_ubi_incref(struct silofs_uber_info *ubi);
-
-void silofs_ubi_decref(struct silofs_uber_info *ubi);
-
-void silofs_ubi_setdirty(struct silofs_uber_info *ubi);
-
-void silofs_ubi_cleardirty(struct silofs_uber_info *ubi);
-
-void silofs_ubi_update_spawned(struct silofs_uber_info *ubi);
-
-bool silofs_ubi_has_btroot(const struct silofs_uber_info *ubi,
-                           const struct silofs_pnptr     *pnptr);
-
-void silofs_ubi_set_btroot(struct silofs_uber_info   *ubi,
-                           const struct silofs_pnptr *pnptr);
-
-void silofs_ubi_set_btroot_by(struct silofs_uber_info         *ubi,
-                              const struct silofs_btnode_info *bti);
-
-void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
-                          enum silofs_vtype              vtype,
-                          struct silofs_pnptr           *out_pnptr);
-
-void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
-                          const struct silofs_stype     *stype,
-                          struct silofs_spdesc          *out_spdesc);
-
-void silofs_ubi_start_spdesc(struct silofs_uber_info   *ubi,
-                             const struct silofs_paddr *paddr);
-
-void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
-                              const struct silofs_spdesc *spdesc);
-
-void silofs_ubi_inc_count_by(struct silofs_uber_info    *ubi,
-                             const struct silofs_blobid *blobid);
-
-void silofs_ubi_dec_count_by(struct silofs_uber_info    *ubi,
-                             const struct silofs_blobid *blobid);
-
-void silofs_ubi_stat_of(const struct silofs_uber_info *ubi,
-                        enum silofs_vtype              vtype,
-                        struct silofs_uber_stat       *out_stat);
-
-void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,
-                              struct silofs_uber_stats      *out_stats);
-
-bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
-                             const struct silofs_btnode_info *bti);
-
-int silofs_validate_uber(const struct silofs_uber_info *ubi);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_uber_ref {
-	struct silofs_uber_info *ubi;
-	enum silofs_flags        ctl_flags;
-	unsigned long            ms_flags;
-};
-
-void silofs_ubref_init(struct silofs_uber_ref *ubref);
-
-void silofs_ubref_fini(struct silofs_uber_ref *ubref);
-
-void silofs_ubref_update(struct silofs_uber_ref  *ubref,
-                         struct silofs_uber_info *ubi);
-
-void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
-                               enum silofs_flags       ctl_flags);
-
-bool silofs_ubref_is_rdonly(const struct silofs_uber_ref *ubref);
-
+#include <silofs/pstor/uber.h>
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spnode */
 
-struct silofs_vspace_ref {
-	size_t             refcnt;
-	enum silofs_spacef flags;
-};
-
-struct silofs_spnode_info2 *silofs_spi_from_vni(struct silofs_vnode_info *vni);
-
-void silofs_spi_incref(struct silofs_spnode_info2 *spi);
-
-void silofs_spi_decref(struct silofs_spnode_info2 *spi);
-
-void silofs_spi_setup_spawned(struct silofs_spnode_info2 *spi,
-                              const struct silofs_vaddr  *ref_vaddr);
-
-void silofs_spi_setup_staged(struct silofs_spnode_info2 *spi);
-
-int silofs_spi_find_free(const struct silofs_spnode_info2 *spi,
-                         struct silofs_vaddr              *out_vaddr);
-
-void silofs_spi_inc_allocated(struct silofs_spnode_info2 *spi,
-                              const struct silofs_vaddr  *vaddr);
-
-void silofs_spi_dec_allocated(struct silofs_spnode_info2 *spi,
-                              const struct silofs_vaddr  *vaddr);
-
-void silofs_spi_mark_unwritten(struct silofs_spnode_info2 *spi,
-                               const struct silofs_vaddr  *vaddr);
-
-void silofs_spi_clear_unwritten(struct silofs_spnode_info2 *spi,
-                                const struct silofs_vaddr  *vaddr);
-
-void silofs_spi_vspace_ref(const struct silofs_spnode_info2 *spi,
-                           const struct silofs_vaddr        *vaddr,
-                           struct silofs_vspace_ref         *out_vspref);
-
-void silofs_spi_clone_from(struct silofs_spnode_info2       *spi,
-                           const struct silofs_spnode_info2 *spi_other);
-
-int silofs_verify_space_node(const struct silofs_space_node *spn);
+#include <silofs/pstor/spnode.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -470,4 +346,4 @@ int silofs_test_vtop_mapping(struct silofs_pexec_ctx   *pexec,
                              const struct silofs_vaddr *vaddr,
                              bool                      *out_exists);
 
-#endif /* SILOFS_PV_H_ */
+#endif /* SILOFS_PSTOR_H_ */

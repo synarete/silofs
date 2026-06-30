@@ -17,11 +17,7 @@
 #ifndef SILOFS_WALK_H_
 #define SILOFS_WALK_H_
 
-#include <silofs/infra.h>
-#include <silofs/addr.h>
-#include <silofs/nodes.h>
-#include <silofs/pv.h>
-#include <silofs/fs.h>
+struct silofs_task_ctx;
 
 int silofs_traverse_fs(struct silofs_task_ctx *task);
 

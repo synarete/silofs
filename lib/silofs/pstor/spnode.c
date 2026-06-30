@@ -19,7 +19,7 @@
 
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static off_t calc_base_offset_of(enum silofs_vtype vtype, off_t off)
 {

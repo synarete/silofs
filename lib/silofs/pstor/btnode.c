@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static uint64_t btn_minkey(const struct silofs_btree_node *btn)
 {

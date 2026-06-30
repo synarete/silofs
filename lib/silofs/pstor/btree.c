@@ -19,7 +19,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

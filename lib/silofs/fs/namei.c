@@ -26,7 +26,7 @@
 #include <limits.h>
 
 #include <silofs/ioctls.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/run.h>
 

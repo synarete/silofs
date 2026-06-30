@@ -18,12 +18,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#include <silofs/pv.h>
+
+#include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/fuseq.h>
-
-#include <silofs/run/mbr.h>
-#include <silofs/run/env.h>
+#include <silofs/run.h>
 
 void silofs_env_refresh_root(struct silofs_env *env,
                              const struct silofs_pnptr *pnptr)

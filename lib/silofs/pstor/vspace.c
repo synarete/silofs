@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 struct silofs_vspace_ctx {
 	struct silofs_pexec_ctx *pexec;

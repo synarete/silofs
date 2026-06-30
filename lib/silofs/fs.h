@@ -24,7 +24,7 @@
 #include <silofs/flags.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 #include <silofs/vfs.h>
 
 struct silofs_env;

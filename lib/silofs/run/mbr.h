@@ -20,7 +20,6 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
 
 struct silofs_env;
 

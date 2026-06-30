@@ -18,7 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static void
 calc_aad_of(const struct silofs_pexec_ctx *pexec,

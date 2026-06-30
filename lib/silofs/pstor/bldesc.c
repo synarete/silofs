@@ -17,7 +17,7 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/pv.h>
+#include <silofs/pstor.h>
 
 static void
 bld_set_btime(struct silofs_blob_desc *bld, const struct timespec *ts)

@@ -23,17 +23,23 @@ off_t silofs_off_min(off_t off1, off_t off2);
 
 off_t silofs_off_max(off_t off1, off_t off2);
 
+off_t silofs_off_max3(off_t off1, off_t off2, off_t off3);
+
+off_t silofs_off_clamp(off_t off, off_t off_lo, off_t off_hi);
+
 off_t silofs_off_end(off_t off, size_t len);
 
 off_t silofs_off_align(off_t off, ssize_t align);
 
 off_t silofs_off_next(off_t off, ssize_t len);
 
+off_t silofs_off_remainder(off_t off, size_t len);
+
 ssize_t silofs_off_diff(off_t beg, off_t end);
 
 ssize_t silofs_off_len(off_t beg, off_t end);
 
-off_t silofs_off_remainder(off_t off, size_t len);
+bool silofs_off_within(off_t off, off_t beg, off_t end);
 
 int silofs_verify_off(off_t off);
 

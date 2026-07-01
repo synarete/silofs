@@ -142,6 +142,8 @@ libsilofs_la_SOURCES += pstor.h
 
 libsilofs_la_SOURCES += fs/dir.c
 libsilofs_la_SOURCES += fs/file.c
+libsilofs_la_SOURCES += fs/file.h
+libsilofs_la_SOURCES += fs/filep.h
 libsilofs_la_SOURCES += fs/flush.c
 libsilofs_la_SOURCES += fs/format.c
 libsilofs_la_SOURCES += fs/idsmap.c

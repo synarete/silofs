@@ -36,6 +36,16 @@ off_t silofs_off_max(off_t off1, off_t off2)
 	return (off1 > off2) ? off1 : off2;
 }
 
+off_t silofs_off_max3(off_t off1, off_t off2, off_t off3)
+{
+	return silofs_off_max(silofs_off_max(off1, off2), off3);
+}
+
+off_t silofs_off_clamp(off_t off, off_t off_lo, off_t off_hi)
+{
+	return silofs_off_min(silofs_off_max(off, off_lo), off_hi);
+}
+
 off_t silofs_off_end(off_t off, size_t len)
 {
 	return off + (off_t)len;
@@ -53,7 +63,7 @@ off_t silofs_off_align(off_t off, ssize_t align)
 
 off_t silofs_off_next(off_t off, ssize_t len)
 {
-	return silofs_off_align(off + len, len);
+	return (len != 0) ? silofs_off_align(off + len, len) : off;
 }
 
 ssize_t silofs_off_diff(off_t beg, off_t end)
@@ -64,6 +74,11 @@ ssize_t silofs_off_diff(off_t beg, off_t end)
 ssize_t silofs_off_len(off_t beg, off_t end)
 {
 	return silofs_off_diff(beg, end);
+}
+
+bool silofs_off_within(off_t off, off_t beg, off_t end)
+{
+	return (beg <= off) && (off < end);
 }
 
 int silofs_verify_off(off_t off)

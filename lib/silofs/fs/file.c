@@ -29,61 +29,8 @@
 #include <silofs/fs.h>
 #include <silofs/run.h>
 
-enum silofs_file_op {
-	SILOFS_FILE_OP_NONE       = 0,
-	SILOFS_FILE_OP_READ       = 1,
-	SILOFS_FILE_OP_WRITE      = 2,
-	SILOFS_FILE_OP_TRUNC      = 3,
-	SILOFS_FILE_OP_FALLOC     = 4,
-	SILOFS_FILE_OP_FIEMAP     = 5,
-	SILOFS_FILE_OP_LSEEK      = 6,
-	SILOFS_FILE_OP_COPY_RANGE = 7,
-	SILOFS_FILE_OP_DROP       = 8,
-};
-
-enum silofs_file_leaf_size {
-	SILOFS_FILE_HEAD1_LEAF_SIZE = SILOFS_FILE_DATA_NODE1_SIZE,
-	SILOFS_FILE_HEAD2_LEAF_SIZE = SILOFS_FILE_DATA_NODE4_SIZE,
-	SILOFS_FILE_TREE_LEAF_SIZE  = SILOFS_FILE_DATA_NODE64_SIZE,
-};
-
-struct silofs_file_ctx {
-	enum silofs_file_op op;
-	enum silofs_stg_mode stg_mode;
-	struct silofs_task_ctx *task;
-	struct silofs_inode_info *ii;
-	struct silofs_rwiter_ctx *rwi_ctx;
-	struct fiemap *fm;
-	size_t len;
-	off_t beg;
-	off_t off;
-	off_t end;
-	int fl_mode;
-	int fm_flags;
-	int fm_stop;
-	int cp_flags;
-	int whence;
-	int with_backref;
-	int o_flags;
-	bool kill_suidgid;
-};
-
-struct silofs_fdnode_ref {
-	struct silofs_laddr laddr;
-	struct silofs_inode_info *ii;
-	struct silofs_ftnode_info *parent_fti;
-	off_t file_pos;
-	size_t slot_idx;
-	size_t leaf_size;
-	bool head1;
-	bool head2;
-	bool tree;
-	bool partial;
-	bool shared;
-	bool has_data;
-	bool has_hole;
-	bool unwritten;
-};
+#define SILOFS_USE_FILE_PRIVATE 1
+#include "filep.h"
 
 /* Local functions forward declarations. */
 static int filc_unshare_fdnode_by(const struct silofs_file_ctx *f_ctx,
@@ -118,41 +65,6 @@ static bool ii_isftype2(const struct silofs_inode_info *ii)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static off_t off_diff(off_t off1, off_t off2)
-{
-	return silofs_off_diff(off1, off2);
-}
-
-static off_t off_max(off_t off1, off_t off2)
-{
-	return silofs_off_max(off1, off2);
-}
-
-static off_t off_max3(off_t off1, off_t off2, off_t off3)
-{
-	return off_max(off_max(off1, off2), off3);
-}
-
-static off_t off_clamp(off_t off1, off_t off2, off_t off3)
-{
-	return silofs_off_min(off_max(off1, off2), off3);
-}
-
-static bool off_is_within(off_t off, off_t beg, off_t end)
-{
-	return (beg <= off) && (off < end);
-}
-
-static bool off_is_lbk_aligned(off_t off)
-{
-	return (off % SILOFS_LBK_SIZE) == 0;
-}
-
-static off_t off_align_to_lbk(off_t off)
-{
-	return silofs_off_align(off, SILOFS_LBK_SIZE);
-}
-
 static off_t off_in_data(off_t off, enum silofs_ltype ltype)
 {
 	const ssize_t len = silofs_ltype_ssize(ltype);
@@ -160,25 +72,19 @@ static off_t off_in_data(off_t off, enum silofs_ltype ltype)
 	return likely(len > 0) ? off % len : off;
 }
 
-static size_t off_ulen(off_t beg, off_t end)
-{
-	return (size_t)silofs_off_len(beg, end);
-}
-
 static size_t len_to_next(off_t off, enum silofs_ltype ltype)
 {
 	const ssize_t len = silofs_ltype_ssize(ltype);
-	const off_t next  = likely(len > 0) ? silofs_off_next(off, len) : off;
 
-	return off_ulen(off, next);
+	return off_ulen(off, off_next(off, len));
 }
 
 static size_t len_of_data(off_t off, off_t end, enum silofs_ltype ltype)
 {
 	const ssize_t len = silofs_ltype_ssize(ltype);
-	const off_t next  = likely(len > 0) ? silofs_off_next(off, len) : off;
+	const off_t nxt   = off_next(off, len);
 
-	return (next < end) ? off_ulen(off, next) : off_ulen(off, end);
+	return (nxt < end) ? off_ulen(off, nxt) : off_ulen(off, end);
 }
 
 static bool off_is_partial(off_t off, off_t end, enum silofs_ltype ltype)
@@ -236,12 +142,12 @@ static off_t off_head2_max(void)
 
 static bool off_is_head1(off_t off)
 {
-	return off_is_within(off, 0, off_head1_max());
+	return off_within(off, 0, off_head1_max());
 }
 
 static bool off_is_head2(off_t off)
 {
-	return off_is_within(off, off_head1_max(), off_head2_max());
+	return off_within(off, off_head1_max(), off_head2_max());
 }
 
 static size_t off_to_head1_slot(off_t off)
@@ -291,22 +197,6 @@ static size_t off_to_tree_height(off_t off)
 	}
 	silofs_assert_le(height, height_max);
 	return height;
-}
-
-static bool laddr_isnull(const struct silofs_laddr *laddr)
-{
-	return silofs_laddr_isnull(laddr);
-}
-
-static size_t laddr_len(const struct silofs_laddr *laddr)
-{
-	silofs_assert(silofs_ltype_isdata(laddr->ltype));
-	return silofs_laddr_len(laddr);
-}
-
-static const struct silofs_laddr *laddr_none(void)
-{
-	return silofs_laddr_none();
 }
 
 static bool ft_height_isbottom(size_t height)
@@ -591,7 +481,7 @@ static void ftn_dec_nactive_childs(struct silofs_ftree_node *ftn)
 
 static bool ftn_isinrange(const struct silofs_ftree_node *ftn, off_t pos)
 {
-	return off_is_within(pos, ftn_beg(ftn), ftn_end(ftn));
+	return off_within(pos, ftn_beg(ftn), ftn_end(ftn));
 }
 
 static enum silofs_ltype ftn_child_ltype(const struct silofs_ftree_node *ftn)
@@ -1425,7 +1315,7 @@ static int filc_check_file_io(const struct silofs_file_ctx *f_ctx)
 		if (f_ctx->cp_flags != 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (!off_is_lbk_aligned(f_ctx->beg) &&
+		if (!off_lbk_aligned(f_ctx->beg) &&
 		    (f_ctx->len > SILOFS_IO_SIZE_MAX)) {
 			return -SILOFS_EINVAL;
 		}

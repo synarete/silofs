@@ -272,7 +272,7 @@ static int format_zero_node_step3(const struct silofs_pexec_ctx *pexec,
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	/* Occupy laddr pos=0 indefinitely */
+	/* Occupy laddr pos=0 forever */
 	err = create_lnode(pexec, ltype, &lni);
 	return_if_err(err);
 
@@ -345,18 +345,18 @@ static int format_base_node_of(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int format_vspace_node_of(const struct silofs_pexec_ctx *pexec,
+static int format_vspace_node_of(const struct silofs_task_ctx *task,
                                  enum silofs_ltype ltype)
 {
 	int err;
 
-	err = format_space_node_of(pexec, ltype);
+	err = format_space_node_of(&task->pexec, ltype);
 	return_if_err(err);
 
-	err = format_zero_node_of(pexec, ltype);
+	err = format_zero_node_of(&task->pexec, ltype);
 	return_if_err(err);
 
-	err = format_base_node_of(pexec, ltype);
+	err = format_base_node_of(&task->pexec, ltype);
 	return_if_err(err);
 
 	return 0;
@@ -367,30 +367,17 @@ static bool has_vspace_mapping(enum silofs_ltype ltype)
 	return silofs_ltype_usespmap(ltype);
 }
 
-static int format_vspace_nodes(const struct silofs_pexec_ctx *pexec)
+static int format_vspace_nodes(const struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		if (has_vspace_mapping(ltype)) {
-			err = format_vspace_node_of(pexec, ltype);
+			err = format_vspace_node_of(task, ltype);
 			return_if_err(err);
 		}
 	}
-	return 0;
-}
-
-static int format_vspace(struct silofs_task_ctx *task)
-{
-	int err;
-
-	err = format_vspace_roots(task);
-	return_if_err(err);
-
-	err = format_vspace_nodes(&task->pexec);
-	return_if_err(err);
-
 	return 0;
 }
 
@@ -472,21 +459,21 @@ int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
 {
 	int err;
 
-	/* format pstor */
 	err = format_uber(task);
 	return_if_err(err);
 
-	err = format_vspace(task);
+	err = format_vspace_roots(task);
 	return_if_err(err);
 
-	/* format fs-meta */
 	err = format_super(task, fs_capacity);
+	return_if_err(err);
+
+	err = format_vspace_nodes(task);
 	return_if_err(err);
 
 	err = format_rootdir(task);
 	return_if_err(err);
 
-	/* resolve root uber-node */
 	resolve_uber(task, out_pnptr);
 
 	return 0;

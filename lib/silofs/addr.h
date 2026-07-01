@@ -28,64 +28,8 @@
 #include <silofs/str.h>
 #include <silofs/crypt.h>
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* offlba */
-
-bool silofs_off_isnull(off_t off);
-
-off_t silofs_off_min(off_t off1, off_t off2);
-
-off_t silofs_off_max(off_t off1, off_t off2);
-
-off_t silofs_off_end(off_t off, size_t len);
-
-off_t silofs_off_align(off_t off, ssize_t align);
-
-off_t silofs_off_next(off_t off, ssize_t len);
-
-ssize_t silofs_off_diff(off_t beg, off_t end);
-
-ssize_t silofs_off_len(off_t beg, off_t end);
-
-size_t silofs_off_ulen(off_t beg, off_t end);
-
-off_t silofs_off_remainder(off_t off, size_t len);
-
-int silofs_verify_off(off_t off);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* htox */
-uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
-
-void silofs_u8b_from_u64(uint8_t p[8], uint64_t u);
-
-uint16_t silofs_cpu_to_le16(uint16_t n);
-
-uint16_t silofs_le16_to_cpu(uint16_t n);
-
-uint32_t silofs_cpu_to_le32(uint32_t n);
-
-uint32_t silofs_le32_to_cpu(uint32_t n);
-
-uint64_t silofs_cpu_to_le64(uint64_t n);
-
-uint64_t silofs_le64_to_cpu(uint64_t n);
-
-uint64_t silofs_cpu_to_ino(ino_t ino);
-
-ino_t silofs_ino_to_cpu(uint64_t ino);
-
-int64_t silofs_cpu_to_off(off_t off);
-
-off_t silofs_off_to_cpu(int64_t off);
-
-uint64_t silofs_cpu_to_time(time_t tm);
-
-time_t silofs_time_to_cpu(uint64_t tm);
-
-void silofs_ts_to_cpu(const struct silofs_timespec *t, struct timespec *ts);
-
-void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec *t);
+#include <silofs/addr/offlen.h>
+#include <silofs/addr/htox.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* stype */
@@ -229,47 +173,7 @@ int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* paddr */
 
-/* persistent address with blob */
-struct silofs_paddr {
-	struct silofs_blobid blobid;
-	off_t                pos;
-	enum silofs_ptype    ptype;
-};
-
-const struct silofs_paddr *silofs_paddr_none(void);
-
-void silofs_paddr_init(struct silofs_paddr        *paddr,
-                       const struct silofs_blobid *blobid, off_t pos);
-
-void silofs_paddr_fini(struct silofs_paddr *paddr);
-
-void silofs_paddr_reset(struct silofs_paddr *paddr);
-
-void silofs_paddr_assign(struct silofs_paddr       *paddr,
-                         const struct silofs_paddr *other);
-
-bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
-                          const struct silofs_paddr *other);
-
-bool silofs_paddr_isnull(const struct silofs_paddr *paddr);
-
-long silofs_paddr_compare(const struct silofs_paddr *paddr1,
-                          const struct silofs_paddr *paddr2);
-
-void silofs_paddr_next(const struct silofs_paddr *paddr,
-                       struct silofs_paddr       *out_next);
-
-void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
-                          const struct silofs_paddr *paddr);
-
-void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
-                          struct silofs_paddr          *paddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
-                              const struct silofs_paddr      *paddr,
-                              struct silofs_caad             *out_caad);
+#include <silofs/addr/paddr.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* nmeta */
@@ -433,38 +337,7 @@ int silofs_fsref_import(const struct silofs_fsref *fsref,
 void silofs_fsrefs_export(struct silofs_fsrefs       *fsrefs,
                           const struct silofs_mbrefs *mbrefs);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* uidgid */
-
-uid_t silofs_uid_null(void);
-
-uid_t silofs_uid_nobody(void);
-
-bool silofs_uid_eq(uid_t uid1, uid_t uid2);
-
-bool silofs_uid_isnull(uid_t uid);
-
-bool silofs_uid_isroot(uid_t uid);
-
-gid_t silofs_gid_null(void);
-
-gid_t silofs_gid_nobody(void);
-
-bool silofs_gid_eq(gid_t gid1, gid_t gid2);
-
-bool silofs_gid_isnull(gid_t gid);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_cred_init(struct silofs_cred *cred);
-
-void silofs_cred_fini(struct silofs_cred *cred);
-
-void silofs_cred_assign(struct silofs_cred       *cred,
-                        const struct silofs_cred *other);
-
-void silofs_cred_setup(struct silofs_cred *cred, //
-                       uid_t uid, gid_t gid, mode_t umsk);
+#include <silofs/addr/uidgid.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* namestr */

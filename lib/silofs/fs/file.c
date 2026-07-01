@@ -160,12 +160,17 @@ static off_t off_in_data(off_t off, enum silofs_ltype ltype)
 	return likely(len > 0) ? off % len : off;
 }
 
+static size_t off_ulen(off_t beg, off_t end)
+{
+	return (size_t)silofs_off_len(beg, end);
+}
+
 static size_t len_to_next(off_t off, enum silofs_ltype ltype)
 {
 	const ssize_t len = silofs_ltype_ssize(ltype);
 	const off_t next  = likely(len > 0) ? silofs_off_next(off, len) : off;
 
-	return silofs_off_ulen(off, next);
+	return off_ulen(off, next);
 }
 
 static size_t len_of_data(off_t off, off_t end, enum silofs_ltype ltype)
@@ -173,8 +178,7 @@ static size_t len_of_data(off_t off, off_t end, enum silofs_ltype ltype)
 	const ssize_t len = silofs_ltype_ssize(ltype);
 	const off_t next  = likely(len > 0) ? silofs_off_next(off, len) : off;
 
-	return (next < end) ? silofs_off_ulen(off, next) :
-	                      silofs_off_ulen(off, end);
+	return (next < end) ? off_ulen(off, next) : off_ulen(off, end);
 }
 
 static bool off_is_partial(off_t off, off_t end, enum silofs_ltype ltype)
@@ -289,14 +293,6 @@ static size_t off_to_tree_height(off_t off)
 	return height;
 }
 
-static bool ft_height_isbottom(size_t height)
-{
-	silofs_expect_ge(height, 1);
-	silofs_expect_le(height, SILOFS_FILE_HEIGHT_MAX);
-
-	return (height <= 2);
-}
-
 static bool laddr_isnull(const struct silofs_laddr *laddr)
 {
 	return silofs_laddr_isnull(laddr);
@@ -311,6 +307,14 @@ static size_t laddr_len(const struct silofs_laddr *laddr)
 static const struct silofs_laddr *laddr_none(void)
 {
 	return silofs_laddr_none();
+}
+
+static bool ft_height_isbottom(size_t height)
+{
+	silofs_expect_ge(height, 1);
+	silofs_expect_le(height, SILOFS_FILE_HEIGHT_MAX);
+
+	return (height <= 2);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -495,7 +499,7 @@ static size_t ftn_nchilds_max(const struct silofs_ftree_node *ftn)
 
 static size_t ftn_span(const struct silofs_ftree_node *ftn)
 {
-	return silofs_off_ulen(ftn_beg(ftn), ftn_end(ftn));
+	return off_ulen(ftn_beg(ftn), ftn_end(ftn));
 }
 
 static size_t ftn_height(const struct silofs_ftree_node *ftn)
@@ -1008,7 +1012,7 @@ static int filc_require_mut_laddr(const struct silofs_file_ctx *f_ctx,
 
 static size_t filc_io_length(const struct silofs_file_ctx *f_ctx)
 {
-	return silofs_off_ulen(f_ctx->beg, f_ctx->off);
+	return off_ulen(f_ctx->beg, f_ctx->off);
 }
 
 static bool filc_has_more_io(const struct silofs_file_ctx *f_ctx)
@@ -3587,8 +3591,8 @@ int silofs_do_truncate(struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii, off_t off,
                        bool kill_suidgid)
 {
-	const off_t isp  = silofs_ii_span(ii);
-	const size_t len = (off < isp) ? silofs_off_ulen(off, isp) : 0;
+	const off_t isp              = silofs_ii_span(ii);
+	const size_t len             = (off < isp) ? off_ulen(off, isp) : 0;
 	struct silofs_file_ctx f_ctx = {
 		.op           = SILOFS_FILE_OP_TRUNC,
 		.stg_mode     = SILOFS_STG_COW,
@@ -4279,7 +4283,7 @@ static int filc_resolve_fpos(struct silofs_file_ctx *f_ctx,
 
 static size_t filc_copy_length_of(const struct silofs_file_ctx *f_ctx)
 {
-	const size_t len_to_end  = silofs_off_ulen(f_ctx->off, f_ctx->end);
+	const size_t len_to_end  = off_ulen(f_ctx->off, f_ctx->end);
 	const size_t len_to_next = filc_distance_to_next(f_ctx);
 
 	return silofs_min(len_to_end, len_to_next);

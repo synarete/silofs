@@ -521,6 +521,16 @@ static int fvsq_pull(struct silofs_freevsq *fvsq, size_t len, off_t *out_off)
 	return 0;
 }
 
+static size_t length_of(off_t beg, off_t end)
+{
+	ssize_t len;
+
+	silofs_assert_le(beg, end);
+	len = (end - beg);
+	silofs_assert_lt(len, INT64_MAX >> 12);
+	return (size_t)len;
+}
+
 static int fvsq_merge(struct silofs_freevsq *fvsq, off_t off, size_t len)
 {
 	struct silofs_vsp_entry *vspe = nullptr;
@@ -548,7 +558,7 @@ static int fvsq_merge(struct silofs_freevsq *fvsq, off_t off, size_t len)
 	}
 	end = vspe_end(vspe_next);
 	if (vspe == nullptr) {
-		const size_t new_len = silofs_off_ulen(off, end);
+		const size_t new_len = length_of(off, end);
 
 		/* merge with next only */
 		fvsq_evict_vspe(fvsq, vspe_next);

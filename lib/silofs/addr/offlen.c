@@ -66,11 +66,6 @@ ssize_t silofs_off_len(off_t beg, off_t end)
 	return silofs_off_diff(beg, end);
 }
 
-size_t silofs_off_ulen(off_t beg, off_t end)
-{
-	return (size_t)silofs_off_len(beg, end);
-}
-
 int silofs_verify_off(off_t off)
 {
 	if (!silofs_off_isnull(off)) {

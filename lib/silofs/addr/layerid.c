@@ -27,13 +27,18 @@ const struct silofs_layerid *silofs_layerid_none(void)
 
 void silofs_layerid_reset(struct silofs_layerid *layerid)
 {
-	memset(layerid->id, 0, sizeof(layerid->id));
+	memset(&layerid->uuid, 0, sizeof(layerid->uuid));
+}
+
+void silofs_layerid_generate(struct silofs_layerid *layerid)
+{
+	silofs_uuid_generate(&layerid->uuid);
 }
 
 void silofs_layerid_assign(struct silofs_layerid *layerid,
                            const struct silofs_layerid *other)
 {
-	memcpy(layerid->id, other->id, sizeof(layerid->id));
+	silofs_uuid_assign(&layerid->uuid, &other->uuid);
 }
 
 void silofs_layerid_assignx(struct silofs_layerid *layerid,
@@ -49,7 +54,7 @@ void silofs_layerid_assignx(struct silofs_layerid *layerid,
 long silofs_layerid_compare(const struct silofs_layerid *layerid,
                             const struct silofs_layerid *other)
 {
-	return memcmp(layerid->id, other->id, sizeof(layerid->id));
+	return silofs_uuid_compare(&layerid->uuid, &other->uuid);
 }
 
 bool silofs_layerid_isequal(const struct silofs_layerid *layerid,

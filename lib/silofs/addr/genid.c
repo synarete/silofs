@@ -58,8 +58,7 @@ void silofs_generate_uniqid(struct silofs_prandgen *prng,
 	take_prandom(prng, out_uniqid->id, sizeof(out_uniqid->id));
 }
 
-void silofs_generate_layerid(struct silofs_prandgen *prng,
-                             struct silofs_layerid *out_layerid)
+void silofs_generate_layerid(struct silofs_layerid *out_layerid)
 {
-	take_prandom(prng, out_layerid->id, sizeof(out_layerid->id));
+	silofs_layerid_generate(out_layerid);
 }

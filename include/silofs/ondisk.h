@@ -79,15 +79,6 @@
 /* repository blobs sub-directory */
 #define SILOFS_REPO_BLOBSDIR_NAME "blobs"
 
-/* layer identifier size */
-#define SILOFS_LAYERID_SIZE (16)
-
-/* unique identifier size */
-#define SILOFS_UNIQEID_SIZE (16)
-
-/* blob identifier size */
-#define SILOFS_BLOBID_SIZE (56)
-
 /* max number of hard-links to file or sub-directories */
 #define SILOFS_LINK_MAX ((1L << 15) - 1)
 
@@ -96,9 +87,6 @@
 
 /* size of main-boot-record */
 #define SILOFS_MBR_SIZE (1024)
-
-/* number of octets in UUID */
-#define SILOFS_UUID_SIZE (16)
 
 /* size of common meta-data header */
 #define SILOFS_HEADER_SIZE (16)
@@ -438,10 +426,6 @@ struct silofs_timespec {
 	uint64_t t_nsec;
 } silofs_attr_aligned16;
 
-struct silofs_uuid {
-	uint8_t id[SILOFS_UUID_SIZE];
-} silofs_attr_aligned16;
-
 struct silofs_hash128 {
 	uint8_t hash[SILOFS_HASH128_LEN];
 } silofs_attr_aligned16;
@@ -497,17 +481,30 @@ struct silofs_mac {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* common layer identifier */
-struct silofs_layerid {
-	uint8_t id[SILOFS_LAYERID_SIZE];
+/* universally unique Identifier */
+#define SILOFS_UUID_SIZE (16)
+
+struct silofs_uuid {
+	uint8_t id[SILOFS_UUID_SIZE];
 } silofs_attr_aligned8;
 
-/* unique identifier within blob */
+/* layer identifier (UUID) */
+struct silofs_layerid {
+	struct silofs_uuid uuid;
+} silofs_attr_aligned8;
+
+/* unique identifier within layer */
+#define SILOFS_UNIQEID_SIZE (16)
+
 struct silofs_uniqid {
 	uint8_t id[SILOFS_UNIQEID_SIZE];
 } silofs_attr_aligned8;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /* blob-identifier */
+#define SILOFS_BLOBID_SIZE (56)
+
 struct silofs_blobid56b {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;

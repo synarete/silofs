@@ -30,7 +30,8 @@ top_layerid(const struct silofs_pexec_ctx *pexec)
 static void gen_layerid(const struct silofs_pexec_ctx *pexec,
                         struct silofs_layerid *out_layerid)
 {
-	silofs_generate_layerid(pexec->prng, out_layerid);
+	silofs_generate_layerid(out_layerid);
+	silofs_unused(pexec);
 }
 
 static void gen_uniqid(const struct silofs_pexec_ctx *pexec,

@@ -164,12 +164,10 @@ static void validate_ondisk_base_types(void)
 static void validate_ondisk_addrs(void)
 {
 	REQUIRE_SIZEOF(struct silofs_layerid, 16);
-	REQUIRE_SIZEOF(struct silofs_layerid, SILOFS_LAYERID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_uniqid, 16);
 	REQUIRE_SIZEOF(struct silofs_uniqid, SILOFS_UNIQEID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
 	REQUIRE_SIZEOF(struct silofs_blobid56b, SILOFS_BLOBID_SIZE);
-	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
 	REQUIRE_SIZEOF(struct silofs_laddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_laddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);

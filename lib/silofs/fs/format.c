@@ -31,7 +31,7 @@ laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
 
 static void drop_caches(const struct silofs_pexec_ctx *pexec)
 {
-	silofs_vcache_drop(pexec->vcache);
+	silofs_lcache_drop(pexec->lcache);
 	silofs_pcache_drop(pexec->pcache);
 }
 

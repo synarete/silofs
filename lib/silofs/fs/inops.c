@@ -165,7 +165,7 @@ static int fetch_cached_lni(struct silofs_task_ctx *task,
                             const struct silofs_laddr *laddr,
                             struct silofs_lnode_info **out_lni)
 {
-	*out_lni = silofs_vcache_lookup_lnode(task->pexec.vcache, laddr);
+	*out_lni = silofs_lcache_lookup_lnode(task->pexec.lcache, laddr);
 	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 

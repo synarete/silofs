@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_VCACHE_H_
-#define SILOFS_VCACHE_H_
+#ifndef SILOFS_LCACHE_H_
+#define SILOFS_LCACHE_H_
 
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
@@ -23,36 +23,36 @@
 #include <silofs/addr.h>
 
 /* in-memory caching */
-struct silofs_vcache {
+struct silofs_lcache {
 	struct silofs_alloc *vc_alloc;
 	struct silofs_hmapq  vc_hmapq;
 	struct silofs_dirtyq vc_dirtyq;
 };
 
-int silofs_vcache_init(struct silofs_vcache *vcache,
+int silofs_lcache_init(struct silofs_lcache *lcache,
                        struct silofs_alloc  *alloc);
 
-void silofs_vcache_fini(struct silofs_vcache *vcache);
+void silofs_lcache_fini(struct silofs_lcache *lcache);
 
-size_t silofs_vcache_relax(struct silofs_vcache *vcache, int flags);
+size_t silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
 
-void silofs_vcache_drop(struct silofs_vcache *vcache);
-
-struct silofs_lnode_info *
-silofs_vcache_dq_front(const struct silofs_vcache *vcache);
+void silofs_lcache_drop(struct silofs_lcache *lcache);
 
 struct silofs_lnode_info *
-silofs_vcache_lookup_lnode(struct silofs_vcache      *vcache,
+silofs_lcache_dq_front(const struct silofs_lcache *lcache);
+
+struct silofs_lnode_info *
+silofs_lcache_lookup_lnode(struct silofs_lcache      *lcache,
                            const struct silofs_laddr *laddr);
 
 struct silofs_lnode_info *
-silofs_vcache_create_lnode(struct silofs_vcache      *vcache,
+silofs_lcache_create_lnode(struct silofs_lcache      *lcache,
                            const struct silofs_laddr *laddr);
 
-void silofs_vcache_forget_lnode(struct silofs_vcache     *vcache,
+void silofs_lcache_forget_lnode(struct silofs_lcache     *lcache,
                                 struct silofs_lnode_info *lni);
 
-void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
+void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
                                  struct silofs_cache_stats  *out_cstats);
 
-#endif /* SILOFS_VCACHE_H_ */
+#endif /* SILOFS_LCACHE_H_ */

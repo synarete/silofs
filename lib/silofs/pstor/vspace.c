@@ -20,7 +20,7 @@
 struct silofs_vspace_ctx {
 	const struct silofs_pexec_ctx *pexec;
 	struct silofs_freevsqs *fvsqs;
-	struct silofs_vcache *vcache;
+	struct silofs_lcache *lcache;
 	struct silofs_uber_info *ubi;
 	enum silofs_ltype ltype;
 };
@@ -31,7 +31,7 @@ vsc_init(struct silofs_vspace_ctx *vs_ctx,
 {
 	vs_ctx->pexec  = pexec;
 	vs_ctx->fvsqs  = pexec->fvsqs;
-	vs_ctx->vcache = pexec->vcache;
+	vs_ctx->lcache = pexec->lcache;
 	vs_ctx->ubi    = pexec->ubref->ubi;
 	vs_ctx->ltype  = ltype;
 

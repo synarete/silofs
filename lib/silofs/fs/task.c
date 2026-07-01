@@ -79,7 +79,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->pexec.prng      = env->base.prng;
 	task->pexec.dstor     = env->base.dstor;
 	task->pexec.pcache    = env->base.pcache;
-	task->pexec.vcache    = env->base.vcache;
+	task->pexec.lcache    = env->base.lcache;
 	task->pexec.fvsqs     = env->base.fvsqs;
 	task->pexec.fpaqs     = env->base.fpaqs;
 	task->pexec.md_hd     = &env->md_hd;

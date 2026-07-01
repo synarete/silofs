@@ -423,7 +423,7 @@ void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 #include <silofs/nodes/lnodes.h>
-#include <silofs/nodes/vcache.h>
+#include <silofs/nodes/lcache.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* freesq */

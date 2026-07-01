@@ -30,7 +30,7 @@ enum silofs_env_initf {
 	SILOFS_ENVIF_STDALLOC = SILOFS_BIT(2),
 	SILOFS_ENVIF_REPO     = SILOFS_BIT(3),
 	SILOFS_ENVIF_PCACHE   = SILOFS_BIT(4),
-	SILOFS_ENVIF_VCACHE   = SILOFS_BIT(5),
+	SILOFS_ENVIF_LCACHE   = SILOFS_BIT(5),
 	SILOFS_ENVIF_FREESQS  = SILOFS_BIT(6),
 	SILOFS_ENVIF_IDSMAP   = SILOFS_BIT(9),
 	SILOFS_ENVIF_FUSEQ    = SILOFS_BIT(11),
@@ -49,7 +49,7 @@ struct silofs_env_inst {
 	union silofs_alloc_u alloc_u;
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
-	struct silofs_vcache vcache;
+	struct silofs_lcache lcache;
 	struct silofs_freevsqs fvsqs;
 	struct silofs_freepaqs fpaqs;
 	struct silofs_idsmap idsmap;
@@ -346,22 +346,22 @@ static void envi_fini_pcache(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_vcache(struct silofs_env_inst *envi)
+static int envi_init_lcache(struct silofs_env_inst *envi)
 {
 	int err;
 
-	err = silofs_vcache_init(&envi->vcache, envi->alloc);
+	err = silofs_lcache_init(&envi->lcache, envi->alloc);
 	return_if_err(err);
 
-	envi->initf |= SILOFS_ENVIF_VCACHE;
+	envi->initf |= SILOFS_ENVIF_LCACHE;
 	return 0;
 }
 
-static void envi_fini_vcache(struct silofs_env_inst *envi)
+static void envi_fini_lcache(struct silofs_env_inst *envi)
 {
-	if (envi->initf & SILOFS_ENVIF_VCACHE) {
-		silofs_vcache_fini(&envi->vcache);
-		envi->initf &= ~SILOFS_ENVIF_VCACHE;
+	if (envi->initf & SILOFS_ENVIF_LCACHE) {
+		silofs_lcache_fini(&envi->lcache);
+		envi->initf &= ~SILOFS_ENVIF_LCACHE;
 	}
 }
 
@@ -417,7 +417,7 @@ static int envi_init_env(struct silofs_env_inst *envi)
 		.repo   = &envi->repo,
 		.dstor  = &envi->repo.re_dstor,
 		.pcache = &envi->pcache,
-		.vcache = &envi->vcache,
+		.lcache = &envi->lcache,
 		.fvsqs  = &envi->fvsqs,
 		.fpaqs  = &envi->fpaqs,
 		.idsmap = &envi->idsmap,
@@ -468,7 +468,7 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_env(envi);
 	envi_fini_idsmap(envi);
 	envi_fini_freesqs(envi);
-	envi_fini_vcache(envi);
+	envi_fini_lcache(envi);
 	envi_fini_pcache(envi);
 	envi_fini_repo(envi);
 	envi_fini_nil_bk(envi);
@@ -496,7 +496,7 @@ static int envi_init(struct silofs_env_inst *envi, size_t memwant,
 	err = envi_init_pcache(envi);
 	goto_out_if_err(err);
 
-	err = envi_init_vcache(envi);
+	err = envi_init_lcache(envi);
 	goto_out_if_err(err);
 
 	err = envi_init_freesqs(envi);

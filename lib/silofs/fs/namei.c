@@ -2484,7 +2484,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 static void relax_post_forkfs(const struct silofs_task_ctx *task)
 {
-	silofs_vcache_relax(task->pexec.vcache, SILOFS_CTLF_NOW);
+	silofs_lcache_relax(task->pexec.lcache, SILOFS_CTLF_NOW);
 }
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
@@ -2679,7 +2679,7 @@ static int try_forget_cached_ii(const struct silofs_task_ctx *task,
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
 		struct silofs_lnode_info *lni = silofs_ii_to_lni(ii);
 
-		silofs_vcache_forget_lnode(task->pexec.vcache, lni);
+		silofs_lcache_forget_lnode(task->pexec.lcache, lni);
 	}
 	return 0;
 }

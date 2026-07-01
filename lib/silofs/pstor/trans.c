@@ -197,13 +197,13 @@ static struct silofs_lnode_info *
 lookup_cached_lni(const struct silofs_pexec_ctx *pexec,
                   const struct silofs_laddr *laddr)
 {
-	return silofs_vcache_lookup_lnode(pexec->vcache, laddr);
+	return silofs_lcache_lookup_lnode(pexec->lcache, laddr);
 }
 
 static void forget_cached_lni(const struct silofs_pexec_ctx *pexec,
                               struct silofs_lnode_info *lni)
 {
-	silofs_vcache_forget_lnode(pexec->vcache, lni);
+	silofs_lcache_forget_lnode(pexec->lcache, lni);
 }
 
 static void try_forget_cached_lni(const struct silofs_pexec_ctx *pexec,

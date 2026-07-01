@@ -250,7 +250,7 @@ struct silofs_stage_ctx {
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
-	struct silofs_vcache *vcache;
+	struct silofs_lcache *lcache;
 	enum silofs_spacef spacef;
 };
 
@@ -261,7 +261,7 @@ stc_init(struct silofs_stage_ctx *st_ctx, const struct silofs_pexec_ctx *pexec)
 	st_ctx->alloc  = pexec->alloc;
 	st_ctx->dstor  = pexec->dstor;
 	st_ctx->pcache = pexec->pcache;
-	st_ctx->vcache = pexec->vcache;
+	st_ctx->lcache = pexec->lcache;
 	st_ctx->spacef = SILOFS_SPACEF_NONE;
 }
 
@@ -779,7 +779,7 @@ static int stc_lookup_cached_lnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_laddr *laddr,
                                    struct silofs_lnode_info **out_lni)
 {
-	*out_lni = silofs_vcache_lookup_lnode(st_ctx->vcache, laddr);
+	*out_lni = silofs_lcache_lookup_lnode(st_ctx->lcache, laddr);
 
 	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
@@ -788,7 +788,7 @@ static int stc_create_cached_lnode(const struct silofs_stage_ctx *st_ctx,
                                    const struct silofs_laddr *laddr,
                                    struct silofs_lnode_info **out_lni)
 {
-	*out_lni = silofs_vcache_create_lnode(st_ctx->vcache, laddr);
+	*out_lni = silofs_lcache_create_lnode(st_ctx->lcache, laddr);
 
 	return (*out_lni == nullptr) ? -SILOFS_ENOMEM : 0;
 }
@@ -1073,7 +1073,7 @@ static void dsc_initv(struct silofs_destage_ctx *ds_ctx,
                       const struct silofs_pexec_ctx *pexec)
 {
 	dsc_init(ds_ctx, pexec);
-	ds_ctx->drq = &pexec->vcache->vc_dirtyq;
+	ds_ctx->drq = &pexec->lcache->vc_dirtyq;
 }
 
 static void dsc_fini(struct silofs_destage_ctx *ds_ctx)

@@ -28,7 +28,7 @@ static size_t hdr_size_by(uint8_t stype, enum silofs_hdrf flags)
 	if (flags & SILOFS_HDRF_PNODE) {
 		sz = silofs_ptype_size(stype);
 	} else if (flags & SILOFS_HDRF_VNODE) {
-		sz = silofs_vtype_size(stype);
+		sz = silofs_ltype_size(stype);
 	} else {
 		sz = sizeof(struct silofs_header);
 	}
@@ -199,76 +199,76 @@ int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static bool lview_isdata(enum silofs_vtype vtype)
+static bool lview_isdata(enum silofs_ltype ltype)
 {
-	return silofs_vtype_isdata(vtype);
+	return silofs_ltype_isdata(ltype);
 }
 
-static size_t lview_len(enum silofs_vtype vtype)
+static size_t lview_len(enum silofs_ltype ltype)
 {
-	return silofs_vtype_size(vtype);
+	return silofs_ltype_size(ltype);
 }
 
 static struct silofs_lview *
-lview_malloc(struct silofs_alloc *alloc, enum silofs_vtype vtype, int flags)
+lview_malloc(struct silofs_alloc *alloc, enum silofs_ltype ltype, int flags)
 {
-	return silofs_memalloc(alloc, lview_len(vtype), flags);
+	return silofs_memalloc(alloc, lview_len(ltype), flags);
 }
 
 static void lview_free(struct silofs_lview *lview, struct silofs_alloc *alloc,
-                       enum silofs_vtype vtype, int flags)
+                       enum silofs_ltype ltype, int flags)
 {
-	silofs_memfree(alloc, lview, lview_len(vtype), flags);
+	silofs_memfree(alloc, lview, lview_len(ltype), flags);
 }
 
 static void
-lview_init_meta(struct silofs_lview *lview, enum silofs_vtype vtype)
+lview_init_meta(struct silofs_lview *lview, enum silofs_ltype ltype)
 {
-	memset(lview, 0, lview_len(vtype));
-	silofs_hdr_setup(&lview->u.hdr[0], (uint8_t)vtype, SILOFS_HDRF_VNODE);
+	memset(lview, 0, lview_len(ltype));
+	silofs_hdr_setup(&lview->u.hdr[0], (uint8_t)ltype, SILOFS_HDRF_VNODE);
 }
 
-void silofs_lview_setup(struct silofs_lview *lview, enum silofs_vtype vtype)
+void silofs_lview_setup(struct silofs_lview *lview, enum silofs_ltype ltype)
 {
-	if (!lview_isdata(vtype)) {
-		lview_init_meta(lview, vtype);
+	if (!lview_isdata(ltype)) {
+		lview_init_meta(lview, ltype);
 	}
 }
 
 static void
-lview_fini_meta(struct silofs_lview *lview, enum silofs_vtype vtype)
+lview_fini_meta(struct silofs_lview *lview, enum silofs_ltype ltype)
 {
 	const size_t nz =
-		silofs_min(lview_len(vtype), sizeof(lview->u.hdr[0]));
+		silofs_min(lview_len(ltype), sizeof(lview->u.hdr[0]));
 
 	memset(lview, 0, nz);
 }
 
-static void lview_fini(struct silofs_lview *lview, enum silofs_vtype vtype)
+static void lview_fini(struct silofs_lview *lview, enum silofs_ltype ltype)
 {
-	if (!lview_isdata(vtype)) {
-		lview_fini_meta(lview, vtype);
+	if (!lview_isdata(ltype)) {
+		lview_fini_meta(lview, ltype);
 	}
 }
 
 struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
-                                      enum silofs_vtype vtype, int flags)
+                                      enum silofs_ltype ltype, int flags)
 {
 	struct silofs_lview *lview = nullptr;
 
-	lview = lview_malloc(alloc, vtype, flags);
+	lview = lview_malloc(alloc, ltype, flags);
 	if (lview != nullptr) {
-		silofs_lview_setup(lview, vtype);
+		silofs_lview_setup(lview, ltype);
 	}
 	return lview;
 }
 
 void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
-                      enum silofs_vtype vtype, int flags)
+                      enum silofs_ltype ltype, int flags)
 {
 	if (likely(lview != nullptr)) {
-		lview_fini(lview, vtype);
-		lview_free(lview, alloc, vtype, flags);
+		lview_fini(lview, ltype);
+		lview_free(lview, alloc, ltype, flags);
 	}
 }
 
@@ -278,12 +278,12 @@ void silofs_lview_seal(struct silofs_lview *lview)
 }
 
 int silofs_lview_verify(const struct silofs_lview *lview,
-                        enum silofs_vtype vtype)
+                        enum silofs_ltype ltype)
 {
 	int ret = 0;
 
-	if (!silofs_vtype_isdata(vtype)) {
-		ret = silofs_hdr_verify(&lview->u.hdr[0], (uint8_t)vtype,
+	if (!silofs_ltype_isdata(ltype)) {
+		ret = silofs_hdr_verify(&lview->u.hdr[0], (uint8_t)ltype,
 		                        SILOFS_HDRF_VNODE);
 	}
 	return ret;
@@ -294,7 +294,7 @@ int silofs_lview_verify(const struct silofs_lview *lview,
 int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
                          const struct silofs_lview *lview,
-                         enum silofs_vtype vtype, void *ptr)
+                         enum silofs_ltype ltype, void *ptr)
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
@@ -305,7 +305,7 @@ int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
 		.ctag_out = nullptr,
 		.data_in  = lview,
 		.data_out = ptr,
-		.data_len = lview_len(vtype),
+		.data_len = lview_len(ltype),
 	};
 
 	return silofs_encrypt(&ed_ctx);
@@ -314,7 +314,7 @@ int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
 int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey *civkey,
                          const struct silofs_lview *lview,
-                         enum silofs_vtype vtype, void *ptr)
+                         enum silofs_ltype ltype, void *ptr)
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
@@ -325,7 +325,7 @@ int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
 		.ctag_out = nullptr,
 		.data_in  = lview,
 		.data_out = ptr,
-		.data_len = lview_len(vtype),
+		.data_len = lview_len(ltype),
 	};
 
 	return silofs_decrypt(&ed_ctx);
@@ -334,7 +334,7 @@ int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 const struct silofs_civkey *civkey,
                                 struct silofs_lview *lview,
-                                enum silofs_vtype vtype)
+                                enum silofs_ltype ltype)
 {
 	const struct silofs_encdec_ctx ed_ctx = {
 		.ci_hd    = ci_hd,
@@ -345,7 +345,7 @@ int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
 		.ctag_out = nullptr,
 		.data_in  = lview,
 		.data_out = lview,
-		.data_len = lview_len(vtype),
+		.data_len = lview_len(ltype),
 	};
 
 	return silofs_decrypt(&ed_ctx);

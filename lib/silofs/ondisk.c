@@ -170,8 +170,8 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
 	REQUIRE_SIZEOF(struct silofs_blobid56b, SILOFS_BLOBID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
-	REQUIRE_SIZEOF(struct silofs_vaddr56, 7);
-	REQUIRE_SIZEOF(struct silofs_vaddr64, 8);
+	REQUIRE_SIZEOF(struct silofs_laddr56, 7);
+	REQUIRE_SIZEOF(struct silofs_laddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_pnptr256b, 256);
 	REQUIRE_SIZEOF(struct silofs_spdesc128b, 128);
@@ -290,7 +290,7 @@ static void validate_ondisk_space_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_hdr, 0);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_base_off, 16);
-	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_vtype, 24);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_ltype, 24);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_flags, 1024);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_refcnt, 2048);
 	REQUIRE_SIZEOF_4K(struct silofs_space_node);
@@ -316,7 +316,7 @@ static void validate_ondisk_inode(void)
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_root, 0);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_seed, 8);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_ndents, 16);
-	REQUIRE_OFFSET64(struct silofs_inode_xattr, ix_vaddr, 0);
+	REQUIRE_OFFSET64(struct silofs_inode_xattr, ix_laddr, 0);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
 	REQUIRE_SIZEOF(struct silofs_inode_xattr, 256);
 	REQUIRE_SIZEOF(struct silofs_inode_file, 512);
@@ -356,7 +356,7 @@ static void validate_ondisk_ftree_node(void)
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_end, 56);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_nactive_childs, 64);
 	REQUIRE_OFFSET32(struct silofs_ftree_node, fn_height, 68);
-	REQUIRE_OFFSETXX(struct silofs_ftree_node, fn_child_vtype, 69);
+	REQUIRE_OFFSETXX(struct silofs_ftree_node, fn_child_ltype, 69);
 
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_zeros, 128);
 	REQUIRE_OFFSET64(struct silofs_ftree_node, fn_child, 1024);

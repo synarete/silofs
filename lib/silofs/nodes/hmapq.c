@@ -103,11 +103,11 @@ static uint64_t hash_of_paddr(const struct silofs_paddr *paddr)
 	return x ^ blobid_hash64(&paddr->blobid);
 }
 
-static uint64_t hash_of_vaddr(const struct silofs_vaddr *vaddr)
+static uint64_t hash_of_laddr(const struct silofs_laddr *laddr)
 {
-	const uint64_t off = (uint64_t)vaddr->off;
+	const uint64_t off = (uint64_t)laddr->off;
 
-	return silofs_lrotate64(off + vaddr->vtype, 7) ^ 0x736f6d6570736575ULL;
+	return silofs_lrotate64(off + laddr->ltype, 7) ^ 0x736f6d6570736575ULL;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -133,10 +133,10 @@ static long hkey_compare_as_paddr(const struct silofs_hkey *hkey1,
 	return silofs_paddr_compare(hkey1->keyu.paddr, hkey2->keyu.paddr);
 }
 
-static long hkey_compare_as_vaddr(const struct silofs_hkey *hkey1,
+static long hkey_compare_as_laddr(const struct silofs_hkey *hkey1,
                                   const struct silofs_hkey *hkey2)
 {
-	return silofs_vaddr_compare(hkey1->keyu.vaddr, hkey2->keyu.vaddr);
+	return silofs_laddr_compare(hkey1->keyu.laddr, hkey2->keyu.laddr);
 }
 
 static long hkey_compare_as(const struct silofs_hkey *hkey1,
@@ -149,7 +149,7 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 		cmp = hkey_compare_as_paddr(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_VADDR:
-		cmp = hkey_compare_as_vaddr(hkey1, hkey2);
+		cmp = hkey_compare_as_laddr(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_NONE:
 	default:
@@ -187,7 +187,7 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 		hash = hash_of_paddr(key);
 		break;
 	case SILOFS_HKEY_VADDR:
-		hash = hash_of_vaddr(key);
+		hash = hash_of_laddr(key);
 		break;
 	case SILOFS_HKEY_NONE:
 	default:
@@ -209,10 +209,10 @@ void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
 	hkey_setup_by(hkey, SILOFS_HKEY_PADDR, paddr);
 }
 
-void silofs_hkey_by_vaddr(struct silofs_hkey *hkey,
-                          const struct silofs_vaddr *vaddr)
+void silofs_hkey_by_laddr(struct silofs_hkey *hkey,
+                          const struct silofs_laddr *laddr)
 {
-	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, vaddr);
+	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

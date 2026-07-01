@@ -82,9 +82,9 @@ bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 struct silofs_inode_info *
 silofs_ii_unconst(const struct silofs_inode_info *ii);
 
-struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii);
+struct silofs_lnode_info *silofs_ii_to_lni(const struct silofs_inode_info *ii);
 
-const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii);
+const struct silofs_laddr *silofs_ii_laddr(const struct silofs_inode_info *ii);
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
 
@@ -145,7 +145,7 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 void silofs_make_iattr_of(const struct silofs_inode_info *ii,
                           struct silofs_iattr            *out_iattr);
 
-void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii);
+void silofs_ii_cleardirty_lnis(struct silofs_inode_info *ii);
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 
@@ -191,7 +191,7 @@ void silofs_update_itimes_of(const struct silofs_task_ctx *task,
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
                               struct silofs_inode_info     *ii,
-                              enum silofs_vtype vtype, long dif);
+                              enum silofs_ltype ltype, long dif);
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
                              struct silofs_inode_info     *ii,

@@ -38,19 +38,19 @@ size_t silofs_vcache_relax(struct silofs_vcache *vcache, int flags);
 
 void silofs_vcache_drop(struct silofs_vcache *vcache);
 
-struct silofs_vnode_info *
+struct silofs_lnode_info *
 silofs_vcache_dq_front(const struct silofs_vcache *vcache);
 
-struct silofs_vnode_info *
-silofs_vcache_lookup_vnode(struct silofs_vcache      *vcache,
-                           const struct silofs_vaddr *vaddr);
+struct silofs_lnode_info *
+silofs_vcache_lookup_lnode(struct silofs_vcache      *vcache,
+                           const struct silofs_laddr *laddr);
 
-struct silofs_vnode_info *
-silofs_vcache_create_vnode(struct silofs_vcache      *vcache,
-                           const struct silofs_vaddr *vaddr);
+struct silofs_lnode_info *
+silofs_vcache_create_lnode(struct silofs_vcache      *vcache,
+                           const struct silofs_laddr *laddr);
 
-void silofs_vcache_forget_vnode(struct silofs_vcache     *vcache,
-                                struct silofs_vnode_info *vni);
+void silofs_vcache_forget_lnode(struct silofs_vcache     *vcache,
+                                struct silofs_lnode_info *lni);
 
 void silofs_vcache_collect_stats(const struct silofs_vcache *vcache,
                                  struct silofs_cache_stats  *out_cstats);

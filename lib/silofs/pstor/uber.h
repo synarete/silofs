@@ -28,7 +28,7 @@ struct silofs_uber_stat {
 };
 
 struct silofs_uber_stats {
-	struct silofs_uber_stat st[SILOFS_VTYPE_LAST];
+	struct silofs_uber_stat st[SILOFS_LTYPE_LAST];
 };
 
 const struct silofs_pnptr *silofs_ubi_self(const struct silofs_uber_info *ubi);
@@ -56,7 +56,7 @@ void silofs_ubi_set_btroot_by(struct silofs_uber_info         *ubi,
                               const struct silofs_btnode_info *bti);
 
 void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
-                          enum silofs_vtype              vtype,
+                          enum silofs_ltype              ltype,
                           struct silofs_pnptr           *out_pnptr);
 
 void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
@@ -76,7 +76,7 @@ void silofs_ubi_dec_count_by(struct silofs_uber_info    *ubi,
                              const struct silofs_blobid *blobid);
 
 void silofs_ubi_stat_of(const struct silofs_uber_info *ubi,
-                        enum silofs_vtype              vtype,
+                        enum silofs_ltype              ltype,
                         struct silofs_uber_stat       *out_stat);
 
 void silofs_ubi_collect_stats(const struct silofs_uber_info *ubi,

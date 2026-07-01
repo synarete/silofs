@@ -67,7 +67,7 @@ struct silofs_mntparams {
 
 struct silofs_mntclnt {
 	struct silofs_socket   mc_sock;
-	struct silofs_sockaddr mc_srvaddr;
+	struct silofs_sockaddr mc_srladdr;
 };
 
 struct silofs_mntsvc {

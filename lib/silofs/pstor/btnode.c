@@ -56,15 +56,15 @@ static void btn_rm_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
 	btn_set_flags(btn, (enum silofs_btnodef)newf);
 }
 
-static enum silofs_vtype btn_vspace(const struct silofs_btree_node *btn)
+static enum silofs_ltype btn_vspace(const struct silofs_btree_node *btn)
 {
 	const unsigned vspace = btn->btn_vspace;
 
-	return (enum silofs_vtype)vspace;
+	return (enum silofs_ltype)vspace;
 }
 
 static void
-btn_set_vspace(struct silofs_btree_node *btn, enum silofs_vtype vspace)
+btn_set_vspace(struct silofs_btree_node *btn, enum silofs_ltype vspace)
 {
 	btn->btn_vspace = (uint8_t)vspace;
 }
@@ -743,15 +743,15 @@ void silofs_bti_cleardirty(struct silofs_btnode_info *bti)
 	silofs_pni_cleardirty(&bti->btn_pni);
 }
 
-enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti)
+enum silofs_ltype silofs_bti_vspace(const struct silofs_btnode_info *bti)
 {
 	return btn_vspace(bti->btn);
 }
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
-                           enum silofs_vtype vspace)
+                           enum silofs_ltype vspace)
 {
-	silofs_assert(silofs_vtype_isvnode(vspace));
+	silofs_assert(silofs_ltype_islnode(vspace));
 	btn_set_vspace(bti->btn, vspace);
 	bti_setdirty(bti);
 }
@@ -894,11 +894,11 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti)
 	return btn_nkeys(bti->btn) == btn_nkeys_max(bti->btn);
 }
 
-static enum silofs_vtype bti_self_vspace(const struct silofs_btnode_info *bti)
+static enum silofs_ltype bti_self_vspace(const struct silofs_btnode_info *bti)
 {
 	const struct silofs_pnptr *self = silofs_bti_self(bti);
 
-	return self->paddr.blobid.stype.vtype;
+	return self->paddr.blobid.stype.ltype;
 }
 
 static void bti_update_vspace_by_self(struct silofs_btnode_info *bti)

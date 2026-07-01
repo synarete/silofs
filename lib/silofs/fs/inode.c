@@ -30,11 +30,14 @@ static void ii_update_itimes(struct silofs_inode_info *ii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static ino_t ino_from_vaddr(const struct silofs_vaddr *vaddr)
+static ino_t ino_from_laddr(const struct silofs_laddr *laddr)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
+	ino_t ino;
 
-	return silofs_vaddr_to_ino(vaddr);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_INODE);
+
+	silofs_laddr_to_ino(laddr, &ino);
+	return ino;
 }
 
 bool silofs_ino_isnull(ino_t ino)
@@ -361,14 +364,14 @@ void silofs_make_iattr_of(const struct silofs_inode_info *ii,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct silofs_inode_info *
-ii_from_vni2(const struct silofs_vnode_info *vni)
+ii_from_lni2(const struct silofs_lnode_info *lni)
 {
-	return container_of(vni, struct silofs_inode_info, i_vni);
+	return container_of(lni, struct silofs_inode_info, i_lni);
 }
 
-static bool ii_isevictable_as(const struct silofs_vnode_info *vni)
+static bool ii_isevictable_as(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_inode_info *ii = ii_from_vni2(vni);
+	const struct silofs_inode_info *ii = ii_from_lni2(lni);
 
 	return silofs_ii_isevictable(ii);
 }
@@ -510,12 +513,12 @@ bool silofs_is_rootdir(const struct silofs_inode_info *ii)
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
 {
-	ii->i_vni.vn_flags |= SILOFS_VNF_LOOSE;
+	ii->i_lni.vn_flags |= SILOFS_LNF_LOOSE;
 }
 
 bool silofs_ii_isloose(const struct silofs_inode_info *ii)
 {
-	return (ii->i_vni.vn_flags & SILOFS_VNF_LOOSE) > 0;
+	return (ii->i_lni.vn_flags & SILOFS_LNF_LOOSE) > 0;
 }
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii)
@@ -539,14 +542,14 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	bool ret = false;
 
 	if (ii->i_nopen == 0) {
-		ret = silofs_vni_isevictable(&ii->i_vni);
+		ret = silofs_lni_isevictable(&ii->i_lni);
 	}
 	return ret;
 }
 
 static void ii_setdirty(struct silofs_inode_info *ii)
 {
-	silofs_vni_setdirty(silofs_ii_to_vni(ii), nullptr);
+	silofs_lni_setdirty(silofs_ii_to_lni(ii), nullptr);
 }
 
 void silofs_ii_setdirty(struct silofs_inode_info *ii)
@@ -562,27 +565,27 @@ void silofs_ii_cleardirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_vni_cleardirty(silofs_ii_to_vni(ii));
+	silofs_lni_cleardirty(silofs_ii_to_lni(ii));
 }
 
 bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	return silofs_vni_isdirty(&ii->i_vni);
+	return silofs_lni_isdirty(&ii->i_lni);
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
 	if (ii != nullptr) {
-		silofs_vni_incref(silofs_ii_to_vni(ii));
+		silofs_lni_incref(silofs_ii_to_lni(ii));
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
 	if (ii != nullptr) {
-		silofs_vni_decref(silofs_ii_to_vni(ii));
+		silofs_lni_decref(silofs_ii_to_lni(ii));
 	}
 }
 
@@ -591,14 +594,14 @@ struct silofs_inode_info *silofs_ii_unconst(const struct silofs_inode_info *ii)
 	return silofs_unconst(ii);
 }
 
-struct silofs_vnode_info *silofs_ii_to_vni(const struct silofs_inode_info *ii)
+struct silofs_lnode_info *silofs_ii_to_lni(const struct silofs_inode_info *ii)
 {
-	return silofs_unconst(&ii->i_vni);
+	return silofs_unconst(&ii->i_lni);
 }
 
-const struct silofs_vaddr *silofs_ii_vaddr(const struct silofs_inode_info *ii)
+const struct silofs_laddr *silofs_ii_laddr(const struct silofs_inode_info *ii)
 {
-	return silofs_vni_vaddr(silofs_ii_to_vni(ii));
+	return silofs_lni_laddr(silofs_ii_to_lni(ii));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -665,22 +668,22 @@ static void ii_set_generation(struct silofs_inode_info *ii,
 	silofs_ii_setdirty(ii);
 }
 
-static const struct silofs_vaddr *ii_vaddr(const struct silofs_inode_info *ii)
+static const struct silofs_laddr *ii_laddr(const struct silofs_inode_info *ii)
 {
-	return silofs_ii_vaddr(ii);
+	return silofs_ii_laddr(ii);
 }
 
-static void ii_update_ino_by_vaddr(struct silofs_inode_info *ii)
+static void ii_update_ino_by_laddr(struct silofs_inode_info *ii)
 {
-	ii->i_ino = ino_from_vaddr(ii_vaddr(ii));
+	ii->i_ino = ino_from_laddr(ii_laddr(ii));
 }
 
 static void ii_update_self(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii->inode);
 
-	ii_update_ino_by_vaddr(ii);
-	ii->i_vni.isevictable_fn = ii_isevictable_as;
+	ii_update_ino_by_laddr(ii);
+	ii->i_lni.isevictable_fn = ii_isevictable_as;
 }
 
 void silofs_ii_update_spawned(struct silofs_inode_info *ii,
@@ -1407,9 +1410,9 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 }
 
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
-                               enum silofs_vtype vtype, long dif)
+                               enum silofs_ltype ltype, long dif)
 {
-	const size_t nkbs     = silofs_vtype_nkbs(vtype);
+	const size_t nkbs     = silofs_ltype_nkbs(ltype);
 	const blkcnt_t blocks = silofs_ii_blocks(ii);
 	blkcnt_t cnt;
 
@@ -1422,7 +1425,7 @@ static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
 }
 
 static void
-ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_vtype vtype,
+ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_ltype ltype,
                   long dif, const struct timespec *ts)
 {
 	struct silofs_iattr iattr = {
@@ -1431,7 +1434,7 @@ ii_update_iblocks(struct silofs_inode_info *ii, enum silofs_vtype vtype,
 	};
 
 	silofs_make_iattr_of(ii, &iattr);
-	iattr.ia_blocks = recalc_iblocks(ii, vtype, dif);
+	iattr.ia_blocks = recalc_iblocks(ii, ltype, dif);
 	iattr.ia_flags  = SILOFS_IATTR_BLOCKS;
 
 	ii_update_iattrs(ii, &iattr, ts);
@@ -1449,7 +1452,7 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 	ii_update_iattrs(ii, &iattr, ts);
 }
 
-void silofs_ii_cleardirty_vnis(struct silofs_inode_info *ii)
+void silofs_ii_cleardirty_lnis(struct silofs_inode_info *ii)
 {
 	/* TODO: re-consider */
 	silofs_unused(ii);
@@ -1466,9 +1469,9 @@ void silofs_update_itimes_of(const struct silofs_task_ctx *task,
 
 void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
                               struct silofs_inode_info *ii,
-                              enum silofs_vtype vtype, long dif)
+                              enum silofs_ltype ltype, long dif)
 {
-	ii_update_iblocks(ii, vtype, dif, ts_of(task));
+	ii_update_iblocks(ii, ltype, dif, ts_of(task));
 }
 
 void silofs_update_iattrs_of(const struct silofs_task_ctx *task,

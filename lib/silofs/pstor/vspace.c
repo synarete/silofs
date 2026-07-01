@@ -22,104 +22,104 @@ struct silofs_vspace_ctx {
 	struct silofs_freevsqs *fvsqs;
 	struct silofs_vcache *vcache;
 	struct silofs_uber_info *ubi;
-	enum silofs_vtype vtype;
+	enum silofs_ltype ltype;
 };
 
 static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
-                     struct silofs_pexec_ctx *pexec, enum silofs_vtype vtype)
+                     struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 {
 	vs_ctx->pexec  = pexec;
 	vs_ctx->fvsqs  = pexec->fvsqs;
 	vs_ctx->vcache = pexec->vcache;
 	vs_ctx->ubi    = pexec->ubref->ubi;
-	vs_ctx->vtype  = vtype;
+	vs_ctx->ltype  = ltype;
 
-	silofs_assert_ne(vtype, SILOFS_VTYPE_SPNODE);
+	silofs_assert_ne(ltype, SILOFS_LTYPE_SPNODE);
 }
 
 static void
 vsc_init_by(struct silofs_vspace_ctx *vs_ctx, struct silofs_pexec_ctx *pexec,
-            const struct silofs_vaddr *vaddr)
+            const struct silofs_laddr *laddr)
 {
-	vsc_init(vs_ctx, pexec, vaddr->vtype);
+	vsc_init(vs_ctx, pexec, laddr->ltype);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vsc_apex_vaddr(const struct silofs_vspace_ctx *vs_ctx,
-                           struct silofs_vaddr *out_vaddr)
+static void vsc_apex_laddr(const struct silofs_vspace_ctx *vs_ctx,
+                           struct silofs_laddr *out_laddr)
 {
 	struct silofs_uber_stat ust;
 	ssize_t vsz, tip;
 
-	silofs_ubi_stat_of(vs_ctx->ubi, vs_ctx->vtype, &ust);
-	vsz = silofs_vtype_ssize(vs_ctx->vtype);
+	silofs_ubi_stat_of(vs_ctx->ubi, vs_ctx->ltype, &ust);
+	vsz = silofs_ltype_ssize(vs_ctx->ltype);
 	tip = vsz * (ssize_t)ust.vn;
 
-	silofs_vaddr_setup(out_vaddr, vs_ctx->vtype, tip);
+	silofs_laddr_setup(out_laddr, vs_ctx->ltype, tip);
 }
 
 static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
-                               const struct silofs_vaddr *ref_vaddr,
+                               const struct silofs_laddr *ref_laddr,
                                struct silofs_spnode_info **out_spi)
 {
 	int err;
 
-	err = silofs_stage_spnode2_by(vs_ctx->pexec, ref_vaddr, out_spi);
+	err = silofs_stage_spnode2_by(vs_ctx->pexec, ref_laddr, out_spi);
 	if (err) {
-		log_err("failed to stage spnode of: vtype=%d off=%ld err=%d",
-		        (int)ref_vaddr->vtype, ref_vaddr->off, err);
+		log_err("failed to stage spnode of: ltype=%d off=%ld err=%d",
+		        (int)ref_laddr->ltype, ref_laddr->off, err);
 	}
 	return err;
 }
 
 static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_vaddr *ref_vaddr,
+                                  const struct silofs_laddr *ref_laddr,
                                   struct silofs_spnode_info **out_spi)
 {
-	return silofs_require_spnode2_by(vs_ctx->pexec, ref_vaddr, out_spi);
+	return silofs_require_spnode2_by(vs_ctx->pexec, ref_laddr, out_spi);
 }
 
 static int vsc_claim_free_vspace_by_fvsqs(struct silofs_vspace_ctx *vs_ctx,
-                                          struct silofs_vaddr *out_vaddr)
+                                          struct silofs_laddr *out_laddr)
 {
 	struct silofs_vspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
 	struct silofs_freevsqs *fvsqs  = vs_ctx->pexec->fvsqs;
 	int err;
 
-	err = silofs_freevsqs_pull(fvsqs, vs_ctx->vtype, out_vaddr);
+	err = silofs_freevsqs_pull(fvsqs, vs_ctx->ltype, out_laddr);
 	return_if_err(err);
 
-	err = vsc_stage_spnode_of(vs_ctx, out_vaddr, &spi);
+	err = vsc_stage_spnode_of(vs_ctx, out_laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, out_vaddr, &vspref);
+	silofs_spi_vspace_ref(spi, out_laddr, &vspref);
 	if (vspref.refcnt > 0) {
 		log_err("cached free-vspace has active ref-count: "
-		        "vtype=%d off=%ld refcnt=%zu",
-		        (int)out_vaddr->vtype, out_vaddr->off, vspref.refcnt);
+		        "ltype=%d off=%ld refcnt=%zu",
+		        (int)out_laddr->ltype, out_laddr->off, vspref.refcnt);
 		return -SILOFS_EBUG;
 	}
-	silofs_spi_inc_allocated(spi, out_vaddr);
+	silofs_spi_inc_allocated(spi, out_laddr);
 	return 0;
 }
 
 static int vsc_claim_free_vspace_at(struct silofs_vspace_ctx *vs_ctx,
-                                    const struct silofs_vaddr *ref_vaddr,
-                                    struct silofs_vaddr *out_vaddr)
+                                    const struct silofs_laddr *ref_laddr,
+                                    struct silofs_laddr *out_laddr)
 {
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = vsc_require_spnode2_of(vs_ctx, ref_vaddr, &spi);
+	err = vsc_require_spnode2_of(vs_ctx, ref_laddr, &spi);
 	silofs_assert_ok(err); /* XXX RM */
 	return_if_err(err);
 
-	err = silofs_spi_find_free(spi, out_vaddr);
+	err = silofs_spi_find_free(spi, out_laddr);
 	return_if_err(err);
 
-	silofs_spi_inc_allocated(spi, out_vaddr);
+	silofs_spi_inc_allocated(spi, out_laddr);
 	return 0;
 }
 
@@ -130,141 +130,141 @@ static int vsc_claim_free_vspace_at(struct silofs_vspace_ctx *vs_ctx,
  * Define proper formula and derive 'niter' accordingly.
  */
 static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
-                                            struct silofs_vaddr *out_vaddr)
+                                            struct silofs_laddr *out_laddr)
 {
 	constexpr size_t niter = 1024;
 	constexpr size_t nrefs = SILOFS_SPNODE_NREFS;
-	struct silofs_vaddr ref_vaddr;
+	struct silofs_laddr ref_laddr;
 	int err;
 
-	vsc_apex_vaddr(vs_ctx, &ref_vaddr);
+	vsc_apex_laddr(vs_ctx, &ref_laddr);
 	for (size_t i = 0; i < niter; ++i) {
-		err = vsc_claim_free_vspace_at(vs_ctx, &ref_vaddr, out_vaddr);
+		err = vsc_claim_free_vspace_at(vs_ctx, &ref_laddr, out_laddr);
 		if (!err) {
 			return 0;
 		}
 		if (err != -SILOFS_ENOSPC) {
 			break;
 		}
-		silofs_vaddr_advance(&ref_vaddr, nrefs, &ref_vaddr);
+		silofs_laddr_advance(&ref_laddr, nrefs, &ref_laddr);
 	}
 
-	log_err("failed to calim free vspace: vtype=%d ref-off=%zd err=%d",
-	        ref_vaddr.vtype, ref_vaddr.off, err);
+	log_err("failed to calim free vspace: ltype=%d ref-off=%zd err=%d",
+	        ref_laddr.ltype, ref_laddr.off, err);
 	return err;
 }
 
 static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                 struct silofs_vaddr *out_vaddr)
+                                 struct silofs_laddr *out_laddr)
 {
 	int ret;
 
 	/* fast: try to allocated from in-memory pool of free vspace */
-	ret = vsc_claim_free_vspace_by_fvsqs(vs_ctx, out_vaddr);
+	ret = vsc_claim_free_vspace_by_fvsqs(vs_ctx, out_laddr);
 	if (ret != 0) {
 		/* slow: try to allocate using space-mapping nodes */
-		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_vaddr);
+		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_laddr);
 	}
 	return ret;
 }
 
 int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype vtype,
-                             struct silofs_vaddr *out_vaddr)
+                             enum silofs_ltype ltype,
+                             struct silofs_laddr *out_laddr)
 {
 	struct silofs_vspace_ctx vs_ctx;
 
-	vsc_init(&vs_ctx, pexec, vtype);
-	return vsc_claim_free_vspace(&vs_ctx, out_vaddr);
+	vsc_init(&vs_ctx, pexec, ltype);
+	return vsc_claim_free_vspace(&vs_ctx, out_laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_vaddr *vaddr)
+                                  const struct silofs_laddr *laddr)
 {
 	struct silofs_vspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
+	err = vsc_stage_spnode_of(vs_ctx, laddr, &spi);
 	silofs_assert_ok(err); /* XXX rm */
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, vaddr, &vspref);
+	silofs_spi_vspace_ref(spi, laddr, &vspref);
 	if (vspref.refcnt == 0) {
-		log_err("can not reclaim unused vspace: vtype=%d off=%ld",
-		        vaddr->vtype, vaddr->off);
+		log_err("can not reclaim unused vspace: ltype=%d off=%ld",
+		        laddr->ltype, laddr->off);
 		return -SILOFS_EBUG;
 	}
-	silofs_spi_dec_allocated(spi, vaddr);
+	silofs_spi_dec_allocated(spi, laddr);
 	return 0;
 }
 
 static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_vaddr *vaddr)
+                                  const struct silofs_laddr *laddr)
 {
 	struct silofs_vspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
+	err = vsc_stage_spnode_of(vs_ctx, laddr, &spi);
 	silofs_assert_ok(err); /* XXX rm */
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, vaddr, &vspref);
+	silofs_spi_vspace_ref(spi, laddr, &vspref);
 	if (vspref.refcnt == 0) {
-		log_err("can not incref unused vspace: vtype=%d off=%ld",
-		        vaddr->vtype, vaddr->off);
+		log_err("can not incref unused vspace: ltype=%d off=%ld",
+		        laddr->ltype, laddr->off);
 		return -SILOFS_EBUG;
 	}
-	silofs_spi_inc_allocated(spi, vaddr);
+	silofs_spi_inc_allocated(spi, laddr);
 	return 0;
 }
 
 static int
 vsc_update_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                       const struct silofs_vaddr *vaddr, bool incref)
+                       const struct silofs_laddr *laddr, bool incref)
 {
 	int ret;
 
 	if (incref) {
-		ret = vsc_incref_used_vspace(vs_ctx, vaddr);
+		ret = vsc_incref_used_vspace(vs_ctx, laddr);
 	} else {
-		ret = vsc_decref_used_vspace(vs_ctx, vaddr);
+		ret = vsc_decref_used_vspace(vs_ctx, laddr);
 	}
 	return ret;
 }
 
 int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr, bool incref)
+                              const struct silofs_laddr *laddr, bool incref)
 {
 	struct silofs_vspace_ctx vs_ctx;
 
-	vsc_init_by(&vs_ctx, pexec, vaddr);
-	return vsc_update_used_vspace(&vs_ctx, vaddr, incref);
+	vsc_init_by(&vs_ctx, pexec, laddr);
+	return vsc_update_used_vspace(&vs_ctx, laddr, incref);
 }
 
 static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
-                                const struct silofs_vaddr *vaddr,
+                                const struct silofs_laddr *laddr,
                                 struct silofs_vspace_ref *out_vspref)
 {
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = vsc_stage_spnode_of(vs_ctx, vaddr, &spi);
+	err = vsc_stage_spnode_of(vs_ctx, laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, vaddr, out_vspref);
+	silofs_spi_vspace_ref(spi, laddr, out_vspref);
 	return 0;
 }
 
 int silofs_probe_vspace_ref(struct silofs_pexec_ctx *pexec,
-                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_laddr *laddr,
                             struct silofs_vspace_ref *out_vspref)
 {
 	struct silofs_vspace_ctx vs_ctx;
 
-	vsc_init_by(&vs_ctx, pexec, vaddr);
-	return vsc_probe_vspace_ref(&vs_ctx, vaddr, out_vspref);
+	vsc_init_by(&vs_ctx, pexec, laddr);
+	return vsc_probe_vspace_ref(&vs_ctx, laddr, out_vspref);
 }

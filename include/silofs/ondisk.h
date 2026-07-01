@@ -309,7 +309,7 @@ enum silofs_endianness {
 	SILOFS_ENDIANNESS_BE = 2,
 };
 
-/* p-elements sub-types */
+/* persistent elements sub-types */
 enum silofs_ptype {
 	SILOFS_PTYPE_NONE   = 0,
 	SILOFS_PTYPE_MBR    = 1,
@@ -320,20 +320,20 @@ enum silofs_ptype {
 	SILOFS_PTYPE_LAST   = 6, /* keep last */
 };
 
-/* v-elements sub-types */
-enum silofs_vtype {
-	SILOFS_VTYPE_NONE    = 0,
-	SILOFS_VTYPE_SUPER   = 1,
-	SILOFS_VTYPE_SPNODE  = 2,
-	SILOFS_VTYPE_INODE   = 3,
-	SILOFS_VTYPE_XANODE  = 4,
-	SILOFS_VTYPE_SYMVAL  = 5,
-	SILOFS_VTYPE_DTNODE  = 6,
-	SILOFS_VTYPE_FTNODE  = 7,
-	SILOFS_VTYPE_DATA1K  = 8,
-	SILOFS_VTYPE_DATA4K  = 9,
-	SILOFS_VTYPE_DATA64K = 10,
-	SILOFS_VTYPE_LAST    = 11, /* keep last */
+/* logical elements sub-types */
+enum silofs_ltype {
+	SILOFS_LTYPE_NONE    = 0,
+	SILOFS_LTYPE_SUPER   = 1,
+	SILOFS_LTYPE_SPNODE  = 2,
+	SILOFS_LTYPE_INODE   = 3,
+	SILOFS_LTYPE_XANODE  = 4,
+	SILOFS_LTYPE_SYMVAL  = 5,
+	SILOFS_LTYPE_DTNODE  = 6,
+	SILOFS_LTYPE_FTNODE  = 7,
+	SILOFS_LTYPE_DATA1K  = 8,
+	SILOFS_LTYPE_DATA4K  = 9,
+	SILOFS_LTYPE_DATA64K = 10,
+	SILOFS_LTYPE_LAST    = 11, /* keep last */
 };
 
 /* btree-node flags */
@@ -512,7 +512,7 @@ struct silofs_blobid56b {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;
 	uint8_t               ptype;
-	uint8_t               vtype;
+	uint8_t               ltype;
 	uint8_t               reserved[20];
 	uint16_t              vers;
 } silofs_attr_aligned8;
@@ -529,12 +529,12 @@ struct silofs_paddr64b {
 } silofs_attr_aligned64;
 
 /* virtual address (compact) */
-struct silofs_vaddr56 {
+struct silofs_laddr56 {
 	uint8_t b[7];
 };
 
-struct silofs_vaddr64 {
-	uint64_t off_vtype;
+struct silofs_laddr64 {
+	uint64_t off_ltype;
 } silofs_attr_aligned8;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -655,7 +655,7 @@ struct silofs_superb_node {
 struct silofs_space_node {
 	struct silofs_header sp_hdr;
 	int64_t              sp_base_off;
-	uint8_t              sp_ref_vtype;
+	uint8_t              sp_ref_ltype;
 	uint8_t              sp_reserved[39];
 	uint8_t              sp_reserved2[960];
 	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
@@ -672,12 +672,12 @@ struct silofs_inode_times {
 } silofs_attr_aligned64;
 
 struct silofs_inode_xattr {
-	struct silofs_vaddr64 ix_vaddr[8];
+	struct silofs_laddr64 ix_laddr[8];
 	uint8_t               ix_reserved[192];
 } silofs_attr_aligned64;
 
 struct silofs_inode_dir {
-	struct silofs_vaddr64 d_root;
+	struct silofs_laddr64 d_root;
 	uint64_t              d_seed;
 	uint64_t              d_ndents;
 	uint32_t              d_last_index;
@@ -688,12 +688,12 @@ struct silofs_inode_dir {
 
 struct silofs_inode_lnk {
 	uint8_t               l_head[SILOFS_SYMLNK_HEAD_MAX];
-	struct silofs_vaddr64 l_tail[SILOFS_SYMLNK_NPARTS];
+	struct silofs_laddr64 l_tail[SILOFS_SYMLNK_NPARTS];
 	uint8_t               l_reserved[16];
 } silofs_attr_aligned64;
 
 struct silofs_inode_file {
-	struct silofs_vaddr64 f_slots[32];
+	struct silofs_laddr64 f_slots[32];
 	uint8_t               f_reserved[256];
 } silofs_attr_aligned8;
 
@@ -766,7 +766,7 @@ struct silofs_dtree_node {
 	uint32_t                dn_nactive_childs;
 	uint8_t                 dn_reserved[68];
 	union silofs_dtree_data dn_data;
-	struct silofs_vaddr56   dn_child[SILOFS_DTREE_NODE_NCHILDS];
+	struct silofs_laddr56   dn_child[SILOFS_DTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_ftree_node {
@@ -778,10 +778,10 @@ struct silofs_ftree_node {
 	int64_t               fn_end;
 	uint32_t              fn_nactive_childs;
 	uint8_t               fn_height;
-	uint8_t               fn_child_vtype;
+	uint8_t               fn_child_ltype;
 	uint8_t               fn_reserved[58];
 	uint8_t               fn_zeros[896];
-	struct silofs_vaddr56 fn_child[SILOFS_FTREE_NODE_NCHILDS];
+	struct silofs_laddr56 fn_child[SILOFS_FTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
 struct silofs_symval_node {

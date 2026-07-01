@@ -20,26 +20,26 @@
 #include <silofs/nodes.h>
 #include <silofs/pstor.h>
 
-static void vni_setdirty(struct silofs_vnode_info *vni)
+static void lni_setdirty(struct silofs_lnode_info *lni)
 {
-	silofs_vni_setdirty(vni, nullptr);
+	silofs_lni_setdirty(lni, nullptr);
 }
 
-int silofs_probe_vnode2_at(struct silofs_pexec_ctx *pexec,
-                           const struct silofs_vaddr *vaddr)
+int silofs_probe_lnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr *laddr)
 {
 	struct silofs_pnptr pnptr;
 
-	return silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
+	return silofs_resolve_vtop_mapping(pexec, laddr, &pnptr);
 }
 
-static bool uses_spmap(const struct silofs_vaddr *vaddr)
+static bool uses_spmap(const struct silofs_laddr *laddr)
 {
-	return silofs_vtype_usespmap(vaddr->vtype);
+	return silofs_ltype_usespmap(laddr->ltype);
 }
 
 static int resolve_spacef_of(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_laddr *laddr,
                              enum silofs_spacef *out_spacef)
 {
 	struct silofs_vspace_ref vspref = {
@@ -47,93 +47,93 @@ static int resolve_spacef_of(struct silofs_pexec_ctx *pexec,
 	};
 	int ret = 0;
 
-	if (uses_spmap(vaddr)) {
-		ret = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	if (uses_spmap(laddr)) {
+		ret = silofs_probe_vspace_ref(pexec, laddr, &vspref);
 	}
 	*out_spacef = vspref.flags;
 	return ret;
 }
 
-int silofs_stage_vnode2_at(struct silofs_pexec_ctx *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni)
+int silofs_stage_lnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pnptr pnptr;
 	enum silofs_spacef spacef;
 	int err;
 
-	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
+	err = silofs_resolve_vtop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = resolve_spacef_of(pexec, vaddr, &spacef);
+	err = resolve_spacef_of(pexec, laddr, &spacef);
 	return_if_err(err);
 
-	err = silofs_stage_vnode2_with(pexec, vaddr, &pnptr, spacef, out_vni);
+	err = silofs_stage_lnode2_with(pexec, laddr, &pnptr, spacef, out_lni);
 	return_if_err(err);
 
 	return 0;
 }
 
 static int carve_vtop_mapping(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_laddr *laddr,
                               struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
-	err = silofs_carve_vspace(pexec, vaddr->vtype, out_pnptr);
+	err = silofs_carve_vspace(pexec, laddr->ltype, out_pnptr);
 	return_if_err(err);
 
 	err = silofs_require_paddr(pexec, &out_pnptr->paddr);
 	return_if_err(err);
 
-	err = silofs_create_vtop_mapping(pexec, vaddr, out_pnptr);
+	err = silofs_create_vtop_mapping(pexec, laddr, out_pnptr);
 	return_if_err(err);
 
 	return 0;
 }
 
-int silofs_spawn_vnode2(struct silofs_pexec_ctx *pexec,
-                        enum silofs_vtype vtype,
-                        struct silofs_vnode_info **out_vni)
+int silofs_spawn_lnode2(struct silofs_pexec_ctx *pexec,
+                        enum silofs_ltype ltype,
+                        struct silofs_lnode_info **out_lni)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 	int err;
 
-	err = silofs_claim_free_vspace(pexec, vtype, &vaddr);
-	return err ? err : silofs_spawn_vnode2_at(pexec, &vaddr, out_vni);
+	err = silofs_claim_free_vspace(pexec, ltype, &laddr);
+	return err ? err : silofs_spawn_lnode2_at(pexec, &laddr, out_lni);
 }
 
-int silofs_spawn_vnode2_at(struct silofs_pexec_ctx *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni)
+int silofs_spawn_lnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = carve_vtop_mapping(pexec, vaddr, &pnptr);
+	err = carve_vtop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_vnode2_with(pexec, vaddr, &pnptr, out_vni);
+	err = silofs_spawn_lnode2_with(pexec, laddr, &pnptr, out_lni);
 	return_if_err(err);
 
-	vni_setdirty(*out_vni);
+	lni_setdirty(*out_lni);
 	return 0;
 }
 
-int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype vtype,
-                              struct silofs_vaddr *out_vaddr)
+int silofs_claim_lnode2_space(struct silofs_pexec_ctx *pexec,
+                              enum silofs_ltype ltype,
+                              struct silofs_laddr *out_laddr)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_claim_free_vspace(pexec, vtype, out_vaddr);
+	err = silofs_claim_free_vspace(pexec, ltype, out_laddr);
 	return_if_err(err);
 
-	err = carve_vtop_mapping(pexec, out_vaddr, &pnptr);
+	err = carve_vtop_mapping(pexec, out_laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_claim_vnode2_space2(pexec, out_vaddr, &pnptr);
+	err = silofs_claim_lnode2_space2(pexec, out_laddr, &pnptr);
 	return_if_err(err);
 
 	return 0;
@@ -142,134 +142,134 @@ int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void retain_free_space(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_laddr *laddr,
                               const struct silofs_paddr *paddr)
 {
-	silofs_freevsqs_push(pexec->fvsqs, vaddr);
+	silofs_freevsqs_push(pexec->fvsqs, laddr);
 	silofs_freepaqs_push(pexec->fpaqs, paddr);
 }
 
 static int incref_used_vspace(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr)
+                              const struct silofs_laddr *laddr)
 {
-	return silofs_update_used_vspace(pexec, vaddr, true);
+	return silofs_update_used_vspace(pexec, laddr, true);
 }
 
 static int decref_used_vspace(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr)
+                              const struct silofs_laddr *laddr)
 {
-	return silofs_update_used_vspace(pexec, vaddr, false);
+	return silofs_update_used_vspace(pexec, laddr, false);
 }
 
-static int reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr, bool *out_last)
+static int reclaim_lnode2_at(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_laddr *laddr, bool *out_last)
 {
 	struct silofs_pnptr pnptr;
 	struct silofs_vspace_ref vspref;
 	int err;
 
-	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	err = silofs_probe_vspace_ref(pexec, laddr, &vspref);
 	return_if_err(err);
 
 	silofs_assert_gt(vspref.refcnt, 0);
 
 	*out_last = (vspref.refcnt == 1);
 	if (*out_last == false) {
-		silofs_assert(silofs_vaddr_isdata(vaddr));
+		silofs_assert(silofs_laddr_isdata(laddr));
 		goto out; /* shared data node: dec-ref only */
 	}
 
-	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
+	err = silofs_resolve_vtop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_detach_vnode2_at(pexec, vaddr, &pnptr);
+	err = silofs_detach_lnode2_at(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_remove_vtop_mapping(pexec, vaddr);
+	err = silofs_remove_vtop_mapping(pexec, laddr);
 	return_if_err(err);
 
-	retain_free_space(pexec, vaddr, &pnptr.paddr);
+	retain_free_space(pexec, laddr, &pnptr.paddr);
 out:
-	return decref_used_vspace(pexec, vaddr);
+	return decref_used_vspace(pexec, laddr);
 }
 
-static struct silofs_vnode_info *
-lookup_cached_vni(struct silofs_pexec_ctx *pexec,
-                  const struct silofs_vaddr *vaddr)
+static struct silofs_lnode_info *
+lookup_cached_lni(struct silofs_pexec_ctx *pexec,
+                  const struct silofs_laddr *laddr)
 {
-	return silofs_vcache_lookup_vnode(pexec->vcache, vaddr);
+	return silofs_vcache_lookup_lnode(pexec->vcache, laddr);
 }
 
-static void forget_cached_vni(struct silofs_pexec_ctx *pexec,
-                              struct silofs_vnode_info *vni)
+static void forget_cached_lni(struct silofs_pexec_ctx *pexec,
+                              struct silofs_lnode_info *lni)
 {
-	silofs_vcache_forget_vnode(pexec->vcache, vni);
+	silofs_vcache_forget_lnode(pexec->vcache, lni);
 }
 
-static void try_forget_cached_vni(struct silofs_pexec_ctx *pexec,
-                                  struct silofs_vnode_info *vni)
+static void try_forget_cached_lni(struct silofs_pexec_ctx *pexec,
+                                  struct silofs_lnode_info *lni)
 {
 	/*
 	 * Special case where data-node has been unmapped due to forget, yet it
 	 * still has a live ref-count due to on-going I/O operation.
 	 */
-	if ((vni != nullptr) && !silofs_vni_refcnt(vni)) {
-		forget_cached_vni(pexec, vni);
+	if ((lni != nullptr) && !silofs_lni_refcnt(lni)) {
+		forget_cached_lni(pexec, lni);
 	}
 }
 
-int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr, bool *out_last)
+int silofs_reclaim_lnode2_at(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_laddr *laddr, bool *out_last)
 {
-	struct silofs_vnode_info *vni;
+	struct silofs_lnode_info *lni;
 	int err;
 
-	vni = lookup_cached_vni(pexec, vaddr);
-	err = reclaim_vnode2_at(pexec, vaddr, out_last);
+	lni = lookup_cached_lni(pexec, laddr);
+	err = reclaim_lnode2_at(pexec, laddr, out_last);
 	if (!err && *out_last) {
-		try_forget_cached_vni(pexec, vni);
+		try_forget_cached_lni(pexec, lni);
 	}
 	return err;
 }
 
-int silofs_isshared_vnode2_at(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *vaddr, bool *out_res)
+int silofs_isshared_lnode2_at(struct silofs_pexec_ctx *pexec,
+                              const struct silofs_laddr *laddr, bool *out_res)
 {
 	struct silofs_vspace_ref vspref;
 	int err;
 
-	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	err = silofs_probe_vspace_ref(pexec, laddr, &vspref);
 	return_if_err(err);
 
 	*out_res = (vspref.refcnt > 1);
 	return 0;
 }
 
-int silofs_share_vnode2_at(struct silofs_pexec_ctx *pexec,
-                           const struct silofs_vaddr *vaddr)
+int silofs_share_lnode2_at(struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr *laddr)
 {
 	struct silofs_vspace_ref vspref;
 	int err;
 
-	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	err = silofs_probe_vspace_ref(pexec, laddr, &vspref);
 	return_if_err(err);
 
-	err = incref_used_vspace(pexec, vaddr);
+	err = incref_used_vspace(pexec, laddr);
 	return_if_err(err);
 
 	return 0;
 }
 
-int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr, bool *out_last)
+int silofs_unshare_lnode2_at(struct silofs_pexec_ctx *pexec,
+                             const struct silofs_laddr *laddr, bool *out_last)
 {
 	struct silofs_vspace_ref vspref;
 	int err;
 
-	err = silofs_probe_vspace_ref(pexec, vaddr, &vspref);
+	err = silofs_probe_vspace_ref(pexec, laddr, &vspref);
 	return_if_err(err);
 
-	err = reclaim_vnode2_at(pexec, vaddr, out_last);
+	err = reclaim_lnode2_at(pexec, laddr, out_last);
 	return_if_err(err);
 
 	return 0;
@@ -278,124 +278,124 @@ int silofs_unshare_vnode2_at(struct silofs_pexec_ctx *pexec,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int claim_spawn_spnode2_at(struct silofs_pexec_ctx *pexec,
-                                  const struct silofs_vaddr *vaddr,
-                                  const struct silofs_vaddr *ref_vaddr,
+                                  const struct silofs_laddr *laddr,
+                                  const struct silofs_laddr *ref_laddr,
                                   struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = silofs_spawn_vnode2_at(pexec, vaddr, &vni);
+	err = silofs_spawn_lnode2_at(pexec, laddr, &lni);
 	return_if_err(err);
 
-	*out_spi = silofs_spi_from_vni(vni);
-	silofs_spi_setup_spawned(*out_spi, ref_vaddr);
+	*out_spi = silofs_spi_from_lni(lni);
+	silofs_spi_setup_spawned(*out_spi, ref_laddr);
 	return 0;
 }
 
 static int resolve_stage_spnode2_at(struct silofs_pexec_ctx *pexec,
-                                    const struct silofs_vaddr *vaddr,
+                                    const struct silofs_laddr *laddr,
                                     struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = silofs_stage_vnode2_at(pexec, vaddr, &vni);
+	err = silofs_stage_lnode2_at(pexec, laddr, &lni);
 	return_if_err(err);
 
-	*out_spi = silofs_spi_from_vni(vni);
+	*out_spi = silofs_spi_from_lni(lni);
 	silofs_spi_setup_staged(*out_spi);
 	return 0;
 }
 
 int silofs_stage_spnode2_by(struct silofs_pexec_ctx *pexec,
-                            const struct silofs_vaddr *ref_vaddr,
+                            const struct silofs_laddr *ref_laddr,
                             struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 
-	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
-	return resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
+	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	return resolve_stage_spnode2_at(pexec, &laddr, out_spi);
 }
 
 int silofs_spawn_spnode2_by(struct silofs_pexec_ctx *pexec,
-                            const struct silofs_vaddr *ref_vaddr,
+                            const struct silofs_laddr *ref_laddr,
                             struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 
-	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
-	return claim_spawn_spnode2_at(pexec, &vaddr, ref_vaddr, out_spi);
+	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	return claim_spawn_spnode2_at(pexec, &laddr, ref_laddr, out_spi);
 }
 
 int silofs_test_vtop_mapping(struct silofs_pexec_ctx *pexec,
-                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_laddr *laddr,
                              bool *out_exists)
 {
 	struct silofs_pnptr pnptr;
 	int err;
 
-	err = silofs_resolve_vtop_mapping(pexec, vaddr, &pnptr);
+	err = silofs_resolve_vtop_mapping(pexec, laddr, &pnptr);
 
 	*out_exists = (err == 0);
 	return (err == -SILOFS_ENOENT) ? 0 : err;
 }
 
 int silofs_require_spnode2_by(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *ref_vaddr,
+                              const struct silofs_laddr *ref_laddr,
                               struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 	int err;
 	bool exists;
 
-	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
-	err = silofs_test_vtop_mapping(pexec, &vaddr, &exists);
+	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	err = silofs_test_vtop_mapping(pexec, &laddr, &exists);
 	if (!err) {
 		if (exists) {
-			err = resolve_stage_spnode2_at(pexec, &vaddr, out_spi);
+			err = resolve_stage_spnode2_at(pexec, &laddr, out_spi);
 		} else {
-			err = claim_spawn_spnode2_at(pexec, &vaddr, //
-			                             ref_vaddr, out_spi);
+			err = claim_spawn_spnode2_at(pexec, &laddr, //
+			                             ref_laddr, out_spi);
 		}
 	}
 	return err;
 }
 
 int silofs_mark_unwritten_at2(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *ref_vaddr)
+                              const struct silofs_laddr *ref_laddr)
 {
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = silofs_stage_spnode2_by(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_by(pexec, ref_laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_mark_unwritten(spi, ref_vaddr);
+	silofs_spi_mark_unwritten(spi, ref_laddr);
 	return 0;
 }
 
 int silofs_clear_unwritten_at2(struct silofs_pexec_ctx *pexec,
-                               const struct silofs_vaddr *ref_vaddr)
+                               const struct silofs_laddr *ref_laddr)
 {
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = silofs_stage_spnode2_by(pexec, ref_vaddr, &spi);
+	err = silofs_stage_spnode2_by(pexec, ref_laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_clear_unwritten(spi, ref_vaddr);
+	silofs_spi_clear_unwritten(spi, ref_laddr);
 	return 0;
 }
 
 int silofs_test_unwritten_at2(struct silofs_pexec_ctx *pexec,
-                              const struct silofs_vaddr *ref_vaddr,
+                              const struct silofs_laddr *ref_laddr,
                               bool *out_unwritten)
 {
 	struct silofs_vspace_ref vspref = {};
 	int err;
 
-	err = silofs_probe_vspace_ref(pexec, ref_vaddr, &vspref);
+	err = silofs_probe_vspace_ref(pexec, ref_laddr, &vspref);
 	return_if_err(err);
 
 	*out_unwritten = (vspref.flags & SILOFS_SPACEF_UNWRITTEN) > 0;

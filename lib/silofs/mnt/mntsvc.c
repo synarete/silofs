@@ -1528,7 +1528,7 @@ static void mntclnt_init(struct silofs_mntclnt *mclnt)
 	const char *sockname = silofs_mntrpc_sockname();
 
 	silofs_makesock_seqpacketu(&mclnt->mc_sock);
-	silofs_sockaddr_abstract(&mclnt->mc_srvaddr, sockname);
+	silofs_sockaddr_abstract(&mclnt->mc_srladdr, sockname);
 }
 
 static void mntclnt_fini(struct silofs_mntclnt *mclnt)
@@ -1546,7 +1546,7 @@ static int mntclnt_connect(struct silofs_mntclnt *mclnt)
 	if (err) {
 		return err;
 	}
-	err = silofs_socket_connect(sock, &mclnt->mc_srvaddr);
+	err = silofs_socket_connect(sock, &mclnt->mc_srladdr);
 	if (err) {
 		silofs_socket_fini(sock);
 		return err;

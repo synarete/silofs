@@ -21,17 +21,17 @@
 #include <silofs/nodes.h>
 #include <silofs/pstor.h>
 
-static off_t calc_base_offset_of(enum silofs_vtype vtype, off_t off)
+static off_t calc_base_offset_of(enum silofs_ltype ltype, off_t off)
 {
 	const ssize_t nrefs = SILOFS_SPNODE_NREFS;
-	const ssize_t vsize = silofs_vtype_ssize(vtype);
+	const ssize_t vsize = silofs_ltype_ssize(ltype);
 
 	return silofs_off_align(off, nrefs * vsize);
 }
 
-static bool isdata(const struct silofs_vaddr *vaddr)
+static bool isdata(const struct silofs_laddr *laddr)
 {
-	return silofs_vaddr_isdata(vaddr);
+	return silofs_laddr_isdata(laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -46,15 +46,15 @@ static void spn_set_base_off(struct silofs_space_node *spn, off_t off)
 	spn->sp_base_off = silofs_cpu_to_off(off);
 }
 
-static enum silofs_vtype spn_ref_vtype(const struct silofs_space_node *spn)
+static enum silofs_ltype spn_ref_ltype(const struct silofs_space_node *spn)
 {
-	return (enum silofs_vtype)(spn->sp_ref_vtype);
+	return (enum silofs_ltype)(spn->sp_ref_ltype);
 }
 
 static void
-spn_set_ref_vtype(struct silofs_space_node *spn, enum silofs_vtype ref_vtype)
+spn_set_ref_ltype(struct silofs_space_node *spn, enum silofs_ltype ref_ltype)
 {
-	spn->sp_ref_vtype = (uint8_t)ref_vtype;
+	spn->sp_ref_ltype = (uint8_t)ref_ltype;
 }
 
 static enum silofs_spacef
@@ -161,10 +161,10 @@ static void spn_clone_refcnts(struct silofs_space_node *spn,
 }
 
 static void
-spn_init(struct silofs_space_node *spn, enum silofs_vtype ref_vtype, off_t off)
+spn_init(struct silofs_space_node *spn, enum silofs_ltype ref_ltype, off_t off)
 {
 	spn_set_base_off(spn, off);
-	spn_set_ref_vtype(spn, ref_vtype);
+	spn_set_ref_ltype(spn, ref_ltype);
 	spn_reset_flags(spn);
 	spn_reset_refcnts(spn);
 }
@@ -173,7 +173,7 @@ static void spn_clone(struct silofs_space_node *spn,
                       const struct silofs_space_node *spn_other)
 {
 	spn_set_base_off(spn, spn_base_off(spn_other));
-	spn_set_ref_vtype(spn, spn_ref_vtype(spn_other));
+	spn_set_ref_ltype(spn, spn_ref_ltype(spn_other));
 	spn_clone_flags(spn, spn_other);
 	spn_clone_refcnts(spn, spn_other);
 }
@@ -192,10 +192,10 @@ static size_t spn_nused_refs(const struct silofs_space_node *spn)
 
 static size_t spn_ref_size(const struct silofs_space_node *spn)
 {
-	const enum silofs_vtype ref_vtype = spn_ref_vtype(spn);
+	const enum silofs_ltype ref_ltype = spn_ref_ltype(spn);
 	size_t ref_size;
 
-	ref_size = silofs_vtype_size(ref_vtype);
+	ref_size = silofs_ltype_size(ref_ltype);
 	silofs_assert_gt(ref_size, 0);
 	return ref_size;
 }
@@ -258,37 +258,37 @@ int silofs_verify_space_node(const struct silofs_space_node *spn)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-struct silofs_spnode_info *silofs_spi_from_vni(struct silofs_vnode_info *vni)
+struct silofs_spnode_info *silofs_spi_from_lni(struct silofs_lnode_info *lni)
 {
-	return mut_container_of(vni, struct silofs_spnode_info, spn_vni);
+	return mut_container_of(lni, struct silofs_spnode_info, spn_lni);
 }
 
 void silofs_spi_incref(struct silofs_spnode_info *spi)
 {
 	if (likely(spi != nullptr)) {
-		silofs_vni_incref(&spi->spn_vni);
+		silofs_lni_incref(&spi->spn_lni);
 	}
 }
 
 void silofs_spi_decref(struct silofs_spnode_info *spi)
 {
 	if (likely(spi != nullptr)) {
-		silofs_vni_decref(&spi->spn_vni);
+		silofs_lni_decref(&spi->spn_lni);
 	}
 }
 
 static void spi_setdirty(struct silofs_spnode_info *spi)
 {
-	silofs_vni_setdirty(&spi->spn_vni, nullptr);
+	silofs_lni_setdirty(&spi->spn_lni, nullptr);
 }
 
 void silofs_spi_setup_spawned(struct silofs_spnode_info *spi,
-                              const struct silofs_vaddr *ref_vaddr)
+                              const struct silofs_laddr *ref_laddr)
 {
 	const off_t base_off =
-		calc_base_offset_of(ref_vaddr->vtype, ref_vaddr->off);
+		calc_base_offset_of(ref_laddr->ltype, ref_laddr->off);
 
-	spn_init(spi->spn, ref_vaddr->vtype, base_off);
+	spn_init(spi->spn, ref_laddr->ltype, base_off);
 	spi->spn_nused_ref = 0;
 	spi_setdirty(spi);
 }
@@ -303,16 +303,16 @@ static bool spi_cap_allocate(const struct silofs_spnode_info *spi)
 	return spi->spn_nused_ref < ARRAY_SIZE(spi->spn->sp_refcnt);
 }
 
-static void spi_vaddr_at(const struct silofs_spnode_info *spi, size_t slot,
-                         struct silofs_vaddr *out_vaddr)
+static void spi_laddr_at(const struct silofs_spnode_info *spi, size_t slot,
+                         struct silofs_laddr *out_laddr)
 {
 	const off_t off = spn_slot_to_off(spi->spn, slot);
 
-	silofs_vaddr_setup(out_vaddr, spn_ref_vtype(spi->spn), off);
+	silofs_laddr_setup(out_laddr, spn_ref_ltype(spi->spn), off);
 }
 
 int silofs_spi_find_free(const struct silofs_spnode_info *spi,
-                         struct silofs_vaddr *out_vaddr)
+                         struct silofs_laddr *out_laddr)
 {
 	const struct silofs_space_node *spn = spi->spn;
 	size_t slot;
@@ -326,18 +326,18 @@ int silofs_spi_find_free(const struct silofs_spnode_info *spi,
 		silofs_assert_lt(slot, ARRAY_SIZE(spn->sp_refcnt));
 		return -SILOFS_ENOSPC;
 	}
-	spi_vaddr_at(spi, slot, out_vaddr);
+	spi_laddr_at(spi, slot, out_laddr);
 	return 0;
 }
 
 static size_t spi_slot_of(const struct silofs_spnode_info *spi,
-                          const struct silofs_vaddr *vaddr)
+                          const struct silofs_laddr *laddr)
 {
-	const enum silofs_vtype ref_vtype = spn_ref_vtype(spi->spn);
+	const enum silofs_ltype ref_ltype = spn_ref_ltype(spi->spn);
 
-	silofs_assert_eq(ref_vtype, vaddr->vtype);
+	silofs_assert_eq(ref_ltype, laddr->ltype);
 
-	return spn_off_to_slot(spi->spn, vaddr->off);
+	return spn_off_to_slot(spi->spn, laddr->off);
 }
 
 static size_t spi_refcnt_at(const struct silofs_spnode_info *spi, size_t slot)
@@ -374,9 +374,9 @@ static void spi_clear_unwritten_at(struct silofs_spnode_info *spi, size_t slot)
 }
 
 void silofs_spi_inc_allocated(struct silofs_spnode_info *spi,
-                              const struct silofs_vaddr *vaddr)
+                              const struct silofs_laddr *laddr)
 {
-	const size_t slot = spi_slot_of(spi, vaddr);
+	const size_t slot = spi_slot_of(spi, laddr);
 	const bool first  = (spi_refcnt_at(spi, slot) == 0);
 
 	spn_inc_refcnt_at(spi->spn, slot);
@@ -384,7 +384,7 @@ void silofs_spi_inc_allocated(struct silofs_spnode_info *spi,
 		goto out;
 	}
 	spi_update_nused_ref(spi, 1);
-	if (!isdata(vaddr)) {
+	if (!isdata(laddr)) {
 		goto out;
 	}
 	spi_mark_unwritten_at(spi, slot);
@@ -393,9 +393,9 @@ out:
 }
 
 void silofs_spi_dec_allocated(struct silofs_spnode_info *spi,
-                              const struct silofs_vaddr *vaddr)
+                              const struct silofs_laddr *laddr)
 {
-	const size_t slot = spi_slot_of(spi, vaddr);
+	const size_t slot = spi_slot_of(spi, laddr);
 	const bool last   = (spi_refcnt_at(spi, slot) == 1);
 
 	spn_dec_refcnt_at(spi->spn, slot);
@@ -407,9 +407,9 @@ void silofs_spi_dec_allocated(struct silofs_spnode_info *spi,
 }
 
 void silofs_spi_mark_unwritten(struct silofs_spnode_info *spi,
-                               const struct silofs_vaddr *vaddr)
+                               const struct silofs_laddr *laddr)
 {
-	const size_t slot = spi_slot_of(spi, vaddr);
+	const size_t slot = spi_slot_of(spi, laddr);
 
 	if (!spi_test_unwritten_at(spi, slot)) {
 		spi_mark_unwritten_at(spi, slot);
@@ -418,9 +418,9 @@ void silofs_spi_mark_unwritten(struct silofs_spnode_info *spi,
 }
 
 void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
-                                const struct silofs_vaddr *vaddr)
+                                const struct silofs_laddr *laddr)
 {
-	const size_t slot = spi_slot_of(spi, vaddr);
+	const size_t slot = spi_slot_of(spi, laddr);
 
 	if (spi_test_unwritten_at(spi, slot)) {
 		spi_clear_unwritten_at(spi, slot);
@@ -429,10 +429,10 @@ void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
 }
 
 void silofs_spi_vspace_ref(const struct silofs_spnode_info *spi,
-                           const struct silofs_vaddr *vaddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_vspace_ref *out_vspref)
 {
-	const size_t slot = spi_slot_of(spi, vaddr);
+	const size_t slot = spi_slot_of(spi, laddr);
 
 	out_vspref->refcnt = spn_refcnt_at(spi->spn, slot);
 	out_vspref->flags  = spn_flags_at(spi->spn, slot);

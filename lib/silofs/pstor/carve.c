@@ -65,7 +65,7 @@ int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
 	struct silofs_paddr paddr;
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_UBER,
-		.vtype = SILOFS_VTYPE_NONE,
+		.ltype = SILOFS_LTYPE_NONE,
 	};
 
 	silofs_blobid_init(&blobid, &stype, nullptr, nullptr);
@@ -77,14 +77,14 @@ int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
 }
 
 int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype vtype,
+                              enum silofs_ltype ltype,
                               struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_blobid blobid;
 	struct silofs_paddr paddr;
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
-		.vtype = vtype,
+		.ltype = ltype,
 	};
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
@@ -95,13 +95,13 @@ int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
 }
 
 int silofs_carve_base_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype vtype,
+                             enum silofs_ltype ltype,
                              struct silofs_paddr *out_paddr)
 {
 	struct silofs_blobid blobid;
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_VNODE,
-		.vtype = vtype,
+		.ltype = ltype,
 	};
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
@@ -150,24 +150,24 @@ static int carve_pnptr_of(const struct silofs_pexec_ctx *pexec,
 }
 
 int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
-                         enum silofs_vtype vtype,
+                         enum silofs_ltype ltype,
                          struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
-		.vtype = vtype,
+		.ltype = ltype,
 	};
 
 	return carve_pnptr_of(pexec, &stype, out_pnptr);
 }
 
 int silofs_carve_vspace(const struct silofs_pexec_ctx *pexec,
-                        enum silofs_vtype vtype,
+                        enum silofs_ltype ltype,
                         struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_VNODE,
-		.vtype = vtype,
+		.ltype = ltype,
 	};
 
 	return carve_pnptr_of(pexec, &stype, out_pnptr);

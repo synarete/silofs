@@ -421,21 +421,21 @@ static void ut_file_fallocate_zero_range(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static off_t off_to_nbk(off_t off)
+static ssize_t off_to_nbk(off_t off)
 {
 	return off / UT_64K;
 }
 
-static off_t off_to_nbk_up(off_t off)
+static ssize_t off_to_nbk_up(off_t off)
 {
 	return off_to_nbk(off + UT_64K - 1);
 }
 
 static blkcnt_t blocks_count_of(off_t off, off_t len)
 {
-	const silofs_lba_t lba_beg = off_to_nbk(off);
-	const silofs_lba_t lba_end = off_to_nbk_up(off + len);
-	const off_t length         = (lba_end - lba_beg) * UT_64K;
+	const ssize_t lba_beg = off_to_nbk(off);
+	const ssize_t lba_end = off_to_nbk_up(off + len);
+	const off_t length    = (lba_end - lba_beg) * UT_64K;
 
 	return length / 512;
 }
@@ -446,10 +446,8 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
 	struct stat st[2];
 	const char *name = UT_NAME;
 	const size_t cnt = 64;
-	blkcnt_t nblk    = 0;
-	off_t off        = -1;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t dino = 0, ino = 0;
+	off_t off;
 
 	ut_expect_eq(base_off % UT_64K, 0);
 	ut_expect_eq(step_size % UT_64K, 0);
@@ -464,7 +462,7 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
 
 	off = base_off;
 	for (size_t i = 0; i < cnt; ++i) {
-		nblk = blocks_count_of(off, len);
+		blkcnt_t nblk = blocks_count_of(off, len);
 
 		ut_getattr(ute, ino, &st[0]);
 		ut_fallocate_reserve(ute, ino, off, len);
@@ -476,7 +474,8 @@ static void ut_file_fallocate_stat_(struct ut_env *ute, off_t base_off,
 	}
 	off = base_off;
 	for (size_t j = 0; j < cnt; ++j) {
-		nblk = blocks_count_of(off, len);
+		blkcnt_t nblk = blocks_count_of(off, len);
+
 		ut_getattr(ute, ino, &st[0]);
 		ut_fallocate_punch_hole(ute, ino, off, nblk * 512);
 		ut_getattr(ute, ino, &st[1]);

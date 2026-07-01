@@ -30,20 +30,20 @@ void silofs_sbi_setup_spawned(struct silofs_sbnode_info *sbi, size_t fscap);
 int silofs_sbi_check_iavail(const struct silofs_sbnode_info *sbi);
 
 int silofs_sbi_check_avail(const struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype                vtype);
+                           enum silofs_ltype                ltype);
 
-void silofs_sbi_take_vnode(struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype          vtype);
+void silofs_sbi_take_lnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_ltype          ltype);
 
-void silofs_sbi_give_vnode(struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype          vtype);
+void silofs_sbi_give_lnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_ltype          ltype);
 
 void silofs_sbi_apex_of(const struct silofs_sbnode_info *sbi,
-                        enum silofs_vtype                vtype,
-                        struct silofs_vaddr             *out_vaddr);
+                        enum silofs_ltype                ltype,
+                        struct silofs_laddr             *out_laddr);
 
 void silofs_sbi_update_apex(struct silofs_sbnode_info *sbi,
-                            const struct silofs_vaddr *vaddr);
+                            const struct silofs_laddr *laddr);
 
 uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi);
 

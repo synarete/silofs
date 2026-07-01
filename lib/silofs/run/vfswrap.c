@@ -521,8 +521,3 @@ const struct silofs_vfs_hooks *silofs_vfswrap_hooks(void)
 {
 	return &s_vfs_hooks;
 }
-
-void silofs_env_bind_hooks(struct silofs_env *env)
-{
-	env->vfs_hooks = silofs_vfswrap_hooks();
-}

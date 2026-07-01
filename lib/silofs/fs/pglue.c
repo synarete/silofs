@@ -23,53 +23,53 @@
 #include <silofs/fs.h>
 
 static int verify_lview_of(const struct silofs_lview *lview,
-                           const struct silofs_vaddr *vaddr)
+                           const struct silofs_laddr *laddr)
 {
 	int ret;
 
-	switch (vaddr->vtype) {
-	case SILOFS_VTYPE_SUPER:
+	switch (laddr->ltype) {
+	case SILOFS_LTYPE_SUPER:
 		ret = silofs_verify_superb_node(&lview->u.sbn);
 		break;
-	case SILOFS_VTYPE_SPNODE:
+	case SILOFS_LTYPE_SPNODE:
 		ret = silofs_verify_space_node(&lview->u.spn);
 		break;
-	case SILOFS_VTYPE_INODE:
+	case SILOFS_LTYPE_INODE:
 		ret = silofs_verify_inode(&lview->u.in);
 		break;
-	case SILOFS_VTYPE_XANODE:
+	case SILOFS_LTYPE_XANODE:
 		ret = silofs_verify_xattr_node(&lview->u.xan);
 		break;
-	case SILOFS_VTYPE_SYMVAL:
+	case SILOFS_LTYPE_SYMVAL:
 		ret = silofs_verify_symval_node(&lview->u.svn);
 		break;
-	case SILOFS_VTYPE_DTNODE:
+	case SILOFS_LTYPE_DTNODE:
 		ret = silofs_verify_dtree_node(&lview->u.dtn);
 		break;
-	case SILOFS_VTYPE_FTNODE:
+	case SILOFS_LTYPE_FTNODE:
 		ret = silofs_verify_ftree_node(&lview->u.ftn);
 		break;
-	case SILOFS_VTYPE_DATA1K:
-	case SILOFS_VTYPE_DATA4K:
-	case SILOFS_VTYPE_DATA64K:
+	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_LTYPE_DATA64K:
 		ret = 0;
 		break;
-	case SILOFS_VTYPE_NONE:
-	case SILOFS_VTYPE_LAST:
+	case SILOFS_LTYPE_NONE:
+	case SILOFS_LTYPE_LAST:
 	default:
-		silofs_panic("non vnode: vtype=%d off=%zd", //
-		             vaddr->vtype, vaddr->off);
+		silofs_panic("non lnode: ltype=%d off=%zd", //
+		             laddr->ltype, laddr->off);
 		break;
 	}
 	return ret;
 }
 
-static int verify_staged_vnode(const struct silofs_vnode_info *vni)
+static int verify_staged_lnode(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_lview *lview = vni->vn_ni.view.lview;
-	const struct silofs_vaddr *vaddr = silofs_vni_vaddr(vni);
+	const struct silofs_lview *lview = lni->vn_ni.view.lview;
+	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
 
-	return verify_lview_of(lview, vaddr);
+	return verify_lview_of(lview, laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -90,171 +90,171 @@ finish_pexec(struct silofs_pexec_ctx *pexec, struct silofs_inode_info *pii)
 }
 
 static int
-probe_vnode(const struct silofs_task_ctx *task,
-            const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+probe_lnode(const struct silofs_task_ctx *task,
+            const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_probe_vnode2_at(&pexec, vaddr);
+	err = silofs_probe_lnode2_at(&pexec, laddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int
-stage_vnode(const struct silofs_task_ctx *task,
-            const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii,
-            enum silofs_stg_mode stg_mode, struct silofs_vnode_info **out_vni)
+stage_lnode(const struct silofs_task_ctx *task,
+            const struct silofs_laddr *laddr, struct silofs_inode_info *pii,
+            enum silofs_stg_mode stg_mode, struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_stage_vnode2_at(&pexec, vaddr, out_vni);
+	err = silofs_stage_lnode2_at(&pexec, laddr, out_lni);
 	finish_pexec(&pexec, pii);
 	silofs_unused(stg_mode);
 	return err;
 }
 
-static int stage_verify_vnode(const struct silofs_task_ctx *task,
-                              const struct silofs_vaddr *vaddr,
+static int stage_verify_lnode(const struct silofs_task_ctx *task,
+                              const struct silofs_laddr *laddr,
                               struct silofs_inode_info *pii,
                               enum silofs_stg_mode stg_mode,
-                              struct silofs_vnode_info **out_vni)
+                              struct silofs_lnode_info **out_lni)
 {
 	int err;
 
-	err = stage_vnode(task, vaddr, pii, stg_mode, out_vni);
-	return err ? err : verify_staged_vnode(*out_vni);
+	err = stage_lnode(task, laddr, pii, stg_mode, out_lni);
+	return err ? err : verify_staged_lnode(*out_lni);
 }
 
-static int spawn_vnode_at(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
-                          struct silofs_vnode_info **out_vni)
+static int spawn_lnode_at(const struct silofs_task_ctx *task,
+                          const struct silofs_laddr *laddr,
+                          struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, nullptr);
-	err = silofs_spawn_vnode2_at(&pexec, vaddr, out_vni);
+	err = silofs_spawn_lnode2_at(&pexec, laddr, out_lni);
 	finish_pexec(&pexec, nullptr);
 	return err;
 }
 
 static int
-spawn_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
-            struct silofs_inode_info *pii, struct silofs_vnode_info **out_vni)
+spawn_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+            struct silofs_inode_info *pii, struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_spawn_vnode2(&pexec, vtype, out_vni);
+	err = silofs_spawn_lnode2(&pexec, ltype, out_lni);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int
-claim_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
-            struct silofs_inode_info *pii, struct silofs_vaddr *out_vaddr)
+claim_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+            struct silofs_inode_info *pii, struct silofs_laddr *out_laddr)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_claim_vnode2_space(&pexec, vtype, out_vaddr);
+	err = silofs_claim_lnode2_space(&pexec, ltype, out_laddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
-static int reclaim_vnode(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+static int reclaim_lnode(const struct silofs_task_ctx *task,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii, bool *out_last)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_reclaim_vnode2_at(&pexec, vaddr, out_last);
+	err = silofs_reclaim_lnode2_at(&pexec, laddr, out_last);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int
-share_vnode(const struct silofs_task_ctx *task,
-            const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+share_lnode(const struct silofs_task_ctx *task,
+            const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_share_vnode2_at(&pexec, vaddr);
+	err = silofs_share_lnode2_at(&pexec, laddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
-static int unshare_vnode(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+static int unshare_lnode(const struct silofs_task_ctx *task,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii, bool *out_last)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_unshare_vnode2_at(&pexec, vaddr, out_last);
+	err = silofs_unshare_lnode2_at(&pexec, laddr, out_last);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
-static int isshared_vnode(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+static int isshared_lnode(const struct silofs_task_ctx *task,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii, bool *out_res)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_isshared_vnode2_at(&pexec, vaddr, out_res);
+	err = silofs_isshared_lnode2_at(&pexec, laddr, out_res);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int
 mark_unwritten(const struct silofs_task_ctx *task,
-               const struct silofs_vaddr *vaddr, struct silofs_inode_info *pii)
+               const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_mark_unwritten_at2(&pexec, vaddr);
+	err = silofs_mark_unwritten_at2(&pexec, laddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int clear_unwritten(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr *vaddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_inode_info *pii)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_clear_unwritten_at2(&pexec, vaddr);
+	err = silofs_clear_unwritten_at2(&pexec, laddr);
 	finish_pexec(&pexec, pii);
 	return err;
 }
 
 static int test_unwritten(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii, bool *out_unwritten)
 {
 	struct silofs_pexec_ctx pexec;
 	int err;
 
 	start_pexec(&pexec, task, pii);
-	err = silofs_test_unwritten_at2(&pexec, vaddr, out_unwritten);
+	err = silofs_test_unwritten_at2(&pexec, laddr, out_unwritten);
 	finish_pexec(&pexec, pii);
 	return err;
 }
@@ -280,29 +280,29 @@ static void put_sbi(struct silofs_sbnode_info *sbi)
 	}
 }
 
-static void take_vnode(struct silofs_sbnode_info *sbi, enum silofs_vtype vtype)
+static void take_lnode(struct silofs_sbnode_info *sbi, enum silofs_ltype ltype)
 {
-	silofs_sbi_take_vnode(sbi, vtype);
+	silofs_sbi_take_lnode(sbi, ltype);
 }
 
 static void
-give_vnode(struct silofs_sbnode_info *sbi, enum silofs_vtype vtype, bool last)
+give_lnode(struct silofs_sbnode_info *sbi, enum silofs_ltype ltype, bool last)
 {
 	if (last) {
-		silofs_sbi_give_vnode(sbi, vtype);
+		silofs_sbi_give_lnode(sbi, ltype);
 	}
 }
 
-static void give_vnode_of(struct silofs_sbnode_info *sbi,
-                          const struct silofs_vaddr *vaddr, bool last)
+static void give_lnode_of(struct silofs_sbnode_info *sbi,
+                          const struct silofs_laddr *laddr, bool last)
 {
-	give_vnode(sbi, vaddr->vtype, last);
+	give_lnode(sbi, laddr->ltype, last);
 }
 
 static int
-spawn_take_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
+spawn_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
                  struct silofs_inode_info *pii,
-                 struct silofs_vnode_info **out_vni)
+                 struct silofs_lnode_info **out_lni)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
@@ -310,18 +310,18 @@ spawn_take_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
 	err = get_sbi(task, &sbi);
 	goto_out_if_err(err);
 
-	err = spawn_vnode(task, vtype, pii, out_vni);
+	err = spawn_lnode(task, ltype, pii, out_lni);
 	goto_out_if_err(err);
 
-	take_vnode(sbi, vtype);
+	take_lnode(sbi, ltype);
 out:
 	put_sbi(sbi);
 	return err;
 }
 
 static int
-claim_take_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
-                 struct silofs_inode_info *pii, struct silofs_vaddr *out_vaddr)
+claim_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+                 struct silofs_inode_info *pii, struct silofs_laddr *out_laddr)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
@@ -329,17 +329,17 @@ claim_take_vnode(const struct silofs_task_ctx *task, enum silofs_vtype vtype,
 	err = get_sbi(task, &sbi);
 	goto_out_if_err(err);
 
-	err = claim_vnode(task, vtype, pii, out_vaddr);
+	err = claim_lnode(task, ltype, pii, out_laddr);
 	goto_out_if_err(err);
 
-	take_vnode(sbi, vtype);
+	take_lnode(sbi, ltype);
 out:
 	put_sbi(sbi);
 	return err;
 }
 
-static int reclaim_give_vnode(const struct silofs_task_ctx *task,
-                              const struct silofs_vaddr *vaddr,
+static int reclaim_give_lnode(const struct silofs_task_ctx *task,
+                              const struct silofs_laddr *laddr,
                               struct silofs_inode_info *pii)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
@@ -349,17 +349,17 @@ static int reclaim_give_vnode(const struct silofs_task_ctx *task,
 	err = get_sbi(task, &sbi);
 	goto_out_if_err(err);
 
-	err = reclaim_vnode(task, vaddr, pii, &last);
+	err = reclaim_lnode(task, laddr, pii, &last);
 	goto_out_if_err(err);
 
-	give_vnode_of(sbi, vaddr, last);
+	give_lnode_of(sbi, laddr, last);
 out:
 	put_sbi(sbi);
 	return err;
 }
 
-static int unshare_give_vnode(const struct silofs_task_ctx *task,
-                              const struct silofs_vaddr *vaddr,
+static int unshare_give_lnode(const struct silofs_task_ctx *task,
+                              const struct silofs_laddr *laddr,
                               struct silofs_inode_info *pii)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
@@ -369,10 +369,10 @@ static int unshare_give_vnode(const struct silofs_task_ctx *task,
 	err = get_sbi(task, &sbi);
 	goto_out_if_err(err);
 
-	err = unshare_vnode(task, vaddr, pii, &last);
+	err = unshare_lnode(task, laddr, pii, &last);
 	goto_out_if_err(err);
 
-	give_vnode_of(sbi, vaddr, last);
+	give_lnode_of(sbi, laddr, last);
 out:
 	put_sbi(sbi);
 	return err;
@@ -380,23 +380,23 @@ out:
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void vaddr_of_super(struct silofs_vaddr *out_vaddr)
+static void laddr_of_super(struct silofs_laddr *out_laddr)
 {
-	const off_t pos = silofs_vtype_ssize(SILOFS_VTYPE_SUPER);
+	const off_t pos = silofs_ltype_ssize(SILOFS_LTYPE_SUPER);
 
-	silofs_vaddr_setup(out_vaddr, SILOFS_VTYPE_SUPER, pos);
+	silofs_laddr_setup(out_laddr, SILOFS_LTYPE_SUPER, pos);
 }
 
-static struct silofs_sbnode_info *vni_to_sbi(struct silofs_vnode_info *vni)
+static struct silofs_sbnode_info *lni_to_sbi(struct silofs_lnode_info *lni)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	sbi = silofs_sbi_from_vni(vni);
+	sbi = silofs_sbi_from_lni(lni);
 	if (unlikely(sbi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(sbi->sbn == nullptr)) {
 		silofs_panic("missing sun: sui=%" PRIxPTR, (uintptr_t)sbi);
@@ -406,55 +406,55 @@ static struct silofs_sbnode_info *vni_to_sbi(struct silofs_vnode_info *vni)
 
 int silofs_probe_super2(const struct silofs_task_ctx *task)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 
-	vaddr_of_super(&vaddr);
-	return probe_vnode(task, &vaddr, nullptr);
+	laddr_of_super(&laddr);
+	return probe_lnode(task, &laddr, nullptr);
 }
 
 int silofs_stage_super2(const struct silofs_task_ctx *task,
                         enum silofs_stg_mode stg_mode,
                         struct silofs_sbnode_info **out_sbi)
 {
-	struct silofs_vaddr vaddr;
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_laddr laddr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	vaddr_of_super(&vaddr);
-	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
+	laddr_of_super(&laddr);
+	err = stage_verify_lnode(task, &laddr, nullptr, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_sbi = vni_to_sbi(vni);
+	*out_sbi = lni_to_sbi(lni);
 	return 0;
 }
 
 int silofs_spawn_super2(const struct silofs_task_ctx *task,
                         struct silofs_sbnode_info **out_sbi)
 {
-	struct silofs_vaddr vaddr     = {};
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_laddr laddr     = {};
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	vaddr_of_super(&vaddr);
-	err = spawn_vnode_at(task, &vaddr, &vni);
+	laddr_of_super(&laddr);
+	err = spawn_lnode_at(task, &laddr, &lni);
 	return_if_err(err);
 
-	*out_sbi = vni_to_sbi(vni);
+	*out_sbi = lni_to_sbi(lni);
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_spnode_info *vni_to_spi(struct silofs_vnode_info *vni)
+static struct silofs_spnode_info *lni_to_spi(struct silofs_lnode_info *lni)
 {
 	struct silofs_spnode_info *spi = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	spi = silofs_spi_from_vni(vni);
+	spi = silofs_spi_from_lni(lni);
 	if (unlikely(spi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(spi->spn == nullptr)) {
 		silofs_panic("missing spnode: spi=%" PRIxPTR, (uintptr_t)spi);
@@ -463,59 +463,59 @@ static struct silofs_spnode_info *vni_to_spi(struct silofs_vnode_info *vni)
 }
 
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr)
+                         const struct silofs_laddr *laddr)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SPNODE);
-	return probe_vnode(task, vaddr, nullptr);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SPNODE);
+	return probe_lnode(task, laddr, nullptr);
 }
 
 int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *ref_vaddr,
+                            const struct silofs_laddr *ref_laddr,
                             enum silofs_stg_mode stg_mode,
                             struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vaddr vaddr;
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_laddr laddr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
 
-	err = stage_verify_vnode(task, &vaddr, nullptr, stg_mode, &vni);
+	err = stage_verify_lnode(task, &laddr, nullptr, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_spi = vni_to_spi(vni);
+	*out_spi = lni_to_spi(lni);
 	return 0;
 }
 
 int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *ref_vaddr,
+                            const struct silofs_laddr *ref_laddr,
                             struct silofs_spnode_info **out_spi)
 {
-	struct silofs_vaddr vaddr;
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_laddr laddr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode2_vaddr(ref_vaddr, &vaddr);
+	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
 
-	err = spawn_vnode_at(task, &vaddr, &vni);
+	err = spawn_lnode_at(task, &laddr, &lni);
 	return_if_err(err);
 
-	*out_spi = vni_to_spi(vni);
+	*out_spi = lni_to_spi(lni);
 	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_inode_info *vni_to_ii(struct silofs_vnode_info *vni)
+static struct silofs_inode_info *lni_to_ii(struct silofs_lnode_info *lni)
 {
 	struct silofs_inode_info *ii = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	ii = silofs_ii_from_vni(vni);
+	ii = silofs_ii_from_lni(lni);
 	if (unlikely(ii == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(ii->inode == nullptr)) {
 		silofs_panic("missing inode: ii=%" PRIxPTR, (uintptr_t)ii);
@@ -524,60 +524,60 @@ static struct silofs_inode_info *vni_to_ii(struct silofs_vnode_info *vni)
 }
 
 int silofs_probe_inode2(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr *vaddr)
+                        const struct silofs_laddr *laddr)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
-	return probe_vnode(task, vaddr, nullptr);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_INODE);
+	return probe_lnode(task, laddr, nullptr);
 }
 
 int silofs_stage_inode2(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr *vaddr,
+                        const struct silofs_laddr *laddr,
                         enum silofs_stg_mode stg_mode,
                         struct silofs_inode_info **out_ii)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
-	err = stage_verify_vnode(task, vaddr, nullptr, stg_mode, &vni);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_INODE);
+	err = stage_verify_lnode(task, laddr, nullptr, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_ii = vni_to_ii(vni);
+	*out_ii = lni_to_ii(lni);
 	return 0;
 }
 
 int silofs_spawn_inode2(const struct silofs_task_ctx *task,
                         struct silofs_inode_info **out_ii)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = spawn_take_vnode(task, SILOFS_VTYPE_INODE, nullptr, &vni);
+	err = spawn_take_lnode(task, SILOFS_LTYPE_INODE, nullptr, &lni);
 	return_if_err(err);
 
-	*out_ii = vni_to_ii(vni);
+	*out_ii = lni_to_ii(lni);
 	return 0;
 }
 
 int silofs_remove_inode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr)
+                         const struct silofs_laddr *laddr)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_INODE);
-	return reclaim_give_vnode(task, vaddr, nullptr);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_INODE);
+	return reclaim_give_lnode(task, laddr, nullptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
+static struct silofs_xanode_info *lni_to_xai(struct silofs_lnode_info *lni)
 {
 	struct silofs_xanode_info *xai = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	xai = silofs_xai_from_vni(vni);
+	xai = silofs_xai_from_lni(lni);
 	if (unlikely(xai == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(xai->xan == nullptr)) {
 		silofs_panic("missing xanode: xai=%" PRIxPTR, (uintptr_t)xai);
@@ -586,20 +586,20 @@ static struct silofs_xanode_info *vni_to_xai(struct silofs_vnode_info *vni)
 }
 
 int silofs_stage_xanode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii,
                          enum silofs_stg_mode stg_mode,
                          struct silofs_xanode_info **out_xai)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_XANODE);
 
-	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_xai = vni_to_xai(vni);
+	*out_xai = lni_to_xai(lni);
 	return 0;
 }
 
@@ -607,36 +607,36 @@ int silofs_spawn_xanode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *pii,
                          struct silofs_xanode_info **out_xai)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = spawn_take_vnode(task, SILOFS_VTYPE_XANODE, pii, &vni);
+	err = spawn_take_lnode(task, SILOFS_LTYPE_XANODE, pii, &lni);
 	return_if_err(err);
 
-	*out_xai = vni_to_xai(vni);
+	*out_xai = lni_to_xai(lni);
 	return 0;
 }
 
 int silofs_remove_xanode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_XANODE);
-	return reclaim_give_vnode(task, vaddr, pii);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_XANODE);
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_symval_info *vni_to_svi(struct silofs_vnode_info *vni)
+static struct silofs_symval_info *lni_to_svi(struct silofs_lnode_info *lni)
 {
 	struct silofs_symval_info *svi = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	svi = silofs_svi_from_vni(vni);
+	svi = silofs_svi_from_lni(lni);
 	if (unlikely(svi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(svi->svn == nullptr)) {
 		silofs_panic("missing symval: svi=%" PRIxPTR, (uintptr_t)svi);
@@ -645,20 +645,20 @@ static struct silofs_symval_info *vni_to_svi(struct silofs_vnode_info *vni)
 }
 
 int silofs_stage_symval2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii,
                          enum silofs_stg_mode stg_mode,
                          struct silofs_symval_info **out_svi)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SYMVAL);
 
-	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_svi = vni_to_svi(vni);
+	*out_svi = lni_to_svi(lni);
 	return 0;
 }
 
@@ -666,36 +666,36 @@ int silofs_spawn_symval2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *pii,
                          struct silofs_symval_info **out_svi)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = spawn_take_vnode(task, SILOFS_VTYPE_SYMVAL, pii, &vni);
+	err = spawn_take_lnode(task, SILOFS_LTYPE_SYMVAL, pii, &lni);
 	return_if_err(err);
 
-	*out_svi = vni_to_svi(vni);
+	*out_svi = lni_to_svi(lni);
 	return 0;
 }
 
 int silofs_remove_symval2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_SYMVAL);
-	return reclaim_give_vnode(task, vaddr, pii);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SYMVAL);
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_dtnode_info *vni_to_dti(struct silofs_vnode_info *vni)
+static struct silofs_dtnode_info *lni_to_dti(struct silofs_lnode_info *lni)
 {
 	struct silofs_dtnode_info *dti = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	dti = silofs_dti_from_vni(vni);
+	dti = silofs_dti_from_lni(lni);
 	if (unlikely(dti == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(dti->dtn == nullptr)) {
 		silofs_panic("missing dtnode: dti=%" PRIxPTR, (uintptr_t)dti);
@@ -704,19 +704,19 @@ static struct silofs_dtnode_info *vni_to_dti(struct silofs_vnode_info *vni)
 }
 
 int silofs_stage_dtnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii,
                          enum silofs_stg_mode stg_mode,
                          struct silofs_dtnode_info **out_dti)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
-	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_DTNODE);
+	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_dti = vni_to_dti(vni);
+	*out_dti = lni_to_dti(lni);
 	return 0;
 }
 
@@ -724,36 +724,36 @@ int silofs_spawn_dtnode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *pii,
                          struct silofs_dtnode_info **out_dti)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = spawn_take_vnode(task, SILOFS_VTYPE_DTNODE, pii, &vni);
+	err = spawn_take_lnode(task, SILOFS_LTYPE_DTNODE, pii, &lni);
 	return_if_err(err);
 
-	*out_dti = vni_to_dti(vni);
+	*out_dti = lni_to_dti(lni);
 	return 0;
 }
 
 int silofs_remove_dtnode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_DTNODE);
-	return reclaim_give_vnode(task, vaddr, pii);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_DTNODE);
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_ftnode_info *vni_to_fti(struct silofs_vnode_info *vni)
+static struct silofs_ftnode_info *lni_to_fti(struct silofs_lnode_info *lni)
 {
 	struct silofs_ftnode_info *fti = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	fti = silofs_fti_from_vni(vni);
+	fti = silofs_fti_from_lni(lni);
 	if (unlikely(fti == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(fti->ftn == nullptr)) {
 		silofs_panic("missing ftnode: fti=%" PRIxPTR, (uintptr_t)fti);
@@ -762,19 +762,19 @@ static struct silofs_ftnode_info *vni_to_fti(struct silofs_vnode_info *vni)
 }
 
 int silofs_stage_ftnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii,
                          enum silofs_stg_mode stg_mode,
                          struct silofs_ftnode_info **out_fti)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_FTNODE);
-	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_FTNODE);
+	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_fti = vni_to_fti(vni);
+	*out_fti = lni_to_fti(lni);
 	return 0;
 }
 
@@ -782,36 +782,36 @@ int silofs_spawn_ftnode2(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *pii,
                          struct silofs_ftnode_info **out_fti)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = spawn_take_vnode(task, SILOFS_VTYPE_FTNODE, pii, &vni);
+	err = spawn_take_lnode(task, SILOFS_LTYPE_FTNODE, pii, &lni);
 	return_if_err(err);
 
-	*out_fti = vni_to_fti(vni);
+	*out_fti = lni_to_fti(lni);
 	return 0;
 }
 
 int silofs_remove_ftnode2(struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
-	silofs_assert_eq(vaddr->vtype, SILOFS_VTYPE_FTNODE);
-	return reclaim_give_vnode(task, vaddr, pii);
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_FTNODE);
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_fdnode_info *vni_to_fdi(struct silofs_vnode_info *vni)
+static struct silofs_fdnode_info *lni_to_fdi(struct silofs_lnode_info *lni)
 {
 	struct silofs_fdnode_info *fdi = nullptr;
 
-	if (unlikely(vni == nullptr)) {
-		silofs_panic("nullptr: vni=%" PRIxPTR, (uintptr_t)vni);
+	if (unlikely(lni == nullptr)) {
+		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	fdi = silofs_fdi_from_vni(vni);
+	fdi = silofs_fdi_from_lni(lni);
 	if (unlikely(fdi == nullptr)) {
-		silofs_panic("upcast failure: vni=%" PRIxPTR, (uintptr_t)vni);
+		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
 	if (unlikely(fdi->fdn.dn64 == nullptr)) {
 		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fdi);
@@ -820,85 +820,85 @@ static struct silofs_fdnode_info *vni_to_fdi(struct silofs_vnode_info *vni)
 }
 
 int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii,
                          enum silofs_stg_mode stg_mode,
                          struct silofs_fdnode_info **out_fdi)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_assert(silofs_vaddr_isdata(vaddr));
+	silofs_assert(silofs_laddr_isdata(laddr));
 
-	err = stage_verify_vnode(task, vaddr, pii, stg_mode, &vni);
+	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_fdi = vni_to_fdi(vni);
+	*out_fdi = lni_to_fdi(lni);
 	return 0;
 }
 
 int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
-                         enum silofs_vtype vtype,
+                         enum silofs_ltype ltype,
                          struct silofs_inode_info *pii,
-                         struct silofs_vaddr *out_vaddr)
+                         struct silofs_laddr *out_laddr)
 {
-	silofs_assert(silofs_vtype_isdata(vtype));
-	return claim_take_vnode(task, vtype, pii, out_vaddr);
+	silofs_assert(silofs_ltype_isdata(ltype));
+	return claim_take_lnode(task, ltype, pii, out_laddr);
 }
 
 int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return reclaim_give_vnode(task, vaddr, pii);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 int silofs_share_fdnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr *vaddr,
+                         const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return share_vnode(task, vaddr, pii);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return share_lnode(task, laddr, pii);
 }
 
 int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr *vaddr,
+                           const struct silofs_laddr *laddr,
                            struct silofs_inode_info *pii)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return unshare_give_vnode(task, vaddr, pii);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return unshare_give_lnode(task, laddr, pii);
 }
 
 int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_laddr *laddr,
                             struct silofs_inode_info *pii, bool *out_res)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return isshared_vnode(task, vaddr, pii, out_res);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return isshared_lnode(task, laddr, pii, out_res);
 }
 
 int silofs_mark_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                  const struct silofs_vaddr *vaddr,
+                                  const struct silofs_laddr *laddr,
                                   struct silofs_inode_info *pii)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return mark_unwritten(task, vaddr, pii);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return mark_unwritten(task, laddr, pii);
 }
 
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                   const struct silofs_vaddr *vaddr,
+                                   const struct silofs_laddr *laddr,
                                    struct silofs_inode_info *pii)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return clear_unwritten(task, vaddr, pii);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return clear_unwritten(task, laddr, pii);
 }
 
 int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                  const struct silofs_vaddr *vaddr,
+                                  const struct silofs_laddr *laddr,
                                   struct silofs_inode_info *pii,
                                   bool *out_unwritten)
 {
-	silofs_assert(silofs_vaddr_isdata(vaddr));
-	return test_unwritten(task, vaddr, pii, out_unwritten);
+	silofs_assert(silofs_laddr_isdata(laddr));
+	return test_unwritten(task, laddr, pii, out_unwritten);
 }

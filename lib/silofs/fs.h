@@ -55,22 +55,22 @@ int silofs_spawn_super2(const struct silofs_task_ctx *task,
                         struct silofs_sbnode_info   **out_sbi);
 
 int silofs_probe_spnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr);
+                         const struct silofs_laddr    *laddr);
 
 int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr    *ref_vaddr,
+                            const struct silofs_laddr    *ref_laddr,
                             enum silofs_stg_mode          stg_mode,
                             struct silofs_spnode_info   **out_spi);
 
 int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr    *ref_vaddr,
+                            const struct silofs_laddr    *ref_laddr,
                             struct silofs_spnode_info   **out_spi);
 
 int silofs_probe_inode2(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr    *vaddr);
+                        const struct silofs_laddr    *laddr);
 
 int silofs_stage_inode2(const struct silofs_task_ctx *task,
-                        const struct silofs_vaddr    *vaddr,
+                        const struct silofs_laddr    *laddr,
                         enum silofs_stg_mode          stg_mode,
                         struct silofs_inode_info    **out_ii);
 
@@ -78,10 +78,10 @@ int silofs_spawn_inode2(const struct silofs_task_ctx *task,
                         struct silofs_inode_info    **out_ii);
 
 int silofs_remove_inode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr);
+                         const struct silofs_laddr    *laddr);
 
 int silofs_stage_xanode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii,
                          enum silofs_stg_mode          stg_mode,
                          struct silofs_xanode_info   **out_xai);
@@ -91,11 +91,11 @@ int silofs_spawn_xanode2(const struct silofs_task_ctx *task,
                          struct silofs_xanode_info   **out_xai);
 
 int silofs_remove_xanode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr    *vaddr,
+                          const struct silofs_laddr    *laddr,
                           struct silofs_inode_info     *pii);
 
 int silofs_stage_symval2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii,
                          enum silofs_stg_mode          stg_mode,
                          struct silofs_symval_info   **out_svi);
@@ -105,11 +105,11 @@ int silofs_spawn_symval2(const struct silofs_task_ctx *task,
                          struct silofs_symval_info   **out_svi);
 
 int silofs_remove_symval2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr    *vaddr,
+                          const struct silofs_laddr    *laddr,
                           struct silofs_inode_info     *pii);
 
 int silofs_stage_dtnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii,
                          enum silofs_stg_mode          stg_mode,
                          struct silofs_dtnode_info   **out_dti);
@@ -119,11 +119,11 @@ int silofs_spawn_dtnode2(const struct silofs_task_ctx *task,
                          struct silofs_dtnode_info   **out_dti);
 
 int silofs_remove_dtnode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr    *vaddr,
+                          const struct silofs_laddr    *laddr,
                           struct silofs_inode_info     *pii);
 
 int silofs_stage_ftnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii,
                          enum silofs_stg_mode          stg_mode,
                          struct silofs_ftnode_info   **out_fti);
@@ -133,46 +133,46 @@ int silofs_spawn_ftnode2(const struct silofs_task_ctx *task,
                          struct silofs_ftnode_info   **out_fti);
 
 int silofs_remove_ftnode2(struct silofs_task_ctx    *task,
-                          const struct silofs_vaddr *vaddr,
+                          const struct silofs_laddr *laddr,
                           struct silofs_inode_info  *pii);
 
 int silofs_claim_fdnode2(const struct silofs_task_ctx *task,
-                         enum silofs_vtype             vtype,
+                         enum silofs_ltype             ltype,
                          struct silofs_inode_info     *pii,
-                         struct silofs_vaddr          *out_vaddr);
+                         struct silofs_laddr          *out_laddr);
 
 int silofs_stage_fdnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii,
                          enum silofs_stg_mode          stg_mode,
                          struct silofs_fdnode_info   **out_fdi);
 
 int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
-                          const struct silofs_vaddr    *vaddr,
+                          const struct silofs_laddr    *laddr,
                           struct silofs_inode_info     *pii);
 
 int silofs_share_fdnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_vaddr    *vaddr,
+                         const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii);
 
 int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
-                           const struct silofs_vaddr    *vaddr,
+                           const struct silofs_laddr    *laddr,
                            struct silofs_inode_info     *pii);
 
 int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
-                            const struct silofs_vaddr    *vaddr,
+                            const struct silofs_laddr    *laddr,
                             struct silofs_inode_info *pii, bool *out_res);
 
 int silofs_mark_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                  const struct silofs_vaddr    *vaddr,
+                                  const struct silofs_laddr    *laddr,
                                   struct silofs_inode_info     *pii);
 
 int silofs_clear_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                   const struct silofs_vaddr    *vaddr,
+                                   const struct silofs_laddr    *laddr,
                                    struct silofs_inode_info     *pii);
 
 int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
-                                  const struct silofs_vaddr    *vaddr,
+                                  const struct silofs_laddr    *laddr,
                                   struct silofs_inode_info     *pii,
                                   bool                         *out_unwritten);
 

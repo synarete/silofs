@@ -78,38 +78,38 @@ int silofs_spawn_inode_by(struct silofs_task_ctx *task,
 }
 
 static void
-vaddr_of(const struct silofs_inode_info *ii, struct silofs_vaddr *out_vaddr)
+laddr_of(const struct silofs_inode_info *ii, struct silofs_laddr *out_laddr)
 {
-	silofs_vaddr_assign(out_vaddr, silofs_ii_vaddr(ii));
+	silofs_laddr_assign(out_laddr, silofs_ii_laddr(ii));
 }
 
 int silofs_remove_inode_by(struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 
-	vaddr_of(ii, &vaddr);
+	laddr_of(ii, &laddr);
 	silofs_ii_cleardirty(ii);
 
-	return silofs_remove_inode2(task, &vaddr);
+	return silofs_remove_inode2(task, &laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int resolve_inode_vaddr(ino_t ino, struct silofs_vaddr *out_vaddr)
+static int resolve_inode_laddr(ino_t ino, struct silofs_laddr *out_laddr)
 {
-	silofs_ino_to_vaddr(ino, out_vaddr);
-	return !silofs_vaddr_isnull(out_vaddr) ? 0 : -SILOFS_EINVAL;
+	silofs_ino_to_laddr(ino, out_laddr);
+	return !silofs_laddr_isnull(out_laddr) ? 0 : -SILOFS_EINVAL;
 }
 
 static int stage_update_inode_at(struct silofs_task_ctx *task,
-                                 const struct silofs_vaddr *vaddr,
+                                 const struct silofs_laddr *laddr,
                                  enum silofs_stg_mode stg_mode,
                                  struct silofs_inode_info **out_ii)
 {
 	int err;
 
-	err = silofs_stage_inode2(task, vaddr, stg_mode, out_ii);
+	err = silofs_stage_inode2(task, laddr, stg_mode, out_ii);
 	return_if_err(err);
 
 	silofs_ii_update_staged(*out_ii);
@@ -143,16 +143,16 @@ int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
                           enum silofs_stg_mode stg_mode,
                           struct silofs_inode_info **out_ii)
 {
-	struct silofs_vaddr vaddr;
+	struct silofs_laddr laddr;
 	int err;
 
-	err = resolve_inode_vaddr(ino, &vaddr);
+	err = resolve_inode_laddr(ino, &laddr);
 	return_if_err(err);
 
-	err = silofs_probe_inode2(task, &vaddr);
+	err = silofs_probe_inode2(task, &laddr);
 	return_if_err(err);
 
-	err = stage_update_inode_at(task, &vaddr, stg_mode, out_ii);
+	err = stage_update_inode_at(task, &laddr, stg_mode, out_ii);
 	return_if_err(err);
 
 	err = ii_check_post_stage(*out_ii, stg_mode);
@@ -161,38 +161,38 @@ int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
 	return 0;
 }
 
-static int fetch_cached_vni(struct silofs_task_ctx *task,
-                            const struct silofs_vaddr *vaddr,
-                            struct silofs_vnode_info **out_vni)
+static int fetch_cached_lni(struct silofs_task_ctx *task,
+                            const struct silofs_laddr *laddr,
+                            struct silofs_lnode_info **out_lni)
 {
-	*out_vni = silofs_vcache_lookup_vnode(task->vcache, vaddr);
-	return (*out_vni == nullptr) ? -SILOFS_ENOENT : 0;
+	*out_lni = silofs_vcache_lookup_lnode(task->vcache, laddr);
+	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
 static int
-fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_vaddr *vaddr,
+fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_laddr *laddr,
                 struct silofs_inode_info **out_ii)
 {
-	struct silofs_vnode_info *vni = nullptr;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = fetch_cached_vni(task, vaddr, &vni);
+	err = fetch_cached_lni(task, laddr, &lni);
 	return_if_err(err);
 
-	*out_ii = silofs_ii_from_vni(vni);
+	*out_ii = silofs_ii_from_lni(lni);
 	return 0;
 }
 
 int silofs_lookup_cached_inode(struct silofs_task_ctx *task, ino_t ino,
                                struct silofs_inode_info **out_ii)
 {
-	struct silofs_vaddr vaddr = { .off = -1 };
+	struct silofs_laddr laddr = { .off = -1 };
 	int err;
 
-	err = resolve_inode_vaddr(ino, &vaddr);
+	err = resolve_inode_laddr(ino, &laddr);
 	return_if_err(err);
 
-	err = fetch_cached_ii(task, &vaddr, out_ii);
+	err = fetch_cached_ii(task, &laddr, out_ii);
 	return_if_err(err);
 
 	return 0;

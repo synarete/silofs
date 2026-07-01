@@ -40,7 +40,7 @@ enum silofs_hkey_type {
 /* addresses as mapping-key */
 union silofs_hkey_u {
 	const struct silofs_paddr *paddr;
-	const struct silofs_vaddr *vaddr;
+	const struct silofs_laddr *laddr;
 	const void                *key;
 };
 
@@ -79,8 +79,8 @@ typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
 void silofs_hkey_by_paddr(struct silofs_hkey        *hkey,
                           const struct silofs_paddr *paddr);
 
-void silofs_hkey_by_vaddr(struct silofs_hkey        *hkey,
-                          const struct silofs_vaddr *vaddr);
+void silofs_hkey_by_laddr(struct silofs_hkey        *hkey,
+                          const struct silofs_laddr *laddr);
 
 long silofs_hkey_compare(const struct silofs_hkey *hkey1,
                          const struct silofs_hkey *hkey2);
@@ -152,28 +152,28 @@ void silofs_hdr_seal(struct silofs_header *hdr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_lview_setup(struct silofs_lview *lview, enum silofs_vtype vtype);
+void silofs_lview_setup(struct silofs_lview *lview, enum silofs_ltype ltype);
 
 struct silofs_lview *silofs_lview_new(struct silofs_alloc *alloc,
-                                      enum silofs_vtype vtype, int flags);
+                                      enum silofs_ltype ltype, int flags);
 
 void silofs_lview_del(struct silofs_lview *lview, struct silofs_alloc *alloc,
-                      enum silofs_vtype vtype, int flags);
+                      enum silofs_ltype ltype, int flags);
 
 void silofs_lview_seal(struct silofs_lview *lview);
 
 int silofs_lview_verify(const struct silofs_lview *lview,
-                        enum silofs_vtype          vtype);
+                        enum silofs_ltype          ltype);
 
 int silofs_encrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
                          const struct silofs_lview     *lview,
-                         enum silofs_vtype vtype, void *ptr);
+                         enum silofs_ltype ltype, void *ptr);
 
 int silofs_decrypt_lview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,
                          const struct silofs_lview     *lview,
-                         enum silofs_vtype vtype, void *ptr);
+                         enum silofs_ltype ltype, void *ptr);
 
 int silofs_encrypt_lview2(const struct silofs_cipher_hd *ci_hd,
                           const struct silofs_civkey    *civkey,
@@ -188,7 +188,7 @@ int silofs_decrypt_lview2(const struct silofs_cipher_hd *ci_hd,
 int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
                                 const struct silofs_civkey    *civkey,
                                 struct silofs_lview           *lview,
-                                enum silofs_vtype              vtype);
+                                enum silofs_ltype              ltype);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -422,7 +422,7 @@ void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-#include <silofs/nodes/vnodes.h>
+#include <silofs/nodes/lnodes.h>
 #include <silofs/nodes/vcache.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -447,7 +447,7 @@ struct silofs_freevs_arr {
 	uint32_t            fva_objsz;
 };
 
-/* in-memory queue of free vspace addresses by vtype */
+/* in-memory queue of free vspace addresses by ltype */
 struct silofs_freevsq {
 	struct silofs_freevs_arr fvs_arr;
 	struct silofs_avl        fvs_avl;
@@ -456,7 +456,7 @@ struct silofs_freevsq {
 
 /* in-memory queue of free vspace addresses */
 struct silofs_freevsqs {
-	struct silofs_freevsq fvsq[SILOFS_VTYPE_LAST - 1];
+	struct silofs_freevsq fvsq[SILOFS_LTYPE_LAST - 1];
 };
 
 int silofs_freevsqs_init(struct silofs_freevsqs *fvsqs,
@@ -467,11 +467,11 @@ void silofs_freevsqs_fini(struct silofs_freevsqs *fvsqs);
 void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs);
 
 int silofs_freevsqs_push(struct silofs_freevsqs    *fvsqs,
-                         const struct silofs_vaddr *vaddr);
+                         const struct silofs_laddr *laddr);
 
 int silofs_freevsqs_pull(struct silofs_freevsqs *fvsqs,
-                         enum silofs_vtype       vtype,
-                         struct silofs_vaddr    *out_vaddr);
+                         enum silofs_ltype       ltype,
+                         struct silofs_laddr    *out_laddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -481,15 +481,15 @@ struct silofs_freepaq_entry {
 	struct silofs_paddr     paddr;
 };
 
-/* in-memory queue of free paddr by vtype */
+/* in-memory queue of free paddr by ltype */
 struct silofs_freepaq {
 	struct silofs_listq  fpaq_listq;
 	struct silofs_alloc *fpaq_alloc;
 };
 
 struct silofs_freepaqs {
-	struct silofs_freepaq fpaq_bn[SILOFS_VTYPE_LAST - 1];
-	struct silofs_freepaq fpaq_vn[SILOFS_VTYPE_LAST - 1];
+	struct silofs_freepaq fpaq_bn[SILOFS_LTYPE_LAST - 1];
+	struct silofs_freepaq fpaq_vn[SILOFS_LTYPE_LAST - 1];
 };
 
 void silofs_freepaqs_init(struct silofs_freepaqs *fpaqs,

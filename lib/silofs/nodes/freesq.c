@@ -20,9 +20,9 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-static uint32_t vtype_size(enum silofs_vtype vtype)
+static uint32_t ltype_size(enum silofs_ltype ltype)
 {
-	const size_t size = silofs_vtype_size(vtype);
+	const size_t size = silofs_ltype_size(ltype);
 
 	silofs_assert_gt(size, 0);
 	silofs_assert_lt(size, UINT32_MAX);
@@ -638,58 +638,58 @@ static void fvsq_fini(struct silofs_freevsq *fvsq)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t fvsqs_vtype_to_slot(enum silofs_vtype vtype)
+static size_t fvsqs_ltype_to_slot(enum silofs_ltype ltype)
 {
-	return (size_t)(vtype - 1);
+	return (size_t)(ltype - 1);
 }
 
-static enum silofs_vtype fvsqs_slot_to_vtype(size_t slot)
+static enum silofs_ltype fvsqs_slot_to_ltype(size_t slot)
 {
-	return (enum silofs_vtype)(slot + 1);
+	return (enum silofs_ltype)(slot + 1);
 }
 
 static struct silofs_freevsq *
-fvsqs_mut_sub(struct silofs_freevsqs *fvsqs, enum silofs_vtype vtype)
+fvsqs_mut_sub(struct silofs_freevsqs *fvsqs, enum silofs_ltype ltype)
 {
 	constexpr size_t nslots = ARRAY_SIZE(fvsqs->fvsq);
-	const size_t slot       = fvsqs_vtype_to_slot(vtype);
+	const size_t slot       = fvsqs_ltype_to_slot(ltype);
 
 	return (slot < nslots) ? &fvsqs->fvsq[slot] : nullptr;
 }
 
 int silofs_freevsqs_push(struct silofs_freevsqs *fvsqs,
-                         const struct silofs_vaddr *vaddr)
+                         const struct silofs_laddr *laddr)
 {
 	struct silofs_freevsq *fvsq;
 	size_t len;
 
-	fvsq = fvsqs_mut_sub(fvsqs, vaddr->vtype);
+	fvsq = fvsqs_mut_sub(fvsqs, laddr->ltype);
 	if (unlikely(fvsq == nullptr)) {
 		return -SILOFS_EINVAL;
 	}
-	len = vtype_size(vaddr->vtype);
-	return fvsq_add(fvsq, vaddr->off, len);
+	len = ltype_size(laddr->ltype);
+	return fvsq_add(fvsq, laddr->off, len);
 }
 
 int silofs_freevsqs_pull(struct silofs_freevsqs *fvsqs,
-                         enum silofs_vtype vtype,
-                         struct silofs_vaddr *out_vaddr)
+                         enum silofs_ltype ltype,
+                         struct silofs_laddr *out_laddr)
 {
 	struct silofs_freevsq *fvsq;
 	size_t len;
 	off_t off;
 	int err;
 
-	fvsq = fvsqs_mut_sub(fvsqs, vtype);
+	fvsq = fvsqs_mut_sub(fvsqs, ltype);
 	if (unlikely(fvsq == nullptr)) {
 		return -SILOFS_EINVAL;
 	}
-	len = vtype_size(vtype);
+	len = ltype_size(ltype);
 	err = fvsq_pull(fvsq, len, &off);
 	if (err) {
 		return err;
 	}
-	silofs_vaddr_setup(out_vaddr, vtype, off);
+	silofs_laddr_setup(out_laddr, ltype, off);
 	return 0;
 }
 
@@ -703,11 +703,11 @@ void silofs_freevsqs_drop(struct silofs_freevsqs *fvsqs)
 int silofs_freevsqs_init(struct silofs_freevsqs *fvsqs,
                          struct silofs_alloc *alloc)
 {
-	enum silofs_vtype vtype;
+	enum silofs_ltype ltype;
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(fvsqs->fvsq); ++slot) {
-		vtype = fvsqs_slot_to_vtype(slot);
-		fvsq_init(&fvsqs->fvsq[slot], vtype_size(vtype), alloc);
+		ltype = fvsqs_slot_to_ltype(slot);
+		fvsq_init(&fvsqs->fvsq[slot], ltype_size(ltype), alloc);
 	}
 	return 0;
 }
@@ -891,9 +891,9 @@ void silofs_freepaqs_drop(struct silofs_freepaqs *fpaqs)
 	}
 }
 
-static size_t fpaqs_vtype_to_slot(enum silofs_vtype vtype)
+static size_t fpaqs_ltype_to_slot(enum silofs_ltype ltype)
 {
-	return (size_t)(vtype - 1);
+	return (size_t)(ltype - 1);
 }
 
 static struct silofs_freepaq *
@@ -904,12 +904,12 @@ freepaqs_mut_sub(struct silofs_freepaqs *fpaqs,
 	size_t slot;
 
 	if (stype->ptype == SILOFS_PTYPE_BTNODE) {
-		slot = fpaqs_vtype_to_slot(stype->vtype);
+		slot = fpaqs_ltype_to_slot(stype->ltype);
 		if (slot < ARRAY_SIZE(fpaqs->fpaq_bn)) {
 			fpaq = &fpaqs->fpaq_bn[slot];
 		}
 	} else if (stype->ptype == SILOFS_PTYPE_VNODE) {
-		slot = fpaqs_vtype_to_slot(stype->vtype);
+		slot = fpaqs_ltype_to_slot(stype->ltype);
 		if (slot < ARRAY_SIZE(fpaqs->fpaq_vn)) {
 			fpaq = &fpaqs->fpaq_vn[slot];
 		}

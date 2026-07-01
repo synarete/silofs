@@ -144,6 +144,11 @@ static void env_update_iopen_max(struct silofs_env *env)
 	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
+static void env_bind_vfs_hooks(struct silofs_env *env)
+{
+	env->vfs_hooks = silofs_vfswrap_hooks();
+}
+
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	int err;
@@ -166,7 +171,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	env_setup_ctlflags(env, spec->flags);
 	env_update_iopen_max(env);
 
-	silofs_env_bind_hooks(env);
+	env_bind_vfs_hooks(env);
 
 	return 0;
 }

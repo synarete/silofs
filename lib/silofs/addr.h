@@ -31,8 +31,6 @@
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* offlba */
 
-typedef off_t silofs_lba_t;
-
 bool silofs_off_isnull(off_t off);
 
 off_t silofs_off_min(off_t off1, off_t off2);
@@ -43,8 +41,6 @@ off_t silofs_off_end(off_t off, size_t len);
 
 off_t silofs_off_align(off_t off, ssize_t align);
 
-off_t silofs_off_align_to_lbk(off_t off);
-
 off_t silofs_off_next(off_t off, ssize_t len);
 
 ssize_t silofs_off_diff(off_t beg, off_t end);
@@ -53,17 +49,7 @@ ssize_t silofs_off_len(off_t beg, off_t end);
 
 size_t silofs_off_ulen(off_t beg, off_t end);
 
-silofs_lba_t silofs_off_to_lba(off_t off);
-
-off_t silofs_off_in_lbk(off_t off);
-
-off_t silofs_off_next_lbk(off_t off);
-
 off_t silofs_off_remainder(off_t off, size_t len);
-
-bool silofs_lba_isnull(silofs_lba_t lba);
-
-off_t silofs_lba_to_off(silofs_lba_t lba);
 
 int silofs_verify_off(off_t off);
 
@@ -106,26 +92,26 @@ void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec *t);
 
 struct silofs_stype {
 	enum silofs_ptype ptype;
-	enum silofs_vtype vtype;
+	enum silofs_ltype ltype;
 };
 
 size_t silofs_ptype_size(enum silofs_ptype ptype);
 
-bool silofs_vtype_isnone(enum silofs_vtype vtype);
+bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
-bool silofs_vtype_isinode(enum silofs_vtype vtype);
+bool silofs_ltype_isinode(enum silofs_ltype ltype);
 
-bool silofs_vtype_isvnode(enum silofs_vtype vtype);
+bool silofs_ltype_islnode(enum silofs_ltype ltype);
 
-bool silofs_vtype_isdata(enum silofs_vtype vtype);
+bool silofs_ltype_isdata(enum silofs_ltype ltype);
 
-bool silofs_vtype_usespmap(enum silofs_vtype vtype);
+bool silofs_ltype_usespmap(enum silofs_ltype ltype);
 
-size_t silofs_vtype_size(enum silofs_vtype vtype);
+size_t silofs_ltype_size(enum silofs_ltype ltype);
 
-ssize_t silofs_vtype_ssize(enum silofs_vtype vtype);
+ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
 
-size_t silofs_vtype_nkbs(enum silofs_vtype vtype);
+size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hash */
@@ -377,71 +363,8 @@ void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
                         struct silofs_spdesc           *spdesc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* vaddr */
-
-/* logical addressing of virtual nodes */
-struct silofs_vaddr {
-	off_t             off;
-	enum silofs_vtype vtype;
-};
-
-/* set of addresses within single vblock */
-struct silofs_vaddrs {
-	struct silofs_vaddr vaddr[SILOFS_NKB_IN_LBK];
-	size_t              count;
-};
-
-const struct silofs_vaddr *silofs_vaddr_none(void);
-
-size_t silofs_vaddr_len(const struct silofs_vaddr *vaddr);
-
-long silofs_vaddr_compare(const struct silofs_vaddr *vaddr1,
-                          const struct silofs_vaddr *vaddr2);
-
-bool silofs_vaddr_isequal(const struct silofs_vaddr *vaddr1,
-                          const struct silofs_vaddr *vaddr2);
-
-void silofs_vaddr_setup(struct silofs_vaddr *vaddr, enum silofs_vtype vtype,
-                        off_t off);
-
-void silofs_vaddr_advance(const struct silofs_vaddr *vaddr, size_t nsteps,
-                          struct silofs_vaddr *out_vaddr);
-
-void silofs_vaddr_assign(struct silofs_vaddr       *vaddr,
-                         const struct silofs_vaddr *other);
-
-void silofs_vaddr_reset(struct silofs_vaddr *vaddr);
-
-bool silofs_vaddr_isnull(const struct silofs_vaddr *vaddr);
-
-bool silofs_vaddr_isdata(const struct silofs_vaddr *vaddr);
-
-bool silofs_vaddr_isdata64k(const struct silofs_vaddr *vaddr);
-
-bool silofs_vaddr_isinode(const struct silofs_vaddr *vaddr);
-
-void silofs_vaddr_by_spleaf(struct silofs_vaddr *vaddr,
-                            enum silofs_vtype vtype, off_t voff_base,
-                            size_t bn, size_t kbn);
-
-void silofs_vaddr56_htox(struct silofs_vaddr56 *vaddr56, off_t off);
-
-void silofs_vaddr56_xtoh(const struct silofs_vaddr56 *vaddr56, off_t *out_off);
-
-void silofs_vaddr64_htox(struct silofs_vaddr64     *vaddr64,
-                         const struct silofs_vaddr *vaddr);
-
-void silofs_vaddr64_xtoh(const struct silofs_vaddr64 *vaddr64,
-                         struct silofs_vaddr         *vaddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_resolve_spnode2_vaddr(const struct silofs_vaddr *ref_vaddr,
-                                  struct silofs_vaddr       *out_vaddr);
-
-void silofs_ino_to_vaddr(ino_t ino, struct silofs_vaddr *out_vaddr);
-
-ino_t silofs_vaddr_to_ino(const struct silofs_vaddr *vaddr);
+/* laddr */
+#include <silofs/addr/laddr.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* genid */

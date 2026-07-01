@@ -87,8 +87,6 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq);
 
-void silofs_env_bind_hooks(struct silofs_env *env);
-
 void silofs_env_lock(struct silofs_env *env);
 
 void silofs_env_unlock(struct silofs_env *env);

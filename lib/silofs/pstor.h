@@ -71,10 +71,10 @@ bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
 
 void silofs_bti_update_spawned(struct silofs_btnode_info *bti);
 
-enum silofs_vtype silofs_bti_vspace(const struct silofs_btnode_info *bti);
+enum silofs_ltype silofs_bti_vspace(const struct silofs_btnode_info *bti);
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
-                           enum silofs_vtype          vspace);
+                           enum silofs_ltype          vspace);
 
 void silofs_bti_mark_root(struct silofs_btnode_info *bti, bool root);
 
@@ -149,32 +149,32 @@ struct silofs_btree_path {
 };
 
 int silofs_resolve_vtop_bpath(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *vaddr,
+                              const struct silofs_laddr *laddr,
                               struct silofs_btree_path  *out_bpath);
 
 int silofs_resolve_vtop_parent(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_laddr *laddr,
                                const struct silofs_paddr *paddr,
                                struct silofs_pnptr       *out_pnptr);
 
 int silofs_resolve_vtop_btleaf(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_laddr *laddr,
                                struct silofs_pnptr       *out_pnptr);
 
 int silofs_resolve_vtop_mapping(struct silofs_pexec_ctx   *pexec,
-                                const struct silofs_vaddr *vaddr,
+                                const struct silofs_laddr *laddr,
                                 struct silofs_pnptr       *out_pnptr);
 
 int silofs_create_vtop_mapping(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr);
 
 int silofs_update_vtop_mapping(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr,
+                               const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr);
 
 int silofs_remove_vtop_mapping(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr);
+                               const struct silofs_laddr *laddr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
@@ -183,19 +183,19 @@ int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
                               struct silofs_pnptr           *out_pnptr);
 
 int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype              vtype,
+                              enum silofs_ltype              ltype,
                               struct silofs_pnptr           *out_pnptr);
 
 int silofs_carve_base_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype              vtype,
+                             enum silofs_ltype              ltype,
                              struct silofs_paddr           *out_paddr);
 
 int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
-                         enum silofs_vtype              vtype,
+                         enum silofs_ltype              ltype,
                          struct silofs_pnptr           *out_pnptr);
 
 int silofs_carve_vspace(const struct silofs_pexec_ctx *pexec,
-                        enum silofs_vtype              vtype,
+                        enum silofs_ltype              ltype,
                         struct silofs_pnptr           *out_pnptr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -209,13 +209,13 @@ int silofs_decrypt_pnode(const struct silofs_pexec_ctx  *pexec,
                          const struct silofs_pnode_info *pni,
                          const struct silofs_ctag       *ctag);
 
-int silofs_encrypt_vnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_vnode_info *vni,
+int silofs_encrypt_lnode(const struct silofs_pexec_ctx  *pexec,
+                         const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr      *pnptr,
                          struct silofs_ctag             *out_ctag);
 
-int silofs_decrypt_vnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_vnode_info *vni,
+int silofs_decrypt_lnode(const struct silofs_pexec_ctx  *pexec,
+                         const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr      *pnptr,
                          const struct silofs_ctag       *ctag);
 
@@ -246,23 +246,23 @@ int silofs_stage_btnode(struct silofs_pexec_ctx    *pexec,
                         const struct silofs_pnptr  *pnptr,
                         struct silofs_btnode_info **out_bti);
 
-int silofs_spawn_vnode2_with(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr,
+int silofs_spawn_lnode2_with(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_laddr *laddr,
                              const struct silofs_pnptr *pnptr,
-                             struct silofs_vnode_info **out_vni);
+                             struct silofs_lnode_info **out_lni);
 
-int silofs_claim_vnode2_space2(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *vaddr,
+int silofs_claim_lnode2_space2(struct silofs_pexec_ctx   *pexec,
+                               const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr);
 
-int silofs_stage_vnode2_with(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr,
+int silofs_stage_lnode2_with(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_laddr *laddr,
                              const struct silofs_pnptr *pnptr,
                              enum silofs_spacef         spacef,
-                             struct silofs_vnode_info **out_vni);
+                             struct silofs_lnode_info **out_lni);
 
-int silofs_detach_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                            const struct silofs_vaddr *vaddr,
+int silofs_detach_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                            const struct silofs_laddr *laddr,
                             const struct silofs_pnptr *pnptr);
 
 int silofs_require_paddr(struct silofs_pexec_ctx   *pexec,
@@ -274,76 +274,76 @@ int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec);
 /* vspace */
 
 int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
-                             enum silofs_vtype        vtype,
-                             struct silofs_vaddr     *out_vaddr);
+                             enum silofs_ltype        ltype,
+                             struct silofs_laddr     *out_laddr);
 
 int silofs_update_used_vspace(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *vaddr, bool incref);
+                              const struct silofs_laddr *laddr, bool incref);
 
 int silofs_probe_vspace_ref(struct silofs_pexec_ctx   *pexec,
-                            const struct silofs_vaddr *vaddr,
+                            const struct silofs_laddr *laddr,
                             struct silofs_vspace_ref  *out_vspref);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* trans */
 
-int silofs_probe_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *vaddr);
+int silofs_probe_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_laddr *laddr);
 
-int silofs_stage_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni);
+int silofs_stage_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info **out_lni);
 
-int silofs_spawn_vnode2(struct silofs_pexec_ctx   *pexec,
-                        enum silofs_vtype          vtype,
-                        struct silofs_vnode_info **out_vni);
+int silofs_spawn_lnode2(struct silofs_pexec_ctx   *pexec,
+                        enum silofs_ltype          ltype,
+                        struct silofs_lnode_info **out_lni);
 
-int silofs_spawn_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *vaddr,
-                           struct silofs_vnode_info **out_vni);
+int silofs_spawn_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_lnode_info **out_lni);
 
-int silofs_claim_vnode2_space(struct silofs_pexec_ctx *pexec,
-                              enum silofs_vtype        vtype,
-                              struct silofs_vaddr     *out_vaddr);
+int silofs_claim_lnode2_space(struct silofs_pexec_ctx *pexec,
+                              enum silofs_ltype        ltype,
+                              struct silofs_laddr     *out_laddr);
 
-int silofs_isshared_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *vaddr, bool *out_res);
+int silofs_isshared_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                              const struct silofs_laddr *laddr, bool *out_res);
 
-int silofs_share_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                           const struct silofs_vaddr *vaddr);
+int silofs_share_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                           const struct silofs_laddr *laddr);
 
-int silofs_unshare_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr, bool *out_last);
+int silofs_unshare_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_laddr *laddr, bool *out_last);
 
-int silofs_reclaim_vnode2_at(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr, bool *out_last);
+int silofs_reclaim_lnode2_at(struct silofs_pexec_ctx   *pexec,
+                             const struct silofs_laddr *laddr, bool *out_last);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_stage_spnode2_by(struct silofs_pexec_ctx    *pexec,
-                            const struct silofs_vaddr  *ref_vaddr,
+                            const struct silofs_laddr  *ref_laddr,
                             struct silofs_spnode_info **out_spi);
 
 int silofs_spawn_spnode2_by(struct silofs_pexec_ctx    *pexec,
-                            const struct silofs_vaddr  *ref_vaddr,
+                            const struct silofs_laddr  *ref_laddr,
                             struct silofs_spnode_info **out_spi);
 
 int silofs_require_spnode2_by(struct silofs_pexec_ctx    *pexec,
-                              const struct silofs_vaddr  *ref_vaddr,
+                              const struct silofs_laddr  *ref_laddr,
                               struct silofs_spnode_info **out_spi);
 
 int silofs_mark_unwritten_at2(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *ref_vaddr);
+                              const struct silofs_laddr *ref_laddr);
 
 int silofs_clear_unwritten_at2(struct silofs_pexec_ctx   *pexec,
-                               const struct silofs_vaddr *ref_vaddr);
+                               const struct silofs_laddr *ref_laddr);
 
 int silofs_test_unwritten_at2(struct silofs_pexec_ctx   *pexec,
-                              const struct silofs_vaddr *ref_vaddr,
+                              const struct silofs_laddr *ref_laddr,
                               bool                      *out_unwritten);
 
 int silofs_test_vtop_mapping(struct silofs_pexec_ctx   *pexec,
-                             const struct silofs_vaddr *vaddr,
+                             const struct silofs_laddr *laddr,
                              bool                      *out_exists);
 
 #endif /* SILOFS_PSTOR_H_ */

@@ -21,7 +21,7 @@
 
 static const struct silofs_blobid s_blobid_none = {
 	.stype.ptype = SILOFS_PTYPE_NONE,
-	.stype.vtype = SILOFS_VTYPE_NONE,
+	.stype.ltype = SILOFS_LTYPE_NONE,
 	.vers        = SILOFS_FMT_VERSION,
 };
 
@@ -35,7 +35,7 @@ static void blobid_clear(struct silofs_blobid *blobid)
 	silofs_layerid_reset(&blobid->layerid);
 	silofs_uniqid_reset(&blobid->uniqid);
 	blobid->stype.ptype = SILOFS_PTYPE_NONE;
-	blobid->stype.vtype = SILOFS_VTYPE_NONE;
+	blobid->stype.ltype = SILOFS_LTYPE_NONE;
 	blobid->vers        = 0;
 }
 
@@ -47,7 +47,7 @@ void silofs_blobid_init(struct silofs_blobid *blobid,
 	silofs_layerid_assignx(&blobid->layerid, layerid);
 	silofs_uniqid_assignx(&blobid->uniqid, uniqid);
 	blobid->stype.ptype = stype->ptype;
-	blobid->stype.vtype = stype->vtype;
+	blobid->stype.ltype = stype->ltype;
 	blobid->vers        = SILOFS_FMT_VERSION;
 }
 
@@ -67,7 +67,7 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 	silofs_layerid_assign(&blobid->layerid, &other->layerid);
 	silofs_uniqid_assign(&blobid->uniqid, &other->uniqid);
 	blobid->stype.ptype = other->stype.ptype;
-	blobid->stype.vtype = other->stype.vtype;
+	blobid->stype.ltype = other->stype.ltype;
 	blobid->vers        = other->vers;
 }
 
@@ -80,7 +80,7 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 	if (cmp != 0) {
 		return cmp;
 	}
-	cmp = (long)blobid->stype.vtype - (long)other->stype.vtype;
+	cmp = (long)blobid->stype.ltype - (long)other->stype.ltype;
 	if (cmp != 0) {
 		return cmp;
 	}
@@ -110,7 +110,7 @@ size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)
 	size_t sz;
 
 	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
-		sz = silofs_vtype_size(blobid->stype.vtype);
+		sz = silofs_ltype_size(blobid->stype.ltype);
 	} else {
 		sz = silofs_ptype_size(blobid->stype.ptype);
 	}
@@ -124,7 +124,7 @@ void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,
 	silofs_layerid_assign(&blobid56->layerid, &blobid->layerid);
 	silofs_uniqid_assign(&blobid56->uniqid, &blobid->uniqid);
 	blobid56->ptype = (uint8_t)blobid->stype.ptype;
-	blobid56->vtype = (uint8_t)blobid->stype.vtype;
+	blobid56->ltype = (uint8_t)blobid->stype.ltype;
 	blobid56->vers  = silofs_cpu_to_le16(blobid->vers);
 }
 
@@ -134,7 +134,7 @@ void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
 	silofs_layerid_assign(&blobid->layerid, &blobid56->layerid);
 	silofs_uniqid_assign(&blobid->uniqid, &blobid56->uniqid);
 	blobid->stype.ptype = (enum silofs_ptype)blobid56->ptype;
-	blobid->stype.vtype = (enum silofs_vtype)blobid56->vtype;
+	blobid->stype.ltype = (enum silofs_ltype)blobid56->ltype;
 	blobid->vers        = silofs_le16_to_cpu(blobid56->vers);
 }
 

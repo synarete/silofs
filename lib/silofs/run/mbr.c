@@ -23,7 +23,7 @@
 
 static void
 calc_cas_paddr(const struct silofs_mdigest_hd *md_hd, enum silofs_ptype ptype,
-               enum silofs_vtype vtype, const struct iovec *iov,
+               enum silofs_ltype ltype, const struct iovec *iov,
                size_t iov_cnt, struct silofs_paddr *out_paddr)
 {
 	struct silofs_hash256 hash;
@@ -32,7 +32,7 @@ calc_cas_paddr(const struct silofs_mdigest_hd *md_hd, enum silofs_ptype ptype,
 	struct silofs_uniqid uniqid;
 	const struct silofs_stype stype = {
 		.ptype = ptype,
-		.vtype = vtype,
+		.ltype = ltype,
 	};
 
 	silofs_sha3_256_ofv(md_hd, iov, iov_cnt, &hash);
@@ -48,7 +48,7 @@ static void
 calc_mbr_cas_paddr(const struct silofs_mdigest_hd *md_hd,
                    const struct iovec *iov, struct silofs_paddr *out_paddr)
 {
-	calc_cas_paddr(md_hd, SILOFS_PTYPE_MBR, SILOFS_VTYPE_NONE, //
+	calc_cas_paddr(md_hd, SILOFS_PTYPE_MBR, SILOFS_LTYPE_NONE, //
 	               iov, 1, out_paddr);
 }
 

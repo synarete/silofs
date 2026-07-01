@@ -80,12 +80,12 @@ static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static size_t
-sbn_slot_of(const struct silofs_superb_node *sbn, enum silofs_vtype vtype)
+sbn_slot_of(const struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
-	const size_t slot = (size_t)vtype;
+	const size_t slot = (size_t)ltype;
 
-	STATICASSERT_LT(SILOFS_VTYPE_LAST, ARRAY_SIZE(sbn->s_nodes_count));
-	STATICASSERT_LT(SILOFS_VTYPE_LAST, ARRAY_SIZE(sbn->s_apex_voff));
+	STATICASSERT_LT(SILOFS_LTYPE_LAST, ARRAY_SIZE(sbn->s_nodes_count));
+	STATICASSERT_LT(SILOFS_LTYPE_LAST, ARRAY_SIZE(sbn->s_apex_voff));
 	silofs_assert_lt(slot, ARRAY_SIZE(sbn->s_nodes_count));
 	silofs_assert_lt(slot, ARRAY_SIZE(sbn->s_apex_voff));
 
@@ -202,17 +202,17 @@ static void sbn_reset_nodes_count(struct silofs_superb_node *sbn)
 }
 
 static size_t
-sbn_nodes_count(const struct silofs_superb_node *sbn, enum silofs_vtype vtype)
+sbn_nodes_count(const struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
-	const size_t slot = sbn_slot_of(sbn, vtype);
+	const size_t slot = sbn_slot_of(sbn, ltype);
 
 	return sbn_nodes_count_at(sbn, slot);
 }
 
 static void
-sbn_inc_nodes_count(struct silofs_superb_node *sbn, enum silofs_vtype vtype)
+sbn_inc_nodes_count(struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
-	const size_t slot  = sbn_slot_of(sbn, vtype);
+	const size_t slot  = sbn_slot_of(sbn, ltype);
 	const size_t count = sbn_nodes_count_at(sbn, slot);
 
 	silofs_assert_lt(count, UINT64_MAX / 2);
@@ -220,9 +220,9 @@ sbn_inc_nodes_count(struct silofs_superb_node *sbn, enum silofs_vtype vtype)
 }
 
 static void
-sbn_dec_nodes_count(struct silofs_superb_node *sbn, enum silofs_vtype vtype)
+sbn_dec_nodes_count(struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
-	const size_t slot  = sbn_slot_of(sbn, vtype);
+	const size_t slot  = sbn_slot_of(sbn, ltype);
 	const size_t count = sbn_nodes_count_at(sbn, slot);
 
 	silofs_assert_gt(count, 0);
@@ -253,17 +253,17 @@ static void sbn_reset_apex_voff(struct silofs_superb_node *sbn)
 }
 
 static off_t
-sbn_apex_voff(const struct silofs_superb_node *sbn, enum silofs_vtype vtype)
+sbn_apex_voff(const struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
-	const size_t slot = sbn_slot_of(sbn, vtype);
+	const size_t slot = sbn_slot_of(sbn, ltype);
 
 	return sbn_apex_voff_at(sbn, slot);
 }
 
 static void sbn_set_apex_voff(struct silofs_superb_node *sbn,
-                              enum silofs_vtype vtype, off_t voff)
+                              enum silofs_ltype ltype, off_t voff)
 {
-	const size_t slot = sbn_slot_of(sbn, vtype);
+	const size_t slot = sbn_slot_of(sbn, ltype);
 
 	sbn_set_apex_voff_at(sbn, slot, voff);
 }
@@ -386,24 +386,24 @@ int silofs_verify_superb_node(const struct silofs_superb_node *sbn)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static size_t vsize_of(enum silofs_vtype vtype)
+static size_t vsize_of(enum silofs_ltype ltype)
 {
-	return silofs_vtype_size(vtype);
+	return silofs_ltype_size(ltype);
 }
 
 void silofs_sbi_incref(struct silofs_sbnode_info *sbi)
 {
-	silofs_vni_incref(&sbi->sbn_vni);
+	silofs_lni_incref(&sbi->sbn_lni);
 }
 
 void silofs_sbi_decref(struct silofs_sbnode_info *sbi)
 {
-	silofs_vni_decref(&sbi->sbn_vni);
+	silofs_lni_decref(&sbi->sbn_lni);
 }
 
 static void sbi_setdirty(struct silofs_sbnode_info *sbi)
 {
-	silofs_vni_setdirty(&sbi->sbn_vni, nullptr);
+	silofs_lni_setdirty(&sbi->sbn_lni, nullptr);
 }
 
 void silofs_sbi_setdirty(struct silofs_sbnode_info *sbi)
@@ -447,21 +447,21 @@ uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi)
 }
 
 void silofs_sbi_apex_of(const struct silofs_sbnode_info *sbi,
-                        enum silofs_vtype vtype,
-                        struct silofs_vaddr *out_vaddr)
+                        enum silofs_ltype ltype,
+                        struct silofs_laddr *out_laddr)
 {
-	const off_t off = sbn_apex_voff(sbi->sbn, vtype);
+	const off_t off = sbn_apex_voff(sbi->sbn, ltype);
 
-	silofs_vaddr_setup(out_vaddr, vtype, off);
+	silofs_laddr_setup(out_laddr, ltype, off);
 }
 
 void silofs_sbi_update_apex(struct silofs_sbnode_info *sbi,
-                            const struct silofs_vaddr *vaddr)
+                            const struct silofs_laddr *laddr)
 {
-	const off_t off = sbn_apex_voff(sbi->sbn, vaddr->vtype);
+	const off_t off = sbn_apex_voff(sbi->sbn, laddr->ltype);
 
-	if (vaddr->off > off) {
-		sbn_set_apex_voff(sbi->sbn, vaddr->vtype, vaddr->off);
+	if (laddr->off > off) {
+		sbn_set_apex_voff(sbi->sbn, laddr->ltype, laddr->off);
 		sbi_setdirty(sbi);
 	}
 }
@@ -478,7 +478,7 @@ static size_t sbi_fs_usage(const struct silofs_sbnode_info *sbi)
 
 static fsfilcnt_t sbi_inodes_usage(const struct silofs_sbnode_info *sbi)
 {
-	const size_t icount = sbn_nodes_count(sbi->sbn, SILOFS_VTYPE_INODE);
+	const size_t icount = sbn_nodes_count(sbi->sbn, SILOFS_LTYPE_INODE);
 
 	return (fsfilcnt_t)icount;
 }
@@ -486,7 +486,7 @@ static fsfilcnt_t sbi_inodes_usage(const struct silofs_sbnode_info *sbi)
 static fsfilcnt_t sbi_inodes_limit(const struct silofs_sbnode_info *sbi)
 {
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
-	const size_t inode_size  = vsize_of(SILOFS_VTYPE_INODE);
+	const size_t inode_size  = vsize_of(SILOFS_LTYPE_INODE);
 
 	return (fs_capacity / inode_size) >> 2;
 }
@@ -500,39 +500,39 @@ int silofs_sbi_check_iavail(const struct silofs_sbnode_info *sbi)
 }
 
 int silofs_sbi_check_avail(const struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype vtype)
+                           enum silofs_ltype ltype)
 {
 	constexpr size_t ext     = SILOFS_MEGA;
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
 	const size_t fs_usage    = sbi_fs_usage(sbi);
-	const size_t nwant       = vsize_of(vtype);
+	const size_t nwant       = vsize_of(ltype);
 
 	return ((fs_usage + nwant + ext) < fs_capacity) ? 0 : -SILOFS_ENOSPC;
 }
 
-void silofs_sbi_take_vnode(struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype vtype)
+void silofs_sbi_take_lnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_ltype ltype)
 {
 	const size_t fs_capacity = sbi_fs_capacity(sbi);
 	const size_t fs_usage    = sbi_fs_usage(sbi);
-	const size_t ntake       = vsize_of(vtype);
+	const size_t ntake       = vsize_of(ltype);
 
 	silofs_assert_lt(fs_usage + ntake, fs_capacity);
 
-	sbn_inc_nodes_count(sbi->sbn, vtype);
+	sbn_inc_nodes_count(sbi->sbn, ltype);
 	sbn_set_fs_usage(sbi->sbn, fs_usage + ntake);
 	sbi_setdirty(sbi);
 }
 
-void silofs_sbi_give_vnode(struct silofs_sbnode_info *sbi,
-                           enum silofs_vtype vtype)
+void silofs_sbi_give_lnode(struct silofs_sbnode_info *sbi,
+                           enum silofs_ltype ltype)
 {
 	const size_t usage = sbi_fs_usage(sbi);
-	const size_t ngive = vsize_of(vtype);
+	const size_t ngive = vsize_of(ltype);
 
 	silofs_assert_ge(usage, ngive);
 
-	sbn_dec_nodes_count(sbi->sbn, vtype);
+	sbn_dec_nodes_count(sbi->sbn, ltype);
 	sbn_set_fs_usage(sbi->sbn, usage - ngive);
 	sbi_setdirty(sbi);
 }

@@ -132,49 +132,49 @@ int silofs_decrypt_pnode(const struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t vni_lview_len(const struct silofs_vnode_info *vni)
+static size_t lni_lview_len(const struct silofs_lnode_info *lni)
 {
-	return silofs_ni_view_size(&vni->vn_ni);
+	return silofs_ni_view_size(&lni->vn_ni);
 }
 
 static const struct silofs_lview * //
-vni_lview(const struct silofs_vnode_info *vni)
+lni_lview(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_lview *lview = silofs_vni_lview(vni);
+	const struct silofs_lview *lview = silofs_lni_lview(lni);
 
 	silofs_assume_not_null(lview);
 	return lview;
 }
 
 static struct silofs_lview * //
-vni_mut_lview(const struct silofs_vnode_info *vni)
+lni_mut_lview(const struct silofs_lnode_info *lni)
 {
-	struct silofs_lview *lview = silofs_vni_lview(vni);
+	struct silofs_lview *lview = silofs_lni_lview(lni);
 
 	silofs_assume_not_null(lview);
 	return lview;
 }
 
 static const struct silofs_lview * //
-vni_lviewx(const struct silofs_vnode_info *vni)
+lni_lviewx(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_lview *lviewx = silofs_vni_lviewx(vni);
+	const struct silofs_lview *lviewx = silofs_lni_lviewx(lni);
 
 	silofs_assume_not_null(lviewx);
 	return lviewx;
 }
 
 static struct silofs_lview * //
-vni_mut_lviewx(const struct silofs_vnode_info *vni)
+lni_mut_lviewx(const struct silofs_lnode_info *lni)
 {
-	struct silofs_lview *lviewx = silofs_vni_lviewx(vni);
+	struct silofs_lview *lviewx = silofs_lni_lviewx(lni);
 
 	silofs_assume_not_null(lviewx);
 	return lviewx;
 }
 
-int silofs_encrypt_vnode(const struct silofs_pexec_ctx *pexec,
-                         const struct silofs_vnode_info *vni,
+int silofs_encrypt_lnode(const struct silofs_pexec_ctx *pexec,
+                         const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr *pnptr,
                          struct silofs_ctag *out_ctag)
 {
@@ -186,16 +186,16 @@ int silofs_encrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.caad     = caad_by(pexec, pnptr, out_ctag, &caad),
 		.ctag_in  = nullptr,
 		.ctag_out = out_ctag,
-		.data_in  = vni_lview(vni),
-		.data_out = vni_mut_lviewx(vni),
-		.data_len = vni_lview_len(vni),
+		.data_in  = lni_lview(lni),
+		.data_out = lni_mut_lviewx(lni),
+		.data_len = lni_lview_len(lni),
 	};
 
 	return silofs_encrypt(&ed_ctx);
 }
 
-int silofs_decrypt_vnode(const struct silofs_pexec_ctx *pexec,
-                         const struct silofs_vnode_info *vni,
+int silofs_decrypt_lnode(const struct silofs_pexec_ctx *pexec,
+                         const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr *pnptr,
                          const struct silofs_ctag *ctag)
 {
@@ -207,9 +207,9 @@ int silofs_decrypt_vnode(const struct silofs_pexec_ctx *pexec,
 		.caad     = caad_by(pexec, pnptr, ctag, &caad),
 		.ctag_in  = ctag,
 		.ctag_out = nullptr,
-		.data_in  = vni_lviewx(vni),
-		.data_out = vni_mut_lview(vni),
-		.data_len = vni_lview_len(vni),
+		.data_in  = lni_lviewx(lni),
+		.data_out = lni_mut_lview(lni),
+		.data_len = lni_lview_len(lni),
 	};
 
 	return silofs_decrypt(&ed_ctx);

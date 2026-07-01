@@ -19,8 +19,6 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 bool silofs_off_isnull(off_t off)
 {
 	SILOFS_STATICASSERT_LT(SILOFS_OFF_NULL, 0);
@@ -43,22 +41,6 @@ off_t silofs_off_end(off_t off, size_t len)
 	return off + (off_t)len;
 }
 
-silofs_lba_t silofs_off_to_lba(off_t off)
-{
-	return !silofs_off_isnull(off) ? (off / SILOFS_LBK_SIZE) :
-	                                 SILOFS_LBA_NULL;
-}
-
-off_t silofs_off_in_lbk(off_t off)
-{
-	return silofs_off_remainder(off, SILOFS_LBK_SIZE);
-}
-
-off_t silofs_off_next_lbk(off_t off)
-{
-	return silofs_off_next(off, SILOFS_LBK_SIZE);
-}
-
 off_t silofs_off_remainder(off_t off, size_t len)
 {
 	return off % (ssize_t)len;
@@ -67,11 +49,6 @@ off_t silofs_off_remainder(off_t off, size_t len)
 off_t silofs_off_align(off_t off, ssize_t align)
 {
 	return (off / align) * align;
-}
-
-off_t silofs_off_align_to_lbk(off_t off)
-{
-	return silofs_off_align(off, SILOFS_LBK_SIZE);
 }
 
 off_t silofs_off_next(off_t off, ssize_t len)
@@ -96,24 +73,12 @@ size_t silofs_off_ulen(off_t beg, off_t end)
 
 int silofs_verify_off(off_t off)
 {
-	return (silofs_off_isnull(off) || (off >= 0)) ? 0 :
-	                                                -SILOFS_EFSCORRUPTED;
-}
+	if (!silofs_off_isnull(off)) {
+		const int64_t off64 = (int64_t)off;
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static bool lba_isequal(silofs_lba_t lba1, silofs_lba_t lba2)
-{
-	return (lba1 == lba2);
-}
-
-bool silofs_lba_isnull(silofs_lba_t lba)
-{
-	return lba_isequal(lba, SILOFS_LBA_NULL);
-}
-
-off_t silofs_lba_to_off(silofs_lba_t lba)
-{
-	return !silofs_lba_isnull(lba) ? (lba * SILOFS_LBK_SIZE) :
-	                                 SILOFS_OFF_NULL;
+		if ((off < 0) || (off64 == INT64_MAX)) {
+			return -SILOFS_EFSCORRUPTED;
+		}
+	}
+	return 0;
 }

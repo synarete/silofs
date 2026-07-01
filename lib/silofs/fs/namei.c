@@ -75,7 +75,7 @@ static void put_sbi(struct silofs_sbnode_info *sbi)
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
 {
-	return (task->ubref->ctl_flags & SILOFS_F_NLOOKUP) > 0;
+	return (task->pexec.ubref->ctl_flags & SILOFS_F_NLOOKUP) > 0;
 }
 
 static void sub_nlookup(const struct silofs_task_ctx *task,
@@ -430,7 +430,7 @@ int silofs_do_access(const struct silofs_task_ctx *task,
 
 static int check_on_writable_fs(const struct silofs_task_ctx *task)
 {
-	return silofs_ubref_is_rdonly(task->ubref) ? -SILOFS_ERDONLY : 0;
+	return silofs_ubref_is_rdonly(task->pexec.ubref) ? -SILOFS_ERDONLY : 0;
 }
 
 static int
@@ -817,7 +817,7 @@ check_mknod(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->ubref->ms_flags & MS_NODEV) {
+		if (task->pexec.ubref->ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2221,7 +2221,7 @@ do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 	/*
 	 * TODO-0068: Export uber stats via dedicated ioctl.
 	 */
-	silofs_ubi_collect_stats(task->ubref->ubi, &ub_stats);
+	silofs_ubi_collect_stats(task->pexec.ubref->ubi, &ub_stats);
 
 	err = get_sbi(task, &sbi);
 	return_if_err(err);
@@ -2484,7 +2484,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 static void relax_post_forkfs(const struct silofs_task_ctx *task)
 {
-	silofs_vcache_relax(task->vcache, SILOFS_CTLF_NOW);
+	silofs_vcache_relax(task->pexec.vcache, SILOFS_CTLF_NOW);
 }
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
@@ -2679,7 +2679,7 @@ static int try_forget_cached_ii(const struct silofs_task_ctx *task,
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
 		struct silofs_lnode_info *lni = silofs_ii_to_lni(ii);
 
-		silofs_vcache_forget_lnode(task->vcache, lni);
+		silofs_vcache_forget_lnode(task->pexec.vcache, lni);
 	}
 	return 0;
 }

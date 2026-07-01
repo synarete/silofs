@@ -28,14 +28,13 @@ struct silofs_task_auth {
 
 /* execution-context */
 struct silofs_task_ctx {
-	struct silofs_task_auth     auth;
+	struct silofs_task_auth auth;
+	struct silofs_pexec_ctx pexec;
+
 	struct silofs_env          *env;
 	const struct silofs_idsmap *idsm;
-	struct silofs_prandgen     *prng;
 	struct silofs_repo         *repo;
-	struct silofs_vcache       *vcache;
 	struct silofs_inode_info   *looseq;
-	struct silofs_uber_ref     *ubref;
 	uint64_t                    upper_id;
 	struct timespec             op_start_time;
 	volatile int8_t             interrupted;
@@ -77,8 +76,5 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
 
 int silofs_curr_sbi(const struct silofs_task_ctx *task,
                     struct silofs_sbnode_info   **out_sbi);
-
-void silofs_make_pexec(const struct silofs_task_ctx *task,
-                       struct silofs_pexec_ctx      *out_pexec);
 
 #endif /* SILOFS_TASK_H_ */

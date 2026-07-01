@@ -45,8 +45,6 @@ bool silofs_ltype_isnone(enum silofs_ltype ltype);
 
 bool silofs_ltype_isinode(enum silofs_ltype ltype);
 
-bool silofs_ltype_islnode(enum silofs_ltype ltype);
-
 bool silofs_ltype_isdata(enum silofs_ltype ltype);
 
 bool silofs_ltype_usespmap(enum silofs_ltype ltype);

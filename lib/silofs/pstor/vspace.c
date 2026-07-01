@@ -18,15 +18,16 @@
 #include <silofs/pstor.h>
 
 struct silofs_vspace_ctx {
-	struct silofs_pexec_ctx *pexec;
+	const struct silofs_pexec_ctx *pexec;
 	struct silofs_freevsqs *fvsqs;
 	struct silofs_vcache *vcache;
 	struct silofs_uber_info *ubi;
 	enum silofs_ltype ltype;
 };
 
-static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
-                     struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static void
+vsc_init(struct silofs_vspace_ctx *vs_ctx,
+         const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 {
 	vs_ctx->pexec  = pexec;
 	vs_ctx->fvsqs  = pexec->fvsqs;
@@ -37,9 +38,9 @@ static void vsc_init(struct silofs_vspace_ctx *vs_ctx,
 	silofs_assert_ne(ltype, SILOFS_LTYPE_SPNODE);
 }
 
-static void
-vsc_init_by(struct silofs_vspace_ctx *vs_ctx, struct silofs_pexec_ctx *pexec,
-            const struct silofs_laddr *laddr)
+static void vsc_init_by(struct silofs_vspace_ctx *vs_ctx,
+                        const struct silofs_pexec_ctx *pexec,
+                        const struct silofs_laddr *laddr)
 {
 	vsc_init(vs_ctx, pexec, laddr->ltype);
 }
@@ -168,7 +169,7 @@ static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	return ret;
 }
 
-int silofs_claim_free_vspace(struct silofs_pexec_ctx *pexec,
+int silofs_claim_free_vspace(const struct silofs_pexec_ctx *pexec,
                              enum silofs_ltype ltype,
                              struct silofs_laddr *out_laddr)
 {
@@ -236,7 +237,7 @@ vsc_update_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	return ret;
 }
 
-int silofs_update_used_vspace(struct silofs_pexec_ctx *pexec,
+int silofs_update_used_vspace(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr *laddr, bool incref)
 {
 	struct silofs_vspace_ctx vs_ctx;
@@ -259,7 +260,7 @@ static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
-int silofs_probe_vspace_ref(struct silofs_pexec_ctx *pexec,
+int silofs_probe_vspace_ref(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr *laddr,
                             struct silofs_vspace_ref *out_vspref)
 {

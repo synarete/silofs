@@ -751,7 +751,6 @@ enum silofs_ltype silofs_bti_vspace(const struct silofs_btnode_info *bti)
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
                            enum silofs_ltype vspace)
 {
-	silofs_assert(silofs_ltype_islnode(vspace));
 	btn_set_vspace(bti->btn, vspace);
 	bti_setdirty(bti);
 }

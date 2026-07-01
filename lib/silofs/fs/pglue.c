@@ -74,31 +74,31 @@ static int verify_staged_lnode(const struct silofs_lnode_info *lni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-start_pexec(struct silofs_pexec_ctx *pexec, const struct silofs_task_ctx *task,
-            struct silofs_inode_info *pii)
+static void pii_incref(struct silofs_inode_info *pii)
 {
-	silofs_make_pexec(task, pexec);
-	silofs_ii_incref(pii);
+	if (pii != nullptr) {
+		silofs_ii_incref(pii);
+	}
 }
 
-static void
-finish_pexec(struct silofs_pexec_ctx *pexec, struct silofs_inode_info *pii)
+static void pii_decref(struct silofs_inode_info *pii)
 {
-	silofs_ii_decref(pii);
-	silofs_memzero(pexec, sizeof(*pexec));
+	if (pii != nullptr) {
+		silofs_ii_decref(pii);
+	}
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int
 probe_lnode(const struct silofs_task_ctx *task,
             const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_probe_lnode2_at(&pexec, laddr);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_probe_lnode2_at(&task->pexec, laddr);
+	pii_decref(pii);
 	return err;
 }
 
@@ -107,12 +107,11 @@ stage_lnode(const struct silofs_task_ctx *task,
             const struct silofs_laddr *laddr, struct silofs_inode_info *pii,
             enum silofs_stg_mode stg_mode, struct silofs_lnode_info **out_lni)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_stage_lnode2_at(&pexec, laddr, out_lni);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_stage_lnode2_at(&task->pexec, laddr, out_lni);
+	pii_decref(pii);
 	silofs_unused(stg_mode);
 	return err;
 }
@@ -133,25 +132,18 @@ static int spawn_lnode_at(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_lnode_info **out_lni)
 {
-	struct silofs_pexec_ctx pexec;
-	int err;
-
-	start_pexec(&pexec, task, nullptr);
-	err = silofs_spawn_lnode2_at(&pexec, laddr, out_lni);
-	finish_pexec(&pexec, nullptr);
-	return err;
+	return silofs_spawn_lnode2_at(&task->pexec, laddr, out_lni);
 }
 
 static int
 spawn_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
             struct silofs_inode_info *pii, struct silofs_lnode_info **out_lni)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_spawn_lnode2(&pexec, ltype, out_lni);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_spawn_lnode2(&task->pexec, ltype, out_lni);
+	pii_decref(pii);
 	return err;
 }
 
@@ -159,12 +151,11 @@ static int
 claim_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
             struct silofs_inode_info *pii, struct silofs_laddr *out_laddr)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_claim_lnode2_space(&pexec, ltype, out_laddr);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_claim_lnode2_space(&task->pexec, ltype, out_laddr);
+	pii_decref(pii);
 	return err;
 }
 
@@ -172,12 +163,11 @@ static int reclaim_lnode(const struct silofs_task_ctx *task,
                          const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii, bool *out_last)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_reclaim_lnode2_at(&pexec, laddr, out_last);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_reclaim_lnode2_at(&task->pexec, laddr, out_last);
+	pii_decref(pii);
 	return err;
 }
 
@@ -185,12 +175,11 @@ static int
 share_lnode(const struct silofs_task_ctx *task,
             const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_share_lnode2_at(&pexec, laddr);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_share_lnode2_at(&task->pexec, laddr);
+	pii_decref(pii);
 	return err;
 }
 
@@ -198,12 +187,11 @@ static int unshare_lnode(const struct silofs_task_ctx *task,
                          const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii, bool *out_last)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_unshare_lnode2_at(&pexec, laddr, out_last);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_unshare_lnode2_at(&task->pexec, laddr, out_last);
+	pii_decref(pii);
 	return err;
 }
 
@@ -211,12 +199,11 @@ static int isshared_lnode(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii, bool *out_res)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_isshared_lnode2_at(&pexec, laddr, out_res);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_isshared_lnode2_at(&task->pexec, laddr, out_res);
+	pii_decref(pii);
 	return err;
 }
 
@@ -224,12 +211,11 @@ static int
 mark_unwritten(const struct silofs_task_ctx *task,
                const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_mark_unwritten_at2(&pexec, laddr);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_mark_unwritten_at2(&task->pexec, laddr);
+	pii_decref(pii);
 	return err;
 }
 
@@ -237,12 +223,11 @@ static int clear_unwritten(const struct silofs_task_ctx *task,
                            const struct silofs_laddr *laddr,
                            struct silofs_inode_info *pii)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_clear_unwritten_at2(&pexec, laddr);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_clear_unwritten_at2(&task->pexec, laddr);
+	pii_decref(pii);
 	return err;
 }
 
@@ -250,12 +235,11 @@ static int test_unwritten(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii, bool *out_unwritten)
 {
-	struct silofs_pexec_ctx pexec;
 	int err;
 
-	start_pexec(&pexec, task, pii);
-	err = silofs_test_unwritten_at2(&pexec, laddr, out_unwritten);
-	finish_pexec(&pexec, pii);
+	pii_incref(pii);
+	err = silofs_test_unwritten_at2(&task->pexec, laddr, out_unwritten);
+	pii_decref(pii);
 	return err;
 }
 

@@ -1807,7 +1807,7 @@ static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
 	bool asyncwr = false;
 
 	if (f_ctx->op == SILOFS_FILE_OP_WRITE) {
-		const struct silofs_uber_ref *ubref = f_ctx->task->ubref;
+		const struct silofs_uber_ref *ubref = f_ctx->task->pexec.ubref;
 
 		asyncwr = (ubref->ctl_flags & SILOFS_F_ASYNCWR) > 0;
 	}

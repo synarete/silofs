@@ -63,33 +63,9 @@ bool silofs_ltype_isinode(enum silofs_ltype ltype)
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype)
 {
-	return (ltype == SILOFS_LTYPE_NONE);
-}
+	const int val = ltype;
 
-bool silofs_ltype_islnode(enum silofs_ltype ltype)
-{
-	bool ret;
-
-	switch (ltype) {
-	case SILOFS_LTYPE_SUPER:
-	case SILOFS_LTYPE_SPNODE:
-	case SILOFS_LTYPE_INODE:
-	case SILOFS_LTYPE_XANODE:
-	case SILOFS_LTYPE_SYMVAL:
-	case SILOFS_LTYPE_DTNODE:
-	case SILOFS_LTYPE_FTNODE:
-	case SILOFS_LTYPE_DATA1K:
-	case SILOFS_LTYPE_DATA4K:
-	case SILOFS_LTYPE_DATA64K:
-		ret = true;
-		break;
-	case SILOFS_LTYPE_NONE:
-	case SILOFS_LTYPE_LAST:
-	default:
-		ret = false;
-		break;
-	}
-	return ret;
+	return (val <= SILOFS_LTYPE_NONE) || (val >= SILOFS_LTYPE_LAST);
 }
 
 bool silofs_ltype_isdata(enum silofs_ltype ltype)

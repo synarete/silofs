@@ -203,7 +203,6 @@ ubn_btroot_of(const struct silofs_uber_node *ubn, enum silofs_ltype ltype,
 {
 	const size_t slot = ubn_slot_of(ubn, ltype);
 
-	silofs_assert(silofs_ltype_islnode(ltype));
 	ubn_btroot(ubn, slot, out_pnptr);
 }
 
@@ -219,7 +218,6 @@ static void
 ubn_set_btroot_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
                   const struct silofs_pnptr *pnptr)
 {
-	silofs_assert(silofs_ltype_islnode(ltype));
 	ubn_set_btroot(ubn, ubn_slot_of(ubn, ltype), pnptr);
 }
 
@@ -248,7 +246,6 @@ ubn_set_bn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
 {
 	const size_t slot = ubn_slot_of(ubn, ltype);
 
-	silofs_assert(silofs_ltype_islnode(ltype));
 	ubn_set_bn_spdesc(ubn, slot, spdesc);
 }
 
@@ -275,7 +272,6 @@ static void
 ubn_set_vn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
                      const struct silofs_spdesc *spdesc)
 {
-	silofs_assert(silofs_ltype_islnode(ltype));
 	ubn_set_vn_spdesc(ubn, ubn_slot_of(ubn, ltype), spdesc);
 }
 
@@ -509,7 +505,7 @@ void silofs_ubi_stat_of(const struct silofs_uber_info *ubi,
                         struct silofs_uber_stat *out_stat)
 {
 	memset(out_stat, 0, sizeof(*out_stat));
-	if (silofs_ltype_islnode(ltype)) {
+	if (!silofs_ltype_isnone(ltype)) {
 		out_stat->bn = ubn_bn_count_of(ubi->ubn, ltype);
 		out_stat->vn = ubn_vn_count_of(ubi->ubn, ltype);
 	}

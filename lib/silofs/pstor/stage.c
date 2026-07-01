@@ -246,7 +246,7 @@ static bool lni_has_asyncwr(const struct silofs_lnode_info *lni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_stage_ctx {
-	struct silofs_pexec_ctx *pexec;
+	const struct silofs_pexec_ctx *pexec;
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
@@ -255,7 +255,7 @@ struct silofs_stage_ctx {
 };
 
 static void
-stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec)
+stc_init(struct silofs_stage_ctx *st_ctx, const struct silofs_pexec_ctx *pexec)
 {
 	st_ctx->pexec  = pexec;
 	st_ctx->alloc  = pexec->alloc;
@@ -266,8 +266,8 @@ stc_init(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec)
 }
 
 static void
-stc_init2(struct silofs_stage_ctx *st_ctx, struct silofs_pexec_ctx *pexec,
-          enum silofs_spacef spacef)
+stc_init2(struct silofs_stage_ctx *st_ctx,
+          const struct silofs_pexec_ctx *pexec, enum silofs_spacef spacef)
 {
 	stc_init(st_ctx, pexec);
 	st_ctx->spacef = spacef;
@@ -528,7 +528,7 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(struct silofs_pexec_ctx *pexec,
+int silofs_spawn_uber(const struct silofs_pexec_ctx *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
@@ -562,7 +562,7 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_uber(struct silofs_pexec_ctx *pexec,
+int silofs_stage_uber(const struct silofs_pexec_ctx *pexec,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
@@ -618,7 +618,7 @@ static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_bldesc(struct silofs_pexec_ctx *pexec,
+int silofs_spawn_bldesc(const struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
@@ -652,7 +652,7 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_bldesc(struct silofs_pexec_ctx *pexec,
+int silofs_stage_bldesc(const struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
@@ -715,7 +715,7 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode(struct silofs_pexec_ctx *pexec,
+int silofs_spawn_btnode(const struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
@@ -748,7 +748,7 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_btnode(struct silofs_pexec_ctx *pexec,
+int silofs_stage_btnode(const struct silofs_pexec_ctx *pexec,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
@@ -761,7 +761,7 @@ int silofs_stage_btnode(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-int silofs_require_paddr(struct silofs_pexec_ctx *pexec,
+int silofs_require_paddr(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_stage_ctx st_ctx = {};
@@ -825,7 +825,7 @@ static int stc_spawn_lnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_lnode2_with(struct silofs_pexec_ctx *pexec,
+int silofs_spawn_lnode2_with(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr,
                              const struct silofs_pnptr *pnptr,
                              struct silofs_lnode_info **out_lni)
@@ -852,7 +852,7 @@ static int stc_claim_lnode_space(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_claim_lnode2_space2(struct silofs_pexec_ctx *pexec,
+int silofs_claim_lnode2_space2(const struct silofs_pexec_ctx *pexec,
                                const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr)
 {
@@ -958,7 +958,7 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_lnode2_with(struct silofs_pexec_ctx *pexec,
+int silofs_stage_lnode2_with(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr,
                              const struct silofs_pnptr *pnptr,
                              enum silofs_spacef spacef,
@@ -1013,7 +1013,7 @@ static int stc_detach_lnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_detach_lnode2_at(struct silofs_pexec_ctx *pexec,
+int silofs_detach_lnode2_at(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr *laddr,
                             const struct silofs_pnptr *pnptr)
 {
@@ -1042,7 +1042,7 @@ mkalt_pnptr(const struct silofs_pnptr *pnptr_cur,
 
 struct silofs_destage_ctx {
 	struct silofs_destageq dsq;
-	struct silofs_pexec_ctx *pexec;
+	const struct silofs_pexec_ctx *pexec;
 	struct silofs_alloc *alloc;
 	struct silofs_dirtyq *drq;
 	struct silofs_uber_info *ubi;
@@ -1050,8 +1050,8 @@ struct silofs_destage_ctx {
 	bool cleardirty;
 };
 
-static void
-dsc_init(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
+static void dsc_init(struct silofs_destage_ctx *ds_ctx,
+                     const struct silofs_pexec_ctx *pexec)
 {
 	silofs_destageq_init(&ds_ctx->dsq);
 	ds_ctx->pexec      = pexec;
@@ -1062,15 +1062,15 @@ dsc_init(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
 	ds_ctx->cleardirty = false;
 }
 
-static void
-dsc_initp(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
+static void dsc_initp(struct silofs_destage_ctx *ds_ctx,
+                      const struct silofs_pexec_ctx *pexec)
 {
 	dsc_init(ds_ctx, pexec);
 	ds_ctx->drq = &pexec->pcache->pc_dirtyq;
 }
 
-static void
-dsc_initv(struct silofs_destage_ctx *ds_ctx, struct silofs_pexec_ctx *pexec)
+static void dsc_initv(struct silofs_destage_ctx *ds_ctx,
+                      const struct silofs_pexec_ctx *pexec)
 {
 	dsc_init(ds_ctx, pexec);
 	ds_ctx->drq = &pexec->vcache->vc_dirtyq;
@@ -1416,7 +1416,7 @@ out:
 	return err;
 }
 
-static int destage_pnodes(struct silofs_pexec_ctx *pexec)
+static int destage_pnodes(const struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
@@ -1665,7 +1665,7 @@ out:
 	return err;
 }
 
-static int destage_lnodes(struct silofs_pexec_ctx *pexec)
+static int destage_lnodes(const struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
@@ -1685,7 +1685,7 @@ static void dsc_postop_cleanup(struct silofs_destage_ctx *ds_ctx)
 	dsc_cleanup_depopulate_pnodes(ds_ctx);
 }
 
-static void postop_cleanup(struct silofs_pexec_ctx *pexec)
+static void postop_cleanup(const struct silofs_pexec_ctx *pexec)
 {
 	struct silofs_destage_ctx ds_ctx;
 
@@ -1702,7 +1702,7 @@ static void postop_report(const struct silofs_pexec_ctx *pexec, int status)
 	unused(pexec);
 }
 
-int silofs_destage_dirty_nodes(struct silofs_pexec_ctx *pexec)
+int silofs_destage_dirty_nodes(const struct silofs_pexec_ctx *pexec)
 {
 	int err;
 

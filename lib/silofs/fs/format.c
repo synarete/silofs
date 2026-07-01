@@ -29,21 +29,19 @@ laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void drop_caches(struct silofs_pexec_ctx *pexec)
+static void drop_caches(const struct silofs_pexec_ctx *pexec)
 {
 	silofs_vcache_drop(pexec->vcache);
 	silofs_pcache_drop(pexec->pcache);
 }
 
-static int flush_dirty_nodes(struct silofs_pexec_ctx *pexec, bool drop)
+static int flush_dirty_nodes(const struct silofs_pexec_ctx *pexec, bool drop)
 {
 	int err;
 
 	err = silofs_destage_dirty_nodes(pexec);
-	if (err) {
-		log_err("failed to flush dirty nodes: err=%d", err);
-		return err;
-	}
+	return_if_err(err);
+
 	if (drop) {
 		drop_caches(pexec);
 	}
@@ -52,26 +50,26 @@ static int flush_dirty_nodes(struct silofs_pexec_ctx *pexec, bool drop)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void update_active_uber(struct silofs_pexec_ctx *pexec,
+static void update_active_uber(const struct silofs_pexec_ctx *pexec,
                                struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
 	silofs_ubref_update(pexec->ubref, ubi);
 }
 
-static int format_uber(struct silofs_pexec_ctx *pexec)
+static int format_uber(struct silofs_task_ctx *task)
 {
 	struct silofs_pnptr pnptr    = {};
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_carve_base_ubspace(pexec, &pnptr);
+	err = silofs_carve_base_ubspace(&task->pexec, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_uber(pexec, &pnptr, &ubi);
+	err = silofs_spawn_uber(&task->pexec, &pnptr, &ubi);
 	return_if_err(err);
 
-	update_active_uber(pexec, ubi);
+	update_active_uber(&task->pexec, ubi);
 	return 0;
 }
 
@@ -85,7 +83,7 @@ fixup_spawned_btroot(const struct silofs_pexec_ctx *pexec,
 }
 
 static int
-spawn_btroot_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
+spawn_btroot_of(const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
                 struct silofs_btnode_info **out_bti)
 {
 	struct silofs_pnptr pnptr = {};
@@ -107,7 +105,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return silofs_pni_paddr(&bti->btn_pni);
 }
 
-static void update_formatted_btroot(struct silofs_pexec_ctx *pexec,
+static void update_formatted_btroot(const struct silofs_pexec_ctx *pexec,
                                     const struct silofs_btnode_info *bti)
 {
 	struct silofs_uber_info *ubi = pexec->ubref->ubi;
@@ -116,8 +114,8 @@ static void update_formatted_btroot(struct silofs_pexec_ctx *pexec,
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
 }
 
-static int
-format_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_btree_root_of(const struct silofs_pexec_ctx *pexec,
+                                enum silofs_ltype ltype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
@@ -129,8 +127,8 @@ format_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-format_vspace_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_vspace_root_of(const struct silofs_pexec_ctx *pexec,
+                                 enum silofs_ltype ltype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
@@ -142,29 +140,28 @@ format_vspace_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int format_vspace_roots(struct silofs_pexec_ctx *pexec)
+static int format_vspace_roots(struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!silofs_ltype_islnode(ltype)) {
-			continue;
+		if (!silofs_ltype_isnone(ltype)) {
+			err = format_btree_root_of(&task->pexec, ltype);
+			return_if_err(err);
+
+			err = format_vspace_root_of(&task->pexec, ltype);
+			return_if_err(err);
+
+			err = flush_dirty_nodes(&task->pexec, false);
+			return_if_err(err);
 		}
-		err = format_btree_root_of(pexec, ltype);
-		return_if_err(err);
-
-		err = format_vspace_root_of(pexec, ltype);
-		return_if_err(err);
-
-		err = flush_dirty_nodes(pexec, false);
-		return_if_err(err);
 	}
 	return 0;
 }
 
-static int
-format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_space_node_of(const struct silofs_pexec_ctx *pexec,
+                                enum silofs_ltype ltype)
 {
 	struct silofs_laddr ref_laddr;
 	struct silofs_spnode_info *spi = nullptr;
@@ -173,7 +170,7 @@ format_space_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return silofs_spawn_spnode2_by(pexec, &ref_laddr, &spi);
 }
 
-static int format_refetch_node_at(struct silofs_pexec_ctx *pexec,
+static int format_refetch_node_at(const struct silofs_pexec_ctx *pexec,
                                   const struct silofs_laddr *laddr,
                                   struct silofs_lnode_info **out_lni)
 {
@@ -187,7 +184,7 @@ static int format_refetch_node_at(struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-static int format_refetch_zero_node(struct silofs_pexec_ctx *pexec,
+static int format_refetch_zero_node(const struct silofs_pexec_ctx *pexec,
                                     enum silofs_ltype ltype,
                                     struct silofs_lnode_info **out_lni)
 {
@@ -198,7 +195,7 @@ static int format_refetch_zero_node(struct silofs_pexec_ctx *pexec,
 }
 
 static int
-create_lnode(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
+create_lnode(const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
              struct silofs_lnode_info **out_lni)
 {
 	int err;
@@ -211,8 +208,8 @@ create_lnode(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
 	return err;
 }
 
-static int
-format_zero_node_step1(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_zero_node_step1(const struct silofs_pexec_ctx *pexec,
+                                  enum silofs_ltype ltype)
 {
 	const struct silofs_laddr *laddr = nullptr;
 	struct silofs_lnode_info *lni    = nullptr;
@@ -234,8 +231,8 @@ format_zero_node_step1(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-reclaim_lnode(struct silofs_pexec_ctx *pexec, struct silofs_lnode_info *lni)
+static int reclaim_lnode(const struct silofs_pexec_ctx *pexec,
+                         struct silofs_lnode_info *lni)
 {
 	struct silofs_laddr laddr;
 	bool last = false;
@@ -250,8 +247,8 @@ reclaim_lnode(struct silofs_pexec_ctx *pexec, struct silofs_lnode_info *lni)
 	return err;
 }
 
-static int
-format_zero_node_step2(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_zero_node_step2(const struct silofs_pexec_ctx *pexec,
+                                  enum silofs_ltype ltype)
 {
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
@@ -268,8 +265,8 @@ format_zero_node_step2(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-format_zero_node_step3(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_zero_node_step3(const struct silofs_pexec_ctx *pexec,
+                                  enum silofs_ltype ltype)
 {
 	struct silofs_laddr laddr;
 	struct silofs_lnode_info *lni = nullptr;
@@ -292,16 +289,16 @@ format_zero_node_step3(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-format_zero_node_step4(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_zero_node_step4(const struct silofs_pexec_ctx *pexec,
+                                  enum silofs_ltype ltype)
 {
 	struct silofs_lnode_info *lni = nullptr;
 
 	return format_refetch_zero_node(pexec, ltype, &lni);
 }
 
-static int
-format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_zero_node_of(const struct silofs_pexec_ctx *pexec,
+                               enum silofs_ltype ltype)
 {
 	int err;
 
@@ -320,8 +317,8 @@ format_zero_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-format_base_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_base_node_of(const struct silofs_pexec_ctx *pexec,
+                               enum silofs_ltype ltype)
 {
 	const struct silofs_laddr *laddr = nullptr;
 	struct silofs_lnode_info *lni    = nullptr;
@@ -348,8 +345,8 @@ format_base_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int
-format_vspace_node_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int format_vspace_node_of(const struct silofs_pexec_ctx *pexec,
+                                 enum silofs_ltype ltype)
 {
 	int err;
 
@@ -370,7 +367,7 @@ static bool has_vspace_mapping(enum silofs_ltype ltype)
 	return silofs_ltype_usespmap(ltype);
 }
 
-static int format_vspace_nodes(struct silofs_pexec_ctx *pexec)
+static int format_vspace_nodes(const struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -384,49 +381,25 @@ static int format_vspace_nodes(struct silofs_pexec_ctx *pexec)
 	return 0;
 }
 
-static int format_vspace(struct silofs_pexec_ctx *pexec)
+static int format_vspace(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = format_vspace_roots(pexec);
+	err = format_vspace_roots(task);
 	return_if_err(err);
 
-	err = format_vspace_nodes(pexec);
+	err = format_vspace_nodes(&task->pexec);
 	return_if_err(err);
 
 	return 0;
 }
 
-static void resolve_uber(const struct silofs_pexec_ctx *pexec,
+static void resolve_uber(const struct silofs_task_ctx *task,
                          struct silofs_pnptr *out_pnptr)
 {
-	const struct silofs_uber_info *ubi = pexec->ubref->ubi;
+	const struct silofs_uber_info *ubi = task->pexec.ubref->ubi;
 
-	silofs_pnptr_assign(out_pnptr, silofs_pni_self(&ubi->ub_pni));
-}
-
-static int
-do_format_pbs(struct silofs_pexec_ctx *pexec, struct silofs_pnptr *out_pnptr)
-{
-	int err;
-
-	err = format_uber(pexec);
-	return_if_err(err);
-
-	err = format_vspace(pexec);
-	return_if_err(err);
-
-	resolve_uber(pexec, out_pnptr);
-	return 0;
-}
-
-static int
-format_pbs(struct silofs_task_ctx *task, struct silofs_pnptr *out_pnptr)
-{
-	struct silofs_pexec_ctx pexec;
-
-	silofs_make_pexec(task, &pexec);
-	return do_format_pbs(&pexec, out_pnptr);
+	silofs_pnptr_assign(out_pnptr, silofs_ubi_self(ubi));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -479,7 +452,7 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 
 static bool use_utf8_names(const struct silofs_task_ctx *task)
 {
-	return (task->ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
+	return (task->pexec.ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
 }
 
 static int format_rootdir(struct silofs_task_ctx *task)
@@ -494,37 +467,35 @@ static int format_rootdir(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int format_vfs(struct silofs_task_ctx *task, size_t fs_capacity)
+int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
+                  struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
+	/* format pstor */
+	err = format_uber(task);
+	return_if_err(err);
+
+	err = format_vspace(task);
+	return_if_err(err);
+
+	/* format fs-meta */
 	err = format_super(task, fs_capacity);
 	return_if_err(err);
 
 	err = format_rootdir(task);
 	return_if_err(err);
 
-	return 0;
-}
-
-int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
-                  struct silofs_pnptr *out_pnptr)
-{
-	int err;
-
-	err = format_pbs(task, out_pnptr);
-	return_if_err(err);
-
-	err = format_vfs(task, fs_capacity);
-	return_if_err(err);
+	/* resolve root uber-node */
+	resolve_uber(task, out_pnptr);
 
 	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int
-reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
+static int reload_uber(const struct silofs_pexec_ctx *pexec,
+                       const struct silofs_pnptr *pnptr)
 {
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
@@ -536,8 +507,8 @@ reload_uber(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
 	return 0;
 }
 
-static int
-reload_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int reload_btree_root_of(const struct silofs_pexec_ctx *pexec,
+                                enum silofs_ltype ltype)
 {
 	struct silofs_pnptr pnptr = {};
 	struct silofs_btnode_info *bti;
@@ -556,23 +527,22 @@ reload_btree_root_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int reload_vspace_roots(struct silofs_pexec_ctx *pexec)
+static int reload_vspace_roots(const struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (!silofs_ltype_islnode(ltype)) {
-			continue;
+		if (!silofs_ltype_isnone(ltype)) {
+			err = reload_btree_root_of(pexec, ltype);
+			return_if_err(err);
 		}
-		err = reload_btree_root_of(pexec, ltype);
-		return_if_err(err);
 	}
 	return 0;
 }
 
-static int
-reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
+static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
+                               enum silofs_ltype ltype)
 {
 	struct silofs_laddr laddr;
 	struct silofs_vspace_ref vspref;
@@ -596,7 +566,7 @@ reload_node_zero_of(struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 	return 0;
 }
 
-static int reload_vspace_nodes(struct silofs_pexec_ctx *pexec)
+static int reload_vspace_nodes(const struct silofs_pexec_ctx *pexec)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -610,7 +580,7 @@ static int reload_vspace_nodes(struct silofs_pexec_ctx *pexec)
 	return 0;
 }
 
-static int reload_vspace(struct silofs_pexec_ctx *pexec)
+static int reload_vspace(const struct silofs_pexec_ctx *pexec)
 {
 	int err;
 
@@ -624,26 +594,17 @@ static int reload_vspace(struct silofs_pexec_ctx *pexec)
 }
 
 static int
-do_reload_pbs(struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr)
+reload_pstor(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
 	int err;
 
-	err = reload_uber(pexec, pnptr);
+	err = reload_uber(&task->pexec, pnptr);
 	return_if_err(err);
 
-	err = reload_vspace(pexec);
+	err = reload_vspace(&task->pexec);
 	return_if_err(err);
 
 	return 0;
-}
-
-static int
-reload_pbs(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
-{
-	struct silofs_pexec_ctx pexec;
-
-	silofs_make_pexec(task, &pexec);
-	return do_reload_pbs(&pexec, pnptr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -736,7 +697,7 @@ int silofs_reload(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = reload_pbs(task, pnptr);
+	err = reload_pstor(task, pnptr);
 	return_if_err(err);
 
 	err = reload_vfs(task);

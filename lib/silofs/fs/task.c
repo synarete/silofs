@@ -73,22 +73,31 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	memset(task, 0, sizeof(*task));
 	silofs_cred_init(&task->auth.creds.fs_cred);
 	silofs_cred_init(&task->auth.creds.host_cred);
-	task->env         = env;
-	task->prng        = env->base.prng;
-	task->idsm        = env->base.idsmap;
-	task->repo        = env->base.repo;
-	task->vcache      = env->base.vcache;
-	task->looseq      = nullptr;
-	task->ubref       = &env->ubref;
-	task->upper_id    = 0;
-	task->interrupted = 0;
-	task->fs_locked   = false;
-	task->rw_locked   = false;
-	task->exclusive   = false;
-	task->priv_op     = false;
-	task->kwrite      = false;
-	task->runnable    = true;
-	task->internal    = false;
+
+	task->env             = env;
+	task->pexec.alloc     = env->alloc;
+	task->pexec.prng      = env->base.prng;
+	task->pexec.dstor     = env->base.dstor;
+	task->pexec.pcache    = env->base.pcache;
+	task->pexec.vcache    = env->base.vcache;
+	task->pexec.fvsqs     = env->base.fvsqs;
+	task->pexec.fpaqs     = env->base.fpaqs;
+	task->pexec.md_hd     = &env->md_hd;
+	task->pexec.enc_ci_hd = &env->enc_ci_hd;
+	task->pexec.dec_ci_hd = &env->dec_ci_hd;
+	task->pexec.ubref     = &env->ubref;
+	task->idsm            = env->base.idsmap;
+	task->repo            = env->base.repo;
+	task->looseq          = nullptr;
+	task->upper_id        = 0;
+	task->interrupted     = 0;
+	task->fs_locked       = false;
+	task->rw_locked       = false;
+	task->exclusive       = false;
+	task->priv_op         = false;
+	task->kwrite          = false;
+	task->runnable        = true;
+	task->internal        = false;
 }
 
 void silofs_task_fini(struct silofs_task_ctx *task)
@@ -96,11 +105,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_null(task->looseq);
 	silofs_assert_eq(task->fs_locked, false);
 
-	task->env      = nullptr;
-	task->idsm     = nullptr;
-	task->repo     = nullptr;
-	task->vcache   = nullptr;
-	task->vcache   = nullptr;
+	memset(task, 0, sizeof(*task));
 	task->runnable = false;
 }
 
@@ -215,22 +220,4 @@ int silofs_curr_sbi(const struct silofs_task_ctx *task,
                     struct silofs_sbnode_info **out_sbi)
 {
 	return silofs_stage_super2(task, SILOFS_STG_CUR, out_sbi);
-}
-
-void silofs_make_pexec(const struct silofs_task_ctx *task,
-                       struct silofs_pexec_ctx *out_pexec)
-{
-	silofs_memzero(out_pexec, sizeof(*out_pexec));
-
-	out_pexec->alloc     = task->env->alloc;
-	out_pexec->prng      = task->env->base.prng;
-	out_pexec->dstor     = task->env->base.dstor;
-	out_pexec->pcache    = task->env->base.pcache;
-	out_pexec->vcache    = task->env->base.vcache;
-	out_pexec->fvsqs     = task->env->base.fvsqs;
-	out_pexec->fpaqs     = task->env->base.fpaqs;
-	out_pexec->md_hd     = &task->env->md_hd;
-	out_pexec->enc_ci_hd = &task->env->enc_ci_hd;
-	out_pexec->dec_ci_hd = &task->env->dec_ci_hd;
-	out_pexec->ubref     = task->ubref;
 }

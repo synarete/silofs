@@ -166,8 +166,8 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_layerid, 16);
 	REQUIRE_SIZEOF(struct silofs_uniqid, 16);
 	REQUIRE_SIZEOF(struct silofs_uniqid, SILOFS_UNIQEID_SIZE);
-	REQUIRE_SIZEOF(struct silofs_blobid56b, 56);
-	REQUIRE_SIZEOF(struct silofs_blobid56b, SILOFS_BLOBID_SIZE);
+	REQUIRE_SIZEOF(struct silofs_blobid48b, 48);
+	REQUIRE_SIZEOF(struct silofs_blobid48b, SILOFS_BLOBID_SIZE);
 	REQUIRE_SIZEOF(struct silofs_laddr56, 7);
 	REQUIRE_SIZEOF(struct silofs_laddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
@@ -256,12 +256,12 @@ static void validate_ondisk_blob_desc(void)
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_btime, 32);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_ctime, 48);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_prev, 64);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_refblob, 120);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_blobsize, 176);
-	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_objsize, 184);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs_max, 188);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs, 192);
-	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_flags, 196);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_refblob, 128);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_blobsize, 192);
+	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_objsize, 200);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs_max, 204);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_nobjs, 208);
+	REQUIRE_OFFSET32(struct silofs_blob_desc, bld_flags, 212);
 	REQUIRE_OFFSET64(struct silofs_blob_desc, bld_obj_state, 256);
 	REQUIRE_SIZEOF_8K(struct silofs_blob_desc);
 }

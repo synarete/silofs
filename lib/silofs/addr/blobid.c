@@ -117,25 +117,25 @@ size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)
 	return sz;
 }
 
-void silofs_blobid56b_htox(struct silofs_blobid56b *blobid56,
+void silofs_blobid48b_htox(struct silofs_blobid48b *blobid48,
                            const struct silofs_blobid *blobid)
 {
-	memset(blobid56, 0, sizeof(*blobid56));
-	silofs_layerid_assign(&blobid56->layerid, &blobid->layerid);
-	silofs_uniqid_assign(&blobid56->uniqid, &blobid->uniqid);
-	blobid56->ptype = (uint8_t)blobid->stype.ptype;
-	blobid56->ltype = (uint8_t)blobid->stype.ltype;
-	blobid56->vers  = silofs_cpu_to_le16(blobid->vers);
+	memset(blobid48, 0, sizeof(*blobid48));
+	silofs_layerid_assign(&blobid48->layerid, &blobid->layerid);
+	silofs_uniqid_assign(&blobid48->uniqid, &blobid->uniqid);
+	blobid48->ptype = (uint8_t)blobid->stype.ptype;
+	blobid48->ltype = (uint8_t)blobid->stype.ltype;
+	blobid48->vers  = silofs_cpu_to_le16(blobid->vers);
 }
 
-void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
+void silofs_blobid48b_xtoh(const struct silofs_blobid48b *blobid48,
                            struct silofs_blobid *blobid)
 {
-	silofs_layerid_assign(&blobid->layerid, &blobid56->layerid);
-	silofs_uniqid_assign(&blobid->uniqid, &blobid56->uniqid);
-	blobid->stype.ptype = (enum silofs_ptype)blobid56->ptype;
-	blobid->stype.ltype = (enum silofs_ltype)blobid56->ltype;
-	blobid->vers        = silofs_le16_to_cpu(blobid56->vers);
+	silofs_layerid_assign(&blobid->layerid, &blobid48->layerid);
+	silofs_uniqid_assign(&blobid->uniqid, &blobid48->uniqid);
+	blobid->stype.ptype = (enum silofs_ptype)blobid48->ptype;
+	blobid->stype.ltype = (enum silofs_ltype)blobid48->ltype;
+	blobid->vers        = silofs_le16_to_cpu(blobid48->vers);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -156,11 +156,11 @@ void silofs_blobidx_derive(struct silofs_blobidx *blobidx,
                            const struct silofs_mdigest_hd *md_hd,
                            const struct silofs_blobid *blobid)
 {
-	struct silofs_blobid56b blobid56b;
+	struct silofs_blobid48b blobid48b;
 	struct silofs_hash256 hash;
 
-	silofs_blobid56b_htox(&blobid56b, blobid);
-	silofs_sha3_256_of(md_hd, &blobid56b, sizeof(blobid56b), &hash);
+	silofs_blobid48b_htox(&blobid48b, blobid);
+	silofs_sha3_256_of(md_hd, &blobid48b, sizeof(blobid48b), &hash);
 	silofs_blobidx_setup(blobidx, &hash);
 }
 

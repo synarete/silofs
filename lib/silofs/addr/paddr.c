@@ -146,14 +146,14 @@ void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
                           const struct silofs_paddr *paddr)
 {
 	memset(paddr64, 0, sizeof(*paddr64));
-	silofs_blobid56b_htox(&paddr64->blobid56b, &paddr->blobid);
+	silofs_blobid48b_htox(&paddr64->blobid48b, &paddr->blobid);
 	paddr64->pos = silofs_cpu_to_off(paddr->pos);
 }
 
 void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
-	silofs_blobid56b_xtoh(&paddr64->blobid56b, &paddr->blobid);
+	silofs_blobid48b_xtoh(&paddr64->blobid48b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
 	paddr->ptype = paddr->blobid.stype.ptype;
 }

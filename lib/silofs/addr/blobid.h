@@ -51,10 +51,10 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
 
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
 
-void silofs_blobid56b_htox(struct silofs_blobid56b    *blobid56,
+void silofs_blobid48b_htox(struct silofs_blobid48b    *blobid48,
                            const struct silofs_blobid *blobid);
 
-void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
+void silofs_blobid48b_xtoh(const struct silofs_blobid48b *blobid48,
                            struct silofs_blobid          *blobid);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

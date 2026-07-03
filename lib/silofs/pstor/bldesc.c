@@ -34,7 +34,7 @@ bld_set_ctime(struct silofs_blob_desc *bld, const struct timespec *ts)
 static void
 bld_set_prev(struct silofs_blob_desc *bld, const struct silofs_blobid *blobid)
 {
-	silofs_blobid56b_htox(&bld->bld_prev, blobid);
+	silofs_blobid48b_htox(&bld->bld_prev, blobid);
 }
 
 static void bld_reset_prev(struct silofs_blob_desc *bld)
@@ -45,13 +45,13 @@ static void bld_reset_prev(struct silofs_blob_desc *bld)
 static void bld_refblob(const struct silofs_blob_desc *bld,
                         struct silofs_blobid *out_blobid)
 {
-	silofs_blobid56b_xtoh(&bld->bld_refblob, out_blobid);
+	silofs_blobid48b_xtoh(&bld->bld_refblob, out_blobid);
 }
 
 static void bld_set_refblob(struct silofs_blob_desc *bld,
                             const struct silofs_blobid *blobid)
 {
-	silofs_blobid56b_htox(&bld->bld_refblob, blobid);
+	silofs_blobid48b_htox(&bld->bld_refblob, blobid);
 }
 
 static void bld_reset_refblob(struct silofs_blob_desc *bld)

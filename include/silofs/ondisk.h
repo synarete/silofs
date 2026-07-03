@@ -486,31 +486,31 @@ struct silofs_mac {
 
 struct silofs_uuid {
 	uint8_t id[SILOFS_UUID_SIZE];
-} silofs_attr_aligned8;
+} silofs_attr_aligned16;
 
 /* layer identifier (UUID) */
 struct silofs_layerid {
 	struct silofs_uuid uuid;
-} silofs_attr_aligned8;
+} silofs_attr_aligned16;
 
 /* unique identifier within layer */
 #define SILOFS_UNIQEID_SIZE (16)
 
 struct silofs_uniqid {
 	uint8_t id[SILOFS_UNIQEID_SIZE];
-} silofs_attr_aligned8;
+} silofs_attr_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* blob-identifier */
-#define SILOFS_BLOBID_SIZE (56)
+#define SILOFS_BLOBID_SIZE (48)
 
-struct silofs_blobid56b {
+struct silofs_blobid48b {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;
 	uint8_t               ptype;
 	uint8_t               ltype;
-	uint8_t               reserved[20];
+	uint8_t               reserved[12];
 	uint16_t              vers;
 } silofs_attr_aligned8;
 
@@ -521,8 +521,9 @@ struct silofs_blobidx {
 
 /* persistent blob addressing */
 struct silofs_paddr64b {
-	struct silofs_blobid56b blobid56b;
+	struct silofs_blobid48b blobid48b;
 	int64_t                 pos;
+	uint8_t                 reserved[8];
 } silofs_attr_aligned64;
 
 /* virtual address (compact) */
@@ -858,14 +859,16 @@ struct silofs_blob_desc {
 	uint8_t                 bld_reserved0[16];
 	struct silofs_timespec  bld_btime;
 	struct silofs_timespec  bld_ctime;
-	struct silofs_blobid56b bld_prev;
-	struct silofs_blobid56b bld_refblob;
+	struct silofs_blobid48b bld_prev;
+	uint8_t                 bld_reserved1[16];
+	struct silofs_blobid48b bld_refblob;
+	uint8_t                 bld_reserved2[16];
 	uint64_t                bld_blobsize;
 	uint32_t                bld_objsize;
 	uint32_t                bld_nobjs_max;
 	uint32_t                bld_nobjs;
 	uint32_t                bld_flags;
-	uint8_t                 bld_reserved1[56];
+	uint8_t                 bld_reserved3[40];
 	uint8_t                 bld_obj_state[7936];
 } silofs_attr_aligned64;
 

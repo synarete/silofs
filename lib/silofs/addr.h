@@ -30,10 +30,11 @@
 
 #include <silofs/addr/offlen.h>
 #include <silofs/addr/htox.h>
+#include <silofs/addr/laddr.h>
 #include <silofs/addr/uniqid.h>
 #include <silofs/addr/blobid.h>
 #include <silofs/addr/paddr.h>
-#include <silofs/addr/laddr.h>
+#include <silofs/addr/pnptr.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hash */
@@ -57,73 +58,6 @@ int silofs_hash256_from_str(struct silofs_hash256 *hash, const char *str,
                             size_t len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* nmeta */
-
-/* nodes meta settings */
-struct silofs_nmeta {
-	struct silofs_civkey civkey;
-	struct silofs_ciargs ciargs;
-	struct silofs_ctag   ctag;
-};
-
-const struct silofs_nmeta *silofs_nmeta_none(void);
-
-void silofs_nmeta_setup(struct silofs_nmeta        *nmeta,
-                        const struct silofs_civkey *civkey);
-
-void silofs_nmeta_reset(struct silofs_nmeta *nmeta);
-
-void silofs_nmeta_assign(struct silofs_nmeta       *nmeta,
-                         const struct silofs_nmeta *other);
-
-void silofs_nmeta_update(struct silofs_nmeta      *nmeta,
-                         const struct silofs_ctag *ctag);
-
-bool silofs_nmeta_isequal(const struct silofs_nmeta *nmeta,
-                          const struct silofs_nmeta *other);
-
-void silofs_nmeta128b_htox(struct silofs_nmeta128b   *nmeta128,
-                           const struct silofs_nmeta *nmeta);
-
-void silofs_nmeta128b_xtoh(const struct silofs_nmeta128b *nmeta128,
-                           struct silofs_nmeta           *nmeta);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* pnptr */
-
-/* pnode meta pointer */
-struct silofs_pnptr {
-	struct silofs_nmeta nmeta;
-	struct silofs_paddr paddr;
-};
-
-const struct silofs_pnptr *silofs_pnptr_none(void);
-
-void silofs_pnptr_setup(struct silofs_pnptr        *pnptr,
-                        const struct silofs_paddr  *paddr,
-                        const struct silofs_civkey *civkey);
-
-void silofs_pnptr_setup2(struct silofs_pnptr       *pnptr,
-                         const struct silofs_paddr *paddr,
-                         const struct silofs_nmeta *nmeta);
-
-void silofs_pnptr_reset(struct silofs_pnptr *pnptr);
-
-void silofs_pnptr_assign(struct silofs_pnptr       *pnptr,
-                         const struct silofs_pnptr *other);
-
-bool silofs_pnptr_isequal(const struct silofs_pnptr *pnptr,
-                          const struct silofs_pnptr *other);
-
-bool silofs_pnptr_isnull(const struct silofs_pnptr *pnptr);
-
-void silofs_pnptr256b_htox(struct silofs_pnptr256b   *pnptr256,
-                           const struct silofs_pnptr *pnptr);
-
-void silofs_pnptr256b_xtoh(const struct silofs_pnptr256b *pnptr256,
-                           struct silofs_pnptr           *pnptr);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* spdesc */

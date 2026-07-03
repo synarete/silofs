@@ -186,7 +186,7 @@ int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
                               enum silofs_ltype              ltype,
                               struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_base_vspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
                              enum silofs_ltype              ltype,
                              struct silofs_paddr           *out_paddr);
 

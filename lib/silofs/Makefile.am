@@ -101,6 +101,7 @@ libsilofs_la_SOURCES += addr/mbref.c
 libsilofs_la_SOURCES += addr/namestr.c
 libsilofs_la_SOURCES += addr/nmeta.c
 libsilofs_la_SOURCES += addr/pnptr.c
+libsilofs_la_SOURCES += addr/pnptr.h
 libsilofs_la_SOURCES += addr/offlen.c
 libsilofs_la_SOURCES += addr/offlen.h
 libsilofs_la_SOURCES += addr/paddr.c

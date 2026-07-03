@@ -35,6 +35,11 @@ static void drop_caches(const struct silofs_pexec_ctx *pexec)
 	silofs_pcache_drop(pexec->pcache);
 }
 
+static int flush_dirty(const struct silofs_task_ctx *task)
+{
+	return silofs_destage_dirty_nodes(&task->pexec);
+}
+
 static int flush_dirty_nodes(const struct silofs_pexec_ctx *pexec, bool drop)
 {
 	int err;
@@ -127,20 +132,20 @@ static int format_btree_root_of(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int format_vspace_root_of(const struct silofs_pexec_ctx *pexec,
+static int format_lspace_root_of(const struct silofs_pexec_ctx *pexec,
                                  enum silofs_ltype ltype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
 
-	err = silofs_carve_base_vspace(pexec, ltype, &paddr);
+	err = silofs_carve_base_lspace(pexec, ltype, &paddr);
 	return_if_err(err);
 
 	silofs_ubi_start_spdesc(pexec->ubref->ubi, &paddr);
 	return 0;
 }
 
-static int format_vspace_roots(struct silofs_task_ctx *task)
+static int format_lspace_roots(struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
@@ -150,24 +155,49 @@ static int format_vspace_roots(struct silofs_task_ctx *task)
 			err = format_btree_root_of(&task->pexec, ltype);
 			return_if_err(err);
 
-			err = format_vspace_root_of(&task->pexec, ltype);
+			err = format_lspace_root_of(&task->pexec, ltype);
 			return_if_err(err);
+		}
+	}
+	return flush_dirty(task);
+}
 
-			err = flush_dirty_nodes(&task->pexec, false);
+static bool has_lspace_mapping(enum silofs_ltype ltype)
+{
+	return silofs_ltype_usespmap(ltype);
+}
+
+static int format_base_spnode_of(const struct silofs_task_ctx *task,
+                                 enum silofs_ltype ltype)
+{
+	struct silofs_laddr apex_laddr;
+	struct silofs_sbnode_info *sbi = nullptr;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi_apex_of(sbi, ltype, &apex_laddr);
+	;
+	err = silofs_spawn_spnode2_by(&task->pexec, &apex_laddr, &spi);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int format_base_spnodes(const struct silofs_task_ctx *task)
+{
+	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
+	int err;
+
+	while (++ltype < SILOFS_LTYPE_LAST) {
+		if (has_lspace_mapping(ltype)) {
+			err = format_base_spnode_of(task, ltype);
 			return_if_err(err);
 		}
 	}
 	return 0;
-}
-
-static int format_space_node_of(const struct silofs_pexec_ctx *pexec,
-                                enum silofs_ltype ltype)
-{
-	struct silofs_laddr ref_laddr;
-	struct silofs_spnode_info *spi = nullptr;
-
-	silofs_laddr_setup(&ref_laddr, ltype, 0);
-	return silofs_spawn_spnode2_by(pexec, &ref_laddr, &spi);
 }
 
 static int format_refetch_node_at(const struct silofs_pexec_ctx *pexec,
@@ -345,13 +375,10 @@ static int format_base_node_of(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int format_vspace_node_of(const struct silofs_task_ctx *task,
+static int format_lspace_node_of(const struct silofs_task_ctx *task,
                                  enum silofs_ltype ltype)
 {
 	int err;
-
-	err = format_space_node_of(&task->pexec, ltype);
-	return_if_err(err);
 
 	err = format_zero_node_of(&task->pexec, ltype);
 	return_if_err(err);
@@ -362,19 +389,14 @@ static int format_vspace_node_of(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static bool has_vspace_mapping(enum silofs_ltype ltype)
-{
-	return silofs_ltype_usespmap(ltype);
-}
-
-static int format_vspace_nodes(const struct silofs_task_ctx *task)
+static int format_lspace_nodes(const struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (has_vspace_mapping(ltype)) {
-			err = format_vspace_node_of(task, ltype);
+		if (has_lspace_mapping(ltype)) {
+			err = format_lspace_node_of(task, ltype);
 			return_if_err(err);
 		}
 	}
@@ -462,13 +484,16 @@ int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
 	err = format_uber(task);
 	return_if_err(err);
 
-	err = format_vspace_roots(task);
+	err = format_lspace_roots(task);
 	return_if_err(err);
 
 	err = format_super(task, fs_capacity);
 	return_if_err(err);
 
-	err = format_vspace_nodes(task);
+	err = format_base_spnodes(task);
+	return_if_err(err);
+
+	err = format_lspace_nodes(task);
 	return_if_err(err);
 
 	err = format_rootdir(task);
@@ -559,7 +584,7 @@ static int reload_vspace_nodes(const struct silofs_pexec_ctx *pexec)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (has_vspace_mapping(ltype)) {
+		if (has_lspace_mapping(ltype)) {
 			err = reload_node_zero_of(pexec, ltype);
 			return_if_err(err);
 		}
@@ -635,7 +660,7 @@ static int reload_apex_spnodes(struct silofs_task_ctx *task)
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (has_vspace_mapping(ltype)) {
+		if (has_lspace_mapping(ltype)) {
 			err = reload_apex_spnode_of(task, ltype);
 			return_if_err(err);
 		}

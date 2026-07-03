@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_UIDGID_H_
-#define SILOFS_UIDGID_H_
+#ifndef SILOFS_CREDS_H_
+#define SILOFS_CREDS_H_
 
 uid_t silofs_uid_null(void);
 
@@ -26,6 +26,8 @@ bool silofs_uid_eq(uid_t uid1, uid_t uid2);
 bool silofs_uid_isnull(uid_t uid);
 
 bool silofs_uid_isroot(uid_t uid);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 gid_t silofs_gid_null(void);
 
@@ -44,7 +46,7 @@ void silofs_cred_fini(struct silofs_cred *cred);
 void silofs_cred_assign(struct silofs_cred       *cred,
                         const struct silofs_cred *other);
 
-void silofs_cred_setup(struct silofs_cred *cred, //
-                       uid_t uid, gid_t gid, mode_t umsk);
+void silofs_cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid,
+                       mode_t umsk);
 
-#endif                                           /* SILOFS_UIDGID_H_ */
+#endif /* SILOFS_CREDS_H_ */

@@ -18,6 +18,121 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
+bool silofs_ltype_isnone(enum silofs_ltype ltype)
+{
+	const int val = ltype;
+
+	return (val <= SILOFS_LTYPE_NONE) || (val >= SILOFS_LTYPE_LAST);
+}
+
+bool silofs_ltype_isinode(enum silofs_ltype ltype)
+{
+	return ltype == SILOFS_LTYPE_INODE;
+}
+
+bool silofs_ltype_isdata(enum silofs_ltype ltype)
+{
+	bool ret;
+
+	switch (ltype) {
+	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_LTYPE_DATA64K:
+		ret = true;
+		break;
+	case SILOFS_LTYPE_SUPER:
+	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_LTYPE_INODE:
+	case SILOFS_LTYPE_XANODE:
+	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_LTYPE_NONE:
+	case SILOFS_LTYPE_LAST:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
+
+bool silofs_ltype_usespmap(enum silofs_ltype ltype)
+{
+	bool ret;
+
+	switch (ltype) {
+	case SILOFS_LTYPE_INODE:
+	case SILOFS_LTYPE_XANODE:
+	case SILOFS_LTYPE_SYMVAL:
+	case SILOFS_LTYPE_DTNODE:
+	case SILOFS_LTYPE_FTNODE:
+	case SILOFS_LTYPE_DATA1K:
+	case SILOFS_LTYPE_DATA4K:
+	case SILOFS_LTYPE_DATA64K:
+		ret = true;
+		break;
+	case SILOFS_LTYPE_SUPER:
+	case SILOFS_LTYPE_SPNODE:
+	case SILOFS_LTYPE_NONE:
+	case SILOFS_LTYPE_LAST:
+	default:
+		ret = false;
+		break;
+	}
+	return ret;
+}
+
+size_t silofs_ltype_size(enum silofs_ltype ltype)
+{
+	size_t size;
+
+	switch (ltype) {
+	case SILOFS_LTYPE_SUPER:
+		size = sizeof(struct silofs_superb_node);
+		break;
+	case SILOFS_LTYPE_SPNODE:
+		size = sizeof(struct silofs_space_node);
+		break;
+	case SILOFS_LTYPE_INODE:
+		size = sizeof(struct silofs_inode);
+		break;
+	case SILOFS_LTYPE_XANODE:
+		size = sizeof(struct silofs_xattr_node);
+		break;
+	case SILOFS_LTYPE_DTNODE:
+		size = sizeof(struct silofs_dtree_node);
+		break;
+	case SILOFS_LTYPE_FTNODE:
+		size = sizeof(struct silofs_ftree_node);
+		break;
+	case SILOFS_LTYPE_SYMVAL:
+		size = sizeof(struct silofs_symval_node);
+		break;
+	case SILOFS_LTYPE_DATA1K:
+		size = sizeof(struct silofs_data_node1);
+		break;
+	case SILOFS_LTYPE_DATA4K:
+		size = sizeof(struct silofs_data_node4);
+		break;
+	case SILOFS_LTYPE_DATA64K:
+		size = sizeof(struct silofs_data_node64);
+		break;
+	case SILOFS_LTYPE_NONE:
+	case SILOFS_LTYPE_LAST:
+	default:
+		size = 0;
+		break;
+	}
+	return size;
+}
+
+ssize_t silofs_ltype_ssize(enum silofs_ltype ltype)
+{
+	return (ssize_t)silofs_ltype_size(ltype);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static uint64_t cpu_to_off_ltype(off_t off, enum silofs_ltype ltype)
 {
 	const uint64_t mask   = 0xFF;

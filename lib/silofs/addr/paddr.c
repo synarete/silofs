@@ -19,6 +19,37 @@
 #include <silofs/str.h>
 #include <silofs/addr.h>
 
+size_t silofs_ptype_size(enum silofs_ptype ptype)
+{
+	size_t sz;
+
+	switch (ptype) {
+	case SILOFS_PTYPE_MBR:
+		sz = sizeof(struct silofs_mbr1k);
+		break;
+	case SILOFS_PTYPE_UBER:
+		sz = sizeof(struct silofs_uber_node);
+		break;
+	case SILOFS_PTYPE_BLDESC:
+		sz = sizeof(struct silofs_blob_desc);
+		break;
+	case SILOFS_PTYPE_BTNODE:
+		sz = sizeof(struct silofs_btree_node);
+		break;
+	case SILOFS_PTYPE_VNODE:
+		sz = sizeof(struct silofs_data_node1); /* min lnode size */
+		break;
+	case SILOFS_PTYPE_NONE:
+	case SILOFS_PTYPE_LAST:
+	default:
+		sz = 0;
+		break;
+	}
+	return sz;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static const struct silofs_paddr s_paddr_none = {
 	.ptype = SILOFS_PTYPE_NONE,
 	.pos   = SILOFS_OFF_NULL,

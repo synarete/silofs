@@ -30,30 +30,10 @@
 
 #include <silofs/addr/offlen.h>
 #include <silofs/addr/htox.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* stype */
-
-struct silofs_stype {
-	enum silofs_ptype ptype;
-	enum silofs_ltype ltype;
-};
-
-size_t silofs_ptype_size(enum silofs_ptype ptype);
-
-bool silofs_ltype_isnone(enum silofs_ltype ltype);
-
-bool silofs_ltype_isinode(enum silofs_ltype ltype);
-
-bool silofs_ltype_isdata(enum silofs_ltype ltype);
-
-bool silofs_ltype_usespmap(enum silofs_ltype ltype);
-
-size_t silofs_ltype_size(enum silofs_ltype ltype);
-
-ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
-
-size_t silofs_ltype_nkbs(enum silofs_ltype ltype);
+#include <silofs/addr/uniqid.h>
+#include <silofs/addr/blobid.h>
+#include <silofs/addr/paddr.h>
+#include <silofs/addr/laddr.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* hash */
@@ -77,71 +57,6 @@ int silofs_hash256_from_str(struct silofs_hash256 *hash, const char *str,
                             size_t len);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-#include <silofs/addr/layerid.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* blobid */
-struct silofs_blobid {
-	struct silofs_layerid layerid;
-	struct silofs_uniqid  uniqid;
-	struct silofs_stype   stype;
-	uint16_t              vers;
-};
-
-const struct silofs_blobid *silofs_blobid_none(void);
-
-void silofs_blobid_init(struct silofs_blobid        *blobid,
-                        const struct silofs_stype   *stype,
-                        const struct silofs_layerid *layerid,
-                        const struct silofs_uniqid  *uniqid);
-
-void silofs_blobid_fini(struct silofs_blobid *blobid);
-
-void silofs_blobid_reset(struct silofs_blobid *blobid);
-
-void silofs_blobid_assign(struct silofs_blobid       *blobid,
-                          const struct silofs_blobid *other);
-
-long silofs_blobid_compare(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other);
-
-bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
-                           const struct silofs_blobid *other);
-
-size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
-
-void silofs_blobid56b_htox(struct silofs_blobid56b    *blobid56,
-                           const struct silofs_blobid *blobid);
-
-void silofs_blobid56b_xtoh(const struct silofs_blobid56b *blobid56,
-                           struct silofs_blobid          *blobid);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_blobidx_setup(struct silofs_blobidx       *blobidx,
-                          const struct silofs_hash256 *h);
-
-void silofs_blobidx_assign(struct silofs_blobidx       *blobidx,
-                           const struct silofs_blobidx *other);
-
-void silofs_blobidx_derive(struct silofs_blobidx          *blobidx,
-                           const struct silofs_mdigest_hd *md_hd,
-                           const struct silofs_blobid     *blobid);
-
-bool silofs_blobidx_isequal(const struct silofs_blobidx *blobidx,
-                            const struct silofs_blobidx *other);
-
-int silofs_blobidx_to_str(const struct silofs_blobidx *blobidx, char *str,
-                          size_t len);
-
-int silofs_blobidx_from_str(struct silofs_blobidx *blobidx, const char *str,
-                            size_t len);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* paddr */
-
-#include <silofs/addr/paddr.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* nmeta */
@@ -235,10 +150,6 @@ void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
                         struct silofs_spdesc           *spdesc);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* laddr */
-#include <silofs/addr/laddr.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* genid */
 
 void silofs_generate_civ(struct silofs_prandgen *prng,
@@ -304,7 +215,7 @@ int silofs_fsref_import(const struct silofs_fsref *fsref,
 void silofs_fsrefs_export(struct silofs_fsrefs       *fsrefs,
                           const struct silofs_mbrefs *mbrefs);
 
-#include <silofs/addr/uidgid.h>
+#include <silofs/addr/creds.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* namestr */

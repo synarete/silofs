@@ -1409,17 +1409,24 @@ void silofs_ii_refresh_atime(struct silofs_inode_info *ii, bool to_volatile)
 	}
 }
 
+static blkcnt_t nkbs_of(enum silofs_ltype ltype)
+{
+	const size_t size = silofs_ltype_size(ltype);
+
+	return (blkcnt_t)silofs_div_round_up(size, SILOFS_KB_SIZE);
+}
+
 static blkcnt_t recalc_iblocks(const struct silofs_inode_info *ii,
                                enum silofs_ltype ltype, long dif)
 {
-	const size_t nkbs     = silofs_ltype_nkbs(ltype);
+	const blkcnt_t nkbs   = nkbs_of(ltype);
 	const blkcnt_t blocks = silofs_ii_blocks(ii);
 	blkcnt_t cnt;
 
 	if (dif > 0) {
-		cnt = blocks + (blkcnt_t)(nkbs * (size_t)dif);
+		cnt = blocks + (nkbs * dif);
 	} else {
-		cnt = blocks - (blkcnt_t)(nkbs * (size_t)labs(dif));
+		cnt = blocks - (nkbs * labs(dif));
 	}
 	return cnt;
 }

@@ -58,6 +58,10 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+size_t silofs_ptype_size(enum silofs_ptype ptype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 void silofs_calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
                               const struct silofs_paddr      *paddr,
                               struct silofs_caad             *out_caad);

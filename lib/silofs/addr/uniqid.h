@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_LAYERID_H_
-#define SILOFS_LAYERID_H_
+#ifndef SILOFS_UNIQID_H_
+#define SILOFS_UNIQID_H_
 
 const struct silofs_layerid *silofs_layerid_none(void);
 
@@ -51,4 +51,4 @@ void silofs_uniqid_assignx(struct silofs_uniqid       *uniqid,
 long silofs_uniqid_compare(const struct silofs_uniqid *uniqid,
                            const struct silofs_uniqid *other);
 
-#endif /* SILOFS_LAYERID_H_ */
+#endif /* SILOFS_UNIQID_H_ */

@@ -19,6 +19,20 @@
 
 #include <silofs/ondisk.h>
 
+bool silofs_ltype_isnone(enum silofs_ltype ltype);
+
+bool silofs_ltype_isinode(enum silofs_ltype ltype);
+
+bool silofs_ltype_isdata(enum silofs_ltype ltype);
+
+bool silofs_ltype_usespmap(enum silofs_ltype ltype);
+
+size_t silofs_ltype_size(enum silofs_ltype ltype);
+
+ssize_t silofs_ltype_ssize(enum silofs_ltype ltype);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 /* logical addressing of meta nodes */
 struct silofs_laddr {
 	off_t             off;

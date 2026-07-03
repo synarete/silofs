@@ -87,6 +87,9 @@ libsilofs_la_SOURCES += crypt/prand.c
 libsilofs_la_SOURCES += crypt.h
 
 libsilofs_la_SOURCES += addr/blobid.c
+libsilofs_la_SOURCES += addr/blobid.h
+libsilofs_la_SOURCES += addr/creds.c
+libsilofs_la_SOURCES += addr/creds.h
 libsilofs_la_SOURCES += addr/fsref.c
 libsilofs_la_SOURCES += addr/genid.c
 libsilofs_la_SOURCES += addr/hash.c
@@ -104,9 +107,8 @@ libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/paddr.h
 libsilofs_la_SOURCES += addr/spdesc.c
 libsilofs_la_SOURCES += addr/stype.c
-libsilofs_la_SOURCES += addr/layerid.c
-libsilofs_la_SOURCES += addr/uidgid.c
-libsilofs_la_SOURCES += addr/uidgid.h
+libsilofs_la_SOURCES += addr/uniqid.c
+libsilofs_la_SOURCES += addr/uniqid.h
 libsilofs_la_SOURCES += addr.h
 
 libsilofs_la_SOURCES += nodes/dirtyq.c

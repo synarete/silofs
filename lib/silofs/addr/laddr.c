@@ -366,13 +366,15 @@ void silofs_resolve_spnode2_laddr(const struct silofs_laddr *ref_laddr,
                                   struct silofs_laddr *out_laddr)
 {
 	const uint64_t ref_ltype = (uint64_t)(ref_laddr->ltype);
-	uint64_t ref_vsize, ref_voff, ref_index;
+	uint64_t ref_vsize, ref_voff, ref_index = 0;
 	uint64_t spnode_vsize, spnode_index, spnode_off;
 	off_t off;
 
 	ref_voff  = (uint64_t)ref_laddr->off;
 	ref_vsize = silofs_ltype_size(ref_laddr->ltype);
-	ref_index = ref_voff / ref_vsize;
+	if (likely(ref_vsize > 0)) {
+		ref_index = ref_voff / ref_vsize;
+	}
 
 	spnode_index = ref_index / SILOFS_SPNODE_NREFS;
 	spnode_vsize = silofs_ltype_size(SILOFS_LTYPE_SPNODE);

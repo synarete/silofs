@@ -55,13 +55,11 @@ static int check_name(const struct silofs_strview *sv)
 	int err;
 
 	err = check_name_len(sv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_name_dat(sv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -71,9 +69,8 @@ int silofs_namestr_init_by(struct silofs_namestr *nstr,
 	int err;
 
 	err = check_name(sv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	silofs_strview_init_by(&nstr->sv, sv);
 	nstr->hash = 0;
 	return 0;

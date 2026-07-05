@@ -564,7 +564,7 @@ static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
 
 	silofs_laddr_setup(&laddr, ltype, 0);
 
-	err = silofs_stage_spnode2_by(pexec, &laddr, &spi);
+	err = silofs_stage_spnode_by(pexec, &laddr, &spi);
 	return_if_err(err);
 
 	silofs_spi_vspace_ref(spi, &laddr, &vspref);

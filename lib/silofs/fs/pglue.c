@@ -207,6 +207,8 @@ static int isshared_lnode(const struct silofs_task_ctx *task,
 	return err;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int
 mark_unwritten(const struct silofs_task_ctx *task,
                const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
@@ -214,7 +216,7 @@ mark_unwritten(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_mark_unwritten_at2(&task->pexec, laddr);
+	err = silofs_mark_unwritten_at(task, laddr);
 	pii_decref(pii);
 	return err;
 }
@@ -226,7 +228,7 @@ static int clear_unwritten(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_clear_unwritten_at2(&task->pexec, laddr);
+	err = silofs_clear_unwritten_at(task, laddr);
 	pii_decref(pii);
 	return err;
 }
@@ -238,7 +240,7 @@ static int test_unwritten(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_test_unwritten_at2(&task->pexec, laddr, out_unwritten);
+	err = silofs_test_unwritten_at(task, laddr, out_unwritten);
 	pii_decref(pii);
 	return err;
 }

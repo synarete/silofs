@@ -1207,7 +1207,7 @@ static int dsc_resolve_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_laddr laddr;
 
 	bti_base_laddr(bti, &laddr);
-	return silofs_resolve_vtop_parent(ds_ctx->pexec, &laddr, //
+	return silofs_resolve_ltop_parent(ds_ctx->pexec, &laddr, //
 	                                  bti_paddr(bti), out_pnptr);
 }
 
@@ -1452,7 +1452,7 @@ static int dsc_resolve_lnode(const struct silofs_destage_ctx *ds_ctx,
                              const struct silofs_lnode_info *lni,
                              struct silofs_pnptr *out_pnptr)
 {
-	return silofs_resolve_vtop_mapping(ds_ctx->pexec, lni_laddr(lni),
+	return silofs_resolve_ltop_mapping(ds_ctx->pexec, lni_laddr(lni),
 	                                   out_pnptr);
 }
 
@@ -1462,7 +1462,7 @@ static int dsc_resolve_lnode_parent(const struct silofs_destage_ctx *ds_ctx,
 {
 	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
 
-	return silofs_resolve_vtop_btleaf(ds_ctx->pexec, laddr, out_pnptr);
+	return silofs_resolve_ltop_btleaf(ds_ctx->pexec, laddr, out_pnptr);
 }
 
 static int dsc_encrypt_lnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1563,7 +1563,7 @@ static int dsc_stain_lnode_parents(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_btree_path bpath = { .cnt = 0 };
 	int err;
 
-	err = silofs_resolve_vtop_bpath(ds_ctx->pexec, lni_laddr(lni), &bpath);
+	err = silofs_resolve_ltop_bpath(ds_ctx->pexec, lni_laddr(lni), &bpath);
 	return_if_err(err);
 
 	for (size_t i = 0; i < bpath.cnt; ++i) {

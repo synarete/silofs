@@ -22,6 +22,21 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
+/* pv-layer execution-context */
+struct silofs_pexec_ctx {
+	struct silofs_alloc      *alloc;
+	struct silofs_prandgen   *prng;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_lcache     *lcache;
+	struct silofs_freevsqs   *fvsqs;
+	struct silofs_freepaqs   *fpaqs;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_uber_ref   *ubref;
+};
+
 #include <silofs/pstor/dstor.h>
 #include <silofs/pstor/repo.h>
 
@@ -118,63 +133,8 @@ void silofs_clone_btnode(const struct silofs_btnode_info *bti,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* uber */
 #include <silofs/pstor/uber.h>
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* spnode */
-
 #include <silofs/pstor/spnode.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-/* pv-layer execution-context */
-struct silofs_pexec_ctx {
-	struct silofs_alloc      *alloc;
-	struct silofs_prandgen   *prng;
-	struct silofs_dstor      *dstor;
-	struct silofs_pcache     *pcache;
-	struct silofs_lcache     *lcache;
-	struct silofs_freevsqs   *fvsqs;
-	struct silofs_freepaqs   *fpaqs;
-	struct silofs_mdigest_hd *md_hd;
-	struct silofs_cipher_hd  *enc_ci_hd;
-	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_uber_ref   *ubref;
-};
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* btree (mapping) */
-
-struct silofs_btree_path {
-	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
-	unsigned int               cnt;
-};
-
-int silofs_resolve_vtop_bpath(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr     *laddr,
-                              struct silofs_btree_path      *out_bpath);
-
-int silofs_resolve_vtop_parent(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr,
-                               const struct silofs_paddr     *paddr,
-                               struct silofs_pnptr           *out_pnptr);
-
-int silofs_resolve_vtop_btleaf(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr,
-                               struct silofs_pnptr           *out_pnptr);
-
-int silofs_resolve_vtop_mapping(const struct silofs_pexec_ctx *pexec,
-                                const struct silofs_laddr     *laddr,
-                                struct silofs_pnptr           *out_pnptr);
-
-int silofs_create_vtop_mapping(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr,
-                               const struct silofs_pnptr     *pnptr);
-
-int silofs_update_vtop_mapping(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr,
-                               const struct silofs_pnptr     *pnptr);
-
-int silofs_remove_vtop_mapping(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr);
+#include <silofs/pstor/btree.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
@@ -280,7 +240,7 @@ int silofs_claim_free_vspace(const struct silofs_pexec_ctx *pexec,
 int silofs_update_used_vspace(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr *laddr, bool incref);
 
-int silofs_probe_vspace_ref(const struct silofs_pexec_ctx *pexec,
+int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr     *laddr,
                             struct silofs_vspace_ref      *out_vspref);
 
@@ -320,9 +280,9 @@ int silofs_reclaim_lnode2_at(const struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_stage_spnode2_by(const struct silofs_pexec_ctx *pexec,
-                            const struct silofs_laddr     *ref_laddr,
-                            struct silofs_spnode_info    **out_spi);
+int silofs_stage_spnode_by(const struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr     *ref_laddr,
+                           struct silofs_spnode_info    **out_spi);
 
 int silofs_spawn_spnode2_by(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr     *ref_laddr,
@@ -332,17 +292,9 @@ int silofs_require_spnode2_by(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr     *ref_laddr,
                               struct silofs_spnode_info    **out_spi);
 
-int silofs_mark_unwritten_at2(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr     *ref_laddr);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_clear_unwritten_at2(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *ref_laddr);
-
-int silofs_test_unwritten_at2(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr     *ref_laddr,
-                              bool                          *out_unwritten);
-
-int silofs_test_vtop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_test_ltop_mapping(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr     *laddr,
                              bool                          *out_exists);
 

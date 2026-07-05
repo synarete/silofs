@@ -66,7 +66,7 @@ static int vsc_stage_spnode_of(const struct silofs_vspace_ctx *vs_ctx,
 {
 	int err;
 
-	err = silofs_stage_spnode2_by(vs_ctx->pexec, ref_laddr, out_spi);
+	err = silofs_stage_spnode_by(vs_ctx->pexec, ref_laddr, out_spi);
 	if (err) {
 		log_err("failed to stage spnode of: ltype=%d off=%ld err=%d",
 		        (int)ref_laddr->ltype, ref_laddr->off, err);
@@ -260,7 +260,7 @@ static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
 	return 0;
 }
 
-int silofs_probe_vspace_ref(const struct silofs_pexec_ctx *pexec,
+int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr *laddr,
                             struct silofs_vspace_ref *out_vspref)
 {

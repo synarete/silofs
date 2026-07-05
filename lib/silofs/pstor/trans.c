@@ -145,8 +145,8 @@ static void retain_free_space(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr *laddr,
                               const struct silofs_paddr *paddr)
 {
-	silofs_freevsqs_push(pexec->fvsqs, laddr);
-	silofs_freepaqs_push(pexec->fpaqs, paddr);
+	silofs_lspools_push(pexec->lspools, laddr);
+	silofs_pspools_push(pexec->pspools, paddr);
 }
 
 static int decref_used_vspace(const struct silofs_pexec_ctx *pexec,

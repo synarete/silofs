@@ -115,15 +115,18 @@ libsilofs_la_SOURCES += addr.h
 
 libsilofs_la_SOURCES += nodes/dirtyq.c
 libsilofs_la_SOURCES += nodes/dirtyq.h
-libsilofs_la_SOURCES += nodes/freesq.c
 libsilofs_la_SOURCES += nodes/hmapq.c
+libsilofs_la_SOURCES += nodes/hmapq.h
+libsilofs_la_SOURCES += nodes/lcache.c
+libsilofs_la_SOURCES += nodes/lcache.h
 libsilofs_la_SOURCES += nodes/lnodes.c
 libsilofs_la_SOURCES += nodes/lnodes.h
 libsilofs_la_SOURCES += nodes/nodeview.c
 libsilofs_la_SOURCES += nodes/pcache.c
+libsilofs_la_SOURCES += nodes/pcache.h
 libsilofs_la_SOURCES += nodes/pnodes.c
-libsilofs_la_SOURCES += nodes/lcache.c
-libsilofs_la_SOURCES += nodes/lcache.h
+libsilofs_la_SOURCES += nodes/spools.c
+libsilofs_la_SOURCES += nodes/spools.h
 libsilofs_la_SOURCES += nodes.h
 
 libsilofs_la_SOURCES += pstor/bldesc.c

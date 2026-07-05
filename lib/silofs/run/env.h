@@ -41,8 +41,8 @@ struct silofs_env_base {
 	struct silofs_dstor    *dstor;
 	struct silofs_pcache   *pcache;
 	struct silofs_lcache   *lcache;
-	struct silofs_freevsqs *fvsqs;
-	struct silofs_freepaqs *fpaqs;
+	struct silofs_lspools  *lspools;
+	struct silofs_pspools  *pspools;
 	struct silofs_idsmap   *idsmap;
 };
 

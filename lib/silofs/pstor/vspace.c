@@ -19,7 +19,7 @@
 
 struct silofs_vspace_ctx {
 	const struct silofs_pexec_ctx *pexec;
-	struct silofs_freevsqs *fvsqs;
+	struct silofs_lspools *lspools;
 	struct silofs_lcache *lcache;
 	struct silofs_uber_info *ubi;
 	enum silofs_ltype ltype;
@@ -29,11 +29,11 @@ static void
 vsc_init(struct silofs_vspace_ctx *vs_ctx,
          const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype)
 {
-	vs_ctx->pexec  = pexec;
-	vs_ctx->fvsqs  = pexec->fvsqs;
-	vs_ctx->lcache = pexec->lcache;
-	vs_ctx->ubi    = pexec->ubref->ubi;
-	vs_ctx->ltype  = ltype;
+	vs_ctx->pexec   = pexec;
+	vs_ctx->lspools = pexec->lspools;
+	vs_ctx->lcache  = pexec->lcache;
+	vs_ctx->ubi     = pexec->ubref->ubi;
+	vs_ctx->ltype   = ltype;
 
 	silofs_assert_ne(ltype, SILOFS_LTYPE_SPNODE);
 }
@@ -81,15 +81,15 @@ static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
 	return silofs_require_spnode2_by(vs_ctx->pexec, ref_laddr, out_spi);
 }
 
-static int vsc_claim_free_vspace_by_fvsqs(struct silofs_vspace_ctx *vs_ctx,
-                                          struct silofs_laddr *out_laddr)
+static int vsc_claim_free_vspace_by_lspools(struct silofs_vspace_ctx *vs_ctx,
+                                            struct silofs_laddr *out_laddr)
 {
 	struct silofs_lspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
-	struct silofs_freevsqs *fvsqs  = vs_ctx->pexec->fvsqs;
+	struct silofs_lspools *lspools = vs_ctx->pexec->lspools;
 	int err;
 
-	err = silofs_freevsqs_pull(fvsqs, vs_ctx->ltype, out_laddr);
+	err = silofs_lspools_pull(lspools, vs_ctx->ltype, out_laddr);
 	return_if_err(err);
 
 	err = vsc_stage_spnode_by(vs_ctx, out_laddr, &spi);
@@ -161,7 +161,7 @@ static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
 	int ret;
 
 	/* fast: try to allocated from in-memory pool of free vspace */
-	ret = vsc_claim_free_vspace_by_fvsqs(vs_ctx, out_laddr);
+	ret = vsc_claim_free_vspace_by_lspools(vs_ctx, out_laddr);
 	if (ret != 0) {
 		/* slow: try to allocate using space-mapping nodes */
 		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_laddr);

@@ -29,8 +29,8 @@ struct silofs_pexec_ctx {
 	struct silofs_dstor      *dstor;
 	struct silofs_pcache     *pcache;
 	struct silofs_lcache     *lcache;
-	struct silofs_freevsqs   *fvsqs;
-	struct silofs_freepaqs   *fpaqs;
+	struct silofs_lspools    *lspools;
+	struct silofs_pspools    *pspools;
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd  *enc_ci_hd;
 	struct silofs_cipher_hd  *dec_ci_hd;

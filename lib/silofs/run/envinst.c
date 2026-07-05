@@ -50,8 +50,8 @@ struct silofs_env_inst {
 	struct silofs_repo repo;
 	struct silofs_pcache pcache;
 	struct silofs_lcache lcache;
-	struct silofs_freevsqs fvsqs;
-	struct silofs_freepaqs fpaqs;
+	struct silofs_lspools lspools;
+	struct silofs_pspools pspool;
 	struct silofs_idsmap idsmap;
 	struct silofs_env env;
 	struct silofs_alloc *alloc;
@@ -369,10 +369,10 @@ static int envi_init_freesqs(struct silofs_env_inst *envi)
 {
 	int err;
 
-	err = silofs_freevsqs_init(&envi->fvsqs, envi->alloc);
+	err = silofs_lspools_init(&envi->lspools, envi->alloc);
 	return_if_err(err);
 
-	silofs_freepaqs_init(&envi->fpaqs, envi->alloc);
+	silofs_pspools_init(&envi->pspool, envi->alloc);
 	envi->initf |= SILOFS_ENVIF_FREESQS;
 	return 0;
 }
@@ -380,8 +380,8 @@ static int envi_init_freesqs(struct silofs_env_inst *envi)
 static void envi_fini_freesqs(struct silofs_env_inst *envi)
 {
 	if (envi->initf & SILOFS_ENVIF_FREESQS) {
-		silofs_freepaqs_fini(&envi->fpaqs);
-		silofs_freevsqs_fini(&envi->fvsqs);
+		silofs_pspools_fini(&envi->pspool);
+		silofs_lspools_fini(&envi->lspools);
 		envi->initf &= ~SILOFS_ENVIF_FREESQS;
 	}
 }
@@ -412,15 +412,15 @@ static void envi_fini_idsmap(struct silofs_env_inst *envi)
 static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
-		.prng   = &envi->prandgen,
-		.nilbk  = envi->nilbk,
-		.repo   = &envi->repo,
-		.dstor  = &envi->repo.re_dstor,
-		.pcache = &envi->pcache,
-		.lcache = &envi->lcache,
-		.fvsqs  = &envi->fvsqs,
-		.fpaqs  = &envi->fpaqs,
-		.idsmap = &envi->idsmap,
+		.prng    = &envi->prandgen,
+		.nilbk   = envi->nilbk,
+		.repo    = &envi->repo,
+		.dstor   = &envi->repo.re_dstor,
+		.pcache  = &envi->pcache,
+		.lcache  = &envi->lcache,
+		.lspools = &envi->lspools,
+		.pspools = &envi->pspool,
+		.idsmap  = &envi->idsmap,
 	};
 	struct silofs_env *env = &envi->env;
 	int err;

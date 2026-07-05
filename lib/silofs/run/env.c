@@ -357,8 +357,8 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 void silofs_env_drop_caches(struct silofs_env *env)
 {
-	silofs_freepaqs_drop(env->base.fpaqs);
-	silofs_freevsqs_drop(env->base.fvsqs);
+	silofs_pspools_drop(env->base.pspools);
+	silofs_lspools_drop(env->base.lspools);
 	silofs_lcache_drop(env->base.lcache);
 	silofs_pcache_drop(env->base.pcache);
 	silofs_repo_drop_some(env->base.repo);

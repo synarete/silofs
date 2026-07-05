@@ -134,7 +134,7 @@ static bool try_carve_free_space_of(const struct silofs_pexec_ctx *pexec,
 {
 	int err;
 
-	err = silofs_freepaqs_pull(pexec->fpaqs, stype, out_paddr);
+	err = silofs_pspools_pull(pexec->pspools, stype, out_paddr);
 	return (err == 0);
 }
 

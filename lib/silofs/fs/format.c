@@ -567,7 +567,7 @@ static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
 	err = silofs_stage_spnode_by(pexec, &laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, &laddr, &vspref);
+	silofs_spi_lspace_ref(spi, &laddr, &vspref);
 	if (vspref.refcnt != 1) {
 		return -SILOFS_EFSCORRUPTED;
 	}

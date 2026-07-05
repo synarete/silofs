@@ -149,20 +149,14 @@ static void retain_free_space(const struct silofs_pexec_ctx *pexec,
 	silofs_freepaqs_push(pexec->fpaqs, paddr);
 }
 
-static int incref_used_vspace(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr)
-{
-	return silofs_update_used_vspace(pexec, laddr, true);
-}
-
 static int decref_used_vspace(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr *laddr)
 {
 	return silofs_update_used_vspace(pexec, laddr, false);
 }
 
-static int reclaim_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr *laddr, bool *out_last)
+static int reclaim_lnode_at(const struct silofs_pexec_ctx *pexec,
+                            const struct silofs_laddr *laddr, bool *out_last)
 {
 	struct silofs_pnptr pnptr;
 	struct silofs_lspace_ref vspref;
@@ -225,26 +219,11 @@ int silofs_reclaim_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	int err;
 
 	lni = lookup_cached_lni(pexec, laddr);
-	err = reclaim_lnode2_at(pexec, laddr, out_last);
+	err = reclaim_lnode_at(pexec, laddr, out_last);
 	if (!err && *out_last) {
 		try_forget_cached_lni(pexec, lni);
 	}
 	return err;
-}
-
-int silofs_share_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr *laddr)
-{
-	struct silofs_lspace_ref vspref;
-	int err;
-
-	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
-	return_if_err(err);
-
-	err = incref_used_vspace(pexec, laddr);
-	return_if_err(err);
-
-	return 0;
 }
 
 int silofs_unshare_lnode2_at(const struct silofs_pexec_ctx *pexec,
@@ -256,7 +235,7 @@ int silofs_unshare_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
 	return_if_err(err);
 
-	err = reclaim_lnode2_at(pexec, laddr, out_last);
+	err = reclaim_lnode_at(pexec, laddr, out_last);
 	return_if_err(err);
 
 	return 0;

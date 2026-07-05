@@ -95,7 +95,7 @@ static int vsc_claim_free_vspace_by_fvsqs(struct silofs_vspace_ctx *vs_ctx,
 	err = vsc_stage_spnode_by(vs_ctx, out_laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, out_laddr, &vspref);
+	silofs_spi_lspace_ref(spi, out_laddr, &vspref);
 	if (vspref.refcnt > 0) {
 		log_err("cached free-vspace has active ref-count: "
 		        "ltype=%d off=%ld refcnt=%zu",
@@ -191,7 +191,7 @@ static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	err = vsc_stage_spnode_by(vs_ctx, laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, laddr, &vspref);
+	silofs_spi_lspace_ref(spi, laddr, &vspref);
 	if (vspref.refcnt == 0) {
 		log_err("can not reclaim unused vspace: ltype=%d off=%ld",
 		        laddr->ltype, laddr->off);
@@ -211,7 +211,7 @@ static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
 	err = vsc_stage_spnode_by(vs_ctx, laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, laddr, &vspref);
+	silofs_spi_lspace_ref(spi, laddr, &vspref);
 	if (vspref.refcnt == 0) {
 		log_err("can not incref unused vspace: ltype=%d off=%ld",
 		        laddr->ltype, laddr->off);
@@ -254,7 +254,7 @@ static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
 	err = vsc_stage_spnode_by(vs_ctx, laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, laddr, out_vspref);
+	silofs_spi_lspace_ref(spi, laddr, out_vspref);
 	return 0;
 }
 

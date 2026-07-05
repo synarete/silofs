@@ -178,7 +178,7 @@ share_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_share_lnode2_at(&task->pexec, laddr);
+	err = silofs_share_lnode_at(task, laddr);
 	pii_decref(pii);
 	return err;
 }

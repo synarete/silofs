@@ -46,7 +46,7 @@ static int stage_spnode_by(const struct silofs_task_ctx *task,
 	return stage_spnode_at(task, &laddr, out_spi);
 }
 
-static int probe_vspace_ref(const struct silofs_task_ctx *task,
+static int probe_lspace_ref(const struct silofs_task_ctx *task,
                             const struct silofs_laddr *ref_laddr,
                             struct silofs_lspace_ref *out_lspref)
 {
@@ -56,9 +56,59 @@ static int probe_vspace_ref(const struct silofs_task_ctx *task,
 	err = stage_spnode_by(task, ref_laddr, &spi);
 	return_if_err(err);
 
-	silofs_spi_vspace_ref(spi, ref_laddr, out_lspref);
+	silofs_spi_lspace_ref(spi, ref_laddr, out_lspref);
 	return 0;
 }
+
+static int
+check_lspace_ref(const struct silofs_laddr *ref_laddr,
+                 const struct silofs_lspace_ref *lspref, size_t refcnt_min)
+{
+	constexpr size_t refcnt_max = UINT64_MAX >> 4;
+
+	if ((lspref->refcnt < refcnt_min) || (lspref->refcnt > refcnt_max)) {
+		log_err("illegal lspace ref: ltype=%d off=%zd refcnt=%zu",
+		        ref_laddr->ltype, ref_laddr->off, lspref->refcnt);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int probe_check_lspace_ref(const struct silofs_task_ctx *task,
+                                  const struct silofs_laddr *ref_laddr,
+                                  struct silofs_lspace_ref *out_lspref)
+{
+	int err;
+
+	err = probe_lspace_ref(task, ref_laddr, out_lspref);
+	return_if_err(err);
+
+	err = check_lspace_ref(ref_laddr, out_lspref, 0);
+	return_if_err(err);
+
+	return 0;
+}
+
+#if 0
+static int decref_used_lspace(struct silofs_vspace_ctx *vs_ctx,
+				  const struct silofs_laddr *ref_laddr)
+{
+	struct silofs_lspace_ref lspref;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = stage_spnode_by(vs_ctx, laddr, &spi);
+	return_if_err(err);
+
+	silofs_spi_vspace_ref(spi, laddr, &lspref);
+
+	err = check_lspace_ref(ref_laddr, out_lspref);
+	return_if_err(err);
+
+	silofs_spi_dec_allocated(spi, ref_laddr);
+	return 0;
+}
+#endif
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -95,7 +145,7 @@ int silofs_test_unwritten_at(const struct silofs_task_ctx *task,
 	struct silofs_lspace_ref lspref = {};
 	int err;
 
-	err = probe_vspace_ref(task, ref_laddr, &lspref);
+	err = probe_check_lspace_ref(task, ref_laddr, &lspref);
 	return_if_err(err);
 
 	*out_unwritten = (lspref.flags & SILOFS_LSPACEF_UNWRITTEN) > 0;
@@ -110,9 +160,28 @@ int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,
 	struct silofs_lspace_ref lspref = {};
 	int err;
 
-	err = probe_vspace_ref(task, laddr, &lspref);
+	err = probe_check_lspace_ref(task, laddr, &lspref);
 	return_if_err(err);
 
 	*out_res = (lspref.refcnt > 1);
+	return 0;
+}
+
+int silofs_share_lnode_at(const struct silofs_task_ctx *task,
+                          const struct silofs_laddr *laddr)
+{
+	struct silofs_lspace_ref lspref;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = stage_spnode_by(task, laddr, &spi);
+	return_if_err(err);
+
+	silofs_spi_lspace_ref(spi, laddr, &lspref);
+
+	err = check_lspace_ref(laddr, &lspref, 1);
+	return_if_err(err);
+
+	silofs_spi_inc_allocated(spi, laddr);
 	return 0;
 }

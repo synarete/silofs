@@ -32,4 +32,7 @@ int silofs_test_unwritten_at(const struct silofs_task_ctx *task,
 int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,
                              const struct silofs_laddr *laddr, bool *out_res);
 
+int silofs_share_lnode_at(const struct silofs_task_ctx *task,
+                          const struct silofs_laddr    *laddr);
+
 #endif /* SILOFS_LSPACE_H_ */

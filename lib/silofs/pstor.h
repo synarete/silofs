@@ -268,9 +268,6 @@ int silofs_claim_lnode2_space(const struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_share_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *laddr);
-
 int silofs_unshare_lnode2_at(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr, bool *out_last);
 

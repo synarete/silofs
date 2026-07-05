@@ -428,7 +428,7 @@ void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
 	}
 }
 
-void silofs_spi_vspace_ref(const struct silofs_spnode_info *spi,
+void silofs_spi_lspace_ref(const struct silofs_spnode_info *spi,
                            const struct silofs_laddr *laddr,
                            struct silofs_lspace_ref *out_vspref)
 {

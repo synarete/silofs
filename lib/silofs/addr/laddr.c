@@ -362,8 +362,8 @@ void silofs_laddr_to_ino(const struct silofs_laddr *laddr, ino_t *out_ino)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_resolve_spnode2_laddr(const struct silofs_laddr *ref_laddr,
-                                  struct silofs_laddr *out_laddr)
+void silofs_resolve_spnode_laddr(const struct silofs_laddr *ref_laddr,
+                                 struct silofs_laddr *out_laddr)
 {
 	const uint64_t ref_ltype = (uint64_t)(ref_laddr->ltype);
 	uint64_t ref_vsize, ref_voff, ref_index = 0;

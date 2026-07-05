@@ -206,7 +206,7 @@ static int format_refetch_node_at(const struct silofs_pexec_ctx *pexec,
 {
 	int err;
 
-	err = silofs_stage_lnode2_at(pexec, laddr, out_lni);
+	err = silofs_stage_lnode_at(pexec, laddr, out_lni);
 	if (err) {
 		log_err("failed to re-fetch node: ltype=%d off=%ld err=%d",
 		        (int)laddr->ltype, (long)laddr->off, err);
@@ -557,7 +557,7 @@ static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
                                enum silofs_ltype ltype)
 {
 	struct silofs_laddr laddr;
-	struct silofs_vspace_ref vspref;
+	struct silofs_lspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
 	struct silofs_lnode_info *lni  = nullptr;
 	int err;
@@ -572,7 +572,7 @@ static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
 		return -SILOFS_EFSCORRUPTED;
 	}
 
-	err = silofs_stage_lnode2_at(pexec, &laddr, &lni);
+	err = silofs_stage_lnode_at(pexec, &laddr, &lni);
 	return_if_err(err);
 
 	return 0;

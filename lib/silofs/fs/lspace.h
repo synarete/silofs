@@ -27,4 +27,9 @@ int silofs_test_unwritten_at(const struct silofs_task_ctx *task,
                              const struct silofs_laddr    *ref_laddr,
                              bool                         *out_unwritten);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,
+                             const struct silofs_laddr *laddr, bool *out_res);
+
 #endif /* SILOFS_LSPACE_H_ */

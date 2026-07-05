@@ -330,10 +330,10 @@ enum silofs_btnodef {
 	SILOFS_BTNODEF_ROOT = 0x01,
 };
 
-/* space flags */
-enum silofs_spacef {
-	SILOFS_SPACEF_NONE      = 0x00,
-	SILOFS_SPACEF_UNWRITTEN = 0x01,
+/* logical space flags */
+enum silofs_lspacef {
+	SILOFS_LSPACEF_NONE      = 0x00,
+	SILOFS_LSPACEF_UNWRITTEN = 0x01,
 };
 
 /* name-to-hash functions */

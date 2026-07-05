@@ -20,9 +20,9 @@
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
 
-struct silofs_vspace_ref {
-	size_t             refcnt;
-	enum silofs_spacef flags;
+struct silofs_lspace_ref {
+	size_t              refcnt;
+	enum silofs_lspacef flags;
 };
 
 struct silofs_spnode_info *silofs_spi_from_lni(struct silofs_lnode_info *lni);
@@ -53,7 +53,7 @@ void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
 
 void silofs_spi_vspace_ref(const struct silofs_spnode_info *spi,
                            const struct silofs_laddr       *laddr,
-                           struct silofs_vspace_ref        *out_vspref);
+                           struct silofs_lspace_ref        *out_vspref);
 
 void silofs_spi_clone_from(struct silofs_spnode_info       *spi,
                            const struct silofs_spnode_info *spi_other);

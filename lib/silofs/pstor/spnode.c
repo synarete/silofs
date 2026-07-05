@@ -57,43 +57,43 @@ spn_set_ref_ltype(struct silofs_space_node *spn, enum silofs_ltype ref_ltype)
 	spn->sp_ref_ltype = (uint8_t)ref_ltype;
 }
 
-static enum silofs_spacef
+static enum silofs_lspacef
 spn_flags_at(const struct silofs_space_node *spn, size_t slot)
 {
 	uint16_t flags;
 
 	silofs_assert_lt(slot, ARRAY_SIZE(spn->sp_flags));
 	flags = silofs_le16_to_cpu(spn->sp_flags[slot]);
-	return (enum silofs_spacef)flags;
+	return (enum silofs_lspacef)flags;
 }
 
 static bool spn_test_flags_at(const struct silofs_space_node *spn, size_t slot,
-                              enum silofs_spacef spacef)
+                              enum silofs_lspacef spacef)
 {
 	return ((spn_flags_at(spn, slot) & spacef) == spacef);
 }
 
 static void spn_set_flags_at(struct silofs_space_node *spn, size_t slot,
-                             enum silofs_spacef spacef)
+                             enum silofs_lspacef spacef)
 {
-	enum silofs_spacef currf = spn_flags_at(spn, slot);
-	const uint16_t flags     = (uint16_t)currf | (uint16_t)spacef;
+	enum silofs_lspacef currf = spn_flags_at(spn, slot);
+	const uint16_t flags      = (uint16_t)currf | (uint16_t)spacef;
 
 	spn->sp_flags[slot] = silofs_cpu_to_le16(flags);
 }
 
 static void spn_clear_flags_at(struct silofs_space_node *spn, size_t slot,
-                               enum silofs_spacef spacef)
+                               enum silofs_lspacef spacef)
 {
-	enum silofs_spacef currf = spn_flags_at(spn, slot);
-	const uint16_t flags     = (uint16_t)currf & ~((uint16_t)spacef);
+	enum silofs_lspacef currf = spn_flags_at(spn, slot);
+	const uint16_t flags      = (uint16_t)currf & ~((uint16_t)spacef);
 
 	spn->sp_flags[slot] = silofs_cpu_to_le16(flags);
 }
 
 static void spn_reset_flags_at(struct silofs_space_node *spn, size_t slot)
 {
-	const uint16_t flags = (uint16_t)SILOFS_SPACEF_NONE;
+	const uint16_t flags = (uint16_t)SILOFS_LSPACEF_NONE;
 
 	silofs_assert_lt(slot, ARRAY_SIZE(spn->sp_flags));
 	spn->sp_flags[slot] = silofs_cpu_to_le16(flags);
@@ -360,17 +360,17 @@ static void spi_update_nused_ref(struct silofs_spnode_info *spi, int c)
 static bool
 spi_test_unwritten_at(const struct silofs_spnode_info *spi, size_t slot)
 {
-	return spn_test_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
+	return spn_test_flags_at(spi->spn, slot, SILOFS_LSPACEF_UNWRITTEN);
 }
 
 static void spi_mark_unwritten_at(struct silofs_spnode_info *spi, size_t slot)
 {
-	spn_set_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
+	spn_set_flags_at(spi->spn, slot, SILOFS_LSPACEF_UNWRITTEN);
 }
 
 static void spi_clear_unwritten_at(struct silofs_spnode_info *spi, size_t slot)
 {
-	spn_clear_flags_at(spi->spn, slot, SILOFS_SPACEF_UNWRITTEN);
+	spn_clear_flags_at(spi->spn, slot, SILOFS_LSPACEF_UNWRITTEN);
 }
 
 void silofs_spi_inc_allocated(struct silofs_spnode_info *spi,
@@ -430,7 +430,7 @@ void silofs_spi_clear_unwritten(struct silofs_spnode_info *spi,
 
 void silofs_spi_vspace_ref(const struct silofs_spnode_info *spi,
                            const struct silofs_laddr *laddr,
-                           struct silofs_vspace_ref *out_vspref)
+                           struct silofs_lspace_ref *out_vspref)
 {
 	const size_t slot = spi_slot_of(spi, laddr);
 

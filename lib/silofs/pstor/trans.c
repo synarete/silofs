@@ -40,10 +40,10 @@ static bool uses_spmap(const struct silofs_laddr *laddr)
 
 static int resolve_spacef_of(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr,
-                             enum silofs_spacef *out_spacef)
+                             enum silofs_lspacef *out_spacef)
 {
-	struct silofs_vspace_ref vspref = {
-		.flags = SILOFS_SPACEF_NONE,
+	struct silofs_lspace_ref vspref = {
+		.flags = SILOFS_LSPACEF_NONE,
 	};
 	int ret = 0;
 
@@ -54,12 +54,12 @@ static int resolve_spacef_of(const struct silofs_pexec_ctx *pexec,
 	return ret;
 }
 
-int silofs_stage_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr *laddr,
-                           struct silofs_lnode_info **out_lni)
+int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
+                          const struct silofs_laddr *laddr,
+                          struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pnptr pnptr;
-	enum silofs_spacef spacef;
+	enum silofs_lspacef spacef;
 	int err;
 
 	err = silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
@@ -165,7 +165,7 @@ static int reclaim_lnode2_at(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr, bool *out_last)
 {
 	struct silofs_pnptr pnptr;
-	struct silofs_vspace_ref vspref;
+	struct silofs_lspace_ref vspref;
 	int err;
 
 	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
@@ -232,23 +232,10 @@ int silofs_reclaim_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-int silofs_isshared_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr, bool *out_res)
-{
-	struct silofs_vspace_ref vspref;
-	int err;
-
-	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
-	return_if_err(err);
-
-	*out_res = (vspref.refcnt > 1);
-	return 0;
-}
-
 int silofs_share_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr *laddr)
 {
-	struct silofs_vspace_ref vspref;
+	struct silofs_lspace_ref vspref;
 	int err;
 
 	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
@@ -263,7 +250,7 @@ int silofs_share_lnode2_at(const struct silofs_pexec_ctx *pexec,
 int silofs_unshare_lnode2_at(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr, bool *out_last)
 {
-	struct silofs_vspace_ref vspref;
+	struct silofs_lspace_ref vspref;
 	int err;
 
 	err = silofs_probe_lspace_ref(pexec, laddr, &vspref);
@@ -300,7 +287,7 @@ static int resolve_stage_spnode2_at(const struct silofs_pexec_ctx *pexec,
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = silofs_stage_lnode2_at(pexec, laddr, &lni);
+	err = silofs_stage_lnode_at(pexec, laddr, &lni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_lni(lni);
@@ -314,7 +301,7 @@ int silofs_stage_spnode_by(const struct silofs_pexec_ctx *pexec,
 {
 	struct silofs_laddr laddr;
 
-	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
 	return resolve_stage_spnode2_at(pexec, &laddr, out_spi);
 }
 
@@ -324,13 +311,13 @@ int silofs_spawn_spnode2_by(const struct silofs_pexec_ctx *pexec,
 {
 	struct silofs_laddr laddr;
 
-	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
 	return claim_spawn_spnode2_at(pexec, &laddr, ref_laddr, out_spi);
 }
 
-int silofs_test_ltop_mapping(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr *laddr,
-                             bool *out_exists)
+static int
+test_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+                  const struct silofs_laddr *laddr, bool *out_exists)
 {
 	struct silofs_pnptr pnptr;
 	int err;
@@ -349,8 +336,8 @@ int silofs_require_spnode2_by(const struct silofs_pexec_ctx *pexec,
 	int err;
 	bool exists;
 
-	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
-	err = silofs_test_ltop_mapping(pexec, &laddr, &exists);
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
+	err = test_ltop_mapping(pexec, &laddr, &exists);
 	if (!err) {
 		if (exists) {
 			err = resolve_stage_spnode2_at(pexec, &laddr, out_spi);

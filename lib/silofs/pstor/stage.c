@@ -251,7 +251,7 @@ struct silofs_stage_ctx {
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
 	struct silofs_lcache *lcache;
-	enum silofs_spacef spacef;
+	enum silofs_lspacef spacef;
 };
 
 static void
@@ -262,12 +262,12 @@ stc_init(struct silofs_stage_ctx *st_ctx, const struct silofs_pexec_ctx *pexec)
 	st_ctx->dstor  = pexec->dstor;
 	st_ctx->pcache = pexec->pcache;
 	st_ctx->lcache = pexec->lcache;
-	st_ctx->spacef = SILOFS_SPACEF_NONE;
+	st_ctx->spacef = SILOFS_LSPACEF_NONE;
 }
 
 static void
 stc_init2(struct silofs_stage_ctx *st_ctx,
-          const struct silofs_pexec_ctx *pexec, enum silofs_spacef spacef)
+          const struct silofs_pexec_ctx *pexec, enum silofs_lspacef spacef)
 {
 	stc_init(st_ctx, pexec);
 	st_ctx->spacef = spacef;
@@ -946,7 +946,7 @@ static int stc_stage_lnode(struct silofs_stage_ctx *st_ctx,
 	err = stc_create_cached_lnode(st_ctx, laddr, &lni);
 	return_if_err(err);
 
-	if (st_ctx->spacef & SILOFS_SPACEF_UNWRITTEN) {
+	if (st_ctx->spacef & SILOFS_LSPACEF_UNWRITTEN) {
 		goto out_ok;
 	}
 
@@ -961,7 +961,7 @@ out_ok:
 int silofs_stage_lnode2_with(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr *laddr,
                              const struct silofs_pnptr *pnptr,
-                             enum silofs_spacef spacef,
+                             enum silofs_lspacef spacef,
                              struct silofs_lnode_info **out_lni)
 {
 	struct silofs_stage_ctx st_ctx = {};

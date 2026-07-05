@@ -110,7 +110,7 @@ stage_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_stage_lnode2_at(&task->pexec, laddr, out_lni);
+	err = silofs_stage_lnode_at(&task->pexec, laddr, out_lni);
 	pii_decref(pii);
 	silofs_unused(stg_mode);
 	return err;
@@ -202,7 +202,7 @@ static int isshared_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_isshared_lnode2_at(&task->pexec, laddr, out_res);
+	err = silofs_isshared_lnode_at(task, laddr, out_res);
 	pii_decref(pii);
 	return err;
 }
@@ -464,7 +464,7 @@ int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
 
 	err = stage_verify_lnode(task, &laddr, nullptr, stg_mode, &lni);
 	return_if_err(err);
@@ -481,7 +481,7 @@ int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode2_laddr(ref_laddr, &laddr);
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
 
 	err = spawn_lnode_at(task, &laddr, &lni);
 	return_if_err(err);

@@ -146,6 +146,7 @@ libsilofs_la_SOURCES += pstor/vspace.c
 libsilofs_la_SOURCES += pstor.h
 
 libsilofs_la_SOURCES += fs/dir.c
+libsilofs_la_SOURCES += fs/dir.h
 libsilofs_la_SOURCES += fs/file.c
 libsilofs_la_SOURCES += fs/file.h
 libsilofs_la_SOURCES += fs/filep.h

@@ -218,7 +218,7 @@ int silofs_claim_lnode2_space2(const struct silofs_pexec_ctx *pexec,
 int silofs_stage_lnode2_with(const struct silofs_pexec_ctx *pexec,
                              const struct silofs_laddr     *laddr,
                              const struct silofs_pnptr     *pnptr,
-                             enum silofs_spacef             spacef,
+                             enum silofs_lspacef            spacef,
                              struct silofs_lnode_info     **out_lni);
 
 int silofs_detach_lnode2_at(const struct silofs_pexec_ctx *pexec,
@@ -242,7 +242,7 @@ int silofs_update_used_vspace(const struct silofs_pexec_ctx *pexec,
 
 int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr     *laddr,
-                            struct silofs_vspace_ref      *out_vspref);
+                            struct silofs_lspace_ref      *out_vspref);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* trans */
@@ -250,9 +250,9 @@ int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
 int silofs_probe_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr     *laddr);
 
-int silofs_stage_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *laddr,
-                           struct silofs_lnode_info     **out_lni);
+int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
+                          const struct silofs_laddr     *laddr,
+                          struct silofs_lnode_info     **out_lni);
 
 int silofs_spawn_lnode2(const struct silofs_pexec_ctx *pexec,
                         enum silofs_ltype              ltype,
@@ -266,8 +266,7 @@ int silofs_claim_lnode2_space(const struct silofs_pexec_ctx *pexec,
                               enum silofs_ltype              ltype,
                               struct silofs_laddr           *out_laddr);
 
-int silofs_isshared_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr, bool *out_res);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_share_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr     *laddr);
@@ -291,11 +290,5 @@ int silofs_spawn_spnode2_by(const struct silofs_pexec_ctx *pexec,
 int silofs_require_spnode2_by(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr     *ref_laddr,
                               struct silofs_spnode_info    **out_spi);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_test_ltop_mapping(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr     *laddr,
-                             bool                          *out_exists);
 
 #endif /* SILOFS_PSTOR_H_ */

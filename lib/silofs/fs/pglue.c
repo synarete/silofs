@@ -393,6 +393,17 @@ out:
 	return err;
 }
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
+                            enum silofs_ltype ltype,
+                            struct silofs_lnode_info **out_lni)
+{
+	silofs_assert(silofs_ltype_usespmap(ltype));
+
+	return spawn_take_lnode(task, ltype, nullptr, out_lni);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void laddr_of_super(struct silofs_laddr *out_laddr)
@@ -419,7 +430,7 @@ static struct silofs_sbnode_info *lni_to_sbi(struct silofs_lnode_info *lni)
 	return sbi;
 }
 
-int silofs_probe_super2(const struct silofs_task_ctx *task)
+int silofs_probe_super(const struct silofs_task_ctx *task)
 {
 	struct silofs_laddr laddr;
 
@@ -427,9 +438,9 @@ int silofs_probe_super2(const struct silofs_task_ctx *task)
 	return probe_lnode(task, &laddr, nullptr);
 }
 
-int silofs_stage_super2(const struct silofs_task_ctx *task,
-                        enum silofs_stg_mode stg_mode,
-                        struct silofs_sbnode_info **out_sbi)
+int silofs_stage_super(const struct silofs_task_ctx *task,
+                       enum silofs_stg_mode stg_mode,
+                       struct silofs_sbnode_info **out_sbi)
 {
 	struct silofs_laddr laddr;
 	struct silofs_lnode_info *lni = nullptr;
@@ -443,8 +454,8 @@ int silofs_stage_super2(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-int silofs_spawn_super2(const struct silofs_task_ctx *task,
-                        struct silofs_sbnode_info **out_sbi)
+int silofs_spawn_super(const struct silofs_task_ctx *task,
+                       struct silofs_sbnode_info **out_sbi)
 {
 	struct silofs_laddr laddr     = {};
 	struct silofs_lnode_info *lni = nullptr;
@@ -477,46 +488,51 @@ static struct silofs_spnode_info *lni_to_spi(struct silofs_lnode_info *lni)
 	return spi;
 }
 
-int silofs_probe_spnode2(const struct silofs_task_ctx *task,
-                         const struct silofs_laddr *laddr)
+int silofs_probe_spnode(const struct silofs_task_ctx *task,
+                        const struct silofs_laddr *laddr)
 {
 	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SPNODE);
 	return probe_lnode(task, laddr, nullptr);
 }
 
-int silofs_stage_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_laddr *ref_laddr,
-                            enum silofs_stg_mode stg_mode,
-                            struct silofs_spnode_info **out_spi)
+int silofs_stage_spnode_at(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *laddr,
+                           enum silofs_stg_mode stg_mode,
+                           struct silofs_spnode_info **out_spi)
 {
-	struct silofs_laddr laddr;
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
-
-	err = stage_verify_lnode(task, &laddr, nullptr, stg_mode, &lni);
+	err = stage_verify_lnode(task, laddr, nullptr, stg_mode, &lni);
 	return_if_err(err);
 
 	*out_spi = lni_to_spi(lni);
 	return 0;
 }
 
-int silofs_spawn_spnode2_of(const struct silofs_task_ctx *task,
-                            const struct silofs_laddr *ref_laddr,
-                            struct silofs_spnode_info **out_spi)
+int silofs_spawn_spnode_at(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_spnode_info **out_spi)
 {
-	struct silofs_laddr laddr;
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
-
-	err = spawn_lnode_at(task, &laddr, &lni);
+	err = spawn_lnode_at(task, laddr, &lni);
 	return_if_err(err);
 
 	*out_spi = lni_to_spi(lni);
 	return 0;
+}
+
+int silofs_stage_spnode_of(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *ref_laddr,
+                           enum silofs_stg_mode stg_mode,
+                           struct silofs_spnode_info **out_spi)
+{
+	struct silofs_laddr laddr;
+
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
+	return silofs_stage_spnode_at(task, &laddr, stg_mode, out_spi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

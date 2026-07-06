@@ -166,6 +166,7 @@ libsilofs_la_SOURCES += fs/lspace.h
 libsilofs_la_SOURCES += fs/namei.c
 libsilofs_la_SOURCES += fs/namei.h
 libsilofs_la_SOURCES += fs/pglue.c
+libsilofs_la_SOURCES += fs/pglue.h
 libsilofs_la_SOURCES += fs/super.c
 libsilofs_la_SOURCES += fs/super.h
 libsilofs_la_SOURCES += fs/symlink.c
@@ -173,6 +174,7 @@ libsilofs_la_SOURCES += fs/symlink.h
 libsilofs_la_SOURCES += fs/task.c
 libsilofs_la_SOURCES += fs/task.h
 libsilofs_la_SOURCES += fs/xattr.c
+libsilofs_la_SOURCES += fs/xattr.h
 libsilofs_la_SOURCES += fs.h
 libsilofs_la_SOURCES += vfs.h
 

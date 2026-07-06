@@ -167,6 +167,34 @@ int silofs_share_lnode_at(const struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static int stage_spnode_of(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *ref_laddr,
+                           enum silofs_stg_mode stg_mode,
+                           struct silofs_spnode_info **out_spi)
+{
+	struct silofs_laddr laddr;
+
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
+	return silofs_stage_spnode_at(task, &laddr, stg_mode, out_spi);
+}
+
+static int spawn_spnode_of(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *ref_laddr,
+                           struct silofs_spnode_info **out_spi)
+{
+	struct silofs_laddr laddr;
+	int err;
+
+	silofs_resolve_spnode_laddr(ref_laddr, &laddr);
+	err = silofs_spawn_spnode_at(task, &laddr, out_spi);
+	return_if_err(err);
+
+	silofs_spi_setup_spawned(*out_spi, ref_laddr);
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static int
 apex_laddr_of(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
               struct silofs_laddr *out_laddr)
@@ -225,20 +253,57 @@ claim_free_by_lspool(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int claim_free_at(const struct silofs_task_ctx *task,
-                         const struct silofs_laddr *ref_laddr,
-                         struct silofs_laddr *out_laddr)
+static int claim_free_by_ref(const struct silofs_task_ctx *task,
+                             const struct silofs_laddr *ref_laddr,
+                             struct silofs_laddr *out_laddr)
 {
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = silofs_require_spnode2_by(&task->pexec, ref_laddr, &spi);
+	err = stage_spnode_of(task, ref_laddr, SILOFS_STG_CUR, &spi);
 	return_if_err(err);
 
 	err = silofs_spi_find_free(spi, out_laddr);
 	return_if_err(err);
 
 	silofs_spi_inc_allocated(spi, out_laddr);
+	return 0;
+}
+
+static int
+claim_free_by_apex(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+                   struct silofs_laddr *out_laddr)
+{
+	struct silofs_laddr ref_laddr;
+	int err;
+
+	err = apex_laddr_of(task, ltype, &ref_laddr);
+	return_if_err(err);
+
+	err = claim_free_by_ref(task, &ref_laddr, out_laddr);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int
+advance_free_apex(const struct silofs_task_ctx *task, enum silofs_ltype ltype)
+{
+	struct silofs_laddr ref_laddr;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = apex_laddr_of(task, ltype, &ref_laddr);
+	return_if_err(err);
+
+	next_apex_laddr(&ref_laddr);
+
+	err = spawn_spnode_of(task, &ref_laddr, &spi);
+	return_if_err(err);
+
+	err = update_apex_laddr(task, &ref_laddr);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -253,19 +318,14 @@ claim_free_by_spnode(const struct silofs_task_ctx *task,
                      enum silofs_ltype ltype, struct silofs_laddr *out_laddr)
 {
 	constexpr size_t niter = 1024;
-	struct silofs_laddr ref_laddr;
 	int err;
 
-	err = apex_laddr_of(task, ltype, &ref_laddr);
-	return_if_err(err);
-
 	for (size_t i = 0; i < niter; ++i) {
-		err = claim_free_at(task, &ref_laddr, out_laddr);
-		if (!err || (err != -SILOFS_ENOSPC)) {
-			break;
+		err = claim_free_by_apex(task, ltype, out_laddr);
+		if (err != -SILOFS_ENOSPC) {
+			break; /* OK or I/O error */
 		}
-		next_apex_laddr(&ref_laddr);
-		err = update_apex_laddr(task, &ref_laddr);
+		err = advance_free_apex(task, ltype);
 		if (err) {
 			break;
 		}

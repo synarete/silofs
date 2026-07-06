@@ -418,7 +418,7 @@ static int format_super(struct silofs_task_ctx *task, size_t fs_capacity)
 	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
 
-	err = silofs_spawn_super2(task, &sbi);
+	err = silofs_spawn_super(task, &sbi);
 	return_if_err(err);
 
 	silofs_sbi_setup_spawned(sbi, fs_capacity);
@@ -625,7 +625,7 @@ static int reload_super(struct silofs_task_ctx *task)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
 
-	return silofs_stage_super2(task, SILOFS_STG_CUR, &sbi);
+	return silofs_stage_super(task, SILOFS_STG_CUR, &sbi);
 }
 
 static int reload_apex_spnode_at(struct silofs_task_ctx *task,
@@ -633,7 +633,7 @@ static int reload_apex_spnode_at(struct silofs_task_ctx *task,
 {
 	struct silofs_spnode_info *spi = nullptr;
 
-	return silofs_stage_spnode2_of(task, laddr, SILOFS_STG_CUR, &spi);
+	return silofs_stage_spnode_of(task, laddr, SILOFS_STG_CUR, &spi);
 }
 
 static int

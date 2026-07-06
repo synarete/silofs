@@ -92,17 +92,6 @@ static int carve_ltop_mapping(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_spawn_lnode2(const struct silofs_pexec_ctx *pexec,
-                        enum silofs_ltype ltype,
-                        struct silofs_lnode_info **out_lni)
-{
-	struct silofs_laddr laddr;
-	int err;
-
-	err = silofs_claim_free_vspace(pexec, ltype, &laddr);
-	return err ? err : silofs_spawn_lnode2_at(pexec, &laddr, out_lni);
-}
-
 int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr *laddr,
                            struct silofs_lnode_info **out_lni)

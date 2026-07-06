@@ -21,18 +21,10 @@
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 
-static void
-laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
+static void drop_caches(const struct silofs_task_ctx *task)
 {
-	silofs_laddr_assign(out_laddr, silofs_lni_laddr(lni));
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void drop_caches(const struct silofs_pexec_ctx *pexec)
-{
-	silofs_lcache_drop(pexec->lcache);
-	silofs_pcache_drop(pexec->pcache);
+	silofs_lcache_drop(task->lcache);
+	silofs_pcache_drop(task->pexec.pcache);
 }
 
 static int flush_dirty(const struct silofs_task_ctx *task)
@@ -40,15 +32,15 @@ static int flush_dirty(const struct silofs_task_ctx *task)
 	return silofs_destage_dirty_nodes(&task->pexec);
 }
 
-static int flush_dirty_nodes(const struct silofs_pexec_ctx *pexec, bool drop)
+static int flush_dirty_nodes(const struct silofs_task_ctx *task, bool drop)
 {
 	int err;
 
-	err = silofs_destage_dirty_nodes(pexec);
+	err = flush_dirty(task);
 	return_if_err(err);
 
 	if (drop) {
-		drop_caches(pexec);
+		drop_caches(task);
 	}
 	return 0;
 }
@@ -79,28 +71,26 @@ static int format_uber(struct silofs_task_ctx *task)
 }
 
 static void
-fixup_spawned_btroot(const struct silofs_pexec_ctx *pexec,
-                     struct silofs_btnode_info *bti, enum silofs_ltype ltype)
+fixup_spawned_btroot(struct silofs_btnode_info *bti, enum silofs_ltype ltype)
 {
 	silofs_bti_set_vspace(bti, ltype);
 	silofs_bti_mark_root(bti, true);
-	silofs_unused(pexec);
 }
 
 static int
-spawn_btroot_of(const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
+spawn_btroot_of(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
                 struct silofs_btnode_info **out_bti)
 {
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_carve_base_btspace(pexec, ltype, &pnptr);
+	err = silofs_carve_base_btspace(&task->pexec, ltype, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_btnode(pexec, &pnptr, out_bti);
+	err = silofs_spawn_btnode(&task->pexec, &pnptr, out_bti);
 	return_if_err(err);
 
-	fixup_spawned_btroot(pexec, *out_bti, ltype);
+	fixup_spawned_btroot(*out_bti, ltype);
 	return 0;
 }
 
@@ -110,52 +100,52 @@ bti_paddr(const struct silofs_btnode_info *bti)
 	return silofs_pni_paddr(&bti->btn_pni);
 }
 
-static void update_formatted_btroot(const struct silofs_pexec_ctx *pexec,
+static void update_formatted_btroot(const struct silofs_task_ctx *task,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = pexec->ubref->ubi;
+	struct silofs_uber_info *ubi = task->pexec.ubref->ubi;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
 }
 
-static int format_btree_root_of(const struct silofs_pexec_ctx *pexec,
+static int format_btree_root_of(const struct silofs_task_ctx *task,
                                 enum silofs_ltype ltype)
 {
 	struct silofs_btnode_info *bti = nullptr;
 	int err;
 
-	err = spawn_btroot_of(pexec, ltype, &bti);
+	err = spawn_btroot_of(task, ltype, &bti);
 	return_if_err(err);
 
-	update_formatted_btroot(pexec, bti);
+	update_formatted_btroot(task, bti);
 	return 0;
 }
 
-static int format_lspace_root_of(const struct silofs_pexec_ctx *pexec,
+static int format_lspace_root_of(const struct silofs_task_ctx *task,
                                  enum silofs_ltype ltype)
 {
 	struct silofs_paddr paddr = {};
 	int err;
 
-	err = silofs_carve_base_lspace(pexec, ltype, &paddr);
+	err = silofs_carve_base_lspace(&task->pexec, ltype, &paddr);
 	return_if_err(err);
 
-	silofs_ubi_start_spdesc(pexec->ubref->ubi, &paddr);
+	silofs_ubi_start_spdesc(task->pexec.ubref->ubi, &paddr);
 	return 0;
 }
 
-static int format_lspace_roots(struct silofs_task_ctx *task)
+static int format_lspace_roots(const struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		if (!silofs_ltype_isnone(ltype)) {
-			err = format_btree_root_of(&task->pexec, ltype);
+			err = format_btree_root_of(task, ltype);
 			return_if_err(err);
 
-			err = format_lspace_root_of(&task->pexec, ltype);
+			err = format_lspace_root_of(task, ltype);
 			return_if_err(err);
 		}
 	}
@@ -200,13 +190,13 @@ static int format_base_spnodes(const struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int format_refetch_node_at(const struct silofs_pexec_ctx *pexec,
+static int format_refetch_node_at(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr *laddr,
                                   struct silofs_lnode_info **out_lni)
 {
 	int err;
 
-	err = silofs_stage_lnode_at(pexec, laddr, out_lni);
+	err = silofs_stage_lnode_at(&task->pexec, laddr, out_lni);
 	if (err) {
 		log_err("failed to re-fetch node: ltype=%d off=%ld err=%d",
 		        (int)laddr->ltype, (long)laddr->off, err);
@@ -214,162 +204,168 @@ static int format_refetch_node_at(const struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-static int format_refetch_zero_node(const struct silofs_pexec_ctx *pexec,
+static int format_refetch_zero_node(const struct silofs_task_ctx *task,
                                     enum silofs_ltype ltype,
                                     struct silofs_lnode_info **out_lni)
 {
 	struct silofs_laddr laddr;
 
 	silofs_laddr_setup(&laddr, ltype, 0);
-	return format_refetch_node_at(pexec, &laddr, out_lni);
+	return format_refetch_node_at(task, &laddr, out_lni);
 }
 
 static int
-create_lnode(const struct silofs_pexec_ctx *pexec, enum silofs_ltype ltype,
+create_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
              struct silofs_lnode_info **out_lni)
 {
 	int err;
 
-	err = silofs_spawn_lnode2(pexec, ltype, out_lni);
+	err = silofs_spawn_take_lnode(task, ltype, out_lni);
 	if (err) {
-		log_err("failed to create lnode: ltype=%d err=%d", //
-		        ltype, err);
+		log_err("failed to create lnode: ltype=%d err=%d", ltype, err);
 	}
 	return err;
 }
 
-static int format_zero_node_step1(const struct silofs_pexec_ctx *pexec,
-                                  enum silofs_ltype ltype)
+static int check_zero_node_by(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_laddr *laddr = nullptr;
-	struct silofs_lnode_info *lni    = nullptr;
-	int err;
+	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
 
-	err = create_lnode(pexec, ltype, &lni);
-	return_if_err(err);
-
-	laddr = silofs_lni_laddr(lni);
 	if (laddr->off != 0) {
-		log_err("bad offset for node zero: ltype=%d off=%ld",
+		log_err("bad offset for zero node: ltype=%d off=%ld",
 		        (int)laddr->ltype, (long)laddr->off);
 		return -SILOFS_EBUG;
 	}
-
-	err = flush_dirty_nodes(pexec, true);
-	return_if_err(err);
-
 	return 0;
 }
 
-static int reclaim_lnode(const struct silofs_pexec_ctx *pexec,
-                         struct silofs_lnode_info *lni)
+static int check_base_node_by(const struct silofs_lnode_info *lni)
 {
-	struct silofs_laddr laddr;
-	bool last = false;
-	int err;
+	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
+	ssize_t lsize;
 
-	laddr_of(lni, &laddr);
-	err = silofs_reclaim_lnode2_at(pexec, &laddr, &last);
-	if (err || !last) {
-		log_err("failed to reclaim lnode: ltype=%d off=%zd err=%d",
-		        laddr.ltype, laddr.off, err);
+	lsize = silofs_ltype_ssize(laddr->ltype);
+	if (laddr->off != lsize) {
+		log_err("bad offset for base node: ltype=%d off=%ld",
+		        (int)laddr->ltype, (long)laddr->off);
+		return -SILOFS_EBUG;
 	}
-	return err;
+	return 0;
 }
 
-static int format_zero_node_step2(const struct silofs_pexec_ctx *pexec,
+static int format_zero_node_step1(const struct silofs_task_ctx *task,
                                   enum silofs_ltype ltype)
 {
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = format_refetch_zero_node(pexec, ltype, &lni);
+	err = create_lnode(task, ltype, &lni);
 	return_if_err(err);
 
-	err = reclaim_lnode(pexec, lni);
+	err = check_zero_node_by(lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(pexec, true);
+	err = flush_dirty_nodes(task, true);
 	return_if_err(err);
 
 	return 0;
 }
 
-static int format_zero_node_step3(const struct silofs_pexec_ctx *pexec,
+static int reclaim_lnode(const struct silofs_task_ctx *task,
+                         struct silofs_lnode_info *lni)
+{
+	const enum silofs_ltype ltype = silofs_lni_ltype(lni);
+	int err;
+
+	err = silofs_remove_give_lnode(task, lni);
+	if (err) {
+		log_err("failed to reclaim lnode: ltype=%d err=%d", ltype,
+		        err);
+	}
+	return err;
+}
+
+static int format_zero_node_step2(const struct silofs_task_ctx *task,
                                   enum silofs_ltype ltype)
 {
-	struct silofs_laddr laddr;
+	struct silofs_lnode_info *lni = nullptr;
+	int err;
+
+	err = format_refetch_zero_node(task, ltype, &lni);
+	return_if_err(err);
+
+	err = reclaim_lnode(task, lni);
+	return_if_err(err);
+
+	err = flush_dirty_nodes(task, true);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int format_zero_node_step3(const struct silofs_task_ctx *task,
+                                  enum silofs_ltype ltype)
+{
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
 	/* Occupy laddr pos=0 forever */
-	err = create_lnode(pexec, ltype, &lni);
+	err = create_lnode(task, ltype, &lni);
 	return_if_err(err);
 
-	laddr_of(lni, &laddr);
-	if (laddr.off != 0) {
-		log_err("bad offset for node zero: ltype=%d off=%ld",
-		        (int)laddr.ltype, (long)laddr.off);
-		return -SILOFS_EBUG;
-	}
+	err = check_zero_node_by(lni);
+	return_if_err(err);
 
-	err = flush_dirty_nodes(pexec, true);
+	err = flush_dirty_nodes(task, true);
 	return_if_err(err);
 
 	return 0;
 }
 
-static int format_zero_node_step4(const struct silofs_pexec_ctx *pexec,
+static int format_zero_node_step4(const struct silofs_task_ctx *task,
                                   enum silofs_ltype ltype)
 {
 	struct silofs_lnode_info *lni = nullptr;
 
-	return format_refetch_zero_node(pexec, ltype, &lni);
+	return format_refetch_zero_node(task, ltype, &lni);
 }
 
-static int format_zero_node_of(const struct silofs_pexec_ctx *pexec,
+static int format_zero_node_of(const struct silofs_task_ctx *task,
                                enum silofs_ltype ltype)
 {
 	int err;
 
-	err = format_zero_node_step1(pexec, ltype);
+	err = format_zero_node_step1(task, ltype);
 	return_if_err(err);
 
-	err = format_zero_node_step2(pexec, ltype);
+	err = format_zero_node_step2(task, ltype);
 	return_if_err(err);
 
-	err = format_zero_node_step3(pexec, ltype);
+	err = format_zero_node_step3(task, ltype);
 	return_if_err(err);
 
-	err = format_zero_node_step4(pexec, ltype);
+	err = format_zero_node_step4(task, ltype);
 	return_if_err(err);
 
 	return 0;
 }
 
-static int format_base_node_of(const struct silofs_pexec_ctx *pexec,
+static int format_base_node_of(const struct silofs_task_ctx *task,
                                enum silofs_ltype ltype)
 {
-	const struct silofs_laddr *laddr = nullptr;
-	struct silofs_lnode_info *lni    = nullptr;
-	ssize_t ssize;
+	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = create_lnode(pexec, ltype, &lni);
+	err = create_lnode(task, ltype, &lni);
 	return_if_err(err);
 
-	laddr = silofs_lni_laddr(lni);
-	ssize = silofs_ltype_ssize(laddr->ltype);
-	if (laddr->off != ssize) {
-		log_err("bad offset for non-zero: ltype=%d ssize=%d off=%ld",
-		        (int)laddr->ltype, (int)ssize, (long)laddr->off);
-		return -SILOFS_EBUG;
-	}
-
-	err = reclaim_lnode(pexec, lni);
+	err = check_base_node_by(lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(pexec, true);
+	err = reclaim_lnode(task, lni);
+	return_if_err(err);
+
+	err = flush_dirty_nodes(task, true);
 	return_if_err(err);
 
 	return 0;
@@ -380,10 +376,10 @@ static int format_lspace_node_of(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = format_zero_node_of(&task->pexec, ltype);
+	err = format_zero_node_of(task, ltype);
 	return_if_err(err);
 
-	err = format_base_node_of(&task->pexec, ltype);
+	err = format_base_node_of(task, ltype);
 	return_if_err(err);
 
 	return 0;
@@ -425,11 +421,19 @@ static int format_super(struct silofs_task_ctx *task, size_t fs_capacity)
 	return 0;
 }
 
+static int check_rootdir(const struct silofs_inode_info *ii)
+{
+	if (ii->i_ino != SILOFS_INO_ROOT) {
+		log_err("bad root-dir: ino=%ld", ii->i_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
 static int
 spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 {
 	struct silofs_inew_params inp = {};
-	struct silofs_inode_info *ii;
 	uint64_t igen;
 	int err;
 
@@ -437,15 +441,12 @@ spawn_rootdir(struct silofs_task_ctx *task, struct silofs_inode_info **out_ii)
 	return_if_err(err);
 
 	silofs_inew_params_of(task, nullptr, S_IFDIR | 0755, 0, igen, &inp);
-	err = silofs_spawn_inode_by(task, &inp, &ii);
+	err = silofs_spawn_inode_by(task, &inp, out_ii);
 	return_if_err(err);
 
-	if (ii->i_ino != SILOFS_INO_ROOT) {
-		log_err("failed to format root-dir: ino=%ld", ii->i_ino);
-		return -SILOFS_EFSCORRUPTED;
-	}
+	err = check_rootdir(*out_ii);
+	return_if_err(err);
 
-	*out_ii = ii;
 	return 0;
 }
 

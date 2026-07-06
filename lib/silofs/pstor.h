@@ -255,10 +255,6 @@ int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
                           const struct silofs_laddr     *laddr,
                           struct silofs_lnode_info     **out_lni);
 
-int silofs_spawn_lnode2(const struct silofs_pexec_ctx *pexec,
-                        enum silofs_ltype              ltype,
-                        struct silofs_lnode_info     **out_lni);
-
 int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr     *laddr,
                            struct silofs_lnode_info     **out_lni);

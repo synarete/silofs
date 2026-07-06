@@ -31,6 +31,9 @@ int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
                             enum silofs_ltype             ltype,
                             struct silofs_lnode_info    **out_lni);
 
+int silofs_remove_give_lnode(const struct silofs_task_ctx   *task,
+                             const struct silofs_lnode_info *lni);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_probe_super(const struct silofs_task_ctx *task);

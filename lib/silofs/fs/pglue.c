@@ -404,6 +404,21 @@ int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
 	return spawn_take_lnode(task, ltype, nullptr, out_lni);
 }
 
+static void
+laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
+{
+	silofs_laddr_assign(out_laddr, silofs_lni_laddr(lni));
+}
+
+int silofs_remove_give_lnode(const struct silofs_task_ctx *task,
+                             const struct silofs_lnode_info *lni)
+{
+	struct silofs_laddr laddr;
+
+	laddr_of(lni, &laddr);
+	return reclaim_give_lnode(task, &laddr, nullptr);
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void laddr_of_super(struct silofs_laddr *out_laddr)

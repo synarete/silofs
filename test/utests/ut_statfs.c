@@ -40,7 +40,7 @@ static void ut_statfs_empty(struct ut_env *ute)
 	ut_expect_lt(used_bytes, ute->fs_capacity);
 
 	used_files = stv.f_files - stv.f_ffree;
-	ut_expect_eq(used_files, 1);
+	ut_expect_eq(used_files, 2); /* zero + root-dir */
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -86,6 +86,8 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->pexec.enc_ci_hd = &env->enc_ci_hd;
 	task->pexec.dec_ci_hd = &env->dec_ci_hd;
 	task->pexec.ubref     = &env->ubref;
+	task->lcache          = env->base.lcache;
+	task->lspools         = env->base.lspools;
 	task->idsm            = env->base.idsmap;
 	task->repo            = env->base.repo;
 	task->looseq          = nullptr;

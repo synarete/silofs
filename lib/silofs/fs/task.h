@@ -30,6 +30,8 @@ struct silofs_task_auth {
 struct silofs_task_ctx {
 	struct silofs_task_auth     auth;
 	struct silofs_pexec_ctx     pexec;
+	struct silofs_lcache       *lcache;
+	struct silofs_lspools      *lspools;
 	struct silofs_env          *env;
 	const struct silofs_idsmap *idsm;
 	struct silofs_repo         *repo;

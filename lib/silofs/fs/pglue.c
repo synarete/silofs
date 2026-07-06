@@ -125,7 +125,12 @@ static int stage_verify_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	err = stage_lnode(task, laddr, pii, stg_mode, out_lni);
-	return err ? err : verify_staged_lnode(*out_lni);
+	return_if_err(err);
+
+	err = verify_staged_lnode(*out_lni);
+	return_if_err(err);
+
+	return 0;
 }
 
 static int spawn_lnode_at(const struct silofs_task_ctx *task,
@@ -136,13 +141,37 @@ static int spawn_lnode_at(const struct silofs_task_ctx *task,
 }
 
 static int
-spawn_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
-            struct silofs_inode_info *pii, struct silofs_lnode_info **out_lni)
+claim_free_lspace(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+                  struct silofs_laddr *out_laddr)
+{
+	return silofs_claim_free_lspace(task, ltype, out_laddr);
+}
+
+static int do_claim_spawn_lnode(const struct silofs_task_ctx *task,
+                                enum silofs_ltype ltype,
+                                struct silofs_lnode_info **out_lni)
+{
+	struct silofs_laddr laddr = { .off = -1 };
+	int err;
+
+	err = claim_free_lspace(task, ltype, &laddr);
+	return_if_err(err);
+
+	err = spawn_lnode_at(task, &laddr, out_lni);
+	return_if_err(err);
+
+	return 0;
+}
+
+static int
+claim_spawn_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+                  struct silofs_inode_info *pii,
+                  struct silofs_lnode_info **out_lni)
 {
 	int err;
 
 	pii_incref(pii);
-	err = silofs_spawn_lnode2(&task->pexec, ltype, out_lni);
+	err = do_claim_spawn_lnode(task, ltype, out_lni);
 	pii_decref(pii);
 	return err;
 }
@@ -296,7 +325,7 @@ spawn_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	err = get_sbi(task, &sbi);
 	goto_out_if_err(err);
 
-	err = spawn_lnode(task, ltype, pii, out_lni);
+	err = claim_spawn_lnode(task, ltype, pii, out_lni);
 	goto_out_if_err(err);
 
 	take_lnode(sbi, ltype);

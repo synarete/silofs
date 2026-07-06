@@ -35,4 +35,10 @@ int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,
 int silofs_share_lnode_at(const struct silofs_task_ctx *task,
                           const struct silofs_laddr    *laddr);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_claim_free_lspace(const struct silofs_task_ctx *task,
+                             enum silofs_ltype             ltype,
+                             struct silofs_laddr          *out_laddr);
+
 #endif /* SILOFS_LSPACE_H_ */

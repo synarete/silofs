@@ -60,19 +60,19 @@ static int probe_lspace_ref(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int
-check_lspace_ref(const struct silofs_laddr *ref_laddr,
-                 const struct silofs_lspace_ref *lspref, size_t refcnt_min)
+static int check_lspace_ref(const struct silofs_laddr *ref_laddr,
+                            const struct silofs_lspace_ref *lspref,
+                            size_t refcnt_min, size_t refcnt_max)
 {
-	constexpr size_t refcnt_max = UINT64_MAX >> 4;
-
 	if ((lspref->refcnt < refcnt_min) || (lspref->refcnt > refcnt_max)) {
 		log_err("illegal lspace ref: ltype=%d off=%zd refcnt=%zu",
 		        ref_laddr->ltype, ref_laddr->off, lspref->refcnt);
-		return -SILOFS_EFSCORRUPTED;
+		return -SILOFS_EBUG;
 	}
 	return 0;
 }
+
+#define REFCNT_MAX (UINT64_MAX >> 4)
 
 static int probe_check_lspace_ref(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr *ref_laddr,
@@ -83,32 +83,11 @@ static int probe_check_lspace_ref(const struct silofs_task_ctx *task,
 	err = probe_lspace_ref(task, ref_laddr, out_lspref);
 	return_if_err(err);
 
-	err = check_lspace_ref(ref_laddr, out_lspref, 0);
+	err = check_lspace_ref(ref_laddr, out_lspref, 0, REFCNT_MAX);
 	return_if_err(err);
 
 	return 0;
 }
-
-#if 0
-static int decref_used_lspace(struct silofs_vspace_ctx *vs_ctx,
-				  const struct silofs_laddr *ref_laddr)
-{
-	struct silofs_lspace_ref lspref;
-	struct silofs_spnode_info *spi = nullptr;
-	int err;
-
-	err = stage_spnode_by(vs_ctx, laddr, &spi);
-	return_if_err(err);
-
-	silofs_spi_vspace_ref(spi, laddr, &lspref);
-
-	err = check_lspace_ref(ref_laddr, out_lspref);
-	return_if_err(err);
-
-	silofs_spi_dec_allocated(spi, ref_laddr);
-	return 0;
-}
-#endif
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -179,9 +158,137 @@ int silofs_share_lnode_at(const struct silofs_task_ctx *task,
 
 	silofs_spi_lspace_ref(spi, laddr, &lspref);
 
-	err = check_lspace_ref(laddr, &lspref, 1);
+	err = check_lspace_ref(laddr, &lspref, 1, REFCNT_MAX);
 	return_if_err(err);
 
 	silofs_spi_inc_allocated(spi, laddr);
 	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static int
+apex_laddr_of(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+              struct silofs_laddr *out_laddr)
+{
+	struct silofs_sbnode_info *sbi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi_apex_of(sbi, ltype, out_laddr);
+	return 0;
+}
+
+static void next_apex_laddr(struct silofs_laddr *ref_laddr)
+{
+	constexpr ssize_t nrefs  = SILOFS_SPNODE_NREFS;
+	const ssize_t ltype_size = silofs_ltype_ssize(ref_laddr->ltype);
+
+	ref_laddr->off = silofs_off_next(ref_laddr->off, ltype_size * nrefs);
+}
+
+static int update_apex_laddr(const struct silofs_task_ctx *task,
+                             const struct silofs_laddr *laddr)
+{
+	struct silofs_sbnode_info *sbi = nullptr;
+	int err;
+
+	err = silofs_curr_sbi(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi_update_apex(sbi, laddr);
+	return 0;
+}
+
+static int
+claim_free_by_lspool(const struct silofs_task_ctx *task,
+                     enum silofs_ltype ltype, struct silofs_laddr *out_laddr)
+{
+	struct silofs_lspace_ref lspref;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = silofs_lspools_pull(task->lspools, ltype, out_laddr);
+	return_if_err(err);
+
+	err = stage_spnode_by(task, out_laddr, &spi);
+	return_if_err(err);
+
+	silofs_spi_lspace_ref(spi, out_laddr, &lspref);
+
+	err = check_lspace_ref(out_laddr, &lspref, 0, 0);
+	return_if_err(err);
+
+	silofs_spi_inc_allocated(spi, out_laddr);
+	return 0;
+}
+
+static int claim_free_at(const struct silofs_task_ctx *task,
+                         const struct silofs_laddr *ref_laddr,
+                         struct silofs_laddr *out_laddr)
+{
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = silofs_require_spnode2_by(&task->pexec, ref_laddr, &spi);
+	return_if_err(err);
+
+	err = silofs_spi_find_free(spi, out_laddr);
+	return_if_err(err);
+
+	silofs_spi_inc_allocated(spi, out_laddr);
+	return 0;
+}
+
+/*
+ * TODO-0065: Define niter limit based on available space.
+ *
+ * Try to consume free space based of actual usage and total file-system size.
+ * Define proper formula and derive 'niter' accordingly.
+ */
+static int
+claim_free_by_spnode(const struct silofs_task_ctx *task,
+                     enum silofs_ltype ltype, struct silofs_laddr *out_laddr)
+{
+	constexpr size_t niter = 1024;
+	struct silofs_laddr ref_laddr;
+	int err;
+
+	err = apex_laddr_of(task, ltype, &ref_laddr);
+	return_if_err(err);
+
+	for (size_t i = 0; i < niter; ++i) {
+		err = claim_free_at(task, &ref_laddr, out_laddr);
+		if (!err || (err != -SILOFS_ENOSPC)) {
+			break;
+		}
+		next_apex_laddr(&ref_laddr);
+		err = update_apex_laddr(task, &ref_laddr);
+		if (err) {
+			break;
+		}
+	}
+	return err;
+}
+
+int silofs_claim_free_lspace(const struct silofs_task_ctx *task,
+                             enum silofs_ltype ltype,
+                             struct silofs_laddr *out_laddr)
+{
+	int err;
+
+	/* fast: try to allocated from in-memory pool */
+	err = claim_free_by_lspool(task, ltype, out_laddr);
+	goto_out_if_not_err(err);
+
+	/* slow: try to allocate using space-mapping nodes */
+	err = claim_free_by_spnode(task, ltype, out_laddr);
+	goto_out_if_not_err(err);
+
+	/* failure */
+	log_err("failed to claim free space: ltype=%d err=%d", ltype, err);
+out:
+	return err;
 }

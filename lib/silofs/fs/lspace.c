@@ -21,18 +21,46 @@
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 
-static int stage_spnode_at(const struct silofs_task_ctx *task,
-                           const struct silofs_laddr *laddr,
-                           struct silofs_spnode_info **out_spi)
+static int resolve_spnode_mapping(const struct silofs_task_ctx *task,
+                                  const struct silofs_laddr *laddr,
+                                  struct silofs_pnptr *out_pnptr)
 {
-	struct silofs_lnode_info *lni = nullptr;
+	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SPNODE);
+
+	return silofs_resolve_ltop_mapping(&task->pexec, laddr, out_pnptr);
+}
+
+static int stage_spnode_with(const struct silofs_task_ctx *task,
+                             const struct silofs_laddr *laddr,
+                             const struct silofs_pnptr *pnptr,
+                             struct silofs_spnode_info **out_spi)
+{
+	constexpr enum silofs_lspacef lspf = SILOFS_LSPACEF_NONE;
+	struct silofs_lnode_info *lni      = nullptr;
 	int err;
 
-	err = silofs_stage_lnode_at(&task->pexec, laddr, &lni);
+	err = silofs_stage_lnode_with(&task->pexec, laddr, pnptr, lspf, &lni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_lni(lni);
 	silofs_spi_setup_staged(*out_spi);
+
+	return 0;
+}
+
+static int stage_spnode_at(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_spnode_info **out_spi)
+{
+	struct silofs_pnptr pnptr;
+	int err;
+
+	err = resolve_spnode_mapping(task, laddr, &pnptr);
+	return_if_err(err);
+
+	err = stage_spnode_with(task, laddr, &pnptr, out_spi);
+	return_if_err(err);
+
 	return 0;
 }
 

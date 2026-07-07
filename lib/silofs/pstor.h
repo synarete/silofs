@@ -40,102 +40,12 @@ struct silofs_pexec_ctx {
 
 #include <silofs/pstor/dstor.h>
 #include <silofs/pstor/repo.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* bldesc */
-
-void silofs_bdi_setdirty(struct silofs_bldesc_info *bdi);
-
-void silofs_bdi_cleardirty(struct silofs_bldesc_info *bdi);
-
-void silofs_bdi_ignite(struct silofs_bldesc_info *bdi);
-
-void silofs_bdi_ignite2(struct silofs_bldesc_info  *bdi,
-                        const struct silofs_blobid *blobid);
-
-int silofs_bdi_find_free(const struct silofs_bldesc_info *bdi,
-                         struct silofs_paddr             *out_paddr);
-
-int silofs_bdi_test_free(const struct silofs_bldesc_info *bdi,
-                         const struct silofs_paddr       *paddr);
-
-int silofs_bdi_mark_free(struct silofs_bldesc_info *bdi,
-                         const struct silofs_paddr *paddr);
-
-int silofs_bdi_mark_used(struct silofs_bldesc_info *bdi,
-                         const struct silofs_paddr *paddr);
-
-int silofs_validate_bldesc(const struct silofs_bldesc_info *bdi);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* btnode */
-
-#define SILOFS_BTREE_KEY_NULL UINT64_MAX
-
-const struct silofs_pnptr *
-silofs_bti_self(const struct silofs_btnode_info *bti);
-
-void silofs_bti_incref(struct silofs_btnode_info *bti);
-
-void silofs_bti_decref(struct silofs_btnode_info *bti);
-
-void silofs_bti_setdirty(struct silofs_btnode_info *bti);
-
-void silofs_bti_cleardirty(struct silofs_btnode_info *bti);
-
-bool silofs_bti_isfull(const struct silofs_btnode_info *bti);
-
-void silofs_bti_update_spawned(struct silofs_btnode_info *bti);
-
-enum silofs_ltype silofs_bti_vspace(const struct silofs_btnode_info *bti);
-
-void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
-                           enum silofs_ltype          vspace);
-
-void silofs_bti_mark_root(struct silofs_btnode_info *bti, bool root);
-
-bool silofs_bti_marked_root(const struct silofs_btnode_info *bti);
-
-size_t silofs_bti_height(const struct silofs_btnode_info *bti);
-
-void silofs_bti_set_height(struct silofs_btnode_info *bti, size_t height);
-
-uint64_t silofs_bti_minkey(const struct silofs_btnode_info *bti);
-
-int silofs_bti_resolve(const struct silofs_btnode_info *bti, uint64_t key,
-                       struct silofs_pnptr *out_pnptr);
-
-int silofs_bti_insert(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_pnptr *pnptr);
-
-int silofs_bti_update(struct silofs_btnode_info *bti, uint64_t key,
-                      const struct silofs_pnptr *pnptr);
-
-int silofs_bti_remove(struct silofs_btnode_info *bti, uint64_t key);
-
-int silofs_bti_relink(struct silofs_btnode_info *bti,
-                      const struct silofs_pnptr *cur,
-                      const struct silofs_pnptr *alt);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_validate_btnode(const struct silofs_btnode_info *bti);
-
-uint64_t silofs_split_btnode(struct silofs_btnode_info *curr,
-                             struct silofs_btnode_info *next);
-
-void silofs_rebind_btchilds(struct silofs_btnode_info *parent,
-                            const struct silofs_pnptr *left,
-                            const struct silofs_pnptr *right, uint64_t key);
-
-void silofs_clone_btnode(const struct silofs_btnode_info *bti,
-                         struct silofs_btnode_info       *bti_other);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* uber */
 #include <silofs/pstor/uber.h>
-#include <silofs/pstor/spnode.h>
+#include <silofs/pstor/bldesc.h>
+#include <silofs/pstor/btnode.h>
 #include <silofs/pstor/btree.h>
+
+#include <silofs/pstor/spnode.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* carve */
@@ -216,15 +126,15 @@ int silofs_claim_lnode_pspace(const struct silofs_pexec_ctx *pexec,
                               const struct silofs_laddr     *laddr,
                               const struct silofs_pnptr     *pnptr);
 
-int silofs_stage_lnode2_with(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr     *laddr,
-                             const struct silofs_pnptr     *pnptr,
-                             enum silofs_lspacef            spacef,
-                             struct silofs_lnode_info     **out_lni);
-
-int silofs_detach_lnode2_at(const struct silofs_pexec_ctx *pexec,
+int silofs_stage_lnode_with(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr     *laddr,
-                            const struct silofs_pnptr     *pnptr);
+                            const struct silofs_pnptr     *pnptr,
+                            enum silofs_lspacef            spacef,
+                            struct silofs_lnode_info     **out_lni);
+
+int silofs_detach_lnode_at(const struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr     *laddr,
+                           const struct silofs_pnptr     *pnptr);
 
 int silofs_require_paddr(const struct silofs_pexec_ctx *pexec,
                          const struct silofs_paddr     *paddr);
@@ -234,10 +144,6 @@ int silofs_destage_dirty_nodes(const struct silofs_pexec_ctx *pexec);
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */
 
-int silofs_claim_free_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_ltype              ltype,
-                             struct silofs_laddr           *out_laddr);
-
 int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
                             const struct silofs_laddr     *laddr,
                             struct silofs_lspace_ref      *out_vspref);
@@ -245,20 +151,17 @@ int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* trans */
 
-int silofs_probe_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *laddr);
-
 int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
                           const struct silofs_laddr     *laddr,
                           struct silofs_lnode_info     **out_lni);
 
+int silofs_create_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+                               const struct silofs_laddr     *laddr,
+                               struct silofs_pnptr           *out_pnptr);
+
 int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr     *laddr,
                            struct silofs_lnode_info     **out_lni);
-
-int silofs_claim_lnode2_space(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_ltype              ltype,
-                              struct silofs_laddr           *out_laddr);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

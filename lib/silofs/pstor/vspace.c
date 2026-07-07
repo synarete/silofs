@@ -47,19 +47,6 @@ static void vsc_init_by(struct silofs_vspace_ctx *vs_ctx,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void vsc_apex_laddr(const struct silofs_vspace_ctx *vs_ctx,
-                           struct silofs_laddr *out_laddr)
-{
-	struct silofs_uber_stat ust;
-	ssize_t vsz, tip;
-
-	silofs_ubi_stat_of(vs_ctx->ubi, vs_ctx->ltype, &ust);
-	vsz = silofs_ltype_ssize(vs_ctx->ltype);
-	tip = vsz * (ssize_t)ust.vn;
-
-	silofs_laddr_setup(out_laddr, vs_ctx->ltype, tip);
-}
-
 static int vsc_stage_spnode_by(const struct silofs_vspace_ctx *vs_ctx,
                                const struct silofs_laddr *ref_laddr,
                                struct silofs_spnode_info **out_spi)
@@ -72,111 +59,6 @@ static int vsc_stage_spnode_by(const struct silofs_vspace_ctx *vs_ctx,
 		        (int)ref_laddr->ltype, ref_laddr->off, err);
 	}
 	return err;
-}
-
-static int vsc_require_spnode2_of(const struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_laddr *ref_laddr,
-                                  struct silofs_spnode_info **out_spi)
-{
-	return silofs_require_spnode2_by(vs_ctx->pexec, ref_laddr, out_spi);
-}
-
-static int vsc_claim_free_vspace_by_lspools(struct silofs_vspace_ctx *vs_ctx,
-                                            struct silofs_laddr *out_laddr)
-{
-	struct silofs_lspace_ref vspref;
-	struct silofs_spnode_info *spi = nullptr;
-	struct silofs_lspools *lspools = vs_ctx->pexec->lspools;
-	int err;
-
-	err = silofs_lspools_pull(lspools, vs_ctx->ltype, out_laddr);
-	return_if_err(err);
-
-	err = vsc_stage_spnode_by(vs_ctx, out_laddr, &spi);
-	return_if_err(err);
-
-	silofs_spi_lspace_ref(spi, out_laddr, &vspref);
-	if (vspref.refcnt > 0) {
-		log_err("cached free-vspace has active ref-count: "
-		        "ltype=%d off=%ld refcnt=%zu",
-		        (int)out_laddr->ltype, out_laddr->off, vspref.refcnt);
-		return -SILOFS_EBUG;
-	}
-	silofs_spi_inc_allocated(spi, out_laddr);
-	return 0;
-}
-
-static int vsc_claim_free_vspace_at(struct silofs_vspace_ctx *vs_ctx,
-                                    const struct silofs_laddr *ref_laddr,
-                                    struct silofs_laddr *out_laddr)
-{
-	struct silofs_spnode_info *spi = nullptr;
-	int err;
-
-	err = vsc_require_spnode2_of(vs_ctx, ref_laddr, &spi);
-	silofs_assert_ok(err); /* XXX RM */
-	return_if_err(err);
-
-	err = silofs_spi_find_free(spi, out_laddr);
-	return_if_err(err);
-
-	silofs_spi_inc_allocated(spi, out_laddr);
-	return 0;
-}
-
-/*
- * TODO-0065: Define niter limit based on available space.
- *
- * Try to consume free space based of actual usage and total file-system size.
- * Define proper formula and derive 'niter' accordingly.
- */
-static int vsc_claim_free_vspace_by_spnodes(struct silofs_vspace_ctx *vs_ctx,
-                                            struct silofs_laddr *out_laddr)
-{
-	constexpr size_t niter = 1024;
-	constexpr size_t nrefs = SILOFS_SPNODE_NREFS;
-	struct silofs_laddr ref_laddr;
-	int err;
-
-	vsc_apex_laddr(vs_ctx, &ref_laddr);
-	for (size_t i = 0; i < niter; ++i) {
-		err = vsc_claim_free_vspace_at(vs_ctx, &ref_laddr, out_laddr);
-		if (!err) {
-			return 0;
-		}
-		if (err != -SILOFS_ENOSPC) {
-			break;
-		}
-		silofs_laddr_advance(&ref_laddr, nrefs, &ref_laddr);
-	}
-
-	log_err("failed to calim free vspace: ltype=%d ref-off=%zd err=%d",
-	        ref_laddr.ltype, ref_laddr.off, err);
-	return err;
-}
-
-static int vsc_claim_free_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                 struct silofs_laddr *out_laddr)
-{
-	int ret;
-
-	/* fast: try to allocated from in-memory pool of free vspace */
-	ret = vsc_claim_free_vspace_by_lspools(vs_ctx, out_laddr);
-	if (ret != 0) {
-		/* slow: try to allocate using space-mapping nodes */
-		ret = vsc_claim_free_vspace_by_spnodes(vs_ctx, out_laddr);
-	}
-	return ret;
-}
-
-int silofs_claim_free_vspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_ltype ltype,
-                             struct silofs_laddr *out_laddr)
-{
-	struct silofs_vspace_ctx vs_ctx;
-
-	vsc_init(&vs_ctx, pexec, ltype);
-	return vsc_claim_free_vspace(&vs_ctx, out_laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

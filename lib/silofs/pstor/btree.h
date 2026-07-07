@@ -39,7 +39,7 @@ int silofs_resolve_ltop_mapping(const struct silofs_pexec_ctx *pexec,
                                 const struct silofs_laddr     *laddr,
                                 struct silofs_pnptr           *out_pnptr);
 
-int silofs_create_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_insert_ltop_mapping(const struct silofs_pexec_ctx *pexec,
                                const struct silofs_laddr     *laddr,
                                const struct silofs_pnptr     *pnptr);
 

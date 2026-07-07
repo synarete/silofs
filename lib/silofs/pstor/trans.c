@@ -25,14 +25,6 @@ static void lni_setdirty(struct silofs_lnode_info *lni)
 	silofs_lni_setdirty(lni, nullptr);
 }
 
-int silofs_probe_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr *laddr)
-{
-	struct silofs_pnptr pnptr;
-
-	return silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
-}
-
 static bool uses_spmap(const struct silofs_laddr *laddr)
 {
 	return silofs_ltype_usespmap(laddr->ltype);
@@ -59,24 +51,24 @@ int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
                           struct silofs_lnode_info **out_lni)
 {
 	struct silofs_pnptr pnptr;
-	enum silofs_lspacef spacef;
+	enum silofs_lspacef lspf;
 	int err;
 
 	err = silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = resolve_spacef_of(pexec, laddr, &spacef);
+	err = resolve_spacef_of(pexec, laddr, &lspf);
 	return_if_err(err);
 
-	err = silofs_stage_lnode2_with(pexec, laddr, &pnptr, spacef, out_lni);
+	err = silofs_stage_lnode_with(pexec, laddr, &pnptr, lspf, out_lni);
 	return_if_err(err);
 
 	return 0;
 }
 
-static int carve_ltop_mapping(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr,
-                              struct silofs_pnptr *out_pnptr)
+int silofs_create_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+                               const struct silofs_laddr *laddr,
+                               struct silofs_pnptr *out_pnptr)
 {
 	int err;
 
@@ -86,7 +78,7 @@ static int carve_ltop_mapping(const struct silofs_pexec_ctx *pexec,
 	err = silofs_require_paddr(pexec, &out_pnptr->paddr);
 	return_if_err(err);
 
-	err = silofs_create_ltop_mapping(pexec, laddr, out_pnptr);
+	err = silofs_insert_ltop_mapping(pexec, laddr, out_pnptr);
 	return_if_err(err);
 
 	return 0;
@@ -99,7 +91,7 @@ int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = carve_ltop_mapping(pexec, laddr, &pnptr);
+	err = silofs_create_ltop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
 	err = silofs_spawn_lnode2_with(pexec, laddr, &pnptr, out_lni);
@@ -109,34 +101,7 @@ int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-int silofs_claim_lnode2_space(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_ltype ltype,
-                              struct silofs_laddr *out_laddr)
-{
-	struct silofs_pnptr pnptr = {};
-	int err;
-
-	err = silofs_claim_free_vspace(pexec, ltype, out_laddr);
-	return_if_err(err);
-
-	err = carve_ltop_mapping(pexec, out_laddr, &pnptr);
-	return_if_err(err);
-
-	err = silofs_claim_lnode_pspace(pexec, out_laddr, &pnptr);
-	return_if_err(err);
-
-	return 0;
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void retain_free_space(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr,
-                              const struct silofs_paddr *paddr)
-{
-	silofs_lspools_push(pexec->lspools, laddr);
-	silofs_pspools_push(pexec->pspools, paddr);
-}
 
 int silofs_reclaim_lnode_mapping(const struct silofs_pexec_ctx *pexec,
                                  const struct silofs_laddr *laddr)
@@ -147,13 +112,15 @@ int silofs_reclaim_lnode_mapping(const struct silofs_pexec_ctx *pexec,
 	err = silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_detach_lnode2_at(pexec, laddr, &pnptr);
+	err = silofs_detach_lnode_at(pexec, laddr, &pnptr);
 	return_if_err(err);
 
 	err = silofs_remove_ltop_mapping(pexec, laddr);
 	return_if_err(err);
 
-	retain_free_space(pexec, laddr, &pnptr.paddr);
+	silofs_lspools_push(pexec->lspools, laddr);
+	silofs_pspools_push(pexec->pspools, &pnptr.paddr);
+
 	return 0;
 }
 

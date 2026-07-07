@@ -130,7 +130,9 @@ libsilofs_la_SOURCES += nodes/spools.h
 libsilofs_la_SOURCES += nodes.h
 
 libsilofs_la_SOURCES += pstor/bldesc.c
+libsilofs_la_SOURCES += pstor/bldesc.h
 libsilofs_la_SOURCES += pstor/btnode.c
+libsilofs_la_SOURCES += pstor/btnode.h
 libsilofs_la_SOURCES += pstor/btree.c
 libsilofs_la_SOURCES += pstor/btree.h
 libsilofs_la_SOURCES += pstor/carve.c

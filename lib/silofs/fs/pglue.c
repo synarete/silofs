@@ -94,10 +94,11 @@ static int
 probe_lnode(const struct silofs_task_ctx *task,
             const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
+	struct silofs_pnptr pnptr;
 	int err;
 
 	pii_incref(pii);
-	err = silofs_probe_lnode2_at(&task->pexec, laddr);
+	err = silofs_resolve_ltop_mapping(&task->pexec, laddr, &pnptr);
 	pii_decref(pii);
 	return err;
 }
@@ -180,7 +181,19 @@ static int
 do_claim_lspace(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
                 struct silofs_laddr *out_laddr)
 {
-	return silofs_claim_lnode2_space(&task->pexec, ltype, out_laddr);
+	struct silofs_pnptr pnptr = {};
+	int err;
+
+	err = claim_free_lspace(task, ltype, out_laddr);
+	return_if_err(err);
+
+	err = silofs_create_ltop_mapping(&task->pexec, out_laddr, &pnptr);
+	return_if_err(err);
+
+	err = silofs_claim_lnode_pspace(&task->pexec, out_laddr, &pnptr);
+	return_if_err(err);
+
+	return 0;
 }
 
 static int

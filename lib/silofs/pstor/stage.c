@@ -251,7 +251,7 @@ struct silofs_stage_ctx {
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
 	struct silofs_lcache *lcache;
-	enum silofs_lspacef spacef;
+	enum silofs_lspacef lspf;
 };
 
 static void
@@ -262,15 +262,15 @@ stc_init(struct silofs_stage_ctx *st_ctx, const struct silofs_pexec_ctx *pexec)
 	st_ctx->dstor  = pexec->dstor;
 	st_ctx->pcache = pexec->pcache;
 	st_ctx->lcache = pexec->lcache;
-	st_ctx->spacef = SILOFS_LSPACEF_NONE;
+	st_ctx->lspf   = SILOFS_LSPACEF_NONE;
 }
 
 static void
 stc_init2(struct silofs_stage_ctx *st_ctx,
-          const struct silofs_pexec_ctx *pexec, enum silofs_lspacef spacef)
+          const struct silofs_pexec_ctx *pexec, enum silofs_lspacef lspf)
 {
 	stc_init(st_ctx, pexec);
-	st_ctx->spacef = spacef;
+	st_ctx->lspf = lspf;
 }
 
 static void stc_fini(struct silofs_stage_ctx *st_ctx)
@@ -946,7 +946,7 @@ static int stc_stage_lnode(struct silofs_stage_ctx *st_ctx,
 	err = stc_create_cached_lnode(st_ctx, laddr, &lni);
 	return_if_err(err);
 
-	if (st_ctx->spacef & SILOFS_LSPACEF_UNWRITTEN) {
+	if (st_ctx->lspf & SILOFS_LSPACEF_UNWRITTEN) {
 		goto out_ok;
 	}
 
@@ -958,16 +958,16 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_lnode2_with(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_pnptr *pnptr,
-                             enum silofs_lspacef spacef,
-                             struct silofs_lnode_info **out_lni)
+int silofs_stage_lnode_with(const struct silofs_pexec_ctx *pexec,
+                            const struct silofs_laddr *laddr,
+                            const struct silofs_pnptr *pnptr,
+                            enum silofs_lspacef lspf,
+                            struct silofs_lnode_info **out_lni)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init2(&st_ctx, pexec, spacef);
+	stc_init2(&st_ctx, pexec, lspf);
 	err = stc_stage_lnode(&st_ctx, laddr, pnptr, out_lni);
 	stc_fini(&st_ctx);
 	return err;
@@ -987,7 +987,7 @@ static void stc_cleardirty_cached_lnode(struct silofs_stage_ctx *st_ctx,
 	}
 }
 
-static void stc_detach_vspace(struct silofs_stage_ctx *st_ctx,
+static void stc_detach_lspace(struct silofs_stage_ctx *st_ctx,
                               const struct silofs_pnptr *pnptr)
 {
 	const struct silofs_blobid *blobid = &pnptr->paddr.blobid;
@@ -1004,18 +1004,16 @@ static int stc_detach_lnode(struct silofs_stage_ctx *st_ctx,
 	int err;
 
 	err = stc_access_blob_of(st_ctx, pnptr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 
-	stc_detach_vspace(st_ctx, pnptr);
+	stc_detach_lspace(st_ctx, pnptr);
 	stc_cleardirty_cached_lnode(st_ctx, laddr);
 	return 0;
 }
 
-int silofs_detach_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                            const struct silofs_laddr *laddr,
-                            const struct silofs_pnptr *pnptr)
+int silofs_detach_lnode_at(const struct silofs_pexec_ctx *pexec,
+                           const struct silofs_laddr *laddr,
+                           const struct silofs_pnptr *pnptr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;

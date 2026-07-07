@@ -825,10 +825,10 @@ static int stc_spawn_lnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_lnode2_with(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr *laddr,
-                             const struct silofs_pnptr *pnptr,
-                             struct silofs_lnode_info **out_lni)
+int silofs_spawn_lnode_with(const struct silofs_pexec_ctx *pexec,
+                            const struct silofs_laddr *laddr,
+                            const struct silofs_pnptr *pnptr,
+                            struct silofs_lnode_info **out_lni)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;

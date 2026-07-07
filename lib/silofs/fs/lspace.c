@@ -159,6 +159,27 @@ int silofs_test_unwritten_at(const struct silofs_task_ctx *task,
 	return 0;
 }
 
+static bool usespmap(const struct silofs_laddr *ref_laddr)
+{
+	return silofs_ltype_usespmap(ref_laddr->ltype);
+}
+
+int silofs_probe_lspacef_at(const struct silofs_task_ctx *task,
+                            const struct silofs_laddr *ref_laddr,
+                            enum silofs_lspacef *out_lspf)
+{
+	struct silofs_lspace_ref lspref = {
+		.flags = SILOFS_LSPACEF_NONE,
+	};
+	int err = 0;
+
+	if (usespmap(ref_laddr)) {
+		err = probe_check_lspace_ref(task, ref_laddr, &lspref);
+	}
+	*out_lspf = lspref.flags;
+	return err;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,

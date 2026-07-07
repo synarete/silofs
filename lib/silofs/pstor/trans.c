@@ -94,7 +94,7 @@ int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
 	err = silofs_create_ltop_mapping(pexec, laddr, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_lnode2_with(pexec, laddr, &pnptr, out_lni);
+	err = silofs_spawn_lnode_with(pexec, laddr, &pnptr, out_lni);
 	return_if_err(err);
 
 	lni_setdirty(*out_lni);

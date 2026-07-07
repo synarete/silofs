@@ -44,102 +44,11 @@ struct silofs_pexec_ctx {
 #include <silofs/pstor/bldesc.h>
 #include <silofs/pstor/btnode.h>
 #include <silofs/pstor/btree.h>
+#include <silofs/pstor/stage.h>
+#include <silofs/pstor/carve.h>
+#include <silofs/pstor/encdec.h>
 
 #include <silofs/pstor/spnode.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* carve */
-
-int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
-                              struct silofs_pnptr           *out_pnptr);
-
-int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_ltype              ltype,
-                              struct silofs_pnptr           *out_pnptr);
-
-int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
-                             enum silofs_ltype              ltype,
-                             struct silofs_paddr           *out_paddr);
-
-int silofs_carve_btspace_pnptr(const struct silofs_pexec_ctx *pexec,
-                               enum silofs_ltype              ltype,
-                               struct silofs_pnptr           *out_pnptr);
-
-int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
-                              enum silofs_ltype              ltype,
-                              struct silofs_pnptr           *out_pnptr);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* encdec */
-
-int silofs_encrypt_pnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_pnode_info *pni,
-                         struct silofs_ctag             *out_ctag);
-
-int silofs_decrypt_pnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_pnode_info *pni,
-                         const struct silofs_ctag       *ctag);
-
-int silofs_encrypt_lnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_lnode_info *lni,
-                         const struct silofs_pnptr      *pnptr,
-                         struct silofs_ctag             *out_ctag);
-
-int silofs_decrypt_lnode(const struct silofs_pexec_ctx  *pexec,
-                         const struct silofs_lnode_info *lni,
-                         const struct silofs_pnptr      *pnptr,
-                         const struct silofs_ctag       *ctag);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* stage */
-
-int silofs_spawn_uber(const struct silofs_pexec_ctx *pexec,
-                      const struct silofs_pnptr     *pnptr,
-                      struct silofs_uber_info      **out_ubi);
-
-int silofs_stage_uber(const struct silofs_pexec_ctx *pexec,
-                      const struct silofs_pnptr     *pnptr,
-                      struct silofs_uber_info      **out_ubi);
-
-int silofs_spawn_bldesc(const struct silofs_pexec_ctx *pexec,
-                        const struct silofs_pnptr     *pnptr,
-                        struct silofs_bldesc_info    **out_bdi);
-
-int silofs_stage_bldesc(const struct silofs_pexec_ctx *pexec,
-                        const struct silofs_pnptr     *pnptr,
-                        struct silofs_bldesc_info    **out_bdi);
-
-int silofs_spawn_btnode(const struct silofs_pexec_ctx *pexec,
-                        const struct silofs_pnptr     *pnptr,
-                        struct silofs_btnode_info    **out_bti);
-
-int silofs_stage_btnode(const struct silofs_pexec_ctx *pexec,
-                        const struct silofs_pnptr     *pnptr,
-                        struct silofs_btnode_info    **out_bti);
-
-int silofs_spawn_lnode2_with(const struct silofs_pexec_ctx *pexec,
-                             const struct silofs_laddr     *laddr,
-                             const struct silofs_pnptr     *pnptr,
-                             struct silofs_lnode_info     **out_lni);
-
-int silofs_claim_lnode_pspace(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr     *laddr,
-                              const struct silofs_pnptr     *pnptr);
-
-int silofs_stage_lnode_with(const struct silofs_pexec_ctx *pexec,
-                            const struct silofs_laddr     *laddr,
-                            const struct silofs_pnptr     *pnptr,
-                            enum silofs_lspacef            spacef,
-                            struct silofs_lnode_info     **out_lni);
-
-int silofs_detach_lnode_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *laddr,
-                           const struct silofs_pnptr     *pnptr);
-
-int silofs_require_paddr(const struct silofs_pexec_ctx *pexec,
-                         const struct silofs_paddr     *paddr);
-
-int silofs_destage_dirty_nodes(const struct silofs_pexec_ctx *pexec);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* vspace */

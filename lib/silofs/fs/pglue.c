@@ -103,6 +103,27 @@ probe_lnode(const struct silofs_task_ctx *task,
 	return err;
 }
 
+static int do_stage_lnode(const struct silofs_task_ctx *task,
+                          const struct silofs_laddr *laddr,
+                          struct silofs_lnode_info **out_lni)
+{
+	const struct silofs_pexec_ctx *pexec = &task->pexec;
+	struct silofs_pnptr pnptr;
+	enum silofs_lspacef lspf;
+	int err;
+
+	err = silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
+	return_if_err(err);
+
+	err = silofs_probe_lspacef_at(task, laddr, &lspf);
+	return_if_err(err);
+
+	err = silofs_stage_lnode_with(pexec, laddr, &pnptr, lspf, out_lni);
+	return_if_err(err);
+
+	return 0;
+}
+
 static int
 stage_lnode(const struct silofs_task_ctx *task,
             const struct silofs_laddr *laddr, struct silofs_inode_info *pii,
@@ -111,7 +132,7 @@ stage_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_stage_lnode_at(&task->pexec, laddr, out_lni);
+	err = do_stage_lnode(task, laddr, out_lni);
 	pii_decref(pii);
 	silofs_unused(stg_mode);
 	return err;

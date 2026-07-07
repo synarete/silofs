@@ -47,33 +47,7 @@ struct silofs_pexec_ctx {
 #include <silofs/pstor/stage.h>
 #include <silofs/pstor/carve.h>
 #include <silofs/pstor/encdec.h>
-
+#include <silofs/pstor/mapping.h>
 #include <silofs/pstor/spnode.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* trans */
-
-int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
-                          const struct silofs_laddr     *laddr,
-                          struct silofs_lnode_info     **out_lni);
-
-int silofs_create_ltop_mapping(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr     *laddr,
-                               struct silofs_pnptr           *out_pnptr);
-
-int silofs_spawn_lnode2_at(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *laddr,
-                           struct silofs_lnode_info     **out_lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_reclaim_lnode_mapping(const struct silofs_pexec_ctx *pexec,
-                                 const struct silofs_laddr     *laddr);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_stage_spnode_by(const struct silofs_pexec_ctx *pexec,
-                           const struct silofs_laddr     *ref_laddr,
-                           struct silofs_spnode_info    **out_spi);
 
 #endif /* SILOFS_PSTOR_H_ */

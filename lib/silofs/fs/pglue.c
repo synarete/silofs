@@ -107,18 +107,14 @@ static int do_stage_lnode(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_lnode_info **out_lni)
 {
-	const struct silofs_pexec_ctx *pexec = &task->pexec;
-	struct silofs_pnptr pnptr;
 	enum silofs_lspacef lspf;
 	int err;
-
-	err = silofs_resolve_ltop_mapping(pexec, laddr, &pnptr);
-	return_if_err(err);
 
 	err = silofs_probe_lspacef_at(task, laddr, &lspf);
 	return_if_err(err);
 
-	err = silofs_stage_lnode_with(pexec, laddr, &pnptr, lspf, out_lni);
+	err = silofs_stage_lnode_by_mapping(&task->pexec, laddr, lspf,
+	                                    out_lni);
 	return_if_err(err);
 
 	return 0;
@@ -159,7 +155,7 @@ static int spawn_lnode_at(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_lnode_info **out_lni)
 {
-	return silofs_spawn_lnode2_at(&task->pexec, laddr, out_lni);
+	return silofs_spawn_lnode_by_mapping(&task->pexec, laddr, out_lni);
 }
 
 static int
@@ -202,16 +198,12 @@ static int
 do_claim_lspace(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
                 struct silofs_laddr *out_laddr)
 {
-	struct silofs_pnptr pnptr = {};
 	int err;
 
 	err = claim_free_lspace(task, ltype, out_laddr);
 	return_if_err(err);
 
-	err = silofs_create_ltop_mapping(&task->pexec, out_laddr, &pnptr);
-	return_if_err(err);
-
-	err = silofs_claim_lnode_pspace(&task->pexec, out_laddr, &pnptr);
+	err = silofs_claim_lnode_mapping(&task->pexec, out_laddr);
 	return_if_err(err);
 
 	return 0;
@@ -265,6 +257,18 @@ static int isshared_lnode(const struct silofs_task_ctx *task,
 	return err;
 }
 
+static int do_reclaim_mapping(const struct silofs_task_ctx *task,
+                              const struct silofs_laddr *laddr)
+{
+	int err;
+
+	err = silofs_reclaim_lnode_mapping(&task->pexec, laddr);
+	return_if_err(err);
+
+	silofs_lspools_push(task->lspools, laddr);
+	return 0;
+}
+
 static int reclaim_mapping(const struct silofs_task_ctx *task,
                            const struct silofs_laddr *laddr,
                            struct silofs_inode_info *pii)
@@ -272,7 +276,7 @@ static int reclaim_mapping(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_reclaim_lnode_mapping(&task->pexec, laddr);
+	err = do_reclaim_mapping(task, laddr);
 	pii_decref(pii);
 	return err;
 }

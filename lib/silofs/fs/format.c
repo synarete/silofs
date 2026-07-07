@@ -179,28 +179,28 @@ static int format_base_spnodes(const struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int format_refetch_node_at(const struct silofs_task_ctx *task,
-                                  const struct silofs_laddr *laddr,
-                                  struct silofs_lnode_info **out_lni)
+static int format_stage_node_at(const struct silofs_task_ctx *task,
+                                const struct silofs_laddr *laddr,
+                                struct silofs_lnode_info **out_lni)
 {
 	int err;
 
-	err = silofs_stage_lnode_at(&task->pexec, laddr, out_lni);
+	err = silofs_stage_curr_lnode(task, laddr, out_lni);
 	if (err) {
-		log_err("failed to re-fetch node: ltype=%d off=%ld err=%d",
+		log_err("failed to re-stage node: ltype=%d off=%ld err=%d",
 		        (int)laddr->ltype, (long)laddr->off, err);
 	}
 	return err;
 }
 
-static int format_refetch_zero_node(const struct silofs_task_ctx *task,
+static int format_restage_zero_node(const struct silofs_task_ctx *task,
                                     enum silofs_ltype ltype,
                                     struct silofs_lnode_info **out_lni)
 {
 	struct silofs_laddr laddr;
 
 	silofs_laddr_setup(&laddr, ltype, 0);
-	return format_refetch_node_at(task, &laddr, out_lni);
+	return format_stage_node_at(task, &laddr, out_lni);
 }
 
 static int
@@ -280,7 +280,7 @@ static int format_zero_node_step2(const struct silofs_task_ctx *task,
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
 
-	err = format_refetch_zero_node(task, ltype, &lni);
+	err = format_restage_zero_node(task, ltype, &lni);
 	return_if_err(err);
 
 	err = reclaim_lnode(task, lni);
@@ -316,7 +316,7 @@ static int format_zero_node_step4(const struct silofs_task_ctx *task,
 {
 	struct silofs_lnode_info *lni = nullptr;
 
-	return format_refetch_zero_node(task, ltype, &lni);
+	return format_restage_zero_node(task, ltype, &lni);
 }
 
 static int format_zero_node_of(const struct silofs_task_ctx *task,

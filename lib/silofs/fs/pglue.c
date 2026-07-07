@@ -453,32 +453,6 @@ out:
 	return err;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
-                            enum silofs_ltype ltype,
-                            struct silofs_lnode_info **out_lni)
-{
-	silofs_assert(silofs_ltype_usespmap(ltype));
-
-	return spawn_take_lnode(task, ltype, nullptr, out_lni);
-}
-
-static void
-laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
-{
-	silofs_laddr_assign(out_laddr, silofs_lni_laddr(lni));
-}
-
-int silofs_remove_give_lnode(const struct silofs_task_ctx *task,
-                             const struct silofs_lnode_info *lni)
-{
-	struct silofs_laddr laddr;
-
-	laddr_of(lni, &laddr);
-	return reclaim_give_lnode(task, &laddr, nullptr);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void laddr_of_super(struct silofs_laddr *out_laddr)
@@ -1007,4 +981,37 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
 {
 	silofs_assert(silofs_laddr_isdata(laddr));
 	return test_unwritten(task, laddr, pii, out_unwritten);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
+                            enum silofs_ltype ltype,
+                            struct silofs_lnode_info **out_lni)
+{
+	silofs_assert(silofs_ltype_usespmap(ltype));
+
+	return spawn_take_lnode(task, ltype, nullptr, out_lni);
+}
+
+static void
+laddr_of(const struct silofs_lnode_info *lni, struct silofs_laddr *out_laddr)
+{
+	silofs_laddr_assign(out_laddr, silofs_lni_laddr(lni));
+}
+
+int silofs_remove_give_lnode(const struct silofs_task_ctx *task,
+                             const struct silofs_lnode_info *lni)
+{
+	struct silofs_laddr laddr;
+
+	laddr_of(lni, &laddr);
+	return reclaim_give_lnode(task, &laddr, nullptr);
+}
+
+int silofs_stage_curr_lnode(const struct silofs_task_ctx *task,
+                            const struct silofs_laddr *laddr,
+                            struct silofs_lnode_info **out_lni)
+{
+	return stage_lnode(task, laddr, nullptr, SILOFS_STG_CUR, out_lni);
 }

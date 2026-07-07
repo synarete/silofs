@@ -51,13 +51,6 @@ struct silofs_pexec_ctx {
 #include <silofs/pstor/spnode.h>
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* vspace */
-
-int silofs_probe_lspace_ref(const struct silofs_pexec_ctx *pexec,
-                            const struct silofs_laddr     *laddr,
-                            struct silofs_lspace_ref      *out_vspref);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* trans */
 
 int silofs_stage_lnode_at(const struct silofs_pexec_ctx *pexec,
@@ -82,13 +75,5 @@ int silofs_reclaim_lnode_mapping(const struct silofs_pexec_ctx *pexec,
 int silofs_stage_spnode_by(const struct silofs_pexec_ctx *pexec,
                            const struct silofs_laddr     *ref_laddr,
                            struct silofs_spnode_info    **out_spi);
-
-int silofs_spawn_spnode2_by(const struct silofs_pexec_ctx *pexec,
-                            const struct silofs_laddr     *ref_laddr,
-                            struct silofs_spnode_info    **out_spi);
-
-int silofs_require_spnode2_by(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr     *ref_laddr,
-                              struct silofs_spnode_info    **out_spi);
 
 #endif /* SILOFS_PSTOR_H_ */

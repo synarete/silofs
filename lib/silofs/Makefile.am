@@ -150,7 +150,6 @@ libsilofs_la_SOURCES += pstor/stage.h
 libsilofs_la_SOURCES += pstor/trans.c
 libsilofs_la_SOURCES += pstor/uber.c
 libsilofs_la_SOURCES += pstor/uber.h
-libsilofs_la_SOURCES += pstor/vspace.c
 libsilofs_la_SOURCES += pstor.h
 
 libsilofs_la_SOURCES += fs/dir.c

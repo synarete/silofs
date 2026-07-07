@@ -27,15 +27,6 @@ enum silofs_stg_mode {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
-                            enum silofs_ltype             ltype,
-                            struct silofs_lnode_info    **out_lni);
-
-int silofs_remove_give_lnode(const struct silofs_task_ctx   *task,
-                             const struct silofs_lnode_info *lni);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 int silofs_probe_super(const struct silofs_task_ctx *task);
 
 int silofs_stage_super(const struct silofs_task_ctx *task,
@@ -147,6 +138,8 @@ int silofs_remove_fdnode2(const struct silofs_task_ctx *task,
                           const struct silofs_laddr    *laddr,
                           struct silofs_inode_info     *pii);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 int silofs_share_fdnode2(const struct silofs_task_ctx *task,
                          const struct silofs_laddr    *laddr,
                          struct silofs_inode_info     *pii);
@@ -158,6 +151,8 @@ int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
 int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,
                             const struct silofs_laddr    *laddr,
                             struct silofs_inode_info *pii, bool *out_res);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_mark_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr    *laddr,
@@ -171,5 +166,18 @@ int silofs_test_unwritten_fdnode2(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr    *laddr,
                                   struct silofs_inode_info     *pii,
                                   bool                         *out_unwritten);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_spawn_take_lnode(const struct silofs_task_ctx *task,
+                            enum silofs_ltype             ltype,
+                            struct silofs_lnode_info    **out_lni);
+
+int silofs_remove_give_lnode(const struct silofs_task_ctx   *task,
+                             const struct silofs_lnode_info *lni);
+
+int silofs_stage_curr_lnode(const struct silofs_task_ctx *task,
+                            const struct silofs_laddr    *laddr,
+                            struct silofs_lnode_info    **out_lni);
 
 #endif /* SILOFS_PGLUE_H_ */

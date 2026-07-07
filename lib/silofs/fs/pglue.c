@@ -177,25 +177,20 @@ claim_spawn_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 }
 
 static int
+do_claim_lspace(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
+                struct silofs_laddr *out_laddr)
+{
+	return silofs_claim_lnode2_space(&task->pexec, ltype, out_laddr);
+}
+
+static int
 claim_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
             struct silofs_inode_info *pii, struct silofs_laddr *out_laddr)
 {
 	int err;
 
 	pii_incref(pii);
-	err = silofs_claim_lnode2_space(&task->pexec, ltype, out_laddr);
-	pii_decref(pii);
-	return err;
-}
-
-static int reclaim_lnode(const struct silofs_task_ctx *task,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_inode_info *pii, bool *out_last)
-{
-	int err;
-
-	pii_incref(pii);
-	err = silofs_reclaim_lnode2_at(&task->pexec, laddr, out_last);
+	err = do_claim_lspace(task, ltype, out_laddr);
 	pii_decref(pii);
 	return err;
 }
@@ -212,14 +207,14 @@ share_lnode(const struct silofs_task_ctx *task,
 	return err;
 }
 
-static int unshare_lnode(const struct silofs_task_ctx *task,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_inode_info *pii, bool *out_last)
+static int
+unshare_lnode(const struct silofs_task_ctx *task,
+              const struct silofs_laddr *laddr, struct silofs_inode_info *pii)
 {
 	int err;
 
 	pii_incref(pii);
-	err = silofs_unshare_lnode2_at(&task->pexec, laddr, out_last);
+	err = silofs_unshare_lnode_at(task, laddr);
 	pii_decref(pii);
 	return err;
 }
@@ -234,6 +229,40 @@ static int isshared_lnode(const struct silofs_task_ctx *task,
 	err = silofs_isshared_lnode_at(task, laddr, out_res);
 	pii_decref(pii);
 	return err;
+}
+
+static int reclaim_mapping(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_inode_info *pii)
+{
+	int err;
+
+	pii_incref(pii);
+	err = silofs_reclaim_lnode_mapping(&task->pexec, laddr);
+	pii_decref(pii);
+	return err;
+}
+
+static int reclaim_lnode(const struct silofs_task_ctx *task,
+                         const struct silofs_laddr *laddr,
+                         struct silofs_inode_info *pii, bool *out_last)
+{
+	int err;
+	bool shared = false;
+
+	err = isshared_lnode(task, laddr, pii, &shared);
+	return_if_err(err);
+
+	err = unshare_lnode(task, laddr, pii);
+	return_if_err(err);
+
+	if (!shared) {
+		err = reclaim_mapping(task, laddr, pii);
+		return_if_err(err);
+	}
+
+	*out_last = !shared;
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -300,18 +329,15 @@ static void take_lnode(struct silofs_sbnode_info *sbi, enum silofs_ltype ltype)
 	silofs_sbi_take_lnode(sbi, ltype);
 }
 
-static void
-give_lnode(struct silofs_sbnode_info *sbi, enum silofs_ltype ltype, bool last)
+static void give_lnode(struct silofs_sbnode_info *sbi, enum silofs_ltype ltype)
 {
-	if (last) {
-		silofs_sbi_give_lnode(sbi, ltype);
-	}
+	silofs_sbi_give_lnode(sbi, ltype);
 }
 
-static void give_lnode_of(struct silofs_sbnode_info *sbi,
-                          const struct silofs_laddr *laddr, bool last)
+static void
+give_lnode_of(struct silofs_sbnode_info *sbi, const struct silofs_laddr *laddr)
 {
-	give_lnode(sbi, laddr->ltype, last);
+	give_lnode(sbi, laddr->ltype);
 }
 
 static int
@@ -353,6 +379,23 @@ out:
 	return err;
 }
 
+static void try_forget_cached_lni(const struct silofs_task_ctx *task,
+                                  const struct silofs_laddr *laddr)
+{
+	struct silofs_lcache *lcache  = task->lcache;
+	struct silofs_lnode_info *lni = nullptr;
+	;
+
+	/*
+	 * Special case where data-node has been unmapped via forget, yet it
+	 * still has a live ref-count due to on-going I/O operation.
+	 */
+	lni = silofs_lcache_lookup_lnode(lcache, laddr);
+	if ((lni != nullptr) && !silofs_lni_refcnt(lni)) {
+		silofs_lcache_forget_lnode(lcache, lni);
+	}
+}
+
 static int reclaim_give_lnode(const struct silofs_task_ctx *task,
                               const struct silofs_laddr *laddr,
                               struct silofs_inode_info *pii)
@@ -367,27 +410,10 @@ static int reclaim_give_lnode(const struct silofs_task_ctx *task,
 	err = reclaim_lnode(task, laddr, pii, &last);
 	goto_out_if_err(err);
 
-	give_lnode_of(sbi, laddr, last);
-out:
-	put_sbi(sbi);
-	return err;
-}
-
-static int unshare_give_lnode(const struct silofs_task_ctx *task,
-                              const struct silofs_laddr *laddr,
-                              struct silofs_inode_info *pii)
-{
-	struct silofs_sbnode_info *sbi = nullptr;
-	bool last;
-	int err;
-
-	err = get_sbi(task, &sbi);
-	goto_out_if_err(err);
-
-	err = unshare_lnode(task, laddr, pii, &last);
-	goto_out_if_err(err);
-
-	give_lnode_of(sbi, laddr, last);
+	if (last) {
+		give_lnode_of(sbi, laddr);
+		try_forget_cached_lni(task, laddr);
+	}
 out:
 	put_sbi(sbi);
 	return err;
@@ -913,7 +939,7 @@ int silofs_unshare_fdnode2(const struct silofs_task_ctx *task,
                            struct silofs_inode_info *pii)
 {
 	silofs_assert(silofs_laddr_isdata(laddr));
-	return unshare_give_lnode(task, laddr, pii);
+	return reclaim_give_lnode(task, laddr, pii);
 }
 
 int silofs_isshared_fdnode2(const struct silofs_task_ctx *task,

@@ -160,20 +160,9 @@ static bool has_lspace_mapping(enum silofs_ltype ltype)
 static int format_base_spnode_of(const struct silofs_task_ctx *task,
                                  enum silofs_ltype ltype)
 {
-	struct silofs_laddr apex_laddr;
-	struct silofs_sbnode_info *sbi = nullptr;
 	struct silofs_spnode_info *spi = nullptr;
-	int err;
 
-	err = silofs_curr_sbi(task, &sbi);
-	return_if_err(err);
-
-	silofs_sbi_apex_of(sbi, ltype, &apex_laddr);
-	;
-	err = silofs_spawn_spnode2_by(&task->pexec, &apex_laddr, &spi);
-	return_if_err(err);
-
-	return 0;
+	return silofs_spawn_apex_spnode_of(task, ltype, &spi);
 }
 
 static int format_base_spnodes(const struct silofs_task_ctx *task)
@@ -507,32 +496,32 @@ int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int reload_uber(const struct silofs_pexec_ctx *pexec,
+static int reload_uber(const struct silofs_task_ctx *task,
                        const struct silofs_pnptr *pnptr)
 {
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_stage_uber(pexec, pnptr, &ubi);
+	err = silofs_stage_uber(&task->pexec, pnptr, &ubi);
 	return_if_err(err);
 
-	update_active_uber(pexec, ubi);
+	update_active_uber(&task->pexec, ubi);
 	return 0;
 }
 
-static int reload_btree_root_of(const struct silofs_pexec_ctx *pexec,
+static int reload_btree_root_of(const struct silofs_task_ctx *task,
                                 enum silofs_ltype ltype)
 {
 	struct silofs_pnptr pnptr = {};
 	struct silofs_btnode_info *bti;
 	int err;
 
-	silofs_ubi_btroot_of(pexec->ubref->ubi, ltype, &pnptr);
+	silofs_ubi_btroot_of(task->pexec.ubref->ubi, ltype, &pnptr);
 	if (silofs_pnptr_isnull(&pnptr)) {
 		log_dbg("missing btree root: ltype=%d", ltype);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_stage_btnode(pexec, &pnptr, &bti);
+	err = silofs_stage_btnode(&task->pexec, &pnptr, &bti);
 	if (err) {
 		log_dbg("failed to reload btroot: ltype=%d", ltype);
 		return err;
@@ -540,84 +529,26 @@ static int reload_btree_root_of(const struct silofs_pexec_ctx *pexec,
 	return 0;
 }
 
-static int reload_vspace_roots(const struct silofs_pexec_ctx *pexec)
+static int reload_btree_roots(const struct silofs_task_ctx *task)
 {
 	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
 	int err;
 
 	while (++ltype < SILOFS_LTYPE_LAST) {
 		if (!silofs_ltype_isnone(ltype)) {
-			err = reload_btree_root_of(pexec, ltype);
+			err = reload_btree_root_of(task, ltype);
 			return_if_err(err);
 		}
 	}
 	return 0;
 }
 
-static int reload_node_zero_of(const struct silofs_pexec_ctx *pexec,
-                               enum silofs_ltype ltype)
+static int reload_apex_spnode_of(const struct silofs_task_ctx *task,
+                                 enum silofs_ltype ltype)
 {
-	struct silofs_laddr laddr;
-	struct silofs_lspace_ref vspref;
 	struct silofs_spnode_info *spi = nullptr;
-	struct silofs_lnode_info *lni  = nullptr;
-	int err;
 
-	silofs_laddr_setup(&laddr, ltype, 0);
-
-	err = silofs_stage_spnode_by(pexec, &laddr, &spi);
-	return_if_err(err);
-
-	silofs_spi_lspace_ref(spi, &laddr, &vspref);
-	if (vspref.refcnt != 1) {
-		return -SILOFS_EFSCORRUPTED;
-	}
-
-	err = silofs_stage_lnode_at(pexec, &laddr, &lni);
-	return_if_err(err);
-
-	return 0;
-}
-
-static int reload_vspace_nodes(const struct silofs_pexec_ctx *pexec)
-{
-	enum silofs_ltype ltype = SILOFS_LTYPE_NONE;
-	int err;
-
-	while (++ltype < SILOFS_LTYPE_LAST) {
-		if (has_lspace_mapping(ltype)) {
-			err = reload_node_zero_of(pexec, ltype);
-			return_if_err(err);
-		}
-	}
-	return 0;
-}
-
-static int reload_vspace(const struct silofs_pexec_ctx *pexec)
-{
-	int err;
-
-	err = reload_vspace_roots(pexec);
-	return_if_err(err);
-
-	err = reload_vspace_nodes(pexec);
-	return_if_err(err);
-
-	return 0;
-}
-
-static int
-reload_pstor(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
-{
-	int err;
-
-	err = reload_uber(&task->pexec, pnptr);
-	return_if_err(err);
-
-	err = reload_vspace(&task->pexec);
-	return_if_err(err);
-
-	return 0;
+	return silofs_stage_apex_spnode_of(task, ltype, &spi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -627,32 +558,6 @@ static int reload_super(struct silofs_task_ctx *task)
 	struct silofs_sbnode_info *sbi = nullptr;
 
 	return silofs_stage_super(task, SILOFS_STG_CUR, &sbi);
-}
-
-static int reload_apex_spnode_at(struct silofs_task_ctx *task,
-                                 const struct silofs_laddr *laddr)
-{
-	struct silofs_spnode_info *spi = nullptr;
-
-	return silofs_stage_spnode_of(task, laddr, SILOFS_STG_CUR, &spi);
-}
-
-static int
-reload_apex_spnode_of(struct silofs_task_ctx *task, enum silofs_ltype ltype)
-{
-	struct silofs_laddr laddr;
-	struct silofs_sbnode_info *sbi = nullptr;
-	int err;
-
-	err = silofs_curr_sbi(task, &sbi);
-	return_if_err(err);
-
-	silofs_sbi_apex_of(sbi, ltype, &laddr);
-
-	err = reload_apex_spnode_at(task, &laddr);
-	return_if_err(err);
-
-	return 0;
 }
 
 static int reload_apex_spnodes(struct silofs_task_ctx *task)
@@ -689,9 +594,16 @@ static int reload_rootdir(struct silofs_task_ctx *task)
 	return 0;
 }
 
-static int reload_vfs(struct silofs_task_ctx *task)
+int silofs_reload(struct silofs_task_ctx *task,
+                  const struct silofs_pnptr *pnptr)
 {
 	int err;
+
+	err = reload_uber(task, pnptr);
+	return_if_err(err);
+
+	err = reload_btree_roots(task);
+	return_if_err(err);
 
 	err = reload_super(task);
 	return_if_err(err);
@@ -700,20 +612,6 @@ static int reload_vfs(struct silofs_task_ctx *task)
 	return_if_err(err);
 
 	err = reload_rootdir(task);
-	return_if_err(err);
-
-	return 0;
-}
-
-int silofs_reload(struct silofs_task_ctx *task,
-                  const struct silofs_pnptr *pnptr)
-{
-	int err;
-
-	err = reload_pstor(task, pnptr);
-	return_if_err(err);
-
-	err = reload_vfs(task);
 	return_if_err(err);
 
 	return 0;

@@ -839,9 +839,9 @@ int silofs_spawn_lnode2_with(const struct silofs_pexec_ctx *pexec,
 	return err;
 }
 
-static int stc_claim_lnode_space(const struct silofs_stage_ctx *st_ctx,
-                                 const struct silofs_laddr *laddr,
-                                 const struct silofs_pnptr *pnptr)
+static int stc_claim_lnode_pspace(const struct silofs_stage_ctx *st_ctx,
+                                  const struct silofs_laddr *laddr,
+                                  const struct silofs_pnptr *pnptr)
 {
 	int err;
 
@@ -852,15 +852,15 @@ static int stc_claim_lnode_space(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_claim_lnode2_space2(const struct silofs_pexec_ctx *pexec,
-                               const struct silofs_laddr *laddr,
-                               const struct silofs_pnptr *pnptr)
+int silofs_claim_lnode_pspace(const struct silofs_pexec_ctx *pexec,
+                              const struct silofs_laddr *laddr,
+                              const struct silofs_pnptr *pnptr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
 	stc_init(&st_ctx, pexec);
-	err = stc_claim_lnode_space(&st_ctx, laddr, pnptr);
+	err = stc_claim_lnode_pspace(&st_ctx, laddr, pnptr);
 	stc_fini(&st_ctx);
 	return err;
 }

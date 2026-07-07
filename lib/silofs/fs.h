@@ -39,6 +39,8 @@
 #include <silofs/fs/symlink.h>
 #include <silofs/fs/xattr.h>
 
+#include <silofs/fs/task.h>
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 /* flush */
 
@@ -57,9 +59,5 @@ int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
 
 int silofs_reload(struct silofs_task_ctx    *task,
                   const struct silofs_pnptr *pnptr);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* task */
-#include <silofs/fs/task.h>
 
 #endif /* SILOFS_FS_H_ */

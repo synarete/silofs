@@ -181,69 +181,6 @@ int silofs_claim_free_vspace(const struct silofs_pexec_ctx *pexec,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int vsc_decref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_laddr *laddr)
-{
-	struct silofs_lspace_ref vspref;
-	struct silofs_spnode_info *spi = nullptr;
-	int err;
-
-	err = vsc_stage_spnode_by(vs_ctx, laddr, &spi);
-	return_if_err(err);
-
-	silofs_spi_lspace_ref(spi, laddr, &vspref);
-	if (vspref.refcnt == 0) {
-		log_err("can not reclaim unused vspace: ltype=%d off=%ld",
-		        laddr->ltype, laddr->off);
-		return -SILOFS_EBUG;
-	}
-	silofs_spi_dec_allocated(spi, laddr);
-	return 0;
-}
-
-static int vsc_incref_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                                  const struct silofs_laddr *laddr)
-{
-	struct silofs_lspace_ref vspref;
-	struct silofs_spnode_info *spi = nullptr;
-	int err;
-
-	err = vsc_stage_spnode_by(vs_ctx, laddr, &spi);
-	return_if_err(err);
-
-	silofs_spi_lspace_ref(spi, laddr, &vspref);
-	if (vspref.refcnt == 0) {
-		log_err("can not incref unused vspace: ltype=%d off=%ld",
-		        laddr->ltype, laddr->off);
-		return -SILOFS_EBUG;
-	}
-	silofs_spi_inc_allocated(spi, laddr);
-	return 0;
-}
-
-static int
-vsc_update_used_vspace(struct silofs_vspace_ctx *vs_ctx,
-                       const struct silofs_laddr *laddr, bool incref)
-{
-	int ret;
-
-	if (incref) {
-		ret = vsc_incref_used_vspace(vs_ctx, laddr);
-	} else {
-		ret = vsc_decref_used_vspace(vs_ctx, laddr);
-	}
-	return ret;
-}
-
-int silofs_update_used_vspace(const struct silofs_pexec_ctx *pexec,
-                              const struct silofs_laddr *laddr, bool incref)
-{
-	struct silofs_vspace_ctx vs_ctx;
-
-	vsc_init_by(&vs_ctx, pexec, laddr);
-	return vsc_update_used_vspace(&vs_ctx, laddr, incref);
-}
-
 static int vsc_probe_vspace_ref(struct silofs_vspace_ctx *vs_ctx,
                                 const struct silofs_laddr *laddr,
                                 struct silofs_lspace_ref *out_vspref)

@@ -510,7 +510,8 @@ static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
                              struct silofs_pnptr *out_pnptr)
 {
 	/* TODO: check avail space, RDONLY etc */
-	return silofs_carve_btspace(btc->pexec, btc_vspace(btc), out_pnptr);
+	return silofs_carve_btspace_pnptr(btc->pexec, btc_vspace(btc),
+	                                  out_pnptr);
 }
 
 static int btc_spawn_btnode(const struct silofs_btree_ctx *btc,

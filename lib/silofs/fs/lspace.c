@@ -165,6 +165,25 @@ int silofs_share_lnode_at(const struct silofs_task_ctx *task,
 	return 0;
 }
 
+int silofs_unshare_lnode_at(const struct silofs_task_ctx *task,
+                            const struct silofs_laddr *laddr)
+{
+	struct silofs_lspace_ref lspref;
+	struct silofs_spnode_info *spi = nullptr;
+	int err;
+
+	err = stage_spnode_by(task, laddr, &spi);
+	return_if_err(err);
+
+	silofs_spi_lspace_ref(spi, laddr, &lspref);
+
+	err = check_lspace_ref(laddr, &lspref, 1, REFCNT_MAX);
+	return_if_err(err);
+
+	silofs_spi_dec_allocated(spi, laddr);
+	return 0;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int stage_spnode_of(const struct silofs_task_ctx *task,
@@ -351,4 +370,38 @@ int silofs_claim_free_lspace(const struct silofs_task_ctx *task,
 	log_err("failed to claim free space: ltype=%d err=%d", ltype, err);
 out:
 	return err;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_stage_apex_spnode_of(const struct silofs_task_ctx *task,
+                                enum silofs_ltype ltype,
+                                struct silofs_spnode_info **out_spi)
+{
+	struct silofs_laddr apex_laddr;
+	int err;
+
+	err = apex_laddr_of(task, ltype, &apex_laddr);
+	return_if_err(err);
+
+	err = stage_spnode_of(task, &apex_laddr, SILOFS_STG_CUR, out_spi);
+	return_if_err(err);
+
+	return 0;
+}
+
+int silofs_spawn_apex_spnode_of(const struct silofs_task_ctx *task,
+                                enum silofs_ltype ltype,
+                                struct silofs_spnode_info **out_spi)
+{
+	struct silofs_laddr apex_laddr;
+	int err;
+
+	err = apex_laddr_of(task, ltype, &apex_laddr);
+	return_if_err(err);
+
+	err = spawn_spnode_of(task, &apex_laddr, out_spi);
+	return_if_err(err);
+
+	return 0;
 }

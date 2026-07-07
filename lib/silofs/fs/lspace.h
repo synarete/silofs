@@ -35,10 +35,23 @@ int silofs_isshared_lnode_at(const struct silofs_task_ctx *task,
 int silofs_share_lnode_at(const struct silofs_task_ctx *task,
                           const struct silofs_laddr    *laddr);
 
+int silofs_unshare_lnode_at(const struct silofs_task_ctx *task,
+                            const struct silofs_laddr    *laddr);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_claim_free_lspace(const struct silofs_task_ctx *task,
                              enum silofs_ltype             ltype,
                              struct silofs_laddr          *out_laddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_stage_apex_spnode_of(const struct silofs_task_ctx *task,
+                                enum silofs_ltype             ltype,
+                                struct silofs_spnode_info   **out_spi);
+
+int silofs_spawn_apex_spnode_of(const struct silofs_task_ctx *task,
+                                enum silofs_ltype             ltype,
+                                struct silofs_spnode_info   **out_spi);
 
 #endif /* SILOFS_LSPACE_H_ */

@@ -150,9 +150,9 @@ static int carve_pnptr_of(const struct silofs_pexec_ctx *pexec,
 	return gen_pnptr_at(pexec, &paddr, out_pnptr);
 }
 
-int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
-                         enum silofs_ltype ltype,
-                         struct silofs_pnptr *out_pnptr)
+int silofs_carve_btspace_pnptr(const struct silofs_pexec_ctx *pexec,
+                               enum silofs_ltype ltype,
+                               struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
@@ -162,9 +162,9 @@ int silofs_carve_btspace(const struct silofs_pexec_ctx *pexec,
 	return carve_pnptr_of(pexec, &stype, out_pnptr);
 }
 
-int silofs_carve_vspace(const struct silofs_pexec_ctx *pexec,
-                        enum silofs_ltype ltype,
-                        struct silofs_pnptr *out_pnptr)
+int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
+                              enum silofs_ltype ltype,
+                              struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_VNODE,

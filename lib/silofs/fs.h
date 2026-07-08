@@ -29,7 +29,6 @@
 
 #include <silofs/fs/pglue.h>
 #include <silofs/fs/lspace.h>
-#include <silofs/fs/idsmap.h>
 #include <silofs/fs/super.h>
 #include <silofs/fs/inode.h>
 #include <silofs/fs/inops.h>

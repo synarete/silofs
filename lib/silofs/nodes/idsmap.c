@@ -19,7 +19,6 @@
 #include <silofs/errors.h>
 #include <silofs/infra.h>
 #include <silofs/nodes.h>
-#include <silofs/fs.h>
 
 enum {
 	SILOFS_IDSMAP_HCAP = 509,

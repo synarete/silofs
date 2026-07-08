@@ -236,15 +236,6 @@
 /* on-disk size of symbolic-link tail-value */
 #define SILOFS_SYMVAL_NODE_SIZE (4096)
 
-/* number of extended-attributes entries in indirect node */
-#define SILOFS_XATTR_NENTS (1008)
-
-/* max length of extended attributes value */
-#define SILOFS_XATTR_VALUE_MAX (2048)
-
-/* on-disk size of xattr node */
-#define SILOFS_XATTR_NODE_SIZE (8192)
-
 /* max size of single I/O operation (2M - 64K) */
 #define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
 
@@ -343,16 +334,6 @@ enum silofs_inodef {
 enum silofs_dirf {
 	SILOFS_DIRF_NONE      = 0x00,
 	SILOFS_DIRF_NAME_UTF8 = 0x01,
-};
-
-/* extended attributes known classes */
-enum silofs_xattr_ns {
-	SILOFS_XATTR_NONE     = 0,
-	SILOFS_XATTR_SECURITY = 1,
-	SILOFS_XATTR_SYSTEM   = 2,
-	SILOFS_XATTR_TRUSTED  = 3,
-	SILOFS_XATTR_USER     = 4,
-	SILOFS_XATTR_GNU      = 5,
 };
 
 /* encryption cipher settings (libgcrypt values) */
@@ -711,6 +692,27 @@ struct silofs_inode {
 	union silofs_inode_tail   i_ta;
 } silofs_attr_aligned64;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* number of extended-attributes entries in indirect node */
+#define SILOFS_XATTR_NENTS (1008)
+
+/* max length of extended attributes value */
+#define SILOFS_XATTR_VALUE_MAX (2048)
+
+/* on-disk size of xattr node */
+#define SILOFS_XATTR_NODE_SIZE (8192)
+
+/* extended attributes known classes */
+enum silofs_xattr_ns {
+	SILOFS_XATTR_NONE     = 0,
+	SILOFS_XATTR_SECURITY = 1,
+	SILOFS_XATTR_SYSTEM   = 2,
+	SILOFS_XATTR_TRUSTED  = 3,
+	SILOFS_XATTR_USER     = 4,
+	SILOFS_XATTR_GNU      = 5,
+};
+
 struct silofs_xattr_entry {
 	uint16_t xe_name_len;
 	uint16_t xe_reserved;
@@ -725,6 +727,8 @@ struct silofs_xattr_node {
 	uint8_t                   xa_reserved[86];
 	struct silofs_xattr_entry xe[SILOFS_XATTR_NENTS];
 } silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_dir_entry {
 	uint64_t de_ino;

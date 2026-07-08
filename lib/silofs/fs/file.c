@@ -1477,9 +1477,9 @@ static void filc_zero_fdnode_sub(const struct silofs_file_ctx *f_ctx,
                                  struct silofs_fdnode_info *fdi,
                                  off_t off_in_dn, size_t len)
 {
-	struct silofs_data_node64 *dn64 = fdi->fdn.dn64;
+	void *dat = fdi_data_at(fdi, off_in_dn);
 
-	silofs_memzero(&dn64->dat[off_in_dn], len);
+	silofs_memzero(dat, len);
 	filc_setdirty_fdnode(f_ctx, fdi);
 }
 
@@ -2775,11 +2775,12 @@ static int filc_write_by_head2(struct silofs_file_ctx *f_ctx)
 
 	while (filc_has_head2_leaves_io(f_ctx)) {
 		struct silofs_fdnode_ref fdr = {};
-		size_t len                   = 0;
+		size_t len;
 
 		err = filc_require_head2_leaf(f_ctx, &fdr);
 		return_if_err(err);
 
+		len = 0;
 		err = filc_write_to_fdnode_by(f_ctx, &fdr, &len);
 		return_if_err(err);
 
@@ -3434,9 +3435,8 @@ filc_resolve_tree_end(const struct silofs_file_ctx *f_ctx, off_t *out_end)
 		return 0;
 	}
 	err = filc_stage_root_ftnode(f_ctx, &fti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_end = ftn_end(fti->ftn);
 	return 0;
 }
@@ -3880,9 +3880,8 @@ static bool filc_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
 {
 	struct fiemap_extent *fm_ext;
 	struct fiemap *fm = f_ctx->fm;
-	size_t len;
-	off_t end;
-	size_t dsz;
+	size_t dsz, len;
+	off_t phy_pos, end;
 
 	len = silofs_laddr_len(laddr);
 	end = silofs_off_min(silofs_off_end(f_ctx->off, len), f_ctx->end);
@@ -3897,10 +3896,12 @@ static bool filc_emit_fiemap_ext(struct silofs_file_ctx *f_ctx,
 	if (fm->fm_mapped_extents >= fm->fm_extent_count) {
 		return false;
 	}
-	fm_ext              = &fm->fm_extents[fm->fm_mapped_extents++];
-	fm_ext->fe_flags    = FIEMAP_EXTENT_DATA_ENCRYPTED;
-	fm_ext->fe_logical  = (uint64_t)(f_ctx->off);
-	fm_ext->fe_physical = (uint64_t)(laddr->off);
+	fm_ext             = &fm->fm_extents[fm->fm_mapped_extents++];
+	fm_ext->fe_flags   = FIEMAP_EXTENT_DATA_ENCRYPTED;
+	fm_ext->fe_logical = (uint64_t)(f_ctx->off);
+
+	phy_pos = laddr->off + off_in_data(f_ctx->off, laddr->ltype);
+	fm_ext->fe_physical = (uint64_t)(phy_pos);
 	fm_ext->fe_length   = dsz;
 	return true;
 }
@@ -4288,35 +4289,44 @@ static void filc_rebind_child_by(const struct silofs_file_ctx *f_ctx,
 	silofs_laddr_assign(&fdr->laddr, laddr);
 }
 
-static int filc_unshare_fdnode_by(const struct silofs_file_ctx *f_ctx,
-                                  struct silofs_fdnode_ref *fdr)
+static int filc_do_unshare_fdnode_by(const struct silofs_file_ctx *f_ctx,
+                                     struct silofs_fdnode_ref *fdr)
 {
 	struct silofs_fdnode_ref fdr_new = {};
 	size_t len;
 	int err;
 
-	silofs_assert(fdr->has_data);
-	if (!fdr->shared || !fdr->tree) {
-		return 0;
-	}
 	fdr_setup(&fdr_new, f_ctx->ii, fdr->parent_fti, &fdr->laddr,
 	          fdr->file_pos, f_ctx->end);
+
 	err = filc_claim_fdnode(f_ctx, fdr->laddr.ltype, &fdr_new.laddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	len = laddr_len(&fdr->laddr);
 	err = filc_copy_fdnode_by(f_ctx, fdr, f_ctx, &fdr_new, len);
-	if (err) {
-		filc_remove_fdnode(f_ctx, &fdr_new.laddr);
-		return err;
-	}
+	goto_if_err(err, out_err);
+
 	err = filc_unshare_fdnode(f_ctx, &fdr->laddr);
-	if (err) {
-		return err;
-	}
+	goto_if_err(err, out_err);
+
 	filc_rebind_child_by(f_ctx, fdr, &fdr_new.laddr);
+	filc_update_iblocks(f_ctx, &fdr_new.laddr, 1);
 	return 0;
+out_err:
+	filc_remove_fdnode(f_ctx, &fdr_new.laddr);
+	return err;
+}
+
+static int filc_unshare_fdnode_by(const struct silofs_file_ctx *f_ctx,
+                                  struct silofs_fdnode_ref *fdr)
+{
+	int ret = 0;
+
+	silofs_assert(fdr->has_data);
+	if (fdr->shared && fdr->tree) {
+		ret = filc_do_unshare_fdnode_by(f_ctx, fdr);
+	}
+	return ret;
 }
 
 static int filc_require_tree_and_leaf(const struct silofs_file_ctx *f_ctx,
@@ -4326,13 +4336,11 @@ static int filc_require_tree_and_leaf(const struct silofs_file_ctx *f_ctx,
 	int err;
 
 	err = filc_require_tree(f_ctx, &parent_fti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_require_tree_leaf(f_ctx, parent_fti, out_fdr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -4539,7 +4547,7 @@ static int filc_check_copy_range_same(const struct silofs_file_ctx *f_ctx_src,
                                       const struct silofs_file_ctx *f_ctx_dst)
 {
 	const off_t src_off = f_ctx_src->off;
-	const off_t src_end = silofs_off_end(src_off, f_ctx_dst->len);
+	const off_t src_end = silofs_off_end(src_off, f_ctx_src->len);
 	const off_t dst_off = f_ctx_dst->off;
 	const off_t dst_end = silofs_off_end(dst_off, f_ctx_dst->len);
 	int ret;
@@ -4704,7 +4712,7 @@ int silofs_do_copy_file_range(struct silofs_task_ctx *task,
 		.end          = silofs_off_end(off_out, len),
 		.cp_flags     = flags,
 		.with_backref = 0,
-		.kill_suidgid = false,
+		.kill_suidgid = true,
 	};
 	int ret;
 

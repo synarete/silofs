@@ -16,7 +16,56 @@
  */
 #include <silofs/configs.h>
 #include <silofs/types.h>
+#include <silofs/crypt.h>
+#include <silofs/addr.h>
 #include <silofs/pstor.h>
+
+static void take_grandom(void *p, size_t n)
+{
+	silofs_gcrypt_random(p, n);
+}
+
+static void take_prandom(struct silofs_prandgen *prng, void *p, size_t n)
+{
+	silofs_prandgen_take(prng, p, n);
+}
+
+static void feed_prandom(struct silofs_prandgen *prng, void *p, size_t n)
+{
+	silofs_prandgen_feed(prng, p, n);
+}
+
+static void
+generate_civ(struct silofs_prandgen *prng, struct silofs_civ *out_civ)
+{
+	take_prandom(prng, out_civ->iv, sizeof(out_civ->iv));
+}
+
+static void
+generate_ckey(struct silofs_prandgen *prng, struct silofs_ckey *out_ckey)
+{
+	constexpr size_t n = sizeof(out_ckey->key);
+	uint8_t *p         = out_ckey->key;
+
+	STATICASSERT_GT(sizeof(out_ckey->key), 16);
+
+	take_grandom(p, 16);
+	take_prandom(prng, p + 16, n - 16);
+	feed_prandom(prng, p, 16);
+}
+
+static void
+generate_uniqid(struct silofs_prandgen *prng, struct silofs_uniqid *out_uniqid)
+{
+	take_prandom(prng, out_uniqid->id, sizeof(out_uniqid->id));
+}
+
+static void generate_layerid(struct silofs_layerid *out_layerid)
+{
+	silofs_layerid_generate(out_layerid);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const struct silofs_layerid *
 top_layerid(const struct silofs_pexec_ctx *pexec)
@@ -30,21 +79,21 @@ top_layerid(const struct silofs_pexec_ctx *pexec)
 static void gen_layerid(const struct silofs_pexec_ctx *pexec,
                         struct silofs_layerid *out_layerid)
 {
-	silofs_generate_layerid(out_layerid);
+	generate_layerid(out_layerid);
 	silofs_unused(pexec);
 }
 
 static void gen_uniqid(const struct silofs_pexec_ctx *pexec,
                        struct silofs_uniqid *out_uniqid)
 {
-	silofs_generate_uniqid(pexec->prng, out_uniqid);
+	generate_uniqid(pexec->prng, out_uniqid);
 }
 
 static void gen_civkey(const struct silofs_pexec_ctx *pexec,
                        struct silofs_civkey *out_civkey)
 {
-	silofs_generate_ckey(pexec->prng, &out_civkey->key);
-	silofs_generate_civ(pexec->prng, &out_civkey->iv);
+	generate_ckey(pexec->prng, &out_civkey->key);
+	generate_civ(pexec->prng, &out_civkey->iv);
 }
 
 static int

@@ -77,13 +77,21 @@ libsilofs_la_SOURCES += str/strview.h
 libsilofs_la_SOURCES += str.h
 
 libsilofs_la_SOURCES += crypt/cipher.c
+libsilofs_la_SOURCES += crypt/cipher.h
 libsilofs_la_SOURCES += crypt/gcry.c
+libsilofs_la_SOURCES += crypt/gcry.h
 libsilofs_la_SOURCES += crypt/hmac.c
+libsilofs_la_SOURCES += crypt/hmac.h
 libsilofs_la_SOURCES += crypt/ivkey.c
+libsilofs_la_SOURCES += crypt/ivkey.h
 libsilofs_la_SOURCES += crypt/kdf.c
+libsilofs_la_SOURCES += crypt/kdf.h
 libsilofs_la_SOURCES += crypt/mdigest.c
+libsilofs_la_SOURCES += crypt/mdigest.h
 libsilofs_la_SOURCES += crypt/passwd.c
+libsilofs_la_SOURCES += crypt/passwd.h
 libsilofs_la_SOURCES += crypt/prand.c
+libsilofs_la_SOURCES += crypt/prand.h
 libsilofs_la_SOURCES += crypt.h
 
 libsilofs_la_SOURCES += addr/blobid.c

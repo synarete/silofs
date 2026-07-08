@@ -14,24 +14,24 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPT_H_
-#define SILOFS_CRYPT_H_
+#ifndef SILOFS_HMAC_H_
+#define SILOFS_HMAC_H_
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <gcrypt.h>
+/* wrapper over libgcrypt mac handle */
+struct silofs_hmac_hd {
+	gcry_mac_hd_t hm_hd;
+	int           hm_algo;
+};
 
-#include <silofs/infra.h>
-#include <silofs/ondisk.h>
-#include <silofs/types.h>
+bool silofs_mac_isequal(const struct silofs_mac *mac,
+                        const struct silofs_mac *other);
 
-#include <silofs/crypt/passwd.h>
-#include <silofs/crypt/ivkey.h>
-#include <silofs/crypt/mdigest.h>
-#include <silofs/crypt/kdf.h>
-#include <silofs/crypt/hmac.h>
-#include <silofs/crypt/cipher.h>
-#include <silofs/crypt/prand.h>
-#include <silofs/crypt/gcry.h>
+int silofs_hmac_init(struct silofs_hmac_hd *hmac_hd);
 
-#endif /* SILOFS_CRYPT_H_ */
+void silofs_hmac_fini(struct silofs_hmac_hd *hmac_hd);
+
+int silofs_hmac_calc(struct silofs_hmac_hd    *hmac_hd,
+                     const struct silofs_ckey *key, const void *dat,
+                     size_t dsz, struct silofs_mac *out_mac);
+
+#endif /* SILOFS_HMAC_H_ */

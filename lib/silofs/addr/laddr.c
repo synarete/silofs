@@ -20,7 +20,7 @@
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype)
 {
-	const int val = ltype;
+	const int val = (int)ltype;
 
 	return (val <= SILOFS_LTYPE_NONE) || (val >= SILOFS_LTYPE_LAST);
 }

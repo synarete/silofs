@@ -14,24 +14,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPT_H_
-#define SILOFS_CRYPT_H_
+#ifndef SILOFS_GCRY_H_
+#define SILOFS_GCRY_H_
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <gcrypt.h>
+const char *silofs_gcrypt_version(void);
 
-#include <silofs/infra.h>
-#include <silofs/ondisk.h>
-#include <silofs/types.h>
+int silofs_init_gcrypt(bool with_fips);
 
-#include <silofs/crypt/passwd.h>
-#include <silofs/crypt/ivkey.h>
-#include <silofs/crypt/mdigest.h>
-#include <silofs/crypt/kdf.h>
-#include <silofs/crypt/hmac.h>
-#include <silofs/crypt/cipher.h>
-#include <silofs/crypt/prand.h>
-#include <silofs/crypt/gcry.h>
+void silofs_gcrypt_random(void *ptr, size_t len);
 
-#endif /* SILOFS_CRYPT_H_ */
+int silofs_gcrypt_status_(gcry_error_t gcry_err, const char *fn,
+                          const char *file, int line);
+
+#define silofs_gcrypt_status(gcry_err_, fn_) \
+	silofs_gcrypt_status_(gcry_err_, fn_, SILOFS_FL_LN_)
+
+#endif /* SILOFS_GCRY_H_ */

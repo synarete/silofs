@@ -14,24 +14,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_CRYPT_H_
-#define SILOFS_CRYPT_H_
+#ifndef SILOFS_PASSWD_H_
+#define SILOFS_PASSWD_H_
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <gcrypt.h>
+int silofs_password_setup(struct silofs_password *pw, const char *pass);
 
-#include <silofs/infra.h>
-#include <silofs/ondisk.h>
-#include <silofs/types.h>
+int silofs_password_assign(struct silofs_password       *pw,
+                           const struct silofs_password *other);
 
-#include <silofs/crypt/passwd.h>
-#include <silofs/crypt/ivkey.h>
-#include <silofs/crypt/mdigest.h>
-#include <silofs/crypt/kdf.h>
-#include <silofs/crypt/hmac.h>
-#include <silofs/crypt/cipher.h>
-#include <silofs/crypt/prand.h>
-#include <silofs/crypt/gcry.h>
+void silofs_password_reset(struct silofs_password *pw);
 
-#endif /* SILOFS_CRYPT_H_ */
+int silofs_password_recheck(const struct silofs_password *pw);
+
+#endif /* SILOFS_PASSWD_H_ */

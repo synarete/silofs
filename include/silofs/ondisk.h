@@ -91,21 +91,6 @@
 /* size of common meta-data header */
 #define SILOFS_HEADER_SIZE (16)
 
-/* number of pointers btree mapping-node */
-#define SILOFS_BTREE_NODE_NCHILDS (30)
-
-/* number of keys in btree mapping-node */
-#define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
-
-/* number of entries in btree mapping-leaf */
-#define SILOFS_BTREE_LEAF_NENTS (62)
-
-/* on-disk size of btree node */
-#define SILOFS_BTREE_NODE_SIZE (8192)
-
-/* on-disk size of btree leaf */
-#define SILOFS_BTREE_LEAF_SIZE (4096)
-
 /* minimal file-system capacity, in bytes (2G) */
 #define SILOFS_CAPACITY_SIZE_MIN (2L * SILOFS_GIGA)
 
@@ -849,10 +834,6 @@ enum silofs_objstatef {
 	SILOFS_OBJSTATEF_USED = 0x01,
 };
 
-/* minimal/maximal btree height, including leaf nodes */
-#define SILOFS_BTREE_HEIGHT_MIN (1)
-#define SILOFS_BTREE_HEIGHT_MAX (8)
-
 /* blob's meta descriptor */
 struct silofs_blob_desc {
 	struct silofs_header    bld_hdr;
@@ -872,6 +853,21 @@ struct silofs_blob_desc {
 	uint8_t                 bld_obj_state[7936];
 } silofs_attr_aligned64;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* minimal/maximal btree height, including leaf nodes */
+#define SILOFS_BTREE_HEIGHT_MIN (1)
+#define SILOFS_BTREE_HEIGHT_MAX (8)
+
+/* number of pointers btree mapping-node */
+#define SILOFS_BTREE_NODE_NCHILDS (60)
+
+/* number of keys in btree mapping-node */
+#define SILOFS_BTREE_NODE_NKEYS (SILOFS_BTREE_NODE_NCHILDS - 1)
+
+/* on-disk size of btree node */
+#define SILOFS_BTREE_NODE_SIZE (16384)
+
 /* btree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header    btn_hdr;
@@ -882,9 +878,9 @@ struct silofs_btree_node {
 	uint8_t                 btn_height;
 	uint16_t                btn_nkeys;
 	uint16_t                btn_nchilds;
-	uint8_t                 btn_reserved2[78];
+	uint8_t                 btn_reserved2[206];
 	uint64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
-	uint8_t                 btn_reserved3[144];
+	uint8_t                 btn_reserved3[296];
 	struct silofs_pnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 

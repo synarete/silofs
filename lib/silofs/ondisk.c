@@ -244,10 +244,10 @@ static void validate_ondisk_btree_node(void)
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_height, 45);
 	REQUIRE_OFFSETXX(struct silofs_btree_node, btn_nkeys, 46);
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_nchilds, 48);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 128);
-	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 512);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_key, 256);
+	REQUIRE_OFFSET64(struct silofs_btree_node, btn_child, 1024);
 	REQUIRE_SIZEOF(struct silofs_btree_node, SILOFS_BTREE_NODE_SIZE);
-	REQUIRE_SIZEOF_8K(struct silofs_btree_node);
+	REQUIRE_SIZEOF_16K(struct silofs_btree_node);
 }
 
 static void validate_ondisk_blob_desc(void)

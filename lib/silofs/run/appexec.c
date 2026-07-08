@@ -35,7 +35,7 @@ static void relax_caches(struct silofs_task_ctx *task, bool now)
 
 static int flush_dirty(struct silofs_task_ctx *task)
 {
-	return silofs_destage_dirty_by(task);
+	return silofs_flush_dirty_now(task);
 }
 
 static void drop_caches(struct silofs_task_ctx *task)

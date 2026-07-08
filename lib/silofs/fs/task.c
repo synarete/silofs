@@ -223,3 +223,81 @@ int silofs_curr_sbi(const struct silofs_task_ctx *task,
 {
 	return silofs_stage_super(task, SILOFS_STG_CUR, out_sbi);
 }
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static size_t flush_threshold_of(int flags)
+{
+	size_t threshold;
+
+	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_IDLE | SILOFS_CTLF_FSYNC)) {
+		threshold = 0;
+	} else if (flags & SILOFS_CTLF_RELEASE) {
+		threshold = SILOFS_MEGA / 2;
+	} else if (flags & SILOFS_CTLF_INTERN) {
+		threshold = SILOFS_MEGA;
+	} else if (flags & SILOFS_CTLF_OPSTART) {
+		threshold = 2 * SILOFS_MEGA;
+	} else {
+		threshold = 4 * SILOFS_MEGA;
+	}
+	return threshold;
+}
+
+static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
+{
+	struct silofs_alloc_stat alst = {
+		.nbytes_use = 0,
+		.nbytes_max = 0,
+	};
+	size_t flush_threshold;
+
+	if (flags & SILOFS_CTLF_NOW) {
+		return true;
+	}
+	silofs_memstat(task->env->alloc, &alst);
+	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
+		return true;
+	}
+	flush_threshold = flush_threshold_of(flags); /* XXX CRAP FIXME */
+	if (flush_threshold == 0) {
+		return true;
+	}
+	return false;
+}
+
+static bool need_flush_by(const struct silofs_task_ctx *task,
+                          const struct silofs_inode_info *ii, int flags)
+{
+	silofs_unused(ii);
+	return need_flush_now(task, flags);
+}
+
+static int do_flush_dirty(struct silofs_task_ctx *task,
+                          struct silofs_inode_info *ii, int flags)
+{
+	/* XXX TODO FIXME */
+	silofs_unused(task);
+	silofs_unused(ii);
+	silofs_unused(flags);
+
+	return 0;
+}
+
+int silofs_flush_dirty(struct silofs_task_ctx *task,
+                       struct silofs_inode_info *ii, int flags)
+{
+	int err = 0;
+
+	if (need_flush_by(task, ii, flags)) {
+		silofs_ii_incref(ii);
+		err = do_flush_dirty(task, ii, flags);
+		silofs_ii_decref(ii);
+	}
+	return err;
+}
+
+int silofs_flush_dirty_now(struct silofs_task_ctx *task)
+{
+	return silofs_destage_dirty_nodes(&task->pexec);
+}

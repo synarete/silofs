@@ -42,21 +42,9 @@ static void drop_relax_caches(struct silofs_task_ctx *task)
 	relax_caches(task);
 }
 
-static int flush_destage_dirty(struct silofs_task_ctx *task)
+static int flush_dirty(struct silofs_task_ctx *task)
 {
-	int err;
-
-	err = silofs_flush_dirty_now(task);
-	if (err) {
-		log_err("failed to flush dirty: err=%d", err);
-		return err;
-	}
-	err = silofs_destage_dirty_by(task);
-	if (err) {
-		log_err("failed to destage dirty: err=%d", err);
-		return err;
-	}
-	return 0;
+	return silofs_flush_dirty_now(task);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -184,7 +172,7 @@ static int
 post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
 	silofs_env_refresh_root(task->env, pnptr);
-	return flush_destage_dirty(task);
+	return flush_dirty(task);
 }
 
 int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
@@ -214,7 +202,7 @@ commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 
 static int post_commit_mbr(struct silofs_task_ctx *task)
 {
-	return flush_destage_dirty(task);
+	return flush_dirty(task);
 }
 
 int silofs_exec_commit_mbr(struct silofs_task_ctx *task,

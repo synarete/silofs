@@ -37,26 +37,7 @@
 #include <silofs/fs/dir.h>
 #include <silofs/fs/symlink.h>
 #include <silofs/fs/xattr.h>
-
 #include <silofs/fs/task.h>
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* flush */
-
-int silofs_flush_dirty(struct silofs_task_ctx   *task,
-                       struct silofs_inode_info *ii, int flags);
-
-int silofs_flush_dirty_now(struct silofs_task_ctx *task);
-
-int silofs_destage_dirty_by(struct silofs_task_ctx *task);
-
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-/* format */
-
-int silofs_format(struct silofs_task_ctx *task, size_t fs_capacity,
-                  struct silofs_pnptr *out_pnptr);
-
-int silofs_reload(struct silofs_task_ctx    *task,
-                  const struct silofs_pnptr *pnptr);
+#include <silofs/fs/format.h>
 
 #endif /* SILOFS_FS_H_ */

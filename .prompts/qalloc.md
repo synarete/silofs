@@ -66,8 +66,8 @@ and potential heap corruption bugs.
 
 ## Input Files
 
-- `lib/silofs/base/qalloc.c`
-- `lib/silofs/base/qalloc.h`
+- `lib/silofs/infra/qalloc.c`
+- `lib/silofs/infra/qalloc.h`
 
 ## Required Output
 

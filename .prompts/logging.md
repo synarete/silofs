@@ -4,7 +4,7 @@
 
 This document defines the audit procedure for the logging
 infrastructure in `silofs`. The system is implemented in
-`lib/base/logging.c` and supports dual output (stdout and syslog),
+`lib/silofs/infra/logging.c` and supports dual output (stdout and syslog),
 level-based filtering following RFC-5424, and metadata enrichment
 (timestamps, file/line info). It uses a global parameter structure
 (`silofs_log_params`) to control behavior across the entire process.
@@ -68,7 +68,7 @@ string formatting, and correctness of the RFC-5424 level mapping.
 
 ## Input Files
 
-- `lib/silofs/base/logging.c`
+- `lib/silofs/infra/logging.c`
 - `include/silofs/logging.h`
 
 ## Required Output

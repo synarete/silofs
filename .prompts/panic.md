@@ -70,7 +70,7 @@ mechanism.
 
 ## Input Files
 
-- `lib/silofs/base/panic.c`
+- `lib/silofs/infra/panic.c`
 - `include/silofs/panic.h`
 
 ## Required Output

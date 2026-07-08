@@ -68,10 +68,10 @@ the `xe_data` region, alignment logic, and the transition between
 
 ## Input Files
 
-- `lib/fs/xattr.c` (primary implementation)
+- `lib/silofs/fs/xattr.c` (primary implementation)
 - `include/silofs/ondisk.h` (on-disk structures:
   `silofs_xattr_node`)
-- `lib/fs/inode.c` (inode interaction context)
+- `lib/silofs/fs/inode.c` (inode interaction context)
 
 ## Required Output
 

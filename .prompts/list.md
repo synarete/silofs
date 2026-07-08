@@ -71,8 +71,8 @@ correctness of the `listq` wrappers.
 
 ## Input Files
 
-- `lib/silofs/base/list.c`
-- `lib/silofs/base/list.h`
+- `lib/silofs/infra/list.c`
+- `lib/silofs/infra/list.h`
 
 ## Required Output
 

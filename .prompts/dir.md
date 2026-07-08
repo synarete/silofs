@@ -70,9 +70,9 @@ nodes, hash collision handling, and `readdir` offset consistency.
 
 ## Input Files
 
-- `lib/fs/dir.c` (primary implementation)
+- `lib/silofs/fs/dir.c` (primary implementation)
 - `include/silofs/ondisk.h` (on-disk structure: `silofs_dtree_node`)
-- `lib/fs/namei.c` (VFS interaction context)
+- `lib/silofs/fs/namei.c` (VFS interaction context)
 
 ## Required Output
 

@@ -87,7 +87,7 @@ sharing/unsharing mechanisms.
 
 ## Input Files
 
-- `lib/fs/file.c`
+- `lib/silofs/fs/file.c`
 - `include/silofs/ondisk.h`
 
 ## Required Output

@@ -100,8 +100,8 @@ Focus on the mathematical correctness of the AVL properties.
 
 ## Input Files
 
-- `lib/silofs/base/avl.c`
-- `lib/silofs/base/avl.h`
+- `lib/silofs/infra/avl.c`
+- `lib/silofs/infra/avl.h`
 - `test/utests/ut_avl.c`
 
 ## Required Output

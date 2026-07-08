@@ -68,10 +68,10 @@ counting.
 
 ## Input Files
 
-- `lib/fs/symlink.c` (primary implementation)
+- `lib/silofs/fs/symlink.c` (primary implementation)
 - `include/silofs/ondisk.h` (on-disk structure:
   `silofs_symlnk_value`)
-- `lib/fs/inode.c` (inode interaction context)
+- `lib/silofs/fs/inode.c` (inode interaction context)
 
 ## Required Output
 

@@ -838,11 +838,10 @@ dtn_remove_de_name(struct silofs_dtree_node *dtn, struct silofs_dir_entry *de)
 static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
                              size_t name_pos_ref, size_t nb_moved)
 {
-	struct silofs_dir_entry *de;
 	struct silofs_dir_entry *de_beg       = dtn_de_begin(dtn);
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
 
-	for (de = de_beg; de < de_end; ++de) {
+	for (struct silofs_dir_entry *de = de_beg; de < de_end; ++de) {
 		size_t name_pos;
 
 		if (!de_isactive(de)) {
@@ -925,11 +924,10 @@ static int dtn_verify_des(const struct silofs_dtree_node *dtn)
 {
 	const struct silofs_dir_entry *de_beg = dtn_de_begin(dtn);
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
-	const struct silofs_dir_entry *de;
 	size_t names_beg_pos;
 
 	names_beg_pos = dtn_names_beg_pos(dtn);
-	for (de = de_beg; de < de_end; ++de) {
+	for (const struct silofs_dir_entry *de = de_beg; de < de_end; ++de) {
 		if (!de_isactive(de)) {
 			continue;
 		}
@@ -1381,9 +1379,12 @@ static int check_utf8_name(const struct silofs_namestr *nstr,
 
 	err = silofs_uconv_convert(uconv, nstr->sv.str, nstr->sv.len, unb.dat,
 	                           sizeof(unb.dat), &convlen);
-	if (err) {
-		return err;
+	return_if_err(err);
+
+	if (convlen > sizeof(unb.dat)) {
+		return -SILOFS_ENAMETOOLONG;
 	}
+
 	datlen = sizeof(unb.dat) - convlen;
 	if (datlen == 0) {
 		return -SILOFS_EINVAL;
@@ -1419,20 +1420,16 @@ int silofs_dir_make_hname(const struct silofs_inode_info *dir_ii,
                           const struct silofs_namestr *nstr,
                           struct silofs_namestr *out_nstr)
 {
-	uint64_t seed;
-	enum silofs_namehfn nhfn;
+	const uint64_t seed      = dir_seed(dir_ii);
+	enum silofs_namehfn nhfn = dir_hfn(dir_ii);
 	int err;
 
 	err = silofs_namestr_init_by(out_nstr, &nstr->sv);
-	if (err) {
-		return err;
-	}
-	nhfn = dir_hfn(dir_ii);
-	seed = dir_seed(dir_ii);
-	err  = silofs_namestr_calc_hash(out_nstr, md_hd, nhfn, seed);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
+	err = silofs_namestr_calc_hash(out_nstr, md_hd, nhfn, seed);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1510,13 +1507,11 @@ static int dirc_stage_dtnode(const struct silofs_dir_ctx *d_ctx,
 	silofs_assert_gt(laddr->off, 0);
 	err = silofs_stage_dtnode2(d_ctx->task, laddr, d_ctx->dir_ii,
 	                           d_ctx->stg_mode, out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_recheck_dnode(d_ctx, *out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1646,9 +1641,8 @@ static int dirc_spawn_tree_root(const struct silofs_dir_ctx *d_ctx,
 
 	laddr_of_dnode(&laddr, SILOFS_OFF_NULL);
 	err = dirc_spawn_setup_dnode(d_ctx, &laddr, dtn_idx, out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dir_set_tree_root(d_ctx->dir_ii, dti_laddr(*out_dti));
 	dir_ii_setdirty(d_ctx->dir_ii);
 	return 0;
@@ -1737,13 +1731,11 @@ static int dirc_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_stage_tree_root(d_ctx, &dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_lookup_by_tree(d_ctx, dti, dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1769,17 +1761,14 @@ static int dirc_check_and_lookup_by_name(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_check_self_and_name(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_check_may_lookup(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_lookup_by_name(d_ctx, dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1790,9 +1779,8 @@ static int dirc_do_lookup_dentry(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_check_and_lookup_by_name(d_ctx, &dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dei_ino_dt(&dei, out_idt);
 	return 0;
 }
@@ -1835,10 +1823,10 @@ dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
 	if (!dtn_index_valid_depth(dtn_idx)) {
 		return -SILOFS_ENOSPC;
 	}
+
 	err = dirc_spawn_setup_dnode(d_ctx, parent, dtn_idx, out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dti_setdirty(*out_dti, d_ctx->dir_ii);
 	return 0;
 }
@@ -1854,10 +1842,10 @@ static int dirc_do_spawn_bind_child(const struct silofs_dir_ctx *d_ctx,
 
 	parent_dtn_idx = dtn_node_index(parent_dti->dtn);
 	child_dtn_idx  = hash_to_child_dtn_index(name->hash, parent_dtn_idx);
+
 	err = dirc_spawn_child(d_ctx, parent_laddr, child_dtn_idx, out_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dti_bind_child_at(parent_dti, dti_laddr(*out_dti), child_dtn_idx);
 	dti_setdirty(parent_dti, d_ctx->dir_ii);
 	return 0;
@@ -1906,9 +1894,8 @@ static int dirc_discard_dnode(const struct silofs_dir_ctx *d_ctx,
 
 	dtn_reset_data(dti->dtn);
 	err = dirc_remove_dtnode(d_ctx, dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dirc_update_isizeblocks(d_ctx, dtn_index, false);
 	return 0;
 }
@@ -2005,9 +1992,8 @@ static int dirc_insert_dentry(struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_add_to_tree(d_ctx, root_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dirc_update_nlink(d_ctx, 1);
 	return 0;
 }
@@ -2018,13 +2004,11 @@ static int dirc_do_add_dentry(struct silofs_dir_ctx *d_ctx)
 	int err;
 
 	err = dirc_require_tree_root(d_ctx, &root_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_insert_dentry(d_ctx, root_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2313,10 +2297,10 @@ static int dirc_next_node(struct silofs_dir_ctx *d_ctx,
 		*out_dtn_idx = next_dtn_idx;
 		return 0;
 	}
+
 	err = dirc_stage_dtnode(d_ctx, &laddr, &parent_dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	ord = dtn_child_ord(dti->dtn);
 	while (++ord < DTREE_FANOUT) {
 		dti_child_addr_by_ord(parent_dti, ord, &laddr);
@@ -2423,17 +2407,19 @@ static bool dirc_emit_dotdot(struct silofs_dir_ctx *d_ctx)
 
 static bool dirc_emit_meta(struct silofs_dir_ctx *d_ctx)
 {
-	bool ok = true;
-
 	if (d_ctx->rd_ctx->pos == 0) {
-		ok                 = dirc_emit_dot(d_ctx);
+		if (!dirc_emit_dot(d_ctx)) {
+			return false;
+		}
 		d_ctx->rd_ctx->pos = 1;
 	}
-	if (ok && (d_ctx->rd_ctx->pos == 1)) {
-		ok                 = dirc_emit_dotdot(d_ctx);
+	if (d_ctx->rd_ctx->pos == 1) {
+		if (!dirc_emit_dotdot(d_ctx)) {
+			return false;
+		}
 		d_ctx->rd_ctx->pos = 2;
 	}
-	return ok;
+	return true;
 }
 
 static int dirc_readdir_iter(struct silofs_dir_ctx *d_ctx)
@@ -2494,21 +2480,17 @@ static int dirc_do_readdir(struct silofs_dir_ctx *d_ctx)
 	int err;
 
 	err = dirc_check_readdir(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_check_raccess(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_check_stage_parent(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_readdir_and_update(d_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2592,13 +2574,11 @@ static int dirc_discard_tree_at(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	err = dirc_discard_childs_of(d_ctx, dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_discard_dnode(d_ctx, dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2611,14 +2591,13 @@ static int dirc_discard_recursively(const struct silofs_dir_ctx *d_ctx,
 	if (laddr_isnull(laddr)) {
 		return 0;
 	}
+
 	err = dirc_stage_dtnode(d_ctx, laddr, &dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_discard_tree_at(d_ctx, dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2638,14 +2617,13 @@ static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
 	if (!dirc_has_tree(d_ctx)) {
 		return 0;
 	}
+
 	err = dirc_stage_tree_root(d_ctx, &dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_discard_tree_at(d_ctx, dti);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dirc_resetup_empty_dir(d_ctx);
 	return 0;
 }
@@ -2723,17 +2701,14 @@ static int dirc_do_remove_dentry(struct silofs_dir_ctx *d_ctx)
 	int err;
 
 	err = dirc_check_and_lookup_by_name(d_ctx, &dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_stage_child_by_de(d_ctx, &dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dirc_erase_dentry(d_ctx, &dei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2847,17 +2822,14 @@ int silofs_verify_dir_inode(const struct silofs_inode *inode)
 	int err;
 
 	err = dinode_verify_root(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dinode_verify_ndends(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dinode_verify_hashfn(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2871,10 +2843,10 @@ static int dtn_verify_childs(const struct silofs_dtree_node *dtn)
 		if (laddr_isnull(&laddr)) {
 			continue;
 		}
+
 		err = silofs_verify_off(laddr.off);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		if (!ltype_isdtnode(laddr.ltype)) {
 			return -SILOFS_EFSCORRUPTED;
 		}
@@ -2892,13 +2864,11 @@ static int dtn_verify_parents(const struct silofs_dtree_node *dtn)
 	int err;
 
 	err = silofs_verify_ino(dtn_ino(dtn));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_verify_off(dtn_parent(dtn));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -2907,28 +2877,22 @@ int silofs_verify_dtree_node(const struct silofs_dtree_node *dtn)
 	int err;
 
 	err = dtn_verify_counts(dtn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dtn_verify_parents(dtn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = verify_dtn_index(dtn_node_index(dtn));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dtn_verify_childs(dtn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dtn_verify_des(dtn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dtn_verify_names(dtn);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

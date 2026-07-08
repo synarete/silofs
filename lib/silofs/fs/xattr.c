@@ -464,16 +464,16 @@ static void ixa_setup(struct silofs_inode_xattr *ixa)
 
 static int ixa_verify(const struct silofs_inode_xattr *ixa)
 {
-	struct silofs_laddr laddr = { .off = -1 };
 	int err;
 
 	for (size_t slot = 0; slot < ARRAY_SIZE(ixa->ix_laddr); ++slot) {
+		struct silofs_laddr laddr = { .off = -1 };
+
 		ixa_laddr(ixa, slot, &laddr);
 		if (!silofs_off_isnull(laddr.off)) {
 			err = silofs_verify_off(laddr.off);
-			if (err) {
-				return err;
-			}
+			return_if_err(err);
+
 			if (laddr.ltype != SILOFS_LTYPE_XANODE) {
 				return -SILOFS_EFSCORRUPTED;
 			}
@@ -632,10 +632,9 @@ static bool has_xattr_prefix(const struct silofs_namestr *name,
 static const struct silofs_xattr_prefix *
 search_prefix(const struct silofs_namestr *name)
 {
-	const struct silofs_xattr_prefix *xap;
-
 	for (size_t i = 0; i < ARRAY_SIZE(s_xattr_prefix); ++i) {
-		xap = &s_xattr_prefix[i];
+		const struct silofs_xattr_prefix *xap = &s_xattr_prefix[i];
+
 		if (has_xattr_prefix(name, xap)) {
 			return xap;
 		}
@@ -683,29 +682,34 @@ static int xac_check_imode(const struct silofs_xattr_ctx *xa_ctx)
 	return (S_ISCHR(mode) || S_ISBLK(mode)) ? -SILOFS_EINVAL : 0;
 }
 
-static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
+static int xac_check_size_flags(const struct silofs_xattr_ctx *xa_ctx)
 {
-	struct silofs_inode_info *ii = xa_ctx->ii;
-	int err;
-
-	err = xac_check_imode(xa_ctx);
-	if (err) {
-		return err;
-	}
-	err = xac_check_xattr_name(xa_ctx, access_mode & W_OK);
-	if (err) {
-		return err;
-	}
 	if (xa_ctx->size > SILOFS_XATTR_VALUE_MAX) {
 		return -SILOFS_EINVAL;
 	}
 	if (!is_valid_xflags(xa_ctx->flags)) {
 		return -SILOFS_EINVAL;
 	}
+	return 0;
+}
+
+static int xac_check_op(const struct silofs_xattr_ctx *xa_ctx, int access_mode)
+{
+	struct silofs_inode_info *ii = xa_ctx->ii;
+	int err;
+
+	err = xac_check_imode(xa_ctx);
+	return_if_err(err);
+
+	err = xac_check_xattr_name(xa_ctx, access_mode & W_OK);
+	return_if_err(err);
+
+	err = xac_check_size_flags(xa_ctx);
+	return_if_err(err);
+
 	err = silofs_do_access(xa_ctx->task, ii, access_mode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -786,13 +790,11 @@ static int xac_do_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	int err;
 
 	err = xac_check_op(xa_ctx, R_OK);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_lookup_entry(xa_ctx, &xei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_size = xe_value_size(xei.xe);
 	if ((buf->cap == 0) || (buf->ptr == nullptr)) {
 		return 0; /* getxattr-size only */
@@ -840,9 +842,8 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	int err;
 
 	err = silofs_spawn_xanode2(xa_ctx->task, xa_ctx->ii, out_xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	xai_setdirty(*out_xai, xa_ctx->ii);
 	return 0;
 }
@@ -856,9 +857,7 @@ xac_spawn_bind_xanode(const struct silofs_xattr_ctx *xa_ctx, size_t slot,
 	int err;
 
 	err = xac_spawn_xanode(xa_ctx, &xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 
 	xai_setup_node(xai, ii->i_ino);
 
@@ -917,13 +916,10 @@ static int xac_try_insert_at_nodes(const struct silofs_xattr_ctx *xa_ctx,
 		struct silofs_xanode_info *xai = nullptr;
 
 		err = xac_require_xanode(xa_ctx, sloti, &xai);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
+
 		err = xac_try_insert_at(xa_ctx, xai, xei);
-		if (!err) {
-			return 0;
-		}
+		return_if_not_err(err);
 	}
 	return -SILOFS_ENOSPC;
 }
@@ -953,10 +949,10 @@ static int xac_setxattr_create(struct silofs_xattr_ctx *xa_ctx,
 	if (err != -SILOFS_ENOSPC) {
 		return err;
 	}
+
 	err = xac_try_insert_at_nodes(xa_ctx, xei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -978,10 +974,10 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 	if ((xa_ctx->flags == XATTR_REPLACE) && (xei->xe == nullptr)) {
 		return -SILOFS_ENODATA;
 	}
+
 	err = xac_setxattr_create(xa_ctx, xei);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if (xei_cur.xe != nullptr) {
 		xei_discard_entry(&xei_cur);
 		xai_setdirty(xei_cur.xai, xa_ctx->ii);
@@ -1049,13 +1045,11 @@ static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	err = xac_check_op(xa_ctx, W_OK);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_setxattr_apply(xa_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	xac_update_post_setxattr(xa_ctx);
 	return 0;
 }
@@ -1217,14 +1211,13 @@ static int xac_emit_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 	if (silofs_laddr_isnull(&laddr)) {
 		return 0;
 	}
+
 	err = xac_stage_xanode(xa_ctx, &laddr, &xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_emit_node(xa_ctx, xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1235,9 +1228,7 @@ static int xac_emit_by_nodes(struct silofs_xattr_ctx *xa_ctx)
 
 	for (size_t slot = 0; slot < nslots_max; ++slot) {
 		err = xac_emit_node_at(xa_ctx, slot);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }
@@ -1252,13 +1243,11 @@ static int xac_emit_names(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	err = xac_emit_by_inode(xa_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_emit_by_nodes(xa_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1267,13 +1256,11 @@ static int xac_do_listxattr(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	err = xac_check_op(xa_ctx, R_OK);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_emit_names(xa_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1312,10 +1299,10 @@ static int xac_drop_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 	if (silofs_laddr_isnull(&laddr)) {
 		return 0;
 	}
+
 	err = xac_remove_xanode_at(xa_ctx, &laddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	ii_xa_unset_at(xa_ctx->ii, sloti);
 	return 0;
 }
@@ -1327,9 +1314,7 @@ static int xac_do_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 
 	for (size_t i = 0; i < nslots_max; ++i) {
 		err = xac_drop_node_at(xa_ctx, i);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }

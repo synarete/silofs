@@ -548,13 +548,13 @@ enum silofs_hdrf {
 /* common header to all meta-data nodes */
 struct silofs_header {
 	uint32_t h_magic;
-	uint32_t h_csum;
 	uint32_t h_size;
 	uint16_t h_flags;
 	uint8_t  h_ptype;
 	uint8_t  h_ltype;
-	uint8_t  h_reserved[16];
-} silofs_attr_aligned16;
+	uint8_t  h_reserved[12];
+	uint64_t h_csum;
+} silofs_attr_aligned32;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

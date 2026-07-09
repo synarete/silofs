@@ -119,20 +119,19 @@ hdr_has_flags(const struct silofs_header *hdr, enum silofs_hdrf flags)
 	return (hdr_flags(hdr) & flags) > 0;
 }
 
-static uint32_t hdr_csum(const struct silofs_header *hdr)
-{
-	return silofs_le32_to_cpu(hdr->h_csum);
-}
-
-static void hdr_set_csum(struct silofs_header *hdr, uint32_t csum)
-{
-	hdr->h_csum = silofs_cpu_to_le32(csum);
-	hdr_add_flags(hdr, SILOFS_HDRF_CSUM);
-}
-
 static bool hdr_has_csum(const struct silofs_header *hdr)
 {
 	return hdr_has_flags(hdr, SILOFS_HDRF_CSUM);
+}
+
+static uint64_t hdr_csum(const struct silofs_header *hdr)
+{
+	return silofs_le64_to_cpu(hdr->h_csum);
+}
+
+static void hdr_set_csum(struct silofs_header *hdr, uint64_t csum)
+{
+	hdr->h_csum = silofs_cpu_to_le64(csum);
 }
 
 static const void *hdr_payload(const struct silofs_header *hdr)
@@ -169,33 +168,28 @@ hdr_verify_base(const struct silofs_header *hdr,
 	return 0;
 }
 
-static uint32_t hdr_calc_chekcsum(const struct silofs_header *hdr)
+static uint64_t hdr_calc_chekcsum(const struct silofs_header *hdr)
 {
 	const void *payload  = hdr_payload(hdr);
 	const size_t pl_size = hdr_payload_size(hdr);
 
-	return (uint32_t)silofs_xxh3(payload, pl_size);
+	return silofs_xxh3(payload, pl_size);
 }
 
 void silofs_hdr_seal(struct silofs_header *hdr)
 {
-	const uint32_t csum = hdr_calc_chekcsum(hdr);
+	const uint64_t csum = hdr_calc_chekcsum(hdr);
 
 	hdr_set_csum(hdr, csum);
+	hdr_add_flags(hdr, SILOFS_HDRF_CSUM);
 }
 
 static int hdr_verify_checksum(const struct silofs_header *hdr)
 {
-	uint32_t csum;
+	const uint64_t csum_want = hdr_calc_chekcsum(hdr);
+	const uint64_t csum_have = hdr_csum(hdr);
 
-	if (!hdr_has_csum(hdr)) {
-		return 0;
-	}
-	csum = hdr_calc_chekcsum(hdr);
-	if (csum != hdr_csum(hdr)) {
-		return -SILOFS_EBADMSG;
-	}
-	return 0;
+	return (csum_want == csum_have) ? 0 : -SILOFS_EFSBADCRC;
 }
 
 int silofs_hdr_verify(const struct silofs_header *hdr,
@@ -206,9 +200,10 @@ int silofs_hdr_verify(const struct silofs_header *hdr,
 	err = hdr_verify_base(hdr, stype, flags);
 	return_if_err(err);
 
-	err = hdr_verify_checksum(hdr);
-	return_if_err(err);
-
+	if (hdr_has_csum(hdr)) {
+		err = hdr_verify_checksum(hdr);
+		return_if_err(err);
+	}
 	return 0;
 }
 

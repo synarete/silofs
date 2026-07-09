@@ -197,11 +197,11 @@ static void validate_ondisk_spdesc(void)
 static void validate_ondisk_headers(void)
 {
 	REQUIRE_OFFSET32(struct silofs_header, h_magic, 0);
-	REQUIRE_OFFSETXX(struct silofs_header, h_csum, 4);
-	REQUIRE_OFFSET32(struct silofs_header, h_size, 8);
-	REQUIRE_OFFSET32(struct silofs_header, h_flags, 12);
-	REQUIRE_OFFSETXX(struct silofs_header, h_ptype, 14);
-	REQUIRE_OFFSETXX(struct silofs_header, h_ltype, 15);
+	REQUIRE_OFFSET32(struct silofs_header, h_size, 4);
+	REQUIRE_OFFSET32(struct silofs_header, h_flags, 8);
+	REQUIRE_OFFSETXX(struct silofs_header, h_ptype, 10);
+	REQUIRE_OFFSETXX(struct silofs_header, h_ltype, 11);
+	REQUIRE_OFFSETXX(struct silofs_header, h_csum, 24);
 	REQUIRE_SIZEOF(struct silofs_header, SILOFS_HEADER_SIZE);
 	REQUIRE_SIZEOF(struct silofs_repo_meta, SILOFS_REPO_METAFILE_SIZE);
 }

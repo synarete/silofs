@@ -277,11 +277,10 @@ static int do_flush_dirty(struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags)
 {
 	/* XXX TODO FIXME */
-	silofs_unused(task);
 	silofs_unused(ii);
 	silofs_unused(flags);
 
-	return 0;
+	return silofs_flush_dirty_now(task);
 }
 
 int silofs_flush_dirty(struct silofs_task_ctx *task,

@@ -37,14 +37,14 @@ hdr_size_by(const struct silofs_stype *stype, enum silofs_hdrf flags)
 	return sz;
 }
 
-static uint32_t hdr_magic(const struct silofs_header *hdr)
+static uint64_t hdr_magic(const struct silofs_header *hdr)
 {
-	return silofs_le32_to_cpu(hdr->h_magic);
+	return silofs_le64_to_cpu(hdr->h_magic);
 }
 
-static void hdr_set_magic(struct silofs_header *hdr, uint32_t magic)
+static void hdr_set_magic(struct silofs_header *hdr, uint64_t magic)
 {
-	hdr->h_magic = silofs_cpu_to_le32(magic);
+	hdr->h_magic = silofs_cpu_to_le64(magic);
 }
 
 static size_t hdr_size(const struct silofs_header *hdr)
@@ -143,7 +143,7 @@ void silofs_hdr_setup(struct silofs_header *hdr,
                       const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
 	memset(hdr, 0, sizeof(*hdr));
-	hdr_set_magic(hdr, SILOFS_META_MAGIC);
+	hdr_set_magic(hdr, SILOFS_HEADER_MAGIC);
 	hdr_set_size(hdr, hdr_size_by(stype, flags));
 	hdr_set_stype(hdr, stype);
 	hdr_set_flags(hdr, flags);
@@ -153,7 +153,7 @@ static int
 hdr_verify_base(const struct silofs_header *hdr,
                 const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
-	if (hdr_magic(hdr) != SILOFS_META_MAGIC) {
+	if (hdr_magic(hdr) != SILOFS_HEADER_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	if (!hdr_has_stype(hdr, stype)) {

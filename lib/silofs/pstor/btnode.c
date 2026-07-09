@@ -56,17 +56,17 @@ static void btn_rm_flags(struct silofs_btree_node *btn, enum silofs_btnodef f)
 	btn_set_flags(btn, (enum silofs_btnodef)newf);
 }
 
-static enum silofs_ltype btn_vspace(const struct silofs_btree_node *btn)
+static enum silofs_ltype btn_lspace(const struct silofs_btree_node *btn)
 {
-	const unsigned vspace = btn->btn_vspace;
+	const unsigned lspace = btn->btn_lspace;
 
-	return (enum silofs_ltype)vspace;
+	return (enum silofs_ltype)lspace;
 }
 
 static void
-btn_set_vspace(struct silofs_btree_node *btn, enum silofs_ltype vspace)
+btn_set_lspace(struct silofs_btree_node *btn, enum silofs_ltype lspace)
 {
-	btn->btn_vspace = (uint8_t)vspace;
+	btn->btn_lspace = (uint8_t)lspace;
 }
 
 static size_t btn_height(const struct silofs_btree_node *btn)
@@ -379,7 +379,7 @@ static void btn_clone_into(const struct silofs_btree_node *btn,
 {
 	btn_setup(btn_other);
 	btn_set_flags(btn_other, btn_flags(btn));
-	btn_set_vspace(btn_other, btn_vspace(btn));
+	btn_set_lspace(btn_other, btn_lspace(btn));
 	btn_set_height(btn_other, btn_height(btn));
 	btn_clone_keys(btn, btn_other);
 	btn_clone_childs(btn, btn_other);
@@ -745,13 +745,13 @@ void silofs_bti_cleardirty(struct silofs_btnode_info *bti)
 
 enum silofs_ltype silofs_bti_vspace(const struct silofs_btnode_info *bti)
 {
-	return btn_vspace(bti->btn);
+	return btn_lspace(bti->btn);
 }
 
 void silofs_bti_set_vspace(struct silofs_btnode_info *bti,
                            enum silofs_ltype vspace)
 {
-	btn_set_vspace(bti->btn, vspace);
+	btn_set_lspace(bti->btn, vspace);
 	bti_setdirty(bti);
 }
 

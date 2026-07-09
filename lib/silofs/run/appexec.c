@@ -21,6 +21,7 @@
 #include <silofs/ondisk.h>
 #include <silofs/ioctls.h>
 #include <silofs/appexec.h>
+#include <silofs/mntsvc.h>
 #include <silofs/infra.h>
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
@@ -83,13 +84,11 @@ appexec_fork_fs(struct silofs_task_ctx *task, struct silofs_mbrefs *out_mbrefs)
 	int err;
 
 	err = silofs_exec_forkfs(task, SILOFS_INO_ROOT, 0, out_mbrefs);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = flush_dirty(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	drop_relax_caches(task);
 	return 0;
 }
@@ -119,17 +118,14 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 	int err;
 
 	err = flush_dirty(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = shutdown_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = close_repo(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -168,9 +164,8 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 	int err;
 
 	err = silofs_env_sense_mbr(task->env, mbref);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	drop_caches(task);
 	return 0;
 }
@@ -348,13 +343,11 @@ static int exec_format_repo(struct silofs_env *env)
 	int err;
 
 	err = make_priv_task(env, &task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_exec_format_repo(&task);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	log_dbg("format-repo done: %s", env->repodir);
 out:
 	return term_task(&task, err);
@@ -365,13 +358,11 @@ static int do_format_repo(struct silofs_env *env)
 	int err;
 
 	err = check_format_repo(env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = exec_format_repo(env);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -732,13 +723,16 @@ static int check_endianess(void)
 	err = check_endianess64(SILOFS_MBR_MAGIC, "@SILOFS@");
 	return_if_err(err);
 
+	err = check_endianess64(SILOFS_HEADER_MAGIC, "%silofs");
+	return_if_err(err);
+
 	err = check_endianess64(SILOFS_SUPER_MAGIC, "@silofs@");
 	return_if_err(err);
 
 	err = check_endianess32(SILOFS_FSID_MAGIC, "SILO");
 	return_if_err(err);
 
-	err = check_endianess32(SILOFS_META_MAGIC, "silo");
+	err = check_endianess32(SILOFS_MNTMSG_MAGIC, "silo");
 	return_if_err(err);
 
 	return 0;

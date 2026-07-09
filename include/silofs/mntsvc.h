@@ -24,6 +24,9 @@
 #include <silofs/ondisk.h>
 #include <silofs/memalloc.h>
 
+/* mount-message magic (ASCII: "silo") */
+#define SILOFS_MNTMSG_MAGIC (0x6F6C6973U)
+
 struct silofs_ms_env;
 
 struct silofs_fsinfo {

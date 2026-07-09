@@ -39,9 +39,6 @@
 /* file-system fsid magic number (ASCII: "SILO") */
 #define SILOFS_FSID_MAGIC (0x4F4C4953U)
 
-/* magic numbers at meta-objects start (ASCII: "silo") */
-#define SILOFS_META_MAGIC (0x6F6C6973U)
-
 /* min/max length of encryption password (FIPS 140-2) */
 #define SILOFS_PASSWORD_MIN (8)
 #define SILOFS_PASSWORD_MAX (127)
@@ -223,9 +220,6 @@
 
 /* max size of within-inode symbolic-link value  */
 #define SILOFS_SYMLNK_HEAD_MAX (480)
-
-/* max size of symbolic-link part  */
-#define SILOFS_SYMVAL_PART_MAX (4032)
 
 /* number of possible symbolic-link parts  */
 #define SILOFS_SYMLNK_NPARTS (2)
@@ -535,7 +529,10 @@ struct silofs_mbr1k {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* size of common meta-data header */
-#define SILOFS_HEADER_SIZE (32)
+#define SILOFS_HEADER_SIZE (64)
+
+/* magic numbers at meta-objects start (ASCII: "%silofs") */
+#define SILOFS_HEADER_MAGIC (0x73666f6c697325)
 
 /* meta-header flags */
 enum silofs_hdrf {
@@ -547,12 +544,12 @@ enum silofs_hdrf {
 
 /* common header to all meta-data nodes */
 struct silofs_header {
-	uint32_t h_magic;
+	uint64_t h_magic;
 	uint32_t h_size;
 	uint16_t h_flags;
 	uint8_t  h_ptype;
 	uint8_t  h_ltype;
-	uint8_t  h_reserved[12];
+	uint8_t  h_reserved[36];
 	uint64_t h_csum;
 } silofs_attr_aligned32;
 
@@ -575,7 +572,7 @@ struct silofs_uber_node {
 	struct silofs_timespec ub_ctime;
 	uint64_t               ub_generation;
 	uint64_t               ub_capacity;
-	uint8_t                ub_reserved1[432];
+	uint8_t                ub_reserved1[400];
 	uint8_t                ub_reserved2[512];
 	struct silofs_uber_sub ub_sub[15];
 } silofs_attr_aligned64;
@@ -597,14 +594,14 @@ struct silofs_superb_node {
 	uint64_t                    s_magic;
 	uint64_t                    s_version;
 	uint32_t                    s_flags;
-	uint8_t                     s_reserved1[12];
+	uint8_t                     s_reserved1[44];
 	struct silofs_sw_version64b s_sw_version;
-	struct silofs_tm64b         s_btime;
 	uint8_t                     s_reserved2[64];
+	struct silofs_tm64b         s_btime;
 	uint64_t                    s_fs_capacity;
 	uint64_t                    s_fs_usage;
 	uint64_t                    s_ino_generation;
-	uint8_t                     s_reserved3[744];
+	uint8_t                     s_reserved3[680];
 	uint64_t                    s_nodes_count[128];
 	int64_t                     s_apex_voff[128];
 	uint8_t                     s_reserved4[1024];
@@ -619,8 +616,8 @@ struct silofs_space_node {
 	struct silofs_header sp_hdr;
 	int64_t              sp_base_off;
 	uint8_t              sp_ref_ltype;
-	uint8_t              sp_reserved[23];
-	uint8_t              sp_reserved2[960];
+	uint8_t              sp_reserved[55];
+	uint8_t              sp_reserved2[896];
 	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
 	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
 } silofs_attr_aligned64;
@@ -684,8 +681,8 @@ struct silofs_inode {
 	uint32_t                  i_rdev_minor;
 	uint64_t                  i_revision;
 	uint64_t                  i_generation;
+	uint8_t                   i_reserved1[32];
 	struct silofs_inode_times i_tm;
-	uint8_t                   i_reserved2[64];
 	struct silofs_inode_xattr i_xa;
 	union silofs_inode_tail   i_ta;
 } silofs_attr_aligned64;
@@ -721,7 +718,7 @@ struct silofs_xattr_node {
 	struct silofs_header      xa_hdr;
 	uint64_t                  xa_ino;
 	uint16_t                  xa_nents;
-	uint8_t                   xa_reserved[86];
+	uint8_t                   xa_reserved[48];
 	struct silofs_xattr_entry xe[SILOFS_XATTR_NENTS];
 } silofs_attr_aligned64;
 
@@ -747,7 +744,7 @@ struct silofs_dtree_node {
 	uint16_t                dn_nde;
 	uint16_t                dn_nnb;
 	uint32_t                dn_nactive_childs;
-	uint8_t                 dn_reserved[68];
+	uint8_t                 dn_reserved[36];
 	union silofs_dtree_data dn_data;
 	struct silofs_laddr56   dn_child[SILOFS_DTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
@@ -761,10 +758,15 @@ struct silofs_ftree_node {
 	uint32_t              fn_nactive_childs;
 	uint8_t               fn_height;
 	uint8_t               fn_child_ltype;
-	uint8_t               fn_reserved[58];
+	uint8_t               fn_reserved[26];
 	uint8_t               fn_zeros[896];
 	struct silofs_laddr56 fn_child[SILOFS_FTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* max size of symbolic-link part  */
+#define SILOFS_SYMVAL_PART_MAX (4000)
 
 struct silofs_symval_node {
 	struct silofs_header svn_hdr;
@@ -837,17 +839,18 @@ struct silofs_blob_desc {
 	struct silofs_header    bld_hdr;
 	struct silofs_timespec  bld_btime;
 	struct silofs_timespec  bld_ctime;
+	uint8_t                 bld_reserved1[32];
 	struct silofs_blobid48b bld_prev;
-	uint8_t                 bld_reserved1[16];
-	struct silofs_blobid48b bld_refblob;
 	uint8_t                 bld_reserved2[16];
+	struct silofs_blobid48b bld_refblob;
+	uint8_t                 bld_reserved3[16];
 	uint64_t                bld_blobsize;
 	uint32_t                bld_objsize;
 	uint32_t                bld_nobjs_max;
 	uint32_t                bld_nobjs;
 	uint32_t                bld_flags;
-	uint8_t                 bld_reserved3[40];
-	uint8_t                 bld_obj_state[7936];
+	uint8_t                 bld_reserved4[232];
+	uint8_t                 bld_obj_state[7680];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -870,11 +873,12 @@ struct silofs_btree_node {
 	struct silofs_header    btn_hdr;
 	uint64_t                btn_minkey;
 	uint32_t                btn_flags;
-	uint8_t                 btn_vspace;
+	uint8_t                 btn_lspace;
 	uint8_t                 btn_height;
+	uint8_t                 btn_reserved1[2];
 	uint16_t                btn_nkeys;
 	uint16_t                btn_nchilds;
-	uint8_t                 btn_reserved2[206];
+	uint8_t                 btn_reserved2[172];
 	uint64_t                btn_key[SILOFS_BTREE_NODE_NKEYS];
 	uint8_t                 btn_reserved3[296];
 	struct silofs_pnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];

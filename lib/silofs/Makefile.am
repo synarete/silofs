@@ -138,7 +138,7 @@ libsilofs_la_SOURCES += nodes/pnodes.h
 libsilofs_la_SOURCES += nodes/spools.c
 libsilofs_la_SOURCES += nodes/spools.h
 libsilofs_la_SOURCES += nodes/view.c
-libsilofs_la_SOURCES += nodes/ciew.h
+libsilofs_la_SOURCES += nodes/view.h
 libsilofs_la_SOURCES += nodes.h
 
 libsilofs_la_SOURCES += pstor/bldesc.c

@@ -992,7 +992,7 @@ static void stc_detach_lspace(struct silofs_stage_ctx *st_ctx,
 {
 	const struct silofs_blobid *blobid = &pnptr->paddr.blobid;
 
-	silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_VNODE);
+	silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_LNODE);
 
 	silofs_ubi_dec_count_by(stc_ubi(st_ctx), blobid);
 }

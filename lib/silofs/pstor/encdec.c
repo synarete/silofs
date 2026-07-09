@@ -20,11 +20,25 @@
 #include <silofs/nodes.h>
 #include <silofs/pstor.h>
 
+static void calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
+                              const struct silofs_paddr *paddr,
+                              struct silofs_caad *out_caad)
+{
+	struct silofs_hash256 hash;
+	struct silofs_paddr64b paddr64;
+
+	STATICASSERT_EQ(sizeof(hash.hash), sizeof(out_caad->aad));
+
+	silofs_paddr64b_htox(&paddr64, paddr);
+	silofs_sha3_256_of(md_hd, &paddr64, sizeof(paddr64), &hash);
+	memcpy(out_caad->aad, hash.hash, sizeof(out_caad->aad));
+}
+
 static void
 calc_aad_of(const struct silofs_pexec_ctx *pexec,
             const struct silofs_pnptr *pnptr, struct silofs_caad *out_caad)
 {
-	silofs_calc_aad_by_paddr(pexec->md_hd, &pnptr->paddr, out_caad);
+	calc_aad_by_paddr(pexec->md_hd, &pnptr->paddr, out_caad);
 }
 
 static const struct silofs_caad *

@@ -17,11 +17,13 @@
 #ifndef SILOFS_NODEVIEW_H_
 #define SILOFS_NODEVIEW_H_
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags);
+void silofs_hdr_setup(struct silofs_header      *hdr,
+                      const struct silofs_stype *stype,
+                      enum silofs_hdrf           flags);
 
-int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags);
+int silofs_hdr_verify(const struct silofs_header *hdr,
+                      const struct silofs_stype  *stype,
+                      enum silofs_hdrf            flags);
 
 void silofs_hdr_seal(struct silofs_header *hdr);
 
@@ -67,12 +69,13 @@ int silofs_decrypt_view_inplace(const struct silofs_cipher_hd *ci_hd,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_pview_setup(struct silofs_pview *pview, enum silofs_ptype ptype);
+void silofs_pview_setup(struct silofs_pview       *pview,
+                        const struct silofs_stype *stype);
 
 void silofs_pview_seal(struct silofs_pview *pview);
 
 int silofs_pview_verify(const struct silofs_pview *pview,
-                        enum silofs_ptype          ptype);
+                        const struct silofs_stype *stype);
 
 int silofs_encrypt_pview(const struct silofs_cipher_hd *ci_hd,
                          const struct silofs_civkey    *civkey,

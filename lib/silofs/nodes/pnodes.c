@@ -91,6 +91,12 @@ enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)
 	return pni_ptype(pni);
 }
 
+const struct silofs_stype *
+silofs_pni_stype(const struct silofs_pnode_info *pni)
+{
+	return &pni->pn_self.paddr.blobid.stype;
+}
+
 static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
 {
 	return &pni->pn_base.dqe;
@@ -161,10 +167,10 @@ pni_attach_pview(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 	int err;
 
 	err = silofs_ni_attach_view(&pni->pn_base, alloc, true);
-	if (!err) {
-		silofs_pview_setup(pni_pview(pni), pni_ptype(pni));
-	}
-	return err;
+	return_if_err(err);
+
+	silofs_pview_setup(pni_pview(pni), silofs_pni_stype(pni));
+	return 0;
 }
 
 static void
@@ -605,7 +611,7 @@ silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_MBR:
-	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LNODE:
 	case SILOFS_PTYPE_LAST:
 	default:
 		silofs_panic("can not create pnode: ptype=%d", (int)ptype);
@@ -631,7 +637,7 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 		break;
 	case SILOFS_PTYPE_NONE:
 	case SILOFS_PTYPE_MBR:
-	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LNODE:
 	case SILOFS_PTYPE_LAST:
 	default:
 		silofs_panic("can not delete pnode: ptype=%d", (int)ptype);
@@ -648,8 +654,9 @@ void silofs_seal_pview_of(const struct silofs_pnode_info *pni)
 
 int silofs_verify_pview_of(const struct silofs_pnode_info *pni)
 {
-	struct silofs_pview *pview = silofs_pni_pview(pni);
+	struct silofs_pview *pview       = silofs_pni_pview(pni);
+	const struct silofs_stype *stype = silofs_pni_stype(pni);
 
 	// TODO: verify sub-components
-	return silofs_pview_verify(pview, pni_ptype(pni));
+	return silofs_pview_verify(pview, stype);
 }

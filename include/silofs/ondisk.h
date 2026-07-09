@@ -256,14 +256,6 @@
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* meta-header flags */
-enum silofs_hdrf {
-	SILOFS_HDRF_NONE  = 0x00,
-	SILOFS_HDRF_PNODE = 0x01,
-	SILOFS_HDRF_VNODE = 0x02,
-	SILOFS_HDRF_CSUM  = 0x04,
-};
-
 /* format endianness */
 enum silofs_endianness {
 	SILOFS_ENDIANNESS_LE = 1,
@@ -277,7 +269,7 @@ enum silofs_ptype {
 	SILOFS_PTYPE_UBER   = 2,
 	SILOFS_PTYPE_BLDESC = 3,
 	SILOFS_PTYPE_BTNODE = 4,
-	SILOFS_PTYPE_VNODE  = 5,
+	SILOFS_PTYPE_LNODE  = 5,
 	SILOFS_PTYPE_LAST   = 6, /* keep last */
 };
 
@@ -545,14 +537,23 @@ struct silofs_mbr1k {
 /* size of common meta-data header */
 #define SILOFS_HEADER_SIZE (32)
 
+/* meta-header flags */
+enum silofs_hdrf {
+	SILOFS_HDRF_NONE  = 0x00,
+	SILOFS_HDRF_PNODE = 0x01,
+	SILOFS_HDRF_LNODE = 0x02,
+	SILOFS_HDRF_CSUM  = 0x04,
+};
+
 /* common header to all meta-data nodes */
 struct silofs_header {
 	uint32_t h_magic;
 	uint32_t h_csum;
 	uint32_t h_size;
 	uint16_t h_flags;
-	uint8_t  h_stype;
-	uint8_t  h_reserved[17];
+	uint8_t  h_ptype;
+	uint8_t  h_ltype;
+	uint8_t  h_reserved[16];
 } silofs_attr_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

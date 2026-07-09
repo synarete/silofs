@@ -19,16 +19,17 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-static size_t hdr_size_by(uint8_t stype, enum silofs_hdrf flags)
+static size_t
+hdr_size_by(const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
 	size_t sz;
 
-	silofs_assert_gt(flags & (SILOFS_HDRF_PNODE | SILOFS_HDRF_VNODE), 0);
+	silofs_assert_gt(flags & (SILOFS_HDRF_PNODE | SILOFS_HDRF_LNODE), 0);
 
 	if (flags & SILOFS_HDRF_PNODE) {
-		sz = silofs_ptype_size(stype);
-	} else if (flags & SILOFS_HDRF_VNODE) {
-		sz = silofs_ltype_size(stype);
+		sz = silofs_ptype_size(stype->ptype);
+	} else if (flags & SILOFS_HDRF_LNODE) {
+		sz = silofs_ltype_size(stype->ltype);
 	} else {
 		sz = sizeof(struct silofs_header);
 	}
@@ -68,14 +69,28 @@ static size_t hdr_payload_size(const struct silofs_header *hdr)
 	return size - sizeof(*hdr);
 }
 
-static uint8_t hdr_stype(const struct silofs_header *hdr)
+static void
+hdr_stype(const struct silofs_header *hdr, struct silofs_stype *out_stype)
 {
-	return hdr->h_stype;
+	out_stype->ptype = (enum silofs_ptype)hdr->h_ptype;
+	out_stype->ltype = (enum silofs_ltype)hdr->h_ltype;
 }
 
-static void hdr_set_stype(struct silofs_header *hdr, uint8_t stype)
+static void
+hdr_set_stype(struct silofs_header *hdr, const struct silofs_stype *stype)
 {
-	hdr->h_stype = stype;
+	hdr->h_ptype = (uint8_t)(stype->ptype);
+	hdr->h_ltype = (uint8_t)(stype->ltype);
+}
+
+static bool hdr_has_stype(const struct silofs_header *hdr,
+                          const struct silofs_stype *stype)
+{
+	struct silofs_stype h_stype;
+
+	hdr_stype(hdr, &h_stype);
+	return ((h_stype.ptype == stype->ptype) &&
+	        (h_stype.ltype == stype->ltype));
 }
 
 static enum silofs_hdrf hdr_flags(const struct silofs_header *hdr)
@@ -124,8 +139,8 @@ static const void *hdr_payload(const struct silofs_header *hdr)
 	return hdr + 1;
 }
 
-void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags)
+void silofs_hdr_setup(struct silofs_header *hdr,
+                      const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
 	memset(hdr, 0, sizeof(*hdr));
 	hdr_set_magic(hdr, SILOFS_META_MAGIC);
@@ -134,13 +149,14 @@ void silofs_hdr_setup(struct silofs_header *hdr, uint8_t stype,
 	hdr_set_flags(hdr, flags);
 }
 
-static int hdr_verify_base(const struct silofs_header *hdr, uint8_t stype,
-                           enum silofs_hdrf flags)
+static int
+hdr_verify_base(const struct silofs_header *hdr,
+                const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
 	if (hdr_magic(hdr) != SILOFS_META_MAGIC) {
 		return -SILOFS_EFSCORRUPTED;
 	}
-	if (hdr_stype(hdr) != stype) {
+	if (!hdr_has_stype(hdr, stype)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	if (!hdr_has_flags(hdr, flags)) {
@@ -181,19 +197,17 @@ static int hdr_verify_checksum(const struct silofs_header *hdr)
 	return 0;
 }
 
-int silofs_hdr_verify(const struct silofs_header *hdr, uint8_t stype,
-                      enum silofs_hdrf flags)
+int silofs_hdr_verify(const struct silofs_header *hdr,
+                      const struct silofs_stype *stype, enum silofs_hdrf flags)
 {
 	int err;
 
 	err = hdr_verify_base(hdr, stype, flags);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = hdr_verify_checksum(hdr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -224,8 +238,13 @@ static void lview_free(struct silofs_lview *lview, struct silofs_alloc *alloc,
 static void
 lview_init_meta(struct silofs_lview *lview, enum silofs_ltype ltype)
 {
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_LNODE,
+		.ltype = ltype,
+	};
+
 	memset(lview, 0, lview_len(ltype));
-	silofs_hdr_setup(&lview->u.hdr[0], (uint8_t)ltype, SILOFS_HDRF_VNODE);
+	silofs_hdr_setup(&lview->u.hdr[0], &stype, SILOFS_HDRF_LNODE);
 }
 
 void silofs_lview_setup(struct silofs_lview *lview, enum silofs_ltype ltype)
@@ -280,13 +299,16 @@ void silofs_lview_seal(struct silofs_lview *lview)
 int silofs_lview_verify(const struct silofs_lview *lview,
                         enum silofs_ltype ltype)
 {
-	int ret = 0;
+	const struct silofs_stype stype = {
+		.ptype = SILOFS_PTYPE_LNODE,
+		.ltype = ltype,
+	};
 
-	if (!silofs_ltype_isdata(ltype)) {
-		ret = silofs_hdr_verify(&lview->u.hdr[0], (uint8_t)ltype,
-		                        SILOFS_HDRF_VNODE);
+	if (silofs_ltype_isdata(ltype)) {
+		return 0;
 	}
-	return ret;
+
+	return silofs_hdr_verify(&lview->u.hdr[0], &stype, SILOFS_HDRF_LNODE);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -403,10 +425,11 @@ static void pview_bzero(struct silofs_pview *pview, enum silofs_ptype ptype)
 	memset(pview, 0, pview_len(ptype));
 }
 
-void silofs_pview_setup(struct silofs_pview *pview, enum silofs_ptype ptype)
+void silofs_pview_setup(struct silofs_pview *pview,
+                        const struct silofs_stype *stype)
 {
-	pview_bzero(pview, ptype);
-	silofs_hdr_setup(&pview->pv.hdr[0], (uint8_t)ptype, SILOFS_HDRF_PNODE);
+	pview_bzero(pview, stype->ptype);
+	silofs_hdr_setup(&pview->pv.hdr[0], stype, SILOFS_HDRF_PNODE);
 }
 
 void silofs_pview_seal(struct silofs_pview *pview)
@@ -415,10 +438,9 @@ void silofs_pview_seal(struct silofs_pview *pview)
 }
 
 int silofs_pview_verify(const struct silofs_pview *pview,
-                        enum silofs_ptype ptype)
+                        const struct silofs_stype *stype)
 {
-	return silofs_hdr_verify(&pview->pv.hdr[0], (uint8_t)ptype,
-	                         SILOFS_HDRF_PNODE);
+	return silofs_hdr_verify(&pview->pv.hdr[0], stype, SILOFS_HDRF_PNODE);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

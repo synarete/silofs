@@ -109,7 +109,7 @@ size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)
 {
 	size_t sz;
 
-	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
 		sz = silofs_ltype_size(blobid->stype.ltype);
 	} else {
 		sz = silofs_ptype_size(blobid->stype.ptype);

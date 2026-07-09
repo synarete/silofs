@@ -150,7 +150,7 @@ int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
 {
 	struct silofs_blobid blobid;
 	const struct silofs_stype stype = {
-		.ptype = SILOFS_PTYPE_VNODE,
+		.ptype = SILOFS_PTYPE_LNODE,
 		.ltype = ltype,
 	};
 
@@ -216,7 +216,7 @@ int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
                               struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_stype stype = {
-		.ptype = SILOFS_PTYPE_VNODE,
+		.ptype = SILOFS_PTYPE_LNODE,
 		.ltype = ltype,
 	};
 

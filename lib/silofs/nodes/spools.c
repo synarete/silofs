@@ -912,7 +912,7 @@ static struct silofs_pspool *pspools_mut_sub(struct silofs_pspools *pspools,
 		if (slot < ARRAY_SIZE(pspools->bn)) {
 			pspool = &pspools->bn[slot];
 		}
-	} else if (stype->ptype == SILOFS_PTYPE_VNODE) {
+	} else if (stype->ptype == SILOFS_PTYPE_LNODE) {
 		slot = pspool_ltype_to_slot(stype->ltype);
 		if (slot < ARRAY_SIZE(pspools->vn)) {
 			pspool = &pspools->vn[slot];

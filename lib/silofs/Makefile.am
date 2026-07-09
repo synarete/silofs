@@ -115,7 +115,6 @@ libsilofs_la_SOURCES += addr/offlen.c
 libsilofs_la_SOURCES += addr/offlen.h
 libsilofs_la_SOURCES += addr/paddr.c
 libsilofs_la_SOURCES += addr/paddr.h
-libsilofs_la_SOURCES += addr/stype.c
 libsilofs_la_SOURCES += addr/uniqid.c
 libsilofs_la_SOURCES += addr/uniqid.h
 libsilofs_la_SOURCES += addr.h

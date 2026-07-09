@@ -440,7 +440,7 @@ void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
                           const struct silofs_stype *stype,
                           struct silofs_spdesc *out_spdesc)
 {
-	if (stype->ptype == SILOFS_PTYPE_VNODE) {
+	if (stype->ptype == SILOFS_PTYPE_LNODE) {
 		ubn_vn_spdesc_of(ubi->ubn, stype->ltype, out_spdesc);
 	} else {
 		silofs_assert_eq(stype->ptype, SILOFS_PTYPE_BTNODE);
@@ -463,7 +463,7 @@ void silofs_ubi_update_spdesc(struct silofs_uber_info *ubi,
 	const struct silofs_blobid *blobid = &spdesc->beg.blobid;
 	const enum silofs_ltype ltype      = blobid->stype.ltype;
 
-	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
 		ubn_set_vn_spdesc_of(ubi->ubn, ltype, spdesc);
 	} else {
 		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
@@ -477,7 +477,7 @@ void silofs_ubi_inc_count_by(struct silofs_uber_info *ubi,
 {
 	const enum silofs_ltype ltype = blobid->stype.ltype;
 
-	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
 		ubn_inc_vn_count_of(ubi->ubn, ltype);
 	} else {
 		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
@@ -491,7 +491,7 @@ void silofs_ubi_dec_count_by(struct silofs_uber_info *ubi,
 {
 	const enum silofs_ltype ltype = blobid->stype.ltype;
 
-	if (blobid->stype.ptype == SILOFS_PTYPE_VNODE) {
+	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
 		ubn_dec_vn_count_of(ubi->ubn, ltype);
 	} else {
 		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);

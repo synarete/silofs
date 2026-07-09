@@ -66,14 +66,17 @@ void silofs_pni_decref(struct silofs_pnode_info *pni);
 void silofs_pni_set_dq(struct silofs_pnode_info *pni,
                        struct silofs_dirtyq     *dq);
 
-struct silofs_pview * //
+struct silofs_pview *       //
 silofs_pni_pview(const struct silofs_pnode_info *pni);
 
-struct silofs_pview * //
+struct silofs_pview *       //
 silofs_pni_pviewx(const struct silofs_pnode_info *pni);
 
-enum silofs_ptype     //
+enum silofs_ptype           //
 silofs_pni_ptype(const struct silofs_pnode_info *pni);
+
+const struct silofs_stype * //
+silofs_pni_stype(const struct silofs_pnode_info *pni);
 
 const struct silofs_paddr *
 silofs_pni_paddr(const struct silofs_pnode_info *pni);

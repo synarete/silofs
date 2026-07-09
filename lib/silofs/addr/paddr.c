@@ -36,7 +36,7 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 	case SILOFS_PTYPE_BTNODE:
 		sz = sizeof(struct silofs_btree_node);
 		break;
-	case SILOFS_PTYPE_VNODE:
+	case SILOFS_PTYPE_LNODE:
 		sz = sizeof(struct silofs_data_node1); /* min lnode size */
 		break;
 	case SILOFS_PTYPE_NONE:
@@ -156,20 +156,6 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 	silofs_blobid48b_xtoh(&paddr64->blobid48b, &paddr->blobid);
 	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
 	paddr->ptype = paddr->blobid.stype.ptype;
-}
-
-void silofs_calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
-                              const struct silofs_paddr *paddr,
-                              struct silofs_caad *out_caad)
-{
-	struct silofs_hash256 hash;
-	struct silofs_paddr64b paddr64;
-
-	STATICASSERT_EQ(sizeof(hash.hash), sizeof(out_caad->aad));
-
-	silofs_paddr64b_htox(&paddr64, paddr);
-	silofs_sha3_256_of(md_hd, &paddr64, sizeof(paddr64), &hash);
-	memcpy(out_caad->aad, hash.hash, sizeof(out_caad->aad));
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

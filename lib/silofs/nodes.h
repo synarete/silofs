@@ -25,7 +25,8 @@
 
 #include <silofs/nodes/dirtyq.h>
 #include <silofs/nodes/hmapq.h>
-#include <silofs/nodes/nodeview.h>
+#include <silofs/nodes/view.h>
+#include <silofs/nodes/node.h>
 #include <silofs/nodes/pnodes.h>
 #include <silofs/nodes/lnodes.h>
 #include <silofs/nodes/spools.h>

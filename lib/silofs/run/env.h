@@ -36,7 +36,6 @@ struct silofs_env_opstat {
 /* environment meta settings */
 struct silofs_env_base {
 	struct silofs_prandgen *prng;
-	struct silofs_lblock   *nilbk;
 	struct silofs_repo     *repo;
 	struct silofs_dstor    *dstor;
 	struct silofs_pcache   *pcache;

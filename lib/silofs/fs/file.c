@@ -851,11 +851,11 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 	silofs_ii_decref(f_ctx->ii);
 }
 
-static void *filc_nil_block(const struct silofs_file_ctx *f_ctx)
+static void *filc_nilbk(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nil_bk = f_ctx->task->env->base.nilbk;
+	struct silofs_lblock *nilbk = f_ctx->task->lcache->lc_nilbk;
 
-	return nil_bk->u.bk;
+	return nilbk->u.bk;
 }
 
 static void filc_iovec_by_fdnode(const struct silofs_file_ctx *f_ctx,
@@ -884,7 +884,7 @@ static void filc_iovec_by_nilbk(const struct silofs_file_ctx *f_ctx,
                                 struct silofs_iovec *out_iov)
 {
 	silofs_iovec_reset(out_iov);
-	out_iov->iov.iov_base = filc_nil_block(f_ctx);
+	out_iov->iov.iov_base = filc_nilbk(f_ctx);
 	out_iov->iov.iov_len  = len_of_data(f_ctx->off, f_ctx->end, ltype);
 	out_iov->iov_off      = 0;
 }

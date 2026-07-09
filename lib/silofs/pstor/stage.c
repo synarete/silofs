@@ -1071,7 +1071,7 @@ static void dsc_initv(struct silofs_destage_ctx *ds_ctx,
                       const struct silofs_pexec_ctx *pexec)
 {
 	dsc_init(ds_ctx, pexec);
-	ds_ctx->drq = &pexec->lcache->vc_dirtyq;
+	ds_ctx->drq = &pexec->lcache->lc_dirtyq;
 }
 
 static void dsc_fini(struct silofs_destage_ctx *ds_ctx)

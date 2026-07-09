@@ -245,29 +245,6 @@ static void envi_fini_alloc(struct silofs_env_inst *envi)
 	}
 }
 
-static int envi_init_nil_bk(struct silofs_env_inst *envi)
-{
-	struct silofs_lblock *lbk;
-
-	lbk = silofs_memalloc(envi->alloc, sizeof(*lbk), SILOFS_ALLOCF_BZERO);
-	if (lbk == nullptr) {
-		return -SILOFS_ENOMEM;
-	}
-	envi->nilbk = lbk;
-	return 0;
-}
-
-static void envi_fini_nil_bk(struct silofs_env_inst *envi)
-{
-	struct silofs_lblock *nilbk = envi->nilbk;
-
-	if (nilbk != nullptr) {
-		silofs_memfree(envi->alloc, nilbk, sizeof(*nilbk),
-		               SILOFS_ALLOCF_TRYPUNCH);
-		envi->nilbk = nullptr;
-	}
-}
-
 static int envi_init_repo(struct silofs_env_inst *envi)
 {
 	int err;
@@ -373,7 +350,6 @@ static int envi_init_env(struct silofs_env_inst *envi)
 {
 	const struct silofs_env_base env_base = {
 		.prng    = &envi->prandgen,
-		.nilbk   = envi->nilbk,
 		.repo    = &envi->repo,
 		.dstor   = &envi->repo.re_dstor,
 		.pcache  = &envi->pcache,
@@ -431,7 +407,6 @@ static void envi_fini(struct silofs_env_inst *envi)
 	envi_fini_lcache(envi);
 	envi_fini_pcache(envi);
 	envi_fini_repo(envi);
-	envi_fini_nil_bk(envi);
 	envi_fini_alloc(envi);
 	envi_fini_prandgen(envi);
 }
@@ -445,9 +420,6 @@ static int envi_init(struct silofs_env_inst *envi, size_t memwant,
 	goto_out_if_err(err);
 
 	err = envi_init_alloc(envi, memwant, flags);
-	goto_out_if_err(err);
-
-	err = envi_init_nil_bk(envi);
 	goto_out_if_err(err);
 
 	err = envi_init_repo(envi);

@@ -31,12 +31,12 @@ static struct silofs_hmapq_elem *lni_to_hmqe(struct silofs_lnode_info *lni)
 
 static void lcache_init_dq(struct silofs_lcache *lcache)
 {
-	silofs_dirtyq_init(&lcache->vc_dirtyq);
+	silofs_dirtyq_init(&lcache->lc_dirtyq);
 }
 
 static void lcache_fini_dq(struct silofs_lcache *lcache)
 {
-	silofs_dirtyq_fini(&lcache->vc_dirtyq);
+	silofs_dirtyq_fini(&lcache->lc_dirtyq);
 }
 
 static struct silofs_dirtyq *
@@ -44,22 +44,22 @@ lcache_resolve_dq(struct silofs_lcache *lcache,
                   const struct silofs_lnode_info *lni)
 {
 	silofs_unused(lni);
-	return &lcache->vc_dirtyq;
+	return &lcache->lc_dirtyq;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int lcache_init_lni_hmapq(struct silofs_lcache *lcache)
 {
-	struct silofs_alloc *alloc = lcache->vc_alloc;
+	struct silofs_alloc *alloc = lcache->lc_alloc;
 	const size_t nslots        = silofs_hmapq_nslots_by(alloc, 3);
 
-	return silofs_hmapq_init(&lcache->vc_hmapq, alloc, nslots);
+	return silofs_hmapq_init(&lcache->lc_hmapq, alloc, nslots);
 }
 
 static void lcache_fini_lni_hmapq(struct silofs_lcache *lcache)
 {
-	silofs_hmapq_fini(&lcache->vc_hmapq, lcache->vc_alloc);
+	silofs_hmapq_fini(&lcache->lc_hmapq, lcache->lc_alloc);
 }
 
 static bool test_evictable_lni(const struct silofs_lnode_info *lni)
@@ -86,7 +86,7 @@ static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
 static struct silofs_lnode_info *
 lcache_find_evictable_lni(struct silofs_lcache *lcache)
 {
-	struct silofs_hmapq *hmapq      = &lcache->vc_hmapq;
+	struct silofs_hmapq *hmapq      = &lcache->lc_hmapq;
 	struct silofs_lnode_info *lni   = nullptr;
 	struct silofs_lnode_info **plni = &lni;
 
@@ -101,14 +101,14 @@ lcache_find_lni(struct silofs_lcache *lcache, const struct silofs_laddr *laddr)
 	struct silofs_hmapq_elem *hmqe;
 
 	silofs_hkey_by_laddr(&hkey, laddr);
-	hmqe = silofs_hmapq_lookup(&lcache->vc_hmapq, &hkey);
+	hmqe = silofs_hmapq_lookup(&lcache->lc_hmapq, &hkey);
 	return (hmqe != nullptr) ? silofs_lni_from_hmqe(hmqe) : nullptr;
 }
 
 static void lcache_promote_lni(struct silofs_lcache *lcache,
                                struct silofs_lnode_info *lni, bool now)
 {
-	silofs_hmapq_promote(&lcache->vc_hmapq, lni_to_hmqe(lni), now);
+	silofs_hmapq_promote(&lcache->lc_hmapq, lni_to_hmqe(lni), now);
 }
 
 static struct silofs_lnode_info *
@@ -127,7 +127,7 @@ lcache_search_relru_lni(struct silofs_lcache *lcache,
 static void
 lcache_remove_lni(struct silofs_lcache *lcache, struct silofs_lnode_info *lni)
 {
-	silofs_lni_remove_from(lni, &lcache->vc_hmapq);
+	silofs_lni_remove_from(lni, &lcache->lc_hmapq);
 	lni->vn_ni.hmqe.hme_forgot = false;
 }
 
@@ -135,13 +135,13 @@ static void
 lcache_evict_lni(struct silofs_lcache *lcache, struct silofs_lnode_info *lni)
 {
 	lcache_remove_lni(lcache, lni);
-	silofs_del_lnode(lni, lcache->vc_alloc);
+	silofs_del_lnode(lni, lcache->lc_alloc);
 }
 
 static void lcache_store_lni_hmapq(struct silofs_lcache *lcache,
                                    struct silofs_lnode_info *lni)
 {
-	silofs_hmapq_store(&lcache->vc_hmapq, lni_to_hmqe(lni));
+	silofs_hmapq_store(&lcache->lc_hmapq, lni_to_hmqe(lni));
 }
 
 static void
@@ -156,7 +156,7 @@ lcache_get_lru_lni(struct silofs_lcache *lcache)
 {
 	struct silofs_hmapq_elem *hmqe;
 
-	hmqe = silofs_hmapq_get_lru(&lcache->vc_hmapq);
+	hmqe = silofs_hmapq_get_lru(&lcache->lc_hmapq);
 	return (hmqe != nullptr) ? silofs_lni_from_hmqe(hmqe) : nullptr;
 }
 
@@ -179,7 +179,7 @@ static size_t lcache_shrink_or_relru_lnis(struct silofs_lcache *lcache,
                                           size_t cnt, int flags)
 {
 	struct silofs_lnode_info *lni = nullptr;
-	const size_t n = silofs_min(cnt, lcache->vc_hmapq.hmq_lru.sz);
+	const size_t n = silofs_min(cnt, lcache->lc_hmapq.hmq_lru.sz);
 	size_t evicted = 0;
 	bool now;
 	bool ok;
@@ -211,7 +211,7 @@ static int try_evict_lni(struct silofs_hmapq_elem *hmqe, void *arg)
 
 static void lcache_drop_evictable_lnis(struct silofs_lcache *lcache)
 {
-	silofs_hmapq_riterate(&lcache->vc_hmapq, SILOFS_HMAPQ_ITERALL,
+	silofs_hmapq_riterate(&lcache->lc_hmapq, SILOFS_HMAPQ_ITERALL,
 	                      try_evict_lni, lcache);
 }
 
@@ -220,7 +220,7 @@ silofs_lcache_dq_front(const struct silofs_lcache *lcache)
 {
 	struct silofs_dq_elem *dqe;
 
-	dqe = silofs_dirtyq_front(&lcache->vc_dirtyq);
+	dqe = silofs_dirtyq_front(&lcache->lc_dirtyq);
 	return silofs_lni_from_dqe(dqe);
 }
 
@@ -230,7 +230,7 @@ static struct silofs_lnode_info *
 lcache_new_lni(const struct silofs_lcache *lcache,
                const struct silofs_laddr *laddr)
 {
-	return silofs_new_lnode(lcache->vc_alloc, laddr);
+	return silofs_new_lnode(lcache->lc_alloc, laddr);
 }
 
 struct silofs_lnode_info *
@@ -259,7 +259,7 @@ lcache_require_lni(struct silofs_lcache *lcache,
 static void
 lcache_unmap_lni(struct silofs_lcache *lcache, struct silofs_lnode_info *lni)
 {
-	silofs_hmapq_unmap(&lcache->vc_hmapq, lni_to_hmqe(lni));
+	silofs_hmapq_unmap(&lcache->lc_hmapq, lni_to_hmqe(lni));
 }
 
 void silofs_lcache_forget_lnode(struct silofs_lcache *lcache,
@@ -330,7 +330,7 @@ static size_t lcache_memory_pressure(const struct silofs_lcache *lcache)
 	struct silofs_alloc_stat st;
 	size_t mem_press = 0;
 
-	silofs_memstat(lcache->vc_alloc, &st);
+	silofs_memstat(lcache->lc_alloc, &st);
 	if (likely(st.nbytes_max > 0)) {
 		mem_press = ((1000UL * st.nbytes_use) / st.nbytes_max);
 	}
@@ -380,7 +380,7 @@ lcache_relax_by_niter(struct silofs_lcache *lcache, size_t niter, int flags)
 
 static size_t lcache_overpop_lnis(const struct silofs_lcache *lcache)
 {
-	return silofs_hmapq_overpop(&lcache->vc_hmapq);
+	return silofs_hmapq_overpop(&lcache->lc_hmapq);
 }
 
 static size_t lcache_relax_by_overpop(struct silofs_lcache *lcache)
@@ -411,7 +411,7 @@ size_t silofs_lcache_relax(struct silofs_lcache *lcache, int flags)
 
 static size_t lcache_hmapq_usage_sum(const struct silofs_lcache *lcache)
 {
-	return silofs_hmapq_usage(&lcache->vc_hmapq);
+	return silofs_hmapq_usage(&lcache->lc_hmapq);
 }
 
 static void lcache_drop_evictables_once(struct silofs_lcache *lcache)
@@ -440,43 +440,80 @@ void silofs_lcache_drop(struct silofs_lcache *lcache)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void lcache_fini_hmapqs(struct silofs_lcache *lcache)
-{
-	lcache_fini_lni_hmapq(lcache);
-}
-
 static int lcache_init_hmapqs(struct silofs_lcache *lcache)
 {
 	return lcache_init_lni_hmapq(lcache);
 }
 
+static void lcache_fini_hmapqs(struct silofs_lcache *lcache)
+{
+	lcache_fini_lni_hmapq(lcache);
+}
+
+static int lcache_init_nilbk(struct silofs_lcache *lcache)
+{
+	struct silofs_lblock *nilbk = nullptr;
+
+	nilbk = silofs_memalloc(lcache->lc_alloc, sizeof(*nilbk),
+	                        SILOFS_ALLOCF_BZERO);
+	if (nilbk == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	lcache->lc_nilbk = nilbk;
+	return 0;
+}
+
+static void lcache_fini_nilbk(struct silofs_lcache *lcache)
+{
+	struct silofs_lblock *nilbk = lcache->lc_nilbk;
+
+	if (nilbk != nullptr) {
+		silofs_memfree(lcache->lc_alloc, nilbk, sizeof(*nilbk),
+		               SILOFS_ALLOCF_TRYPUNCH);
+		lcache->lc_nilbk = nullptr;
+	}
+}
+
 int silofs_lcache_init(struct silofs_lcache *lcache,
                        struct silofs_alloc *alloc)
 {
-	lcache->vc_alloc = alloc;
+	int err;
+
+	lcache->lc_alloc = alloc;
+	lcache->lc_nilbk = nullptr;
 	lcache_init_dq(lcache);
 
-	return lcache_init_hmapqs(lcache);
+	err = lcache_init_nilbk(lcache);
+	return_if_err(err);
+
+	err = lcache_init_hmapqs(lcache);
+	goto_if_err(err, out_fail);
+
+	return 0;
+out_fail:
+	lcache_fini_nilbk(lcache);
+	return err;
 }
 
 void silofs_lcache_fini(struct silofs_lcache *lcache)
 {
 	lcache_fini_dq(lcache);
 	lcache_fini_hmapqs(lcache);
-	lcache->vc_alloc = nullptr;
+	lcache_fini_nilbk(lcache);
+	lcache->lc_alloc = nullptr;
 }
 
 static size_t lcache_alloc_bytes(const struct silofs_lcache *lcache)
 {
 	struct silofs_alloc_stat as = { .nbytes_use = 0 };
 
-	silofs_memstat(lcache->vc_alloc, &as);
+	silofs_memstat(lcache->lc_alloc, &as);
 	return as.nbytes_use;
 }
 
 static size_t lcache_sum_nodes(const struct silofs_lcache *lcache)
 {
-	return lcache->vc_hmapq.hmq_htbl_size;
+	return lcache->lc_hmapq.hmq_htbl_size;
 }
 
 void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,

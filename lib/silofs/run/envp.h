@@ -53,7 +53,6 @@ struct silofs_env_inst {
 	struct silofs_idsmap   idsmap;
 	struct silofs_env      env;
 	struct silofs_alloc   *alloc;
-	struct silofs_lblock  *nilbk;
 	struct silofs_fuseq   *fuseq;
 	long                   initf;
 };

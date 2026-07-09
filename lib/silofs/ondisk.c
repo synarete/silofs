@@ -287,8 +287,8 @@ static void validate_ondisk_superb_node(void)
 static void validate_ondisk_space_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_space_node, sp_base_off, 16);
-	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_ltype, 24);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_base_off, 32);
+	REQUIRE_OFFSET64(struct silofs_space_node, sp_ref_ltype, 40);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_flags, 1024);
 	REQUIRE_OFFSET64(struct silofs_space_node, sp_refcnt, 2048);
 	REQUIRE_SIZEOF_4K(struct silofs_space_node);

@@ -245,7 +245,7 @@ ubi_attach_pview(struct silofs_uber_info *ubi, struct silofs_alloc *alloc)
 	err = pni_attach_pview(&ubi->ub_pni, alloc);
 	if (!err) {
 		pview    = silofs_pni_pview(&ubi->ub_pni);
-		ubi->ubn = &pview->pv.ub;
+		ubi->ubn = &pview->pv.ubn;
 	}
 	return err;
 }

@@ -88,9 +88,6 @@
 /* size of main-boot-record */
 #define SILOFS_MBR_SIZE (1024)
 
-/* size of common meta-data header */
-#define SILOFS_HEADER_SIZE (16)
-
 /* minimal file-system capacity, in bytes (2G) */
 #define SILOFS_CAPACITY_SIZE_MIN (2L * SILOFS_GIGA)
 
@@ -545,6 +542,9 @@ struct silofs_mbr1k {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* size of common meta-data header */
+#define SILOFS_HEADER_SIZE (32)
+
 /* common header to all meta-data nodes */
 struct silofs_header {
 	uint32_t h_magic;
@@ -552,7 +552,7 @@ struct silofs_header {
 	uint32_t h_size;
 	uint16_t h_flags;
 	uint8_t  h_stype;
-	uint8_t  h_reserved1;
+	uint8_t  h_reserved[17];
 } silofs_attr_aligned16;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -570,7 +570,6 @@ struct silofs_uber_sub {
 /* uber-node */
 struct silofs_uber_node {
 	struct silofs_header   ub_hdr;
-	uint8_t                ub_reserved0[16];
 	struct silofs_timespec ub_btime;
 	struct silofs_timespec ub_ctime;
 	uint64_t               ub_generation;
@@ -594,7 +593,6 @@ struct silofs_space_stats1k {
 
 struct silofs_superb_node {
 	struct silofs_header        s_hdr;
-	uint8_t                     s_reserved0[16];
 	uint64_t                    s_magic;
 	uint64_t                    s_version;
 	uint32_t                    s_flags;
@@ -620,7 +618,7 @@ struct silofs_space_node {
 	struct silofs_header sp_hdr;
 	int64_t              sp_base_off;
 	uint8_t              sp_ref_ltype;
-	uint8_t              sp_reserved[39];
+	uint8_t              sp_reserved[23];
 	uint8_t              sp_reserved2[960];
 	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
 	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
@@ -670,7 +668,6 @@ union silofs_inode_tail {
 
 struct silofs_inode {
 	struct silofs_header      i_hdr;
-	uint8_t                   i_reserved0[16];
 	uint64_t                  i_ino;
 	uint64_t                  i_parent;
 	uint32_t                  i_uid;
@@ -721,7 +718,6 @@ struct silofs_xattr_entry {
 
 struct silofs_xattr_node {
 	struct silofs_header      xa_hdr;
-	uint8_t                   xa_reserved0[16];
 	uint64_t                  xa_ino;
 	uint16_t                  xa_nents;
 	uint8_t                   xa_reserved[86];
@@ -744,7 +740,6 @@ union silofs_dtree_data {
 
 struct silofs_dtree_node {
 	struct silofs_header    dn_hdr;
-	uint8_t                 dn_reserved0[16];
 	uint64_t                dn_ino;
 	int64_t                 dn_parent;
 	uint32_t                dn_node_index;
@@ -758,7 +753,6 @@ struct silofs_dtree_node {
 
 struct silofs_ftree_node {
 	struct silofs_header  fn_hdr;
-	uint8_t               fn_reserved0[16];
 	uint64_t              fn_refcnt;
 	uint64_t              fn_ino;
 	int64_t               fn_beg;
@@ -773,7 +767,6 @@ struct silofs_ftree_node {
 
 struct silofs_symval_node {
 	struct silofs_header svn_hdr;
-	uint8_t              svn_reserved1[16];
 	uint64_t             svn_parent;
 	uint16_t             svn_length;
 	uint8_t              svn_reserved2[22];
@@ -841,7 +834,6 @@ enum silofs_objstatef {
 /* blob's meta descriptor */
 struct silofs_blob_desc {
 	struct silofs_header    bld_hdr;
-	uint8_t                 bld_reserved0[16];
 	struct silofs_timespec  bld_btime;
 	struct silofs_timespec  bld_ctime;
 	struct silofs_blobid48b bld_prev;
@@ -875,7 +867,6 @@ struct silofs_blob_desc {
 /* btree node of persistent volume mapping */
 struct silofs_btree_node {
 	struct silofs_header    btn_hdr;
-	uint8_t                 btn_reserved0[16];
 	uint64_t                btn_minkey;
 	uint32_t                btn_flags;
 	uint8_t                 btn_vspace;
@@ -893,7 +884,7 @@ struct silofs_btree_node {
 /* semantic "view" into pnodes' meta-elements */
 union silofs_pview_u {
 	struct silofs_header     hdr[2];
-	struct silofs_uber_node  ub;
+	struct silofs_uber_node  ubn;
 	struct silofs_blob_desc  bd;
 	struct silofs_btree_node btn;
 } silofs_attr_aligned64;

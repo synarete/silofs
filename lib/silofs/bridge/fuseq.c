@@ -34,8 +34,9 @@
 #include <silofs/infra.h>
 #include <silofs/vfs.h>
 #include <silofs/run.h>
-#include <silofs/fuseq.h>
+
 #include "fqtypes.h"
+#include "fuseq.h"
 
 #if FUSE_KERNEL_VERSION != 7
 #error "wrong FUSE_KERNEL_VERSION"

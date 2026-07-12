@@ -197,11 +197,12 @@ libsilofs_la_SOURCES += mnt/mntconf.c
 libsilofs_la_SOURCES += mnt/mntsvc.c
 libsilofs_la_SOURCES += mnt/mstypes.h
 
-libsilofs_la_SOURCES += fuse/fqtypes.c
-libsilofs_la_SOURCES += fuse/fqtypes.h
-libsilofs_la_SOURCES += fuse/fuse_abi.h
-libsilofs_la_SOURCES += fuse/fuseq.c
-libsilofs_la_SOURCES += fuseq.h
+libsilofs_la_SOURCES += bridge/fqtypes.c
+libsilofs_la_SOURCES += bridge/fqtypes.h
+libsilofs_la_SOURCES += bridge/fuse_abi.h
+libsilofs_la_SOURCES += bridge/fuseq.c
+libsilofs_la_SOURCES += bridge/fuseq.h
+libsilofs_la_SOURCES += bridge.h
 
 libsilofs_la_SOURCES += run/appexec.c
 libsilofs_la_SOURCES += run/delfs.c

@@ -18,6 +18,7 @@
 #include <silofs/infra.h>
 #include <silofs/str.h>
 #include <silofs/vfs.h>
+
 #include "fqtypes.h"
 
 #define FUSEQ_HDR_IN_SIZE (40)

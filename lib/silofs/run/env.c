@@ -21,7 +21,7 @@
 
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
-#include <silofs/fuseq.h>
+#include <silofs/bridge.h>
 #include <silofs/run.h>
 
 #define SILOFS_USE_ENV_PRIVATE 1

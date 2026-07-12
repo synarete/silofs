@@ -23,33 +23,6 @@
 #include <silofs/nodes.h>
 #include <silofs/fs.h>
 
-static void swv64b_htox(struct silofs_sw_version64b *swv64,
-                        const struct silofs_sw_version *swv)
-{
-	STATICASSERT_EQ_SIZEOF(swv64->sw_revision, swv->revision);
-
-	memset(swv64, 0, sizeof(*swv64));
-	swv64->sw_major    = silofs_cpu_to_le32(swv->major);
-	swv64->sw_minor    = silofs_cpu_to_le32(swv->minor);
-	swv64->sw_sublevel = silofs_cpu_to_le32(swv->sublevel);
-	memcpy(swv64->sw_revision, swv->revision, sizeof(swv64->sw_revision));
-}
-
-static void swv64b_xtoh(const struct silofs_sw_version64b *swv64,
-                        struct silofs_sw_version *swv)
-{
-	STATICASSERT_EQ_SIZEOF(swv->revision, swv64->sw_revision);
-
-	memset(swv, 0, sizeof(*swv));
-	swv->major    = silofs_le32_to_cpu(swv64->sw_major);
-	swv->minor    = silofs_le32_to_cpu(swv64->sw_minor);
-	swv->sublevel = silofs_le32_to_cpu(swv64->sw_sublevel);
-
-	memcpy(swv->revision, swv64->sw_revision, sizeof(swv->revision));
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
 {
 	tm64->tm_sec      = silofs_cpu_to_le16((uint16_t)tm->tm_sec);
@@ -123,18 +96,6 @@ static void
 sbn_set_flags(struct silofs_superb_node *sbn, enum silofs_superf flags)
 {
 	sbn->s_flags = silofs_cpu_to_le32((uint32_t)flags);
-}
-
-static void sbn_sw_version(const struct silofs_superb_node *sbn,
-                           struct silofs_sw_version *out_swv)
-{
-	swv64b_xtoh(&sbn->s_sw_version, out_swv);
-}
-
-static void sbn_set_sw_version(struct silofs_superb_node *sbn,
-                               const struct silofs_sw_version *swv)
-{
-	swv64b_htox(&sbn->s_sw_version, swv);
 }
 
 static void sbn_btime(const struct silofs_superb_node *sbn, struct tm *tm)
@@ -273,7 +234,6 @@ static void sbn_init(struct silofs_superb_node *sbn)
 	sbn_set_magic(sbn, SILOFS_SUPER_MAGIC);
 	sbn_set_version(sbn, SILOFS_FMT_VERSION);
 	sbn_set_flags(sbn, SILOFS_SUPERF_NONE);
-	sbn_set_sw_version(sbn, &silofs_sw_vers);
 	sbn_set_fs_capacity(sbn, SILOFS_CAPACITY_SIZE_MIN);
 	sbn_set_fs_usage(sbn, 0);
 	sbn_set_ino_generation(sbn, 1);
@@ -311,19 +271,6 @@ static int verify_super_flags(const struct silofs_superb_node *sbn)
 
 	if (flags != SILOFS_SUPERF_NONE) {
 		log_err("bad super: flags=%d", flags);
-		return -SILOFS_EFSCORRUPTED;
-	}
-	return 0;
-}
-
-static int verify_super_sw_version(const struct silofs_superb_node *sbn)
-{
-	struct silofs_sw_version swv;
-
-	sbn_sw_version(sbn, &swv);
-	if (swv.revision[0] == 0) {
-		log_err("bad super: major=%u minor=%u sublevel=%u", swv.major,
-		        swv.minor, swv.sublevel);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -370,9 +317,6 @@ int silofs_verify_superb_node(const struct silofs_superb_node *sbn)
 	return_if_err(err);
 
 	err = verify_super_flags(sbn);
-	return_if_err(err);
-
-	err = verify_super_sw_version(sbn);
 	return_if_err(err);
 
 	err = verify_super_btime(sbn);

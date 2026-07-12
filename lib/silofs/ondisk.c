@@ -215,7 +215,8 @@ static void validate_ondisk_mbr(void)
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_uuid, 16);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_mode, 32);
 	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_flags, 36);
-	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_root, 256);
+	REQUIRE_OFFSET32(struct silofs_mbr1k, mbr_sw_version, 64);
+	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_root_uber, 256);
 	REQUIRE_OFFSET64(struct silofs_mbr1k, mbr_reserved3, 512);
 	REQUIRE_SIZEOF_1K(struct silofs_mbr1k);
 	REQUIRE_SIZEOF(struct silofs_mbr1k, SILOFS_MBR_SIZE);
@@ -275,11 +276,10 @@ static void validate_ondisk_superb_node(void)
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_magic, 64);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_version, 72);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_flags, 80);
-	REQUIRE_OFFSET64(struct silofs_superb_node, s_sw_version, 128);
-	REQUIRE_OFFSET64(struct silofs_superb_node, s_btime, 256);
-	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_capacity, 320);
-	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_usage, 328);
-	REQUIRE_OFFSET64(struct silofs_superb_node, s_ino_generation, 336);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_btime, 128);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_capacity, 256);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_fs_usage, 264);
+	REQUIRE_OFFSET64(struct silofs_superb_node, s_ino_generation, 272);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_nodes_count, 1024);
 	REQUIRE_MEMBER_SIZE(struct silofs_superb_node, s_nodes_count, 1024);
 	REQUIRE_OFFSET64(struct silofs_superb_node, s_apex_voff, 2048);

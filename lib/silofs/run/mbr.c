@@ -15,11 +15,39 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <silofs/version.h>
 #include <silofs/ondisk.h>
 #include <silofs/infra.h>
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 #include <silofs/run.h>
+
+static void swv64b_htox(struct silofs_sw_version64b *swv64,
+                        const struct silofs_sw_version *swv)
+{
+	STATICASSERT_EQ_SIZEOF(swv64->sw_revision, swv->revision);
+
+	memset(swv64, 0, sizeof(*swv64));
+	swv64->sw_major    = silofs_cpu_to_le32(swv->major);
+	swv64->sw_minor    = silofs_cpu_to_le32(swv->minor);
+	swv64->sw_sublevel = silofs_cpu_to_le32(swv->sublevel);
+	memcpy(swv64->sw_revision, swv->revision, sizeof(swv64->sw_revision));
+}
+
+static void swv64b_xtoh(const struct silofs_sw_version64b *swv64,
+                        struct silofs_sw_version *swv)
+{
+	STATICASSERT_EQ_SIZEOF(swv->revision, swv64->sw_revision);
+
+	memset(swv, 0, sizeof(*swv));
+	swv->major    = silofs_le32_to_cpu(swv64->sw_major);
+	swv->minor    = silofs_le32_to_cpu(swv64->sw_minor);
+	swv->sublevel = silofs_le32_to_cpu(swv64->sw_sublevel);
+
+	memcpy(swv->revision, swv64->sw_revision, sizeof(swv->revision));
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static void
 calc_cas_paddr(const struct silofs_mdigest_hd *md_hd, enum silofs_ptype ptype,
@@ -118,16 +146,28 @@ static void mbr1k_gen_uuid(struct silofs_mbr1k *mbr1k)
 	mbr1k_set_uuid(mbr1k, &uuid);
 }
 
+static void mbr1k_sw_version(const struct silofs_mbr1k *mbr1k,
+                             struct silofs_sw_version *out_swv)
+{
+	swv64b_xtoh(&mbr1k->mbr_sw_version, out_swv);
+}
+
+static void mbr1k_set_sw_version(struct silofs_mbr1k *mbr1k,
+                                 const struct silofs_sw_version *swv)
+{
+	swv64b_htox(&mbr1k->mbr_sw_version, swv);
+}
+
 static void
 mbr1k_root(const struct silofs_mbr1k *mbr1k, struct silofs_pnptr *out_pnptr)
 {
-	silofs_pnptr256b_xtoh(&mbr1k->mbr_root, out_pnptr);
+	silofs_pnptr256b_xtoh(&mbr1k->mbr_root_uber, out_pnptr);
 }
 
 static void
 mbr1k_set_root(struct silofs_mbr1k *mbr1k, const struct silofs_pnptr *pnptr)
 {
-	silofs_pnptr256b_htox(&mbr1k->mbr_root, pnptr);
+	silofs_pnptr256b_htox(&mbr1k->mbr_root_uber, pnptr);
 }
 
 static void mbr1k_reset_root(struct silofs_mbr1k *mbr1k)
@@ -481,7 +521,7 @@ static int derive_mbr_hmac_ckey(const struct silofs_mdigest_hd *md_hd,
 	                              out_key);
 }
 
-int silofs_derive_mbr_meta(const struct silofs_password *passwd,
+static int derive_mbr_meta(const struct silofs_password *passwd,
                            struct silofs_mbr_meta *out_mbr_meta)
 {
 	struct silofs_civkey civkey;
@@ -523,39 +563,27 @@ static void mbi_reset_ref(struct silofs_mbr_info *mbi)
 	silofs_mbref_reset(&mbi->mb_ref);
 }
 
-void silofs_mbi_init(struct silofs_mbr_info *mbi)
+static void mbi_init(struct silofs_mbr_info *mbi)
 {
 	const struct silofs_mbr_meta meta_none = {};
 
 	mbr_meta_assign(&mbi->mb_meta, &meta_none);
 	mbr1k_init(&mbi->mb_mbr1k);
+	mbr1k_set_sw_version(&mbi->mb_mbr1k, &silofs_sw_vers);
 	mbi_reset_ref(mbi);
 }
 
-void silofs_mbi_fini(struct silofs_mbr_info *mbi)
+static void mbi_fini(struct silofs_mbr_info *mbi)
 {
 	mbi_reset_ref(mbi);
 	mbr_meta_reset(&mbi->mb_meta);
 	mbr1k_fini(&mbi->mb_mbr1k);
 }
 
-void silofs_mbi_set_meta(struct silofs_mbr_info *mbi,
-                         const struct silofs_mbr_meta *meta)
+static void
+mbi_set_meta(struct silofs_mbr_info *mbi, const struct silofs_mbr_meta *meta)
 {
 	mbr_meta_assign(&mbi->mb_meta, meta);
-}
-
-int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pnptr *out_pnptr)
-{
-	mbr1k_root(&mbi->mb_mbr1k, out_pnptr);
-	return pnptr_isuber(out_pnptr) ? 0 : -SILOFS_ENOENT;
-}
-
-void silofs_mbi_set_root(struct silofs_mbr_info *mbi,
-                         const struct silofs_pnptr *pnptr)
-{
-	mbr1k_set_root(&mbi->mb_mbr1k, pnptr);
 }
 
 static void mbi_get_mbr1k(const struct silofs_mbr_info *mbi,
@@ -564,9 +592,9 @@ static void mbi_get_mbr1k(const struct silofs_mbr_info *mbi,
 	memcpy(out_mbr1k, &mbi->mb_mbr1k, sizeof(*out_mbr1k));
 }
 
-int silofs_mbi_export(const struct silofs_mbr_info *mbi,
-                      struct silofs_mbref *out_mbref,
-                      struct silofs_mbr1k *out_mbr1k_enc)
+static int
+mbi_export(const struct silofs_mbr_info *mbi, struct silofs_mbref *out_mbref,
+           struct silofs_mbr1k *out_mbr1k_enc)
 {
 	struct silofs_mbr1k mbr1k;
 	struct silofs_mbraux aux;
@@ -586,7 +614,7 @@ out:
 }
 
 static void
-mbi_set_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
+mbi_assign_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
 {
 	memcpy(&mbi->mb_mbr1k, mbr1k, sizeof(mbi->mb_mbr1k));
 }
@@ -600,18 +628,15 @@ mbi_import(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref,
 	int err;
 
 	err = mbraux_init(&aux, &mbi->mb_meta);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mbraux_verify_mbref(&aux, mbref, mbr1k_enc);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = mbraux_decode_mbr1k(&aux, mbr1k_enc, &mbr1k);
-	if (err) {
-		goto out;
-	}
-	mbi_set_mbr1k(mbi, &mbr1k);
+	goto_out_if_err(err);
+
+	mbi_assign_mbr1k(mbi, &mbr1k);
 out:
 	mbraux_fini(&aux);
 	return err;
@@ -689,7 +714,7 @@ int silofs_commit_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 	};
 	int err;
 
-	err = silofs_mbi_export(mbi, out_mbref, &mbr1k);
+	err = mbi_export(mbi, out_mbref, &mbr1k);
 	return_if_err(err);
 
 	err = save_mbr_at(dstor, out_mbref, &mbr1k);
@@ -739,4 +764,92 @@ int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 
 	mbi_reset_ref(mbi);
 	return 0;
+}
+
+int silofs_update_mbr(struct silofs_mbr_info *mbi,
+                      const struct silofs_password *passwd)
+{
+	struct silofs_mbr_meta mbr_meta = {};
+	int err;
+
+	err = derive_mbr_meta(passwd, &mbr_meta);
+	return_if_err(err);
+
+	mbi_set_meta(mbi, &mbr_meta);
+	return 0;
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+static size_t sc_page_size(void)
+{
+	return (size_t)silofs_sc_page_size();
+}
+
+static size_t mbrinfo_memsize(const struct silofs_mbr_info *mbi)
+{
+	const size_t page_size = sc_page_size();
+
+	STATICASSERT_LT(sizeof(*mbi), SILOFS_PAGE_SIZE_MIN);
+
+	return page_size * silofs_div_round_up(sizeof(*mbi), page_size);
+}
+
+int silofs_new_mbrinfo(struct silofs_mbr_info **out_mbi)
+{
+	struct silofs_mbr_info *mbi = nullptr;
+	const size_t mem_size       = mbrinfo_memsize(mbi);
+	const size_t page_size      = sc_page_size();
+	void *mem                   = nullptr;
+	int err;
+
+	err = posix_memalign(&mem, page_size, mem_size);
+	if (err) {
+		log_err("failed to allocate mbr-info: mem_size=%zu err=%d",
+		        mem_size, err);
+		return -abs(err);
+	}
+	explicit_bzero(mem, mem_size);
+
+	err = silofs_sys_mlock(mem, mem_size);
+	if (err) {
+		free(mem);
+		log_err("failed to mlock mbr-info: mem_size=%zu err=%d",
+		        mem_size, err);
+		return err;
+	}
+
+	mbi = mem;
+	mbi_init(mbi);
+
+	*out_mbi = mbi;
+	return 0;
+}
+
+void silofs_del_mbrinfo(struct silofs_mbr_info *mbi)
+{
+	const size_t mem_size = mbrinfo_memsize(mbi);
+	void *mem             = mbi;
+
+	mbi_fini(mbi);
+	explicit_bzero(mem, mem_size);
+	silofs_sys_munlock(mem, mem_size);
+	free(mem);
+}
+
+int silofs_get_fsroot(const struct silofs_mbr_info *mbi,
+                      struct silofs_pnptr *out_pnptr,
+                      struct silofs_sw_version *out_swv)
+{
+	mbr1k_root(&mbi->mb_mbr1k, out_pnptr);
+	mbr1k_sw_version(&mbi->mb_mbr1k, out_swv);
+	return pnptr_isuber(out_pnptr) ? 0 : -SILOFS_ENOENT;
+}
+
+void silofs_set_fsroot(struct silofs_mbr_info *mbi,
+                       const struct silofs_pnptr *pnptr,
+                       const struct silofs_sw_version *swv)
+{
+	mbr1k_set_root(&mbi->mb_mbr1k, pnptr);
+	mbr1k_set_sw_version(&mbi->mb_mbr1k, swv);
 }

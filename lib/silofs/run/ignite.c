@@ -224,7 +224,9 @@ int silofs_exec_commit_mbr(struct silofs_task_ctx *task,
 static int resolve_root_uber(const struct silofs_task_ctx *task,
                              struct silofs_pnptr *out_pnptr)
 {
-	return silofs_mbi_uber_root(&task->env->mbi, out_pnptr);
+	struct silofs_sw_version swv;
+
+	return silofs_get_fsroot(task->env->mbi, out_pnptr, &swv);
 }
 
 static int

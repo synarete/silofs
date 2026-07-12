@@ -55,7 +55,7 @@ struct silofs_env {
 	struct silofs_strbuf           name;
 	struct silofs_alloc           *alloc;
 	struct silofs_env_base         base;
-	struct silofs_mbr_info         mbi;
+	struct silofs_mbr_info        *mbi;
 	struct silofs_rwlock           rwlock;
 	struct silofs_mutex            mutex;
 	struct silofs_cipher_hd        enc_ci_hd;

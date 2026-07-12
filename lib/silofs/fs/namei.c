@@ -2285,7 +2285,7 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 
 static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)
 {
-	return &task->env->mbi;
+	return task->env->mbi;
 }
 
 static void fill_query_boot_fsref(const struct silofs_task_ctx *task,

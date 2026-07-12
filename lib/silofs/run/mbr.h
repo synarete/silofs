@@ -31,34 +31,15 @@ struct silofs_mbr_meta {
 
 /* main boot-record, in-memory representation */
 struct silofs_mbr_info {
-	struct silofs_mbr_meta mb_meta;
 	struct silofs_mbr1k    mb_mbr1k;
+	struct silofs_mbr_meta mb_meta;
 	struct silofs_mbref    mb_ref;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_mbi_init(struct silofs_mbr_info *mbi);
-
-void silofs_mbi_fini(struct silofs_mbr_info *mbi);
-
-void silofs_mbi_set_meta(struct silofs_mbr_info       *mbi,
-                         const struct silofs_mbr_meta *meta);
-
-int silofs_mbi_uber_root(const struct silofs_mbr_info *mbi,
-                         struct silofs_pnptr          *out_pnptr);
-
-void silofs_mbi_set_root(struct silofs_mbr_info    *mbi,
-                         const struct silofs_pnptr *pnptr);
-
-int silofs_mbi_export(const struct silofs_mbr_info *mbi,
-                      struct silofs_mbref          *out_mbref,
-                      struct silofs_mbr1k          *out_mbr1k);
-
-int silofs_derive_mbr_meta(const struct silofs_password *passwd,
-                           struct silofs_mbr_meta       *out_mbr_meta);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+int silofs_update_mbr(struct silofs_mbr_info       *mbi,
+                      const struct silofs_password *passwd);
 
 int silofs_sense_mbr(struct silofs_dstor       *dstor,
                      const struct silofs_mbref *mbref);
@@ -71,5 +52,19 @@ int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 
 int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
                      const struct silofs_mbref *mbref);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_new_mbrinfo(struct silofs_mbr_info **out_mbi);
+
+void silofs_del_mbrinfo(struct silofs_mbr_info *mbi);
+
+int silofs_get_fsroot(const struct silofs_mbr_info *mbi,
+                      struct silofs_pnptr          *out_pnptr,
+                      struct silofs_sw_version     *out_swv);
+
+void silofs_set_fsroot(struct silofs_mbr_info         *mbi,
+                       const struct silofs_pnptr      *pnptr,
+                       const struct silofs_sw_version *swv);
 
 #endif /* SILOFS_MBR_H_ */

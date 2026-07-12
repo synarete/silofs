@@ -30,9 +30,6 @@
 /* repo meta-file magic-signature (ASCII: "#SILOFS#") */
 #define SILOFS_REPO_META_MAGIC (0x2353464F4C495323L)
 
-/* main-boot-record magic-signature (ASCII: "@SILOFS@") */
-#define SILOFS_MBR_MAGIC (0x4053464F4C495340L)
-
 /* super-block special magic-signature (ASCII: "@silofs@") */
 #define SILOFS_SUPER_MAGIC (0x4073666F6C697340L)
 
@@ -81,9 +78,6 @@
 
 /* max number of supplementary groups per each uid (same as NFS) */
 #define SILOFS_NSGRP_MAX (16)
-
-/* size of main-boot-record */
-#define SILOFS_MBR_SIZE (1024)
 
 /* minimal file-system capacity, in bytes (2G) */
 #define SILOFS_CAPACITY_SIZE_MIN (2L * SILOFS_GIGA)
@@ -214,18 +208,6 @@
 #define SILOFS_FILE_DATA_NODE1_SIZE  (1024U)
 #define SILOFS_FILE_DATA_NODE4_SIZE  (4096U)
 #define SILOFS_FILE_DATA_NODE64_SIZE (65536U)
-
-/* max size of symbolic-link value (including null terminator) */
-#define SILOFS_SYMLNK_MAX SILOFS_PATH_MAX
-
-/* max size of within-inode symbolic-link value  */
-#define SILOFS_SYMLNK_HEAD_MAX (480)
-
-/* number of possible symbolic-link parts  */
-#define SILOFS_SYMLNK_NPARTS (2)
-
-/* on-disk size of symbolic-link tail-value */
-#define SILOFS_SYMVAL_NODE_SIZE (4096)
 
 /* max size of single I/O operation (2M - 64K) */
 #define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
@@ -511,19 +493,26 @@ struct silofs_spdesc128b {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* global boot record */
+/* size of main-boot-record */
+#define SILOFS_MBR_SIZE (1024)
+
+/* main-boot-record magic-signature (ASCII: "@SILOFS@") */
+#define SILOFS_MBR_MAGIC (0x4053464F4C495340L)
+
+/* main boot record */
 struct silofs_mbr1k {
-	uint64_t                mbr_magic;
-	uint64_t                mbr_version;
-	struct silofs_uuid      mbr_uuid;
-	uint32_t                mbr_mode;
-	uint32_t                mbr_flags;
-	uint8_t                 mbr_reserved1[24];
-	uint8_t                 mbr_reserved2[192];
-	struct silofs_pnptr256b mbr_root;
-	uint8_t                 mbr_reserved3[448];
-	struct silofs_hash256   mbr_hash;
-	struct silofs_mac       mbr_hmac;
+	uint64_t                    mbr_magic;
+	uint64_t                    mbr_version;
+	struct silofs_uuid          mbr_uuid;
+	uint32_t                    mbr_mode;
+	uint32_t                    mbr_flags;
+	uint8_t                     mbr_reserved1[24];
+	struct silofs_sw_version64b mbr_sw_version;
+	uint8_t                     mbr_reserved2[128];
+	struct silofs_pnptr256b     mbr_root_uber;
+	uint8_t                     mbr_reserved3[448];
+	struct silofs_hash256       mbr_hash;
+	struct silofs_mac           mbr_hmac;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -590,21 +579,20 @@ struct silofs_space_stats1k {
 } silofs_attr_aligned64;
 
 struct silofs_superb_node {
-	struct silofs_header        s_hdr;
-	uint64_t                    s_magic;
-	uint64_t                    s_version;
-	uint32_t                    s_flags;
-	uint8_t                     s_reserved1[44];
-	struct silofs_sw_version64b s_sw_version;
-	uint8_t                     s_reserved2[64];
-	struct silofs_tm64b         s_btime;
-	uint64_t                    s_fs_capacity;
-	uint64_t                    s_fs_usage;
-	uint64_t                    s_ino_generation;
-	uint8_t                     s_reserved3[680];
-	uint64_t                    s_nodes_count[128];
-	int64_t                     s_apex_voff[128];
-	uint8_t                     s_reserved4[1024];
+	struct silofs_header s_hdr;
+	uint64_t             s_magic;
+	uint64_t             s_version;
+	uint32_t             s_flags;
+	uint8_t              s_reserved1[44];
+	struct silofs_tm64b  s_btime;
+	uint8_t              s_reserved2[64];
+	uint64_t             s_fs_capacity;
+	uint64_t             s_fs_usage;
+	uint64_t             s_ino_generation;
+	uint8_t              s_reserved3[744];
+	uint64_t             s_nodes_count[128];
+	int64_t              s_apex_voff[128];
+	uint8_t              s_reserved4[1024];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -620,71 +608,6 @@ struct silofs_space_node {
 	uint8_t              sp_reserved2[896];
 	uint16_t             sp_flags[SILOFS_SPNODE_NREFS];
 	uint32_t             sp_refcnt[SILOFS_SPNODE_NREFS];
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_inode_times {
-	struct silofs_timespec btime;
-	struct silofs_timespec atime;
-	struct silofs_timespec ctime;
-	struct silofs_timespec mtime;
-} silofs_attr_aligned64;
-
-struct silofs_inode_xattr {
-	struct silofs_laddr64 ix_laddr[8];
-	uint8_t               ix_reserved[192];
-} silofs_attr_aligned64;
-
-struct silofs_inode_dir {
-	struct silofs_laddr64 d_root;
-	uint64_t              d_seed;
-	uint64_t              d_ndents;
-	uint32_t              d_last_index;
-	uint32_t              d_flags;
-	uint8_t               d_hashfn;
-	uint8_t               d_reserved[31];
-} silofs_attr_aligned64;
-
-struct silofs_inode_lnk {
-	uint8_t               l_head[SILOFS_SYMLNK_HEAD_MAX];
-	struct silofs_laddr64 l_tail[SILOFS_SYMLNK_NPARTS];
-	uint8_t               l_reserved[16];
-} silofs_attr_aligned64;
-
-struct silofs_inode_file {
-	struct silofs_laddr64 f_slots[32];
-	uint8_t               f_reserved[256];
-} silofs_attr_aligned8;
-
-union silofs_inode_tail {
-	struct silofs_inode_dir  d;
-	struct silofs_inode_file f;
-	struct silofs_inode_lnk  l;
-	uint8_t                  b[512];
-} silofs_attr_aligned64;
-
-struct silofs_inode {
-	struct silofs_header      i_hdr;
-	uint64_t                  i_ino;
-	uint64_t                  i_parent;
-	uint32_t                  i_uid;
-	uint32_t                  i_gid;
-	uint32_t                  i_mode;
-	uint32_t                  i_flags;
-	int64_t                   i_size;
-	int64_t                   i_span;
-	uint64_t                  i_blocks;
-	uint64_t                  i_nlink;
-	uint64_t                  i_attributes; /* statx */
-	uint32_t                  i_rdev_major;
-	uint32_t                  i_rdev_minor;
-	uint64_t                  i_revision;
-	uint64_t                  i_generation;
-	uint8_t                   i_reserved1[32];
-	struct silofs_inode_times i_tm;
-	struct silofs_inode_xattr i_xa;
-	union silofs_inode_tail   i_ta;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -765,6 +688,18 @@ struct silofs_ftree_node {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/* max size of symbolic-link value (including null terminator) */
+#define SILOFS_SYMLNK_MAX SILOFS_PATH_MAX
+
+/* max size of within-inode symbolic-link value  */
+#define SILOFS_SYMLNK_HEAD_MAX (480)
+
+/* number of possible symbolic-link parts  */
+#define SILOFS_SYMLNK_NPARTS (2)
+
+/* on-disk size of symbolic-link tail-value */
+#define SILOFS_SYMVAL_NODE_SIZE (4096)
+
 /* max size of symbolic-link part  */
 #define SILOFS_SYMVAL_PART_MAX (4000)
 
@@ -774,6 +709,71 @@ struct silofs_symval_node {
 	uint16_t             svn_length;
 	uint8_t              svn_reserved2[22];
 	uint8_t              svn_value[SILOFS_SYMVAL_PART_MAX];
+} silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+struct silofs_inode_times {
+	struct silofs_timespec btime;
+	struct silofs_timespec atime;
+	struct silofs_timespec ctime;
+	struct silofs_timespec mtime;
+} silofs_attr_aligned64;
+
+struct silofs_inode_xattr {
+	struct silofs_laddr64 ix_laddr[8];
+	uint8_t               ix_reserved[192];
+} silofs_attr_aligned64;
+
+struct silofs_inode_dir {
+	struct silofs_laddr64 d_root;
+	uint64_t              d_seed;
+	uint64_t              d_ndents;
+	uint32_t              d_last_index;
+	uint32_t              d_flags;
+	uint8_t               d_hashfn;
+	uint8_t               d_reserved[31];
+} silofs_attr_aligned64;
+
+struct silofs_inode_lnk {
+	uint8_t               l_head[SILOFS_SYMLNK_HEAD_MAX];
+	struct silofs_laddr64 l_tail[SILOFS_SYMLNK_NPARTS];
+	uint8_t               l_reserved[16];
+} silofs_attr_aligned64;
+
+struct silofs_inode_file {
+	struct silofs_laddr64 f_slots[32];
+	uint8_t               f_reserved[256];
+} silofs_attr_aligned8;
+
+union silofs_inode_tail {
+	struct silofs_inode_dir  d;
+	struct silofs_inode_file f;
+	struct silofs_inode_lnk  l;
+	uint8_t                  b[512];
+} silofs_attr_aligned64;
+
+struct silofs_inode {
+	struct silofs_header      i_hdr;
+	uint64_t                  i_ino;
+	uint64_t                  i_parent;
+	uint32_t                  i_uid;
+	uint32_t                  i_gid;
+	uint32_t                  i_mode;
+	uint32_t                  i_flags;
+	int64_t                   i_size;
+	int64_t                   i_span;
+	uint64_t                  i_blocks;
+	uint64_t                  i_nlink;
+	uint64_t                  i_attributes; /* statx */
+	uint32_t                  i_rdev_major;
+	uint32_t                  i_rdev_minor;
+	uint64_t                  i_revision;
+	uint64_t                  i_generation;
+	uint8_t                   i_reserved1[32];
+	struct silofs_inode_times i_tm;
+	struct silofs_inode_xattr i_xa;
+	union silofs_inode_tail   i_ta;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

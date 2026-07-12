@@ -208,7 +208,6 @@ libsilofs_la_SOURCES += run/appexec.c
 libsilofs_la_SOURCES += run/delfs.c
 libsilofs_la_SOURCES += run/env.c
 libsilofs_la_SOURCES += run/env.h
-libsilofs_la_SOURCES += run/envp.h
 libsilofs_la_SOURCES += run/ignite.c
 libsilofs_la_SOURCES += run/mbr.c
 libsilofs_la_SOURCES += run/mbr.h

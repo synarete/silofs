@@ -250,7 +250,7 @@ static void inewp_update_by_parent(struct silofs_inew_params *inp,
 
 static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)
 {
-	return task->env->base.prng;
+	return &task->env->prandgen;
 }
 
 static void
@@ -2206,7 +2206,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->iopen_cur = env->opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->base.repo->re_dstor.ds_hq.dsq_lru.sz;
+	qpr->bopen_cur = env->repo.re_dstor.ds_hq.dsq_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2454,7 +2454,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 	err = silofs_flush_dirty_now(task);
 	return_if_err(err);
 
-	err = silofs_repo_fsync_all(task->env->base.repo);
+	err = silofs_repo_fsync_all(task->repo);
 	return_if_err(err);
 
 	return 0;

@@ -24,11 +24,8 @@
 #include <silofs/bridge.h>
 #include <silofs/run.h>
 
-#define SILOFS_USE_ENV_PRIVATE 1
-#include "envp.h"
-
 /* Local functions */
-static void envi_unbind_fuseq(struct silofs_env_inst *envi);
+static void env_unbind_fuseq(struct silofs_env *env);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -164,10 +161,10 @@ static enum silofs_qallocf qaflags_by(enum silofs_flags flags)
 	return qaflags;
 }
 
-static int envi_init_qalloc(struct silofs_env_inst *envi, size_t memwant,
-                            enum silofs_flags flags)
+static int env_init_qalloc(struct silofs_env *env, size_t memwant,
+                           enum silofs_flags flags)
 {
-	struct silofs_qalloc *qalloc = &envi->alloc_u.qalloc;
+	struct silofs_qalloc *qalloc = &env->alloc_u.qalloc;
 	size_t memsize;
 	int err;
 
@@ -177,26 +174,26 @@ static int envi_init_qalloc(struct silofs_env_inst *envi, size_t memwant,
 	err = silofs_qalloc_init(qalloc, memsize, qaflags_by(flags));
 	return_if_err(err);
 
-	envi->alloc = &qalloc->alloc;
-	envi->initf |= SILOFS_ENVIF_QALLOC;
+	env->alloc = &qalloc->alloc;
+	env->initf |= SILOFS_ENVF_QALLOC;
 	return 0;
 }
 
-static void envi_fini_qalloc(struct silofs_env_inst *envi)
+static void env_fini_qalloc(struct silofs_env *env)
 {
 	struct silofs_qalloc *qalloc = nullptr;
 
-	if (envi->initf & SILOFS_ENVIF_QALLOC) {
-		qalloc = &envi->alloc_u.qalloc;
+	if (env->initf & SILOFS_ENVF_QALLOC) {
+		qalloc = &env->alloc_u.qalloc;
 		silofs_qalloc_fini(qalloc);
-		envi->alloc = nullptr;
-		envi->initf &= ~SILOFS_ENVIF_QALLOC;
+		env->alloc = nullptr;
+		env->initf &= ~SILOFS_ENVF_QALLOC;
 	}
 }
 
-static int envi_init_stdalloc(struct silofs_env_inst *envi, size_t memwant)
+static int env_init_stdalloc(struct silofs_env *env, size_t memwant)
 {
-	struct silofs_stdalloc *stdalloc = &envi->alloc_u.stdalloc;
+	struct silofs_stdalloc *stdalloc = &env->alloc_u.stdalloc;
 	size_t memsize;
 	int err;
 
@@ -206,322 +203,400 @@ static int envi_init_stdalloc(struct silofs_env_inst *envi, size_t memwant)
 	err = silofs_stdalloc_init(stdalloc, memsize);
 	return_if_err(err);
 
-	envi->alloc = &stdalloc->alloc;
-	envi->initf |= SILOFS_ENVIF_STDALLOC;
+	env->alloc = &stdalloc->alloc;
+	env->initf |= SILOFS_ENVF_STDALLOC;
 	return 0;
 }
 
-static void envi_fini_stdalloc(struct silofs_env_inst *envi)
+static void env_fini_stdalloc(struct silofs_env *env)
 {
 	struct silofs_stdalloc *stdalloc = nullptr;
 
-	if (envi->initf & SILOFS_ENVIF_STDALLOC) {
-		stdalloc = &envi->alloc_u.stdalloc;
+	if (env->initf & SILOFS_ENVF_STDALLOC) {
+		stdalloc = &env->alloc_u.stdalloc;
 		silofs_stdalloc_fini(stdalloc);
-		envi->alloc = nullptr;
-		envi->initf &= ~SILOFS_ENVIF_STDALLOC;
+		env->alloc = nullptr;
+		env->initf &= ~SILOFS_ENVF_STDALLOC;
 	}
 }
 
-static int envi_init_alloc(struct silofs_env_inst *envi, size_t memwant,
-                           enum silofs_flags flags)
+static int
+env_init_alloc(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 {
 	int ret;
 
 	if (flags & SILOFS_F_STDALLOC) {
-		ret = envi_init_stdalloc(envi, memwant);
+		ret = env_init_stdalloc(env, memwant);
 	} else {
-		ret = envi_init_qalloc(envi, memwant, flags);
+		ret = env_init_qalloc(env, memwant, flags);
 	}
 	return ret;
 }
 
-static void envi_fini_alloc(struct silofs_env_inst *envi)
+static void env_fini_alloc(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_STDALLOC) {
-		envi_fini_stdalloc(envi);
-	} else if (envi->initf & SILOFS_ENVIF_QALLOC) {
-		envi_fini_qalloc(envi);
+	if (env->initf & SILOFS_ENVF_STDALLOC) {
+		env_fini_stdalloc(env);
+	} else if (env->initf & SILOFS_ENVF_QALLOC) {
+		env_fini_qalloc(env);
 	}
 }
 
-static int envi_init_repo(struct silofs_env_inst *envi)
+static int env_init_mbr(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_repo_init(&envi->repo, envi->alloc);
+	err = silofs_new_mbrinfo(&env->mbi);
 	return_if_err(err);
 
-	envi->initf |= SILOFS_ENVIF_REPO;
+	env->initf |= SILOFS_ENVF_MBR;
 	return 0;
 }
 
-static void envi_fini_repo(struct silofs_env_inst *envi)
+static void env_fini_mbr(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_REPO) {
-		silofs_repo_fini(&envi->repo);
-		envi->initf &= ~SILOFS_ENVIF_REPO;
+	if (env->initf & SILOFS_ENVF_MBR) {
+		silofs_del_mbrinfo(env->mbi);
+		env->mbi = nullptr;
+		env->initf &= ~SILOFS_ENVF_MBR;
 	}
 }
 
-static int envi_init_pcache(struct silofs_env_inst *envi)
+static int env_init_locks(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_pcache_init(&envi->pcache, envi->alloc);
-	return_if_err(err);
-
-	envi->initf |= SILOFS_ENVIF_PCACHE;
+	err = silofs_rwlock_init(&env->rwlock);
+	if (err) {
+		return err;
+	}
+	err = silofs_mutex_init(&env->mutex);
+	if (err) {
+		silofs_rwlock_fini(&env->rwlock);
+		return err;
+	}
+	env->initf |= SILOFS_ENVF_LOCKS;
 	return 0;
 }
 
-static void envi_fini_pcache(struct silofs_env_inst *envi)
+static void env_fini_locks(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_PCACHE) {
-		silofs_pcache_fini(&envi->pcache);
-		envi->initf &= ~SILOFS_ENVIF_PCACHE;
+	if (env->initf & SILOFS_ENVF_LOCKS) {
+		silofs_mutex_fini(&env->mutex);
+		silofs_rwlock_fini(&env->rwlock);
+		env->initf &= ~SILOFS_ENVF_LOCKS;
 	}
 }
 
-static int envi_init_lcache(struct silofs_env_inst *envi)
+static int env_init_crypt(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_lcache_init(&envi->lcache, envi->alloc);
+	err = silofs_mdigest_init(&env->md_hd);
 	return_if_err(err);
 
-	envi->initf |= SILOFS_ENVIF_LCACHE;
+	err = silofs_cipher_init(&env->enc_ci_hd);
+	goto_if_err(err, out_err);
+
+	err = silofs_cipher_init(&env->dec_ci_hd);
+	goto_if_err(err, out_err);
+
+	env->initf |= SILOFS_ENVF_CRYPT;
 	return 0;
+out_err:
+	silofs_cipher_fini(&env->dec_ci_hd);
+	silofs_cipher_fini(&env->enc_ci_hd);
+	silofs_mdigest_fini(&env->md_hd);
+	return err;
 }
 
-static void envi_fini_lcache(struct silofs_env_inst *envi)
+static void env_fini_crypt(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_LCACHE) {
-		silofs_lcache_fini(&envi->lcache);
-		envi->initf &= ~SILOFS_ENVIF_LCACHE;
+	if (env->initf & SILOFS_ENVF_CRYPT) {
+		silofs_cipher_fini(&env->dec_ci_hd);
+		silofs_cipher_fini(&env->enc_ci_hd);
+		silofs_mdigest_fini(&env->md_hd);
+		env->initf &= ~SILOFS_ENVF_CRYPT;
 	}
 }
 
-static int envi_init_freesqs(struct silofs_env_inst *envi)
+static int env_init_uconv(struct silofs_env *env)
+{
+	return silofs_uconv_init(&env->uconv);
+}
+
+static void env_fini_uconv(struct silofs_env *env)
+{
+	silofs_uconv_fini(&env->uconv);
+}
+
+static int env_init_repo(struct silofs_env *env)
 {
 	int err;
 
-	err = silofs_lspools_init(&envi->lspools, envi->alloc);
+	err = silofs_repo_init(&env->repo, env->alloc);
 	return_if_err(err);
 
-	silofs_pspools_init(&envi->pspool, envi->alloc);
-	envi->initf |= SILOFS_ENVIF_FREESQS;
+	env->initf |= SILOFS_ENVF_REPO;
 	return 0;
 }
 
-static void envi_fini_freesqs(struct silofs_env_inst *envi)
+static void env_fini_repo(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_FREESQS) {
-		silofs_pspools_fini(&envi->pspool);
-		silofs_lspools_fini(&envi->lspools);
-		envi->initf &= ~SILOFS_ENVIF_FREESQS;
+	if (env->initf & SILOFS_ENVF_REPO) {
+		silofs_repo_fini(&env->repo);
+		env->initf &= ~SILOFS_ENVF_REPO;
 	}
 }
 
-static int envi_init_idsmap(struct silofs_env_inst *envi)
+static int env_init_pcache(struct silofs_env *env)
 {
-	struct silofs_idsmap *idsmap = &envi->idsmap;
 	int err;
 
-	err = silofs_idsmap_init(idsmap, envi->alloc);
+	err = silofs_pcache_init(&env->pcache, env->alloc);
 	return_if_err(err);
 
-	envi->initf |= SILOFS_ENVIF_IDSMAP;
+	env->initf |= SILOFS_ENVF_PCACHE;
 	return 0;
 }
 
-static void envi_fini_idsmap(struct silofs_env_inst *envi)
+static void env_fini_pcache(struct silofs_env *env)
 {
-	struct silofs_idsmap *idsmap = &envi->idsmap;
+	if (env->initf & SILOFS_ENVF_PCACHE) {
+		silofs_pcache_fini(&env->pcache);
+		env->initf &= ~SILOFS_ENVF_PCACHE;
+	}
+}
 
-	if (envi->initf & SILOFS_ENVIF_IDSMAP) {
+static int env_init_lcache(struct silofs_env *env)
+{
+	int err;
+
+	err = silofs_lcache_init(&env->lcache, env->alloc);
+	return_if_err(err);
+
+	env->initf |= SILOFS_ENVF_LCACHE;
+	return 0;
+}
+
+static void env_fini_lcache(struct silofs_env *env)
+{
+	if (env->initf & SILOFS_ENVF_LCACHE) {
+		silofs_lcache_fini(&env->lcache);
+		env->initf &= ~SILOFS_ENVF_LCACHE;
+	}
+}
+
+static int env_init_freesqs(struct silofs_env *env)
+{
+	int err;
+
+	err = silofs_lspools_init(&env->lspools, env->alloc);
+	return_if_err(err);
+
+	silofs_pspools_init(&env->pspools, env->alloc);
+	env->initf |= SILOFS_ENVF_FREESQS;
+	return 0;
+}
+
+static void env_fini_freesqs(struct silofs_env *env)
+{
+	if (env->initf & SILOFS_ENVF_FREESQS) {
+		silofs_pspools_fini(&env->pspools);
+		silofs_lspools_fini(&env->lspools);
+		env->initf &= ~SILOFS_ENVF_FREESQS;
+	}
+}
+
+static int env_init_idsmap(struct silofs_env *env)
+{
+	struct silofs_idsmap *idsmap = &env->idsmap;
+	int err;
+
+	err = silofs_idsmap_init(idsmap, env->alloc);
+	return_if_err(err);
+
+	env->initf |= SILOFS_ENVF_IDSMAP;
+	return 0;
+}
+
+static void env_fini_idsmap(struct silofs_env *env)
+{
+	struct silofs_idsmap *idsmap = &env->idsmap;
+
+	if (env->initf & SILOFS_ENVF_IDSMAP) {
 		silofs_idsmap_clear(idsmap);
 		silofs_idsmap_fini(idsmap);
-		envi->initf &= ~SILOFS_ENVIF_IDSMAP;
+		env->initf &= ~SILOFS_ENVF_IDSMAP;
 	}
 }
 
-static int envi_init_env(struct silofs_env_inst *envi)
+static void env_init_commons(struct silofs_env *env)
 {
-	const struct silofs_env_base env_base = {
-		.prng    = &envi->prandgen,
-		.repo    = &envi->repo,
-		.dstor   = &envi->repo.re_dstor,
-		.pcache  = &envi->pcache,
-		.lcache  = &envi->lcache,
-		.lspools = &envi->lspools,
-		.pspools = &envi->pspool,
-		.idsmap  = &envi->idsmap,
-	};
-	struct silofs_env *env = &envi->env;
+	silofs_memzero(&env->opstat, sizeof(env->opstat));
+	silofs_strbuf_reset(&env->name);
+	silofs_cred_init(&env->owner_cred);
+	silofs_ubref_init(&env->ubref);
+	env->init_time = silofs_time_mono_now();
+	env->alloc     = nullptr;
+	env->repodir   = nullptr;
+	env->fuseq     = nullptr;
+	env->vfs_hooks = nullptr;
+}
+
+static void env_fini_commons(struct silofs_env *env)
+{
+	silofs_cred_fini(&env->owner_cred);
+	silofs_ubref_fini(&env->ubref);
+	silofs_memzero(&env->opstat, sizeof(env->opstat));
+}
+
+static int env_init_prandgen(struct silofs_env *env)
+{
 	int err;
 
-	err = silofs_env_init(env, envi->alloc);
+	err = silofs_prandgen_init(&env->prandgen);
 	return_if_err(err);
 
-	silofs_env_use(env, &env_base);
-	envi->initf |= SILOFS_ENVIF_ENV;
+	env->initf |= SILOFS_ENVF_PRANDGEN;
 	return 0;
 }
 
-static void envi_fini_env(struct silofs_env_inst *envi)
+static void env_fini_prandgen(struct silofs_env *env)
 {
-	struct silofs_env *env = &envi->env;
-
-	if (envi->initf & SILOFS_ENVIF_ENV) {
-		silofs_env_fini(env);
-		envi->initf &= ~SILOFS_ENVIF_ENV;
+	if (env->initf & SILOFS_ENVF_PRANDGEN) {
+		silofs_prandgen_fini(&env->prandgen);
+		env->initf &= ~SILOFS_ENVF_PRANDGEN;
 	}
 }
 
-static int envi_init_prandgen(struct silofs_env_inst *envi)
+static void env_fini(struct silofs_env *env)
+{
+	env_unbind_fuseq(env);
+	env_fini_idsmap(env);
+	env_fini_freesqs(env);
+	env_fini_lcache(env);
+	env_fini_pcache(env);
+	env_fini_repo(env);
+	env_fini_uconv(env);
+	env_fini_crypt(env);
+	env_fini_locks(env);
+	env_fini_mbr(env);
+	env_fini_alloc(env);
+	env_fini_prandgen(env);
+	env_fini_commons(env);
+}
+
+static int
+env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 {
 	int err;
 
-	err = silofs_prandgen_init(&envi->prandgen);
-	return_if_err(err);
+	env_init_commons(env);
 
-	envi->initf |= SILOFS_ENVIF_PRANDGEN;
-	return 0;
-}
-
-static void envi_fini_prandgen(struct silofs_env_inst *envi)
-{
-	if (envi->initf & SILOFS_ENVIF_PRANDGEN) {
-		silofs_prandgen_fini(&envi->prandgen);
-		envi->initf &= ~SILOFS_ENVIF_PRANDGEN;
-	}
-}
-
-static void envi_fini(struct silofs_env_inst *envi)
-{
-	envi_unbind_fuseq(envi);
-	envi_fini_env(envi);
-	envi_fini_idsmap(envi);
-	envi_fini_freesqs(envi);
-	envi_fini_lcache(envi);
-	envi_fini_pcache(envi);
-	envi_fini_repo(envi);
-	envi_fini_alloc(envi);
-	envi_fini_prandgen(envi);
-}
-
-static int envi_init(struct silofs_env_inst *envi, size_t memwant,
-                     enum silofs_flags flags)
-{
-	int err;
-
-	err = envi_init_prandgen(envi);
+	err = env_init_alloc(env, memwant, flags);
 	goto_out_if_err(err);
 
-	err = envi_init_alloc(envi, memwant, flags);
+	err = env_init_mbr(env);
 	goto_out_if_err(err);
 
-	err = envi_init_repo(envi);
+	err = env_init_locks(env);
 	goto_out_if_err(err);
 
-	err = envi_init_pcache(envi);
+	err = env_init_crypt(env);
 	goto_out_if_err(err);
 
-	err = envi_init_lcache(envi);
+	err = env_init_uconv(env);
 	goto_out_if_err(err);
 
-	err = envi_init_freesqs(envi);
+	err = env_init_prandgen(env);
 	goto_out_if_err(err);
 
-	err = envi_init_idsmap(envi);
+	err = env_init_repo(env);
 	goto_out_if_err(err);
 
-	err = envi_init_env(envi);
+	err = env_init_pcache(env);
+	goto_out_if_err(err);
+
+	err = env_init_lcache(env);
+	goto_out_if_err(err);
+
+	err = env_init_freesqs(env);
+	goto_out_if_err(err);
+
+	err = env_init_idsmap(env);
 	goto_out_if_err(err);
 
 	return 0;
 out:
-	envi_fini(envi);
+	env_fini(env);
 	return err;
 }
 
-static size_t envi_memsize(const struct silofs_env_inst *envi)
+static size_t env_memsize(const struct silofs_env *env)
 {
-	constexpr size_t ensz = sizeof(*envi);
+	constexpr size_t ensz = sizeof(*env);
 	const size_t pgsz     = (size_t)silofs_sc_page_size();
 	const size_t npgs     = silofs_div_round_up(ensz, pgsz);
 
 	return npgs * pgsz;
 }
 
-static int envi_new(size_t memwant, enum silofs_flags flags,
-                    struct silofs_env_inst **out_envi)
+static int
+env_new(size_t memwant, enum silofs_flags flags, struct silofs_env **out_env)
 
 {
-	struct silofs_env_inst *envi = nullptr;
+	struct silofs_env *env = nullptr;
 	size_t msz;
 	void *mem;
 	int err;
 
-	msz = envi_memsize(envi);
+	msz = env_memsize(env);
 	err = silofs_zmalloc(msz, &mem);
 	return_if_err(err);
 
-	envi = mem;
-	err  = envi_init(envi, memwant, flags);
+	env = mem;
+	err = env_init(env, memwant, flags);
 	return_if_err(err);
 
-	*out_envi = envi;
+	*out_env = env;
 	return 0;
 }
 
-static void envi_del(struct silofs_env_inst *envi)
+static void env_del(struct silofs_env *env)
 {
-	const size_t msz = envi_memsize(envi);
-	void *mem        = envi;
+	const size_t msz = env_memsize(env);
+	void *mem        = env;
 
-	envi_fini(envi);
+	env_fini(env);
 	silofs_zfree(mem, msz);
 }
 
 int silofs_create_env(size_t memwant, enum silofs_flags flags,
                       struct silofs_env **out_env)
 {
-	struct silofs_env_inst *envi;
 	int err;
 
-	STATICASSERT_LE(sizeof(*envi), 64 * SILOFS_KILO);
+	STATICASSERT_LT(sizeof(**out_env), 64 * SILOFS_KILO);
 
-	err = envi_new(memwant, flags, &envi);
-	if (!err) {
-		*out_env = &envi->env;
-	}
+	err = env_new(memwant, flags, out_env);
 	silofs_burnstack();
 
 	return err;
 }
 
-static struct silofs_env_inst *env_inst_of(struct silofs_env *env)
-{
-	return mut_container_of(env, struct silofs_env_inst, env);
-}
-
 void silofs_destroy_env(struct silofs_env *env)
 {
-	struct silofs_env_inst *envi = nullptr;
-
-	envi = env_inst_of(env);
-	envi_del(envi);
+	env_del(env);
 	silofs_burnstack();
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int envi_populate_idsmap(struct silofs_env_inst *envi,
-                                const struct silofs_spec *spec)
+static int
+env_populate_idsmap(struct silofs_env *env, const struct silofs_spec *spec)
 {
-	struct silofs_idsmap *idsmap = &envi->idsmap;
+	struct silofs_idsmap *idsmap = &env->idsmap;
 	bool allow_hostids;
 
 	allow_hostids = (spec->flags & SILOFS_F_ALLOW_HOSTIDS) > 0;
@@ -529,28 +604,28 @@ static int envi_populate_idsmap(struct silofs_env_inst *envi,
 }
 
 static int
-envi_attach_fuseq(struct silofs_env_inst *envi, const struct silofs_spec *spec)
+env_attach_fuseq(struct silofs_env *env, const struct silofs_spec *spec)
 {
 	struct silofs_fuseq *fuseq;
 
-	fuseq = silofs_fuseq_new(envi->alloc, spec->flags);
+	fuseq = silofs_fuseq_new(env->alloc, spec->flags);
 	if (fuseq == nullptr) {
 		log_warn("failed to create fuseq: flags=0x%x", spec->flags);
 		return -SILOFS_ENOMEM;
 	}
-	envi->initf |= SILOFS_ENVIF_FUSEQ;
-	envi->fuseq = fuseq;
+	env->initf |= SILOFS_ENVF_FUSEQ;
+	env->fuseq = fuseq;
 
-	silofs_env_bind_fuseq(&envi->env, fuseq);
+	silofs_env_bind_fuseq(env, fuseq);
 	return 0;
 }
 
-static void envi_unbind_fuseq(struct silofs_env_inst *envi)
+static void env_unbind_fuseq(struct silofs_env *env)
 {
-	if (envi->initf & SILOFS_ENVIF_FUSEQ) {
-		silofs_fuseq_del(envi->fuseq, envi->alloc);
-		envi->fuseq = envi->env.fuseq = nullptr;
-		envi->initf &= ~SILOFS_ENVIF_FUSEQ;
+	if (env->initf & SILOFS_ENVF_FUSEQ) {
+		silofs_fuseq_del(env->fuseq, env->alloc);
+		env->fuseq = nullptr;
+		env->initf &= ~SILOFS_ENVF_FUSEQ;
 	}
 }
 
@@ -559,28 +634,27 @@ static bool with_fuse(const struct silofs_spec *args)
 	return (args->flags & SILOFS_F_WITH_FUSE) > 0;
 }
 
-static int envi_update_by_spec(struct silofs_env_inst *envi,
-                               const struct silofs_spec *spec)
+static int
+env_update_by_spec(struct silofs_env *env, const struct silofs_spec *spec)
 {
-	return silofs_env_setup(&envi->env, spec);
+	return silofs_env_setup(env, spec);
 }
 
 int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec)
 {
-	struct silofs_env_inst *envi = env_inst_of(env);
 	int err;
 
 	err = check_spec(spec);
 	return_if_err(err);
 
-	err = envi_update_by_spec(envi, spec);
+	err = env_update_by_spec(env, spec);
 	return_if_err(err);
 
-	err = envi_populate_idsmap(envi, spec);
+	err = env_populate_idsmap(env, spec);
 	return_if_err(err);
 
 	if (with_fuse(spec)) {
-		err = envi_attach_fuseq(envi, spec);
+		err = env_attach_fuseq(env, spec);
 		return_if_err(err);
 	}
 
@@ -748,150 +822,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void env_init_opstat(struct silofs_env *env)
-{
-	env->opstat.op_iopen_max = 0;
-	env->opstat.op_iopen     = 0;
-	env->opstat.op_count     = 0;
-	env->opstat.op_iopen_max = 0;
-}
-
-static void
-env_init_commons(struct silofs_env *env, struct silofs_alloc *alloc)
-{
-	memset(&env->base, 0, sizeof(env->base));
-	silofs_strbuf_reset(&env->name);
-	silofs_cred_init(&env->owner_cred);
-	silofs_ubref_init(&env->ubref);
-	env->init_time = silofs_time_mono_now();
-	env->alloc     = alloc;
-	env->iconv_set = false;
-	env->repodir   = nullptr;
-	env->fuseq     = nullptr;
-	env->vfs_hooks = nullptr;
-}
-
-static void env_fini_commons(struct silofs_env *env)
-{
-	memset(&env->base, 0, sizeof(env->base));
-	silofs_cred_fini(&env->owner_cred);
-	silofs_ubref_fini(&env->ubref);
-}
-
-static int env_init_mbi(struct silofs_env *env)
-{
-	return silofs_new_mbrinfo(&env->mbi);
-}
-
-static void env_fini_mbi(struct silofs_env *env)
-{
-	if (env->mbi != nullptr) {
-		silofs_del_mbrinfo(env->mbi);
-		env->mbi = nullptr;
-	}
-}
-
-static int env_init_locks(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_rwlock_init(&env->rwlock);
-	if (err) {
-		return err;
-	}
-	err = silofs_mutex_init(&env->mutex);
-	if (err) {
-		silofs_rwlock_fini(&env->rwlock);
-		return err;
-	}
-	return 0;
-}
-
-static void env_fini_locks(struct silofs_env *env)
-{
-	silofs_mutex_fini(&env->mutex);
-	silofs_rwlock_fini(&env->rwlock);
-}
-
-static void env_fini_crypto(struct silofs_env *env)
-{
-	silofs_cipher_fini(&env->dec_ci_hd);
-	silofs_cipher_fini(&env->enc_ci_hd);
-	silofs_mdigest_fini(&env->md_hd);
-}
-
-static int env_init_crypto(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_mdigest_init(&env->md_hd);
-	if (err) {
-		return err;
-	}
-	err = silofs_cipher_init(&env->enc_ci_hd);
-	if (err) {
-		goto out_err;
-	}
-	err = silofs_cipher_init(&env->dec_ci_hd);
-	if (err) {
-		goto out_err;
-	}
-	return 0;
-out_err:
-	env_fini_crypto(env);
-	return err;
-}
-
-static int env_init_uconv(struct silofs_env *env)
-{
-	return silofs_uconv_init(&env->uconv);
-}
-
-static void env_fini_uconv(struct silofs_env *env)
-{
-	silofs_uconv_fini(&env->uconv);
-}
-
-int silofs_env_init(struct silofs_env *env, struct silofs_alloc *alloc)
-{
-	int err;
-
-	env_init_commons(env, alloc);
-	env_init_opstat(env);
-
-	err = env_init_mbi(env);
-	return_if_err(err);
-
-	err = env_init_locks(env);
-	goto_out_if_err(err);
-
-	err = env_init_crypto(env);
-	goto_out_if_err(err);
-
-	err = env_init_uconv(env);
-	goto_out_if_err(err);
-
-	return 0;
-out:
-	silofs_env_fini(env);
-	return err;
-}
-
-void silofs_env_fini(struct silofs_env *env)
-{
-	env_update_repodir(env, nullptr);
-	env_fini_uconv(env);
-	env_fini_crypto(env);
-	env_fini_locks(env);
-	env_fini_mbi(env);
-	env_fini_commons(env);
-}
-
-void silofs_env_use(struct silofs_env *env, const struct silofs_env_base *base)
-{
-	memcpy(&env->base, base, sizeof(env->base));
-}
-
 void silofs_env_lock(struct silofs_env *env)
 {
 	silofs_mutex_lock(&env->mutex);
@@ -920,11 +850,11 @@ void silofs_env_rwunlock(struct silofs_env *env)
 
 void silofs_env_drop_caches(struct silofs_env *env)
 {
-	silofs_pspools_drop(env->base.pspools);
-	silofs_lspools_drop(env->base.lspools);
-	silofs_lcache_drop(env->base.lcache);
-	silofs_pcache_drop(env->base.pcache);
-	silofs_repo_drop_some(env->base.repo);
+	silofs_pspools_drop(&env->pspools);
+	silofs_lspools_drop(&env->lspools);
+	silofs_lcache_drop(&env->lcache);
+	silofs_pcache_drop(&env->pcache);
+	silofs_repo_drop_some(&env->repo);
 }
 
 int silofs_env_shut(struct silofs_env *env)
@@ -934,12 +864,12 @@ int silofs_env_shut(struct silofs_env *env)
 	return 0;
 }
 
-void silofs_env_relax_caches(const struct silofs_env *env, int flags)
+void silofs_env_relax_caches(struct silofs_env *env, int flags)
 {
-	silofs_pcache_relax(env->base.pcache, flags);
-	silofs_lcache_relax(env->base.lcache, flags);
+	silofs_pcache_relax(&env->pcache, flags);
+	silofs_lcache_relax(&env->lcache, flags);
 	if (flags & SILOFS_CTLF_IDLE) {
-		silofs_repo_relax(env->base.repo);
+		silofs_repo_relax(&env->repo);
 	}
 }
 
@@ -1056,23 +986,23 @@ int silofs_env_reinit_ciphers(struct silofs_env *env)
 int silofs_env_commit_mbr(struct silofs_env *env,
                           struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(env->mbi, env->base.dstor, out_mbref);
+	return silofs_commit_mbr(env->mbi, &env->repo.re_dstor, out_mbref);
 }
 
 int silofs_env_sense_mbr(struct silofs_env *env,
                          const struct silofs_mbref *mbref)
 {
-	return silofs_sense_mbr(env->base.dstor, mbref);
+	return silofs_sense_mbr(&env->repo.re_dstor, mbref);
 }
 
 int silofs_env_reload_mbr(struct silofs_env *env,
                           const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(env->mbi, env->base.dstor, mbref);
+	return silofs_reload_mbr(env->mbi, &env->repo.re_dstor, mbref);
 }
 
 int silofs_env_unref_mbr(struct silofs_env *env,
                          const struct silofs_mbref *mbref)
 {
-	return silofs_unref_mbr(env->mbi, env->base.dstor, mbref);
+	return silofs_unref_mbr(env->mbi, &env->repo.re_dstor, mbref);
 }

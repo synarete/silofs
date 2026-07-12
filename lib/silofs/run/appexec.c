@@ -306,7 +306,7 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 void silofs_collect_stats(const struct silofs_env *env,
                           struct silofs_cache_stats *out_cstats)
 {
-	silofs_lcache_collect_stats(env->base.lcache, out_cstats);
+	silofs_lcache_collect_stats(&env->lcache, out_cstats);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -395,7 +395,7 @@ static int check_owner_ids(const struct silofs_env *env)
 	gid_t sgid;
 	int err;
 
-	err = silofs_idsmap_mapcreds(env->base.idsmap, owner_cred->uid,
+	err = silofs_idsmap_mapcreds(&env->idsmap, owner_cred->uid,
 	                             owner_cred->gid, &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%u gid=%u",

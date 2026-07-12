@@ -569,14 +569,13 @@ static int env_malloc_mlock(struct silofs_env **out_env)
 		log_err("posix_memalign failed: msz=%zu err=%d", msz, err);
 		return -abs(err);
 	}
-	explicit_bzero(mem, msz);
-
 	err = silofs_sys_mlock(mem, msz);
 	if (err) {
 		free(mem);
 		log_err("mlock failed: msz=%zu err=%d", msz, err);
 		return err;
 	}
+	explicit_bzero(mem, msz);
 	*out_env = mem;
 	return 0;
 }
@@ -586,6 +585,7 @@ static void env_munlock_free(struct silofs_env *env)
 	const size_t msz = env_memsize(env);
 	void *mem        = env;
 
+	explicit_bzero(mem, msz);
 	silofs_sys_munlock(mem, msz);
 	free(mem);
 }

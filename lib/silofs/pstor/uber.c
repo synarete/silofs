@@ -547,15 +547,17 @@ int silofs_validate_uber(const struct silofs_uber_info *ubi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_ubref_init(struct silofs_uber_ref *ubref)
+int silofs_ubref_init(struct silofs_uber_ref *ubref)
 {
 	ubref->ubi       = nullptr;
 	ubref->ctl_flags = 0;
 	ubref->ms_flags  = 0;
+	return silofs_rwlock_init(&ubref->rwlock);
 }
 
 void silofs_ubref_fini(struct silofs_uber_ref *ubref)
 {
+	silofs_rwlock_fini(&ubref->rwlock);
 	silofs_ubref_update(ubref, nullptr);
 	ubref->ctl_flags = 0;
 	ubref->ms_flags  = 0;
@@ -624,4 +626,18 @@ static bool ubref_has_ctlflags(const struct silofs_uber_ref *ubref,
 bool silofs_ubref_is_rdonly(const struct silofs_uber_ref *ubref)
 {
 	return ubref_has_ctlflags(ubref, SILOFS_F_RDONLY);
+}
+
+void silofs_ubref_rwlock(struct silofs_uber_ref *ubref, bool ex)
+{
+	if (ex) {
+		silofs_rwlock_wrlock(&ubref->rwlock);
+	} else {
+		silofs_rwlock_rdlock(&ubref->rwlock);
+	}
+}
+
+void silofs_ubref_rwunlock(struct silofs_uber_ref *ubref)
+{
+	silofs_rwlock_unlock(&ubref->rwlock);
 }

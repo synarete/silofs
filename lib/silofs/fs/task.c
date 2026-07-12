@@ -191,7 +191,7 @@ void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->rw_locked) {
-		silofs_env_rwlock(task->env, task->exclusive);
+		silofs_ubref_rwlock(task->pexec.ubref, task->exclusive);
 		task->rw_locked = true;
 	}
 }
@@ -199,7 +199,7 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->rw_locked) {
-		silofs_env_rwunlock(task->env);
+		silofs_ubref_rwunlock(task->pexec.ubref);
 		task->rw_locked = false;
 	}
 }

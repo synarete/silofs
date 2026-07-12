@@ -68,7 +68,7 @@ struct silofs_env {
 	struct silofs_lspools          lspools;
 	struct silofs_pspools          pspools;
 	struct silofs_idsmap           idsmap;
-	struct silofs_mbr_info        *mbi;
+	struct silofs_mbr_info         mbi;
 	struct silofs_uber_ref         ubref;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;

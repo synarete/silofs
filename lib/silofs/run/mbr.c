@@ -563,7 +563,7 @@ static void mbi_reset_ref(struct silofs_mbr_info *mbi)
 	silofs_mbref_reset(&mbi->mb_ref);
 }
 
-static void mbi_init(struct silofs_mbr_info *mbi)
+void silofs_mbi_init(struct silofs_mbr_info *mbi)
 {
 	const struct silofs_mbr_meta meta_none = {};
 
@@ -573,7 +573,7 @@ static void mbi_init(struct silofs_mbr_info *mbi)
 	mbi_reset_ref(mbi);
 }
 
-static void mbi_fini(struct silofs_mbr_info *mbi)
+void silofs_mbi_fini(struct silofs_mbr_info *mbi)
 {
 	mbi_reset_ref(mbi);
 	mbr_meta_reset(&mbi->mb_meta);
@@ -780,62 +780,6 @@ int silofs_update_mbr(struct silofs_mbr_info *mbi,
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-static size_t sc_page_size(void)
-{
-	return (size_t)silofs_sc_page_size();
-}
-
-static size_t mbrinfo_memsize(const struct silofs_mbr_info *mbi)
-{
-	const size_t page_size = sc_page_size();
-
-	STATICASSERT_LT(sizeof(*mbi), SILOFS_PAGE_SIZE_MIN);
-
-	return page_size * silofs_div_round_up(sizeof(*mbi), page_size);
-}
-
-int silofs_new_mbrinfo(struct silofs_mbr_info **out_mbi)
-{
-	struct silofs_mbr_info *mbi = nullptr;
-	const size_t mem_size       = mbrinfo_memsize(mbi);
-	const size_t page_size      = sc_page_size();
-	void *mem                   = nullptr;
-	int err;
-
-	err = posix_memalign(&mem, page_size, mem_size);
-	if (err) {
-		log_err("failed to allocate mbr-info: mem_size=%zu err=%d",
-		        mem_size, err);
-		return -abs(err);
-	}
-	explicit_bzero(mem, mem_size);
-
-	err = silofs_sys_mlock(mem, mem_size);
-	if (err) {
-		free(mem);
-		log_err("failed to mlock mbr-info: mem_size=%zu err=%d",
-		        mem_size, err);
-		return err;
-	}
-
-	mbi = mem;
-	mbi_init(mbi);
-
-	*out_mbi = mbi;
-	return 0;
-}
-
-void silofs_del_mbrinfo(struct silofs_mbr_info *mbi)
-{
-	const size_t mem_size = mbrinfo_memsize(mbi);
-	void *mem             = mbi;
-
-	mbi_fini(mbi);
-	explicit_bzero(mem, mem_size);
-	silofs_sys_munlock(mem, mem_size);
-	free(mem);
-}
 
 int silofs_get_fsroot(const struct silofs_mbr_info *mbi,
                       struct silofs_pnptr *out_pnptr,

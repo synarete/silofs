@@ -19,9 +19,6 @@
 
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/nodes.h>
-
-struct silofs_env;
 
 /* mbr meta info */
 struct silofs_mbr_meta {
@@ -55,9 +52,9 @@ int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_new_mbrinfo(struct silofs_mbr_info **out_mbi);
+void silofs_mbi_init(struct silofs_mbr_info *mbi);
 
-void silofs_del_mbrinfo(struct silofs_mbr_info *mbi);
+void silofs_mbi_fini(struct silofs_mbr_info *mbi);
 
 int silofs_get_fsroot(const struct silofs_mbr_info *mbi,
                       struct silofs_pnptr          *out_pnptr,

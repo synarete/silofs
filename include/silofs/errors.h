@@ -19,6 +19,10 @@
 
 #include <errno.h>
 
+#ifndef EFSBADCRC
+#define EFSBADCRC EBADMSG
+#endif
+
 #define SILOFS_ERRBASE     (1000)
 #define SILOFS_ERRBASE2    (10000)
 #define SILOFS_DEFERR(ec)  (SILOFS_ERRBASE + (ec))

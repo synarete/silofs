@@ -20,7 +20,6 @@ libsilofs_la_LIBADD += $(PTHREAD_LIBS)
 libsilofs_la_SOURCES = $(NULL)
 libsilofs_la_SOURCES += ondisk.c
 libsilofs_la_SOURCES += version.c
-libsilofs_la_SOURCES += flags.h
 
 libsilofs_la_SOURCES += sys/syscall.c
 libsilofs_la_SOURCES += sys/syscallx.c
@@ -121,6 +120,7 @@ libsilofs_la_SOURCES += addr.h
 
 libsilofs_la_SOURCES += nodes/dirtyq.c
 libsilofs_la_SOURCES += nodes/dirtyq.h
+libsilofs_la_SOURCES += nodes/flags.h
 libsilofs_la_SOURCES += nodes/hmapq.c
 libsilofs_la_SOURCES += nodes/hmapq.h
 libsilofs_la_SOURCES += nodes/idsmap.c
@@ -143,8 +143,8 @@ libsilofs_la_SOURCES += nodes.h
 
 libsilofs_la_SOURCES += exec/dstor.c
 libsilofs_la_SOURCES += exec/dstor.h
-libsilofs_la_SOURCES += exec/mbr.c
-libsilofs_la_SOURCES += exec/mbr.h
+libsilofs_la_SOURCES += exec/fsroot.c
+libsilofs_la_SOURCES += exec/fsroot.h
 libsilofs_la_SOURCES += exec/repo.c
 libsilofs_la_SOURCES += exec/repo.h
 libsilofs_la_SOURCES += exec.h

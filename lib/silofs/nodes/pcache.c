@@ -17,7 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
-#include <silofs/flags.h>
 #include <silofs/nodes.h>
 
 const struct silofs_pnode_info *

@@ -226,7 +226,7 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 {
 	struct silofs_sw_version swv;
 
-	return silofs_get_fsroot(&task->env->mbi, out_pnptr, &swv);
+	return silofs_resolve_root_uber(&task->env->fsroot, out_pnptr, &swv);
 }
 
 static int

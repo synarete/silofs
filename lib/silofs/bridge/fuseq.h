@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include <silofs/infra.h>
-#include <silofs/flags.h>
 #include <silofs/vfs.h>
 
 struct silofs_env;

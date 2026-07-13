@@ -21,7 +21,6 @@
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
 #include <silofs/infra.h>
-#include <silofs/flags.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 #include <silofs/pstor.h>

@@ -2283,17 +2283,17 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 	str_to_buf(&strview, query->u.boot.name, sizeof(query->u.boot.name));
 }
 
-static const struct silofs_mbr_info *fs_mbi(const struct silofs_task_ctx *task)
+static const struct silofs_fsroot *fs_mbi(const struct silofs_task_ctx *task)
 {
-	return &task->env->mbi;
+	return &task->env->fsroot;
 }
 
 static void fill_query_boot_fsref(const struct silofs_task_ctx *task,
                                   struct silofs_ioc_query *query)
 {
-	const struct silofs_mbr_info *mbi = fs_mbi(task);
+	const struct silofs_fsroot *mbi = fs_mbi(task);
 
-	silofs_fsref_export(&query->u.boot.fsref, &mbi->mb_ref);
+	silofs_fsref_export(&query->u.boot.fsref, &mbi->mbref);
 }
 
 static void fill_query_boot(const struct silofs_task_ctx *task,

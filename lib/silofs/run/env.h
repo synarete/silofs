@@ -48,14 +48,6 @@ union silofs_alloc_u {
 	struct silofs_stdalloc stdalloc;
 };
 
-/* top-level operations counters/stats */
-struct silofs_env_opstat {
-	size_t op_iopen_max;
-	size_t op_iopen;
-	size_t op_count;
-	/* TODO: Have counter per-operation */
-};
-
 /* top-level envronment object */
 struct silofs_env {
 	struct silofs_prandgen         prandgen;
@@ -67,7 +59,7 @@ struct silofs_env {
 	struct silofs_lspools          lspools;
 	struct silofs_pspools          pspools;
 	struct silofs_idsmap           idsmap;
-	struct silofs_mbr_info         mbi;
+	struct silofs_fsroot           fsroot;
 	struct silofs_uber_ref         ubref;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;
@@ -75,7 +67,7 @@ struct silofs_env {
 	struct silofs_cipher_hd        enc_ci_hd;
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
-	struct silofs_env_opstat       opstat;
+	struct silofs_opstat           opstat;
 	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
 	struct silofs_strbuf           name;

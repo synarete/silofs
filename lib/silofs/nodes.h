@@ -23,6 +23,7 @@
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 
+#include <silofs/nodes/flags.h>
 #include <silofs/nodes/dirtyq.h>
 #include <silofs/nodes/hmapq.h>
 #include <silofs/nodes/view.h>

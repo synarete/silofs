@@ -16,6 +16,7 @@
  */
 #include <silofs/configs.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 
 #include <silofs/version.h>
 #include <silofs/ondisk.h>
@@ -86,19 +87,6 @@ calc_mbr_cas_paddr(const struct silofs_mdigest_hd *md_hd,
 static bool pnptr_isuber(const struct silofs_pnptr *pnptr)
 {
 	return pnptr->paddr.blobid.stype.ptype == SILOFS_PTYPE_UBER;
-}
-
-static void mbr_meta_assign(struct silofs_mbr_meta *meta,
-                            const struct silofs_mbr_meta *other)
-{
-	silofs_nmeta_assign(&meta->nmeta, &other->nmeta);
-	silofs_ckey_assign(&meta->hmac_key, &other->hmac_key);
-}
-
-static void mbr_meta_reset(struct silofs_mbr_meta *meta)
-{
-	silofs_nmeta_reset(&meta->nmeta);
-	silofs_ckey_reset(&meta->hmac_key);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -275,7 +263,8 @@ static int mbr1k_verify(const struct silofs_mbr1k *mbr1k,
 	return 0;
 }
 
-static void mbr1k_init(struct silofs_mbr1k *mbr1k)
+static void
+mbr1k_init(struct silofs_mbr1k *mbr1k, const struct silofs_sw_version *swv)
 {
 	silofs_memzero(mbr1k, sizeof(*mbr1k));
 	mbr1k_set_magic(mbr1k, SILOFS_MBR_MAGIC);
@@ -284,11 +273,7 @@ static void mbr1k_init(struct silofs_mbr1k *mbr1k)
 	mbr1k_set_mode(mbr1k, 0);
 	mbr1k_set_flags(mbr1k, 0);
 	mbr1k_gen_uuid(mbr1k);
-}
-
-static void mbr1k_fini(struct silofs_mbr1k *mbr1k)
-{
-	silofs_memffff(mbr1k, sizeof(*mbr1k));
+	mbr1k_set_sw_version(mbr1k, swv);
 }
 
 static size_t mbr1k_enclen(void)
@@ -522,8 +507,8 @@ static int derive_mbr_hmac_ckey(const struct silofs_mdigest_hd *md_hd,
 	                              out_key);
 }
 
-static int derive_mbr_meta(const struct silofs_password *passwd,
-                           struct silofs_mbr_meta *out_mbr_meta)
+static int derive_mbr_meta_by_passwd(const struct silofs_password *passwd,
+                                     struct silofs_mbr_meta *out_mbr_meta)
 {
 	struct silofs_civkey civkey;
 	struct silofs_mdigest_hd md_hd;
@@ -534,17 +519,14 @@ static int derive_mbr_meta(const struct silofs_password *passwd,
 		return 0; /* OK -- password-less mode */
 	}
 	err = silofs_mdigest_init(&md_hd);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = derive_mbr_hmac_ckey(&md_hd, passwd, &out_mbr_meta->hmac_key);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = derive_mbr_civkey(&md_hd, passwd, &civkey);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	silofs_nmeta_setup(&out_mbr_meta->nmeta, &civkey);
 out:
 	silofs_mdigest_fini(&md_hd);
@@ -553,58 +535,123 @@ out:
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
-mbi_set_ref(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref)
+static void fsroot_set_mbr_meta(struct silofs_fsroot *fsroot,
+                                const struct silofs_mbr_meta *meta)
 {
-	silofs_mbref_assign(&mbi->mb_ref, mbref);
+	silofs_nmeta_assign(&fsroot->mbr_meta.nmeta, &meta->nmeta);
+	silofs_ckey_assign(&fsroot->mbr_meta.hmac_key, &meta->hmac_key);
 }
 
-static void mbi_reset_ref(struct silofs_mbr_info *mbi)
-{
-	silofs_mbref_reset(&mbi->mb_ref);
-}
-
-void silofs_mbi_init(struct silofs_mbr_info *mbi)
+static void fsroot_reset_mbr_meta(struct silofs_fsroot *fsroot)
 {
 	const struct silofs_mbr_meta meta_none = {};
 
-	mbr_meta_assign(&mbi->mb_meta, &meta_none);
-	mbr1k_init(&mbi->mb_mbr1k);
-	mbr1k_set_sw_version(&mbi->mb_mbr1k, &silofs_sw_vers);
-	mbi_reset_ref(mbi);
+	fsroot_set_mbr_meta(fsroot, &meta_none);
 }
 
-void silofs_mbi_fini(struct silofs_mbr_info *mbi)
+static void fsroot_set_mbref(struct silofs_fsroot *fsroot,
+                             const struct silofs_mbref *mbref)
 {
-	mbi_reset_ref(mbi);
-	mbr_meta_reset(&mbi->mb_meta);
-	mbr1k_fini(&mbi->mb_mbr1k);
+	silofs_mbref_assign(&fsroot->mbref, mbref);
 }
 
-static void
-mbi_set_meta(struct silofs_mbr_info *mbi, const struct silofs_mbr_meta *meta)
+static void fsroot_reset_mbref(struct silofs_fsroot *fsroot)
 {
-	mbr_meta_assign(&mbi->mb_meta, meta);
+	const struct silofs_mbref mbref = {};
+
+	fsroot_set_mbref(fsroot, &mbref);
 }
 
-static void mbi_get_mbr1k(const struct silofs_mbr_info *mbi,
-                          struct silofs_mbr1k *out_mbr1k)
+static int fsroot_init_locks(struct silofs_fsroot *fsroot)
 {
-	memcpy(out_mbr1k, &mbi->mb_mbr1k, sizeof(*out_mbr1k));
-}
-
-static int
-mbi_export(const struct silofs_mbr_info *mbi, struct silofs_mbref *out_mbref,
-           struct silofs_mbr1k *out_mbr1k_enc)
-{
-	struct silofs_mbr1k mbr1k;
-	struct silofs_mbraux aux;
 	int err;
 
-	mbi_get_mbr1k(mbi, &mbr1k);
-	err = mbraux_init(&aux, &mbi->mb_meta);
+	err = silofs_mutex_init(&fsroot->mutex);
+	if (err) {
+		return err;
+	}
+	err = silofs_rwlock_init(&fsroot->rwlock);
+	if (err) {
+		silofs_mutex_fini(&fsroot->mutex);
+		return err;
+	}
+	return 0;
+}
+
+static void fsroot_fini_locks(struct silofs_fsroot *fsroot)
+{
+	silofs_rwlock_fini(&fsroot->rwlock);
+	silofs_mutex_fini(&fsroot->mutex);
+}
+
+int silofs_fsroot_init(struct silofs_fsroot *fsroot)
+{
+	mbr1k_init(&fsroot->mbr1k, &silofs_sw_vers);
+	fsroot_reset_mbr_meta(fsroot);
+	fsroot_reset_mbref(fsroot);
+	fsroot->ubi       = nullptr;
+	fsroot->ctl_flags = 0;
+	fsroot->ms_flags  = 0;
+	return fsroot_init_locks(fsroot);
+}
+
+void silofs_fsroot_fini(struct silofs_fsroot *fsroot)
+{
+	fsroot_fini_locks(fsroot);
+	fsroot_reset_mbr_meta(fsroot);
+	fsroot_reset_mbref(fsroot);
+	fsroot->ubi = nullptr;
+	silofs_memzero(fsroot, sizeof(*fsroot));
+}
+
+void silofs_fsroot_lock(struct silofs_fsroot *fsroot)
+{
+	silofs_mutex_lock(&fsroot->mutex);
+}
+
+void silofs_fsroot_unlock(struct silofs_fsroot *fsroot)
+{
+	silofs_mutex_unlock(&fsroot->mutex);
+}
+
+void silofs_fsroot_rwlock(struct silofs_fsroot *fsroot, bool ex)
+{
+	if (ex) {
+		silofs_rwlock_wrlock(&fsroot->rwlock);
+	} else {
+		silofs_rwlock_rdlock(&fsroot->rwlock);
+	}
+}
+
+void silofs_fsroot_rwunlock(struct silofs_fsroot *fsroot)
+{
+	silofs_rwlock_unlock(&fsroot->rwlock);
+}
+
+static void fsroot_get_mbr1k(const struct silofs_fsroot *fsroot,
+                             struct silofs_mbr1k *out_mbr1k)
+{
+	memcpy(out_mbr1k, &fsroot->mbr1k, sizeof(*out_mbr1k));
+}
+
+static void fsroot_set_mbr1k(struct silofs_fsroot *fsroot,
+                             const struct silofs_mbr1k *mbr1k)
+{
+	memcpy(&fsroot->mbr1k, mbr1k, sizeof(fsroot->mbr1k));
+}
+
+static int fsroot_export_mbr1k(const struct silofs_fsroot *fsroot,
+                               struct silofs_mbref *out_mbref,
+                               struct silofs_mbr1k *out_mbr1k_enc)
+{
+	struct silofs_mbr1k mbr1k = {};
+	struct silofs_mbraux aux  = {};
+	int err;
+
+	err = mbraux_init(&aux, &fsroot->mbr_meta);
 	return_if_err(err);
 
+	fsroot_get_mbr1k(fsroot, &mbr1k);
 	err = mbraux_encode_mbr1k(&aux, &mbr1k, out_mbr1k_enc);
 	goto_out_if_err(err);
 
@@ -614,21 +661,15 @@ out:
 	return err;
 }
 
-static void
-mbi_assign_mbr1k(struct silofs_mbr_info *mbi, const struct silofs_mbr1k *mbr1k)
+static int fsroot_import_mbr1k(struct silofs_fsroot *fsroot,
+                               const struct silofs_mbref *mbref,
+                               const struct silofs_mbr1k *mbr1k_enc)
 {
-	memcpy(&mbi->mb_mbr1k, mbr1k, sizeof(mbi->mb_mbr1k));
-}
-
-static int
-mbi_import(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref,
-           const struct silofs_mbr1k *mbr1k_enc)
-{
-	struct silofs_mbr1k mbr1k;
-	struct silofs_mbraux aux;
+	struct silofs_mbr1k mbr1k = {};
+	struct silofs_mbraux aux  = {};
 	int err;
 
-	err = mbraux_init(&aux, &mbi->mb_meta);
+	err = mbraux_init(&aux, &fsroot->mbr_meta);
 	return_if_err(err);
 
 	err = mbraux_verify_mbref(&aux, mbref, mbr1k_enc);
@@ -637,10 +678,27 @@ mbi_import(struct silofs_mbr_info *mbi, const struct silofs_mbref *mbref,
 	err = mbraux_decode_mbr1k(&aux, mbr1k_enc, &mbr1k);
 	goto_out_if_err(err);
 
-	mbi_assign_mbr1k(mbi, &mbr1k);
+	fsroot_set_mbr1k(fsroot, &mbr1k);
 out:
 	mbraux_fini(&aux);
 	return err;
+}
+
+int silofs_resolve_root_uber(const struct silofs_fsroot *fsroot,
+                             struct silofs_pnptr *out_pnptr,
+                             struct silofs_sw_version *out_swv)
+{
+	mbr1k_root(&fsroot->mbr1k, out_pnptr);
+	mbr1k_sw_version(&fsroot->mbr1k, out_swv);
+	return pnptr_isuber(out_pnptr) ? 0 : -SILOFS_ENOENT;
+}
+
+void silofs_update_root_uber(struct silofs_fsroot *fsroot,
+                             const struct silofs_pnptr *pnptr,
+                             const struct silofs_sw_version *swv)
+{
+	mbr1k_set_root(&fsroot->mbr1k, pnptr);
+	mbr1k_set_sw_version(&fsroot->mbr1k, swv);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -707,7 +765,7 @@ unref_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
 	return 0;
 }
 
-int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
+int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
                       struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -715,13 +773,13 @@ int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
 	};
 	int err;
 
-	err = mbi_export(mbi, out_mbref, &mbr1k);
+	err = fsroot_export_mbr1k(fsroot, out_mbref, &mbr1k);
 	return_if_err(err);
 
 	err = save_mbr_at(dstor, out_mbref, &mbr1k);
 	return_if_err(err);
 
-	mbi_set_ref(mbi, out_mbref);
+	fsroot_set_mbref(fsroot, out_mbref);
 	return 0;
 }
 
@@ -731,7 +789,7 @@ int silofs_sense_mbr(struct silofs_dstor *dstor,
 	return stat_mbr_at(dstor, mbref);
 }
 
-int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
+int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
                       const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -745,56 +803,104 @@ int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
 	err = load_mbr_at(dstor, mbref, &mbr1k);
 	return_if_err(err);
 
-	err = mbi_import(mbi, mbref, &mbr1k);
+	err = fsroot_import_mbr1k(fsroot, mbref, &mbr1k);
 	return_if_err(err);
 
-	mbi_set_ref(mbi, mbref);
+	fsroot_set_mbref(fsroot, mbref);
 	return 0;
 }
 
-int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
+int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
                      const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = silofs_reload_mbr(dstor, mbi, mbref);
+	err = silofs_reload_mbr(dstor, fsroot, mbref);
 	return_if_err(err);
 
 	err = unref_mbr_at(dstor, mbref);
 	return_if_err(err);
 
-	mbi_reset_ref(mbi);
+	fsroot_reset_mbref(fsroot);
 	return 0;
 }
 
-int silofs_update_mbr(struct silofs_mbr_info *mbi,
-                      const struct silofs_password *passwd)
+int silofs_derive_mbr_meta(struct silofs_fsroot *fsroot,
+                           const struct silofs_password *passwd)
 {
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;
 
-	err = derive_mbr_meta(passwd, &mbr_meta);
+	err = derive_mbr_meta_by_passwd(passwd, &mbr_meta);
 	return_if_err(err);
 
-	mbi_set_meta(mbi, &mbr_meta);
+	fsroot_set_mbr_meta(fsroot, &mbr_meta);
 	return 0;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_get_fsroot(const struct silofs_mbr_info *mbi,
-                      struct silofs_pnptr *out_pnptr,
-                      struct silofs_sw_version *out_swv)
+void silofs_update_uber_ref(struct silofs_fsroot *fsroot,
+                            struct silofs_uber_info *ubi_new)
 {
-	mbr1k_root(&mbi->mb_mbr1k, out_pnptr);
-	mbr1k_sw_version(&mbi->mb_mbr1k, out_swv);
-	return pnptr_isuber(out_pnptr) ? 0 : -SILOFS_ENOENT;
+	struct silofs_uber_info *ubi_cur = fsroot->ubi;
+
+	if (ubi_cur != nullptr) {
+		silofs_pni_decref(&ubi_cur->ub_pni);
+	}
+	if (ubi_new != nullptr) {
+		silofs_pni_incref(&ubi_cur->ub_pni);
+	}
+	fsroot->ubi = ubi_new;
 }
 
-void silofs_set_fsroot(struct silofs_mbr_info *mbi,
-                       const struct silofs_pnptr *pnptr,
-                       const struct silofs_sw_version *swv)
+static void fsroot_derive_ms_flags(struct silofs_fsroot *fsroot)
 {
-	mbr1k_set_root(&mbi->mb_mbr1k, pnptr);
-	mbr1k_set_sw_version(&mbi->mb_mbr1k, swv);
+	unsigned long ms_flag_with = 0;
+	unsigned long ms_flag_dont = 0;
+
+	if (fsroot->ctl_flags & SILOFS_F_LAZYTIME) {
+		ms_flag_with |= MS_LAZYTIME;
+	} else {
+		ms_flag_dont |= MS_LAZYTIME;
+	}
+	if (fsroot->ctl_flags & SILOFS_F_ALLOW_EXEC) {
+		ms_flag_dont |= MS_NOEXEC;
+	} else {
+		ms_flag_with |= MS_NOEXEC;
+	}
+	if (fsroot->ctl_flags & SILOFS_F_ALLOW_SUID) {
+		ms_flag_dont |= MS_NOSUID;
+	} else {
+		ms_flag_with |= MS_NOSUID;
+	}
+	if (fsroot->ctl_flags & SILOFS_F_ALLOW_DEV) {
+		ms_flag_dont |= MS_NODEV;
+	} else {
+		ms_flag_with |= MS_NODEV;
+	}
+	if (fsroot->ctl_flags & SILOFS_F_RDONLY) {
+		ms_flag_with |= MS_RDONLY;
+	} else {
+		ms_flag_dont |= MS_RDONLY;
+	}
+	fsroot->ms_flags = ms_flag_with & ~ms_flag_dont;
+}
+
+void silofs_update_main_ctlflags(struct silofs_fsroot *fsroot,
+                                 enum silofs_flags ctl_flags)
+{
+	fsroot->ctl_flags = ctl_flags;
+	fsroot_derive_ms_flags(fsroot);
+}
+
+static bool fsroot_has_ctlflags(const struct silofs_fsroot *fsroot,
+                                enum silofs_flags ctl_flags_mask)
+{
+	return (fsroot->ctl_flags & ctl_flags_mask) == ctl_flags_mask;
+}
+
+bool silofs_test_rdonly_fs(const struct silofs_fsroot *fsroot)
+{
+	return fsroot_has_ctlflags(fsroot, SILOFS_F_RDONLY);
 }

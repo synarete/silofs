@@ -24,6 +24,24 @@
 #include <silofs/bridge.h>
 #include <silofs/run.h>
 
+/* env initialization-state flags */
+enum silofs_env_initf {
+	SILOFS_ENVF_QALLOC   = SILOFS_BIT(0),
+	SILOFS_ENVF_STDALLOC = SILOFS_BIT(1),
+	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(2),
+	SILOFS_ENVF_LOCKS    = SILOFS_BIT(3),
+	SILOFS_ENVF_CRYPT    = SILOFS_BIT(4),
+	SILOFS_ENVF_UCONV    = SILOFS_BIT(5),
+	SILOFS_ENVF_REPO     = SILOFS_BIT(6),
+	SILOFS_ENVF_PCACHE   = SILOFS_BIT(7),
+	SILOFS_ENVF_LCACHE   = SILOFS_BIT(8),
+	SILOFS_ENVF_FREESQS  = SILOFS_BIT(9),
+	SILOFS_ENVF_IDSMAP   = SILOFS_BIT(10),
+	SILOFS_ENVF_FSROOT   = SILOFS_BIT(11),
+	SILOFS_ENVF_UBREF    = SILOFS_BIT(12),
+	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(13),
+};
+
 /* Local functions */
 static void env_unbind_fuseq(struct silofs_env *env);
 
@@ -242,18 +260,22 @@ static void env_fini_alloc(struct silofs_env *env)
 	}
 }
 
-static int env_init_mbr(struct silofs_env *env)
+static int env_init_fsroot(struct silofs_env *env)
 {
-	silofs_fsroot_init(&env->fsroot);
-	env->initf |= SILOFS_ENVF_MBR;
+	int err;
+
+	err = silofs_fsroot_init(&env->fsroot);
+	return_if_err(err);
+
+	env->initf |= SILOFS_ENVF_FSROOT;
 	return 0;
 }
 
-static void env_fini_mbr(struct silofs_env *env)
+static void env_fini_fsroot(struct silofs_env *env)
 {
-	if (env->initf & SILOFS_ENVF_MBR) {
+	if (env->initf & SILOFS_ENVF_FSROOT) {
 		silofs_fsroot_fini(&env->fsroot);
-		env->initf &= ~SILOFS_ENVF_MBR;
+		env->initf &= ~SILOFS_ENVF_FSROOT;
 	}
 }
 
@@ -421,7 +443,6 @@ static void env_fini_idsmap(struct silofs_env *env)
 
 static void env_init_commons(struct silofs_env *env)
 {
-	silofs_memzero(&env->opstat, sizeof(env->opstat));
 	silofs_strbuf_reset(&env->name);
 	silofs_cred_init(&env->owner_cred);
 	env->init_time = silofs_time_mono_now();
@@ -434,7 +455,6 @@ static void env_init_commons(struct silofs_env *env)
 static void env_fini_commons(struct silofs_env *env)
 {
 	silofs_cred_fini(&env->owner_cred);
-	silofs_memzero(&env->opstat, sizeof(env->opstat));
 }
 
 static int env_init_ubref(struct silofs_env *env)
@@ -479,7 +499,7 @@ static void env_fini(struct silofs_env *env)
 {
 	env_unbind_fuseq(env);
 	env_fini_ubref(env);
-	env_fini_mbr(env);
+	env_fini_fsroot(env);
 	env_fini_idsmap(env);
 	env_fini_freesqs(env);
 	env_fini_lcache(env);
@@ -530,7 +550,7 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	err = env_init_idsmap(env);
 	goto_out_if_err(err);
 
-	err = env_init_mbr(env);
+	err = env_init_fsroot(env);
 	goto_out_if_err(err);
 
 	err = env_init_ubref(env);
@@ -822,7 +842,7 @@ static size_t env_calc_iopen_limit(const struct silofs_env *env)
 
 static void env_update_iopen_max(struct silofs_env *env)
 {
-	env->opstat.op_iopen_max = env_calc_iopen_limit(env);
+	env->fsroot.opstat.op_iopen_max = env_calc_iopen_limit(env);
 }
 
 static void env_bind_vfs_hooks(struct silofs_env *env)
@@ -891,7 +911,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 
 int silofs_env_shut(struct silofs_env *env)
 {
-	log_dbg("shut env: op_count=%lu", env->opstat.op_count);
+	log_dbg("shut env: op_count=%lu", env->fsroot.opstat.op_count);
 	silofs_ubref_update(&env->ubref, nullptr);
 	return 0;
 }

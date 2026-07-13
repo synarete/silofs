@@ -33,6 +33,7 @@ struct silofs_task_ctx {
 	struct silofs_lcache       *lcache;
 	struct silofs_lspools      *lspools;
 	struct silofs_env          *env;
+	struct silofs_fsroot       *fsroot;
 	const struct silofs_idsmap *idsm;
 	struct silofs_repo         *repo;
 	struct silofs_inode_info   *looseq;

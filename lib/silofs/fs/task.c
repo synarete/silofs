@@ -75,6 +75,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	silofs_cred_init(&task->auth.creds.host_cred);
 
 	task->env             = env;
+	task->fsroot          = &env->fsroot;
 	task->pexec.alloc     = env->alloc;
 	task->pexec.prng      = &env->prandgen;
 	task->pexec.dstor     = &env->repo.re_dstor;

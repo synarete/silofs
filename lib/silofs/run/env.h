@@ -24,24 +24,6 @@
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 
-/* env initialization-state flags */
-enum silofs_env_initf {
-	SILOFS_ENVF_QALLOC   = SILOFS_BIT(0),
-	SILOFS_ENVF_STDALLOC = SILOFS_BIT(1),
-	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(2),
-	SILOFS_ENVF_LOCKS    = SILOFS_BIT(3),
-	SILOFS_ENVF_CRYPT    = SILOFS_BIT(4),
-	SILOFS_ENVF_UCONV    = SILOFS_BIT(5),
-	SILOFS_ENVF_REPO     = SILOFS_BIT(6),
-	SILOFS_ENVF_PCACHE   = SILOFS_BIT(7),
-	SILOFS_ENVF_LCACHE   = SILOFS_BIT(8),
-	SILOFS_ENVF_FREESQS  = SILOFS_BIT(9),
-	SILOFS_ENVF_IDSMAP   = SILOFS_BIT(10),
-	SILOFS_ENVF_MBR      = SILOFS_BIT(11),
-	SILOFS_ENVF_UBREF    = SILOFS_BIT(12),
-	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(13),
-};
-
 /* memory allocator of choice */
 union silofs_alloc_u {
 	struct silofs_qalloc   qalloc;
@@ -67,7 +49,6 @@ struct silofs_env {
 	struct silofs_cipher_hd        enc_ci_hd;
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
-	struct silofs_opstat           opstat;
 	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
 	struct silofs_strbuf           name;

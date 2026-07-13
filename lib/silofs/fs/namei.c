@@ -140,9 +140,8 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_task_ctx *task,
                             const struct silofs_inode_info *ii)
 {
-	const struct silofs_env *env = task->env;
-	const size_t total_iopen_max = env->opstat.op_iopen_max;
-	const size_t total_iopn_cur  = env->opstat.op_iopen;
+	const size_t total_iopen_max = task->fsroot->opstat.op_iopen_max;
+	const size_t total_iopn_cur  = task->fsroot->opstat.op_iopen;
 	const size_t iopen_max       = total_iopen_max / 2;
 
 	if (total_iopn_cur >= total_iopen_max) {
@@ -157,15 +156,13 @@ static int check_open_limit(const struct silofs_task_ctx *task,
 static void
 update_nopen(struct silofs_task_ctx *task, struct silofs_inode_info *ii, int n)
 {
-	struct silofs_env *env = task->env;
-
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		env->opstat.op_iopen++;
+		task->fsroot->opstat.op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		env->opstat.op_iopen--;
+		task->fsroot->opstat.op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -2202,8 +2199,8 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->pid       = getpid();
 	qpr->msflags   = env->ubref.ms_flags;
 	qpr->uptime    = uptime;
-	qpr->iopen_max = env->opstat.op_iopen_max;
-	qpr->iopen_cur = env->opstat.op_iopen;
+	qpr->iopen_max = env->fsroot.opstat.op_iopen_max;
+	qpr->iopen_cur = env->fsroot.opstat.op_iopen;
 	qpr->memsz_max = alst.nbytes_max;
 	qpr->memsz_cur = alst.nbytes_use;
 	qpr->bopen_cur = env->repo.re_dstor.ds_hq.dsq_lru.sz;

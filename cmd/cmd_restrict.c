@@ -80,7 +80,7 @@ static void restrict_beneath(int ruleset_fd, const char *dirpath,
 	clode_dirfd(path_beneath.parent_fd);
 }
 
-static void restrict_fsroot(int ruleset_fd)
+static void restrict_abs_toplevel_rootdir(int ruleset_fd)
 {
 	const uint64_t allowed_access_mask =   //
 		LANDLOCK_ACCESS_FS_READ_FILE | //
@@ -132,7 +132,7 @@ static void restrict_process_at(const char *repodir, bool allow_mkdir)
 	int ruleset_fd = -1;
 
 	create_ruleset(&ruleset_fd);
-	restrict_fsroot(ruleset_fd);
+	restrict_abs_toplevel_rootdir(ruleset_fd);
 	restrict_devfs(ruleset_fd);
 	if (repodir != nullptr) {
 		restrict_repo(ruleset_fd, repodir, allow_mkdir);

@@ -1018,7 +1018,7 @@ int silofs_env_reinit_ciphers(struct silofs_env *env)
 int silofs_env_commit_mbr(struct silofs_env *env,
                           struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(&env->mbi, &env->repo.re_dstor, out_mbref);
+	return silofs_commit_mbr(&env->repo.re_dstor, &env->mbi, out_mbref);
 }
 
 int silofs_env_sense_mbr(struct silofs_env *env,
@@ -1030,11 +1030,11 @@ int silofs_env_sense_mbr(struct silofs_env *env,
 int silofs_env_reload_mbr(struct silofs_env *env,
                           const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(&env->mbi, &env->repo.re_dstor, mbref);
+	return silofs_reload_mbr(&env->repo.re_dstor, &env->mbi, mbref);
 }
 
 int silofs_env_unref_mbr(struct silofs_env *env,
                          const struct silofs_mbref *mbref)
 {
-	return silofs_unref_mbr(&env->mbi, &env->repo.re_dstor, mbref);
+	return silofs_unref_mbr(&env->repo.re_dstor, &env->mbi, mbref);
 }

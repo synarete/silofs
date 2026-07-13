@@ -21,6 +21,7 @@
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
+#include <silofs/exec.h>
 
 /* pv-layer execution-context */
 struct silofs_pexec_ctx {
@@ -38,8 +39,6 @@ struct silofs_pexec_ctx {
 	struct silofs_lspools *lspools;
 };
 
-#include <silofs/pstor/dstor.h>
-#include <silofs/pstor/repo.h>
 #include <silofs/pstor/uber.h>
 #include <silofs/pstor/bldesc.h>
 #include <silofs/pstor/btnode.h>

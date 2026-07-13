@@ -23,7 +23,7 @@
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
 #include <silofs/infra.h>
-#include <silofs/pstor.h>
+#include <silofs/exec.h>
 
 /*
  * TODO-0035: Define proper upper-bound for cache limit.
@@ -900,16 +900,14 @@ static int dstor_remove_blob(struct silofs_dstor *dstor,
                              const struct silofs_blobidx *blobidx)
 {
 	struct silofs_blobfile *bf = nullptr;
-	int err                    = 0;
+	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_unlink(bf, dstor->ds_dfd);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	dstor_forget_cached_bf(dstor, bf);
 	return 0;
 }
@@ -1125,13 +1123,11 @@ static int dstor_write_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_write(bf, pos, buf, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1153,13 +1149,11 @@ static int dstor_writev_blob(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_cached_bf(dstor, blobidx, &bf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = bf_writev(bf, pos, iov, cnt);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return sync ? bf_sync_range(bf, pos, silofs_iov_length(iov, cnt)) : 0;
 }
 
@@ -1190,13 +1184,11 @@ int silofs_dstor_save_mbr(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_require_blob(dstor, &mbref->bx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dstor_write_blob(dstor, &mbref->bx, 0, buf, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1207,13 +1199,11 @@ int silofs_dstor_load_mbr(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_sense_blob(dstor, &mbref->bx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dstor_read_blob(dstor, &mbref->bx, 0, buf, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1223,12 +1213,10 @@ int silofs_dstor_unref_mbr(struct silofs_dstor *dstor,
 	int err;
 
 	err = dstor_sense_blob(dstor, &mbref->bx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = dstor_remove_blob(dstor, &mbref->bx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }

@@ -23,7 +23,6 @@
 #include <silofs/addr.h>
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
-#include <silofs/run/mbr.h>
 
 /* env initialization-state flags */
 enum silofs_env_initf {

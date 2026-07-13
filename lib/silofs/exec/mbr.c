@@ -15,12 +15,13 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <sys/stat.h>
+
 #include <silofs/version.h>
 #include <silofs/ondisk.h>
 #include <silofs/infra.h>
-#include <silofs/pstor.h>
-#include <silofs/fs.h>
-#include <silofs/run.h>
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
 
 static void swv64b_htox(struct silofs_sw_version64b *swv64,
                         const struct silofs_sw_version *swv)
@@ -706,7 +707,7 @@ unref_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
 	return 0;
 }
 
-int silofs_commit_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                       struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -730,7 +731,7 @@ int silofs_sense_mbr(struct silofs_dstor *dstor,
 	return stat_mbr_at(dstor, mbref);
 }
 
-int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                       const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -751,12 +752,12 @@ int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
 	return 0;
 }
 
-int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                      const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = silofs_reload_mbr(mbi, dstor, mbref);
+	err = silofs_reload_mbr(dstor, mbi, mbref);
 	return_if_err(err);
 
 	err = unref_mbr_at(dstor, mbref);

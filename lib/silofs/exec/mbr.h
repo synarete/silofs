@@ -41,13 +41,13 @@ int silofs_update_mbr(struct silofs_mbr_info       *mbi,
 int silofs_sense_mbr(struct silofs_dstor       *dstor,
                      const struct silofs_mbref *mbref);
 
-int silofs_commit_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                       struct silofs_mbref *out_mbref);
 
-int silofs_reload_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                       const struct silofs_mbref *mbref);
 
-int silofs_unref_mbr(struct silofs_mbr_info *mbi, struct silofs_dstor *dstor,
+int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_mbr_info *mbi,
                      const struct silofs_mbref *mbref);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -75,7 +75,7 @@ static void put_sbi(struct silofs_sbnode_info *sbi)
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
 {
-	return (task->pexec.ubref->ctl_flags & SILOFS_F_NLOOKUP) > 0;
+	return (task->pexec.fsroot->ctl_flags & SILOFS_F_NLOOKUP) > 0;
 }
 
 static void sub_nlookup(const struct silofs_task_ctx *task,
@@ -427,7 +427,7 @@ int silofs_do_access(const struct silofs_task_ctx *task,
 
 static int check_on_writable_fs(const struct silofs_task_ctx *task)
 {
-	return silofs_ubref_is_rdonly(task->pexec.ubref) ? -SILOFS_ERDONLY : 0;
+	return silofs_test_rdonly_fs(task->pexec.fsroot) ? -SILOFS_ERDONLY : 0;
 }
 
 static int
@@ -814,7 +814,7 @@ check_mknod(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->pexec.ubref->ms_flags & MS_NODEV) {
+		if (task->pexec.fsroot->ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2197,7 +2197,7 @@ fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
 	qpr->uid       = env->owner_cred.uid;
 	qpr->gid       = env->owner_cred.gid;
 	qpr->pid       = getpid();
-	qpr->msflags   = env->ubref.ms_flags;
+	qpr->msflags   = env->fsroot.ms_flags;
 	qpr->uptime    = uptime;
 	qpr->iopen_max = env->fsroot.opstat.op_iopen_max;
 	qpr->iopen_cur = env->fsroot.opstat.op_iopen;
@@ -2218,7 +2218,7 @@ do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 	/*
 	 * TODO-0068: Export uber stats via dedicated ioctl.
 	 */
-	silofs_ubi_collect_stats(task->pexec.ubref->ubi, &ub_stats);
+	silofs_ubi_collect_stats(task->pexec.fsroot->ubi, &ub_stats);
 
 	err = get_sbi(task, &sbi);
 	return_if_err(err);

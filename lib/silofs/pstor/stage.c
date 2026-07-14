@@ -687,9 +687,9 @@ static int stc_validate_staged_btnode(struct silofs_stage_ctx *st_ctx,
 
 static struct silofs_uber_info *stc_ubi(const struct silofs_stage_ctx *st_ctx)
 {
-	silofs_assert_not_null(st_ctx->pexec->ubref->ubi);
+	silofs_assert_not_null(st_ctx->pexec->fsroot->ubi);
 
-	return st_ctx->pexec->ubref->ubi;
+	return st_ctx->pexec->fsroot->ubi;
 }
 
 static void stc_update_spawned_btnode(const struct silofs_stage_ctx *st_ctx,
@@ -1055,7 +1055,7 @@ static void dsc_init(struct silofs_destage_ctx *ds_ctx,
 	ds_ctx->pexec      = pexec;
 	ds_ctx->alloc      = pexec->alloc;
 	ds_ctx->drq        = nullptr;
-	ds_ctx->ubi        = pexec->ubref->ubi;
+	ds_ctx->ubi        = pexec->fsroot->ubi;
 	ds_ctx->dstor      = pexec->dstor;
 	ds_ctx->cleardirty = false;
 }

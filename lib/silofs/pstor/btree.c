@@ -184,7 +184,7 @@ btc_init(struct silofs_btree_ctx *btc, const struct silofs_pexec_ctx *pexec,
 	bpath_init(&btc->bpath);
 	silofs_laddr_assign(&btc->laddr, laddr);
 	btc->pexec = pexec;
-	btc->ubi   = pexec->ubref->ubi;
+	btc->ubi   = pexec->fsroot->ubi;
 }
 
 static void btc_fini(struct silofs_btree_ctx *btc)

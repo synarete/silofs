@@ -644,9 +644,10 @@ search_prefix(const struct silofs_namestr *name)
 
 static bool xac_allow_acl(const struct silofs_xattr_ctx *xa_ctx)
 {
-	const struct silofs_uber_ref *ubref = xa_ctx->task->pexec.ubref;
+	const enum silofs_flags ctl_flags =
+		xa_ctx->task->pexec.fsroot->ctl_flags;
 
-	return (ubref->ctl_flags & SILOFS_F_ALLOW_XACL) > 0;
+	return (ctl_flags & SILOFS_F_ALLOW_XACL) > 0;
 }
 
 static int

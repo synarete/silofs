@@ -141,7 +141,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 static int open_repo(struct silofs_task_ctx *task)
 {
 	return silofs_repo_open(task->repo, task->env->repodir,
-	                        task->pexec.ubref->ctl_flags);
+	                        task->pexec.fsroot->ctl_flags);
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)

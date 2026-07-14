@@ -849,7 +849,7 @@ void silofs_update_uber_ref(struct silofs_fsroot *fsroot,
 		silofs_pni_decref(&ubi_cur->ub_pni);
 	}
 	if (ubi_new != nullptr) {
-		silofs_pni_incref(&ubi_cur->ub_pni);
+		silofs_pni_incref(&ubi_new->ub_pni);
 	}
 	fsroot->ubi = ubi_new;
 }

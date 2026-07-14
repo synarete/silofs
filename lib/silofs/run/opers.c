@@ -157,7 +157,7 @@ static bool op_is_fsowner(const struct silofs_task_ctx *task)
 static bool
 op_has_ctl_flags(const struct silofs_task_ctx *task, enum silofs_flags mask)
 {
-	return ((task->pexec.ubref->ctl_flags & mask) == mask);
+	return ((task->pexec.fsroot->ctl_flags & mask) == mask);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task_ctx *task)

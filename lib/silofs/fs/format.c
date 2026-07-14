@@ -51,7 +51,7 @@ static void update_active_uber(const struct silofs_pexec_ctx *pexec,
                                struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
-	silofs_ubref_update(pexec->ubref, ubi);
+	silofs_update_uber_ref(pexec->fsroot, ubi);
 }
 
 static int format_uber(struct silofs_task_ctx *task)
@@ -103,7 +103,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 static void update_formatted_btroot(const struct silofs_task_ctx *task,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = task->pexec.ubref->ubi;
+	struct silofs_uber_info *ubi = task->pexec.fsroot->ubi;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
@@ -131,7 +131,7 @@ static int format_lspace_root_of(const struct silofs_task_ctx *task,
 	err = silofs_carve_base_lspace(&task->pexec, ltype, &paddr);
 	return_if_err(err);
 
-	silofs_ubi_start_spdesc(task->pexec.ubref->ubi, &paddr);
+	silofs_ubi_start_spdesc(task->pexec.fsroot->ubi, &paddr);
 	return 0;
 }
 
@@ -391,7 +391,7 @@ static int format_lspace_nodes(const struct silofs_task_ctx *task)
 static void resolve_uber(const struct silofs_task_ctx *task,
                          struct silofs_pnptr *out_pnptr)
 {
-	const struct silofs_uber_info *ubi = task->pexec.ubref->ubi;
+	const struct silofs_uber_info *ubi = task->pexec.fsroot->ubi;
 
 	silofs_pnptr_assign(out_pnptr, silofs_ubi_self(ubi));
 }
@@ -451,7 +451,7 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 
 static bool use_utf8_names(const struct silofs_task_ctx *task)
 {
-	return (task->pexec.ubref->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
+	return (task->pexec.fsroot->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
 }
 
 static int format_rootdir(struct silofs_task_ctx *task)
@@ -516,7 +516,7 @@ static int reload_btree_root_of(const struct silofs_task_ctx *task,
 	struct silofs_btnode_info *bti;
 	int err;
 
-	silofs_ubi_btroot_of(task->pexec.ubref->ubi, ltype, &pnptr);
+	silofs_ubi_btroot_of(task->pexec.fsroot->ubi, ltype, &pnptr);
 	if (silofs_pnptr_isnull(&pnptr)) {
 		log_dbg("missing btree root: ltype=%d", ltype);
 		return -SILOFS_EFSCORRUPTED;

@@ -86,7 +86,7 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->pexec.md_hd     = &env->md_hd;
 	task->pexec.enc_ci_hd = &env->enc_ci_hd;
 	task->pexec.dec_ci_hd = &env->dec_ci_hd;
-	task->pexec.ubref     = &env->ubref;
+	task->pexec.fsroot    = &env->fsroot;
 	task->lcache          = &env->lcache;
 	task->lspools         = &env->lspools;
 	task->idsm            = &env->idsmap;
@@ -176,7 +176,7 @@ static void task_purge(struct silofs_task_ctx *task)
 void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->fs_locked && !task->priv_op) {
-		silofs_env_lock(task->env);
+		silofs_fsroot_lock(task->fsroot);
 		task->fs_locked = true;
 	}
 }
@@ -184,7 +184,7 @@ void silofs_lock_fs_by(struct silofs_task_ctx *task)
 void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->fs_locked && !task->priv_op) {
-		silofs_env_unlock(task->env);
+		silofs_fsroot_unlock(task->fsroot);
 		task->fs_locked = false;
 	}
 }
@@ -192,7 +192,7 @@ void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->rw_locked) {
-		silofs_ubref_rwlock(task->pexec.ubref, task->exclusive);
+		silofs_fsroot_rwlock(task->fsroot, task->exclusive);
 		task->rw_locked = true;
 	}
 }
@@ -200,7 +200,7 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->rw_locked) {
-		silofs_ubref_rwunlock(task->pexec.ubref);
+		silofs_fsroot_rwunlock(task->fsroot);
 		task->rw_locked = false;
 	}
 }

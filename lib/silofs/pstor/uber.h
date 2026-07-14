@@ -87,29 +87,4 @@ bool silofs_ubi_onsame_layer(const struct silofs_uber_info   *ubi,
 
 int silofs_validate_uber(const struct silofs_uber_info *ubi);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-struct silofs_uber_ref {
-	struct silofs_rwlock     rwlock;
-	struct silofs_uber_info *ubi;
-	enum silofs_flags        ctl_flags;
-	unsigned long            ms_flags;
-};
-
-int silofs_ubref_init(struct silofs_uber_ref *ubref);
-
-void silofs_ubref_fini(struct silofs_uber_ref *ubref);
-
-void silofs_ubref_update(struct silofs_uber_ref  *ubref,
-                         struct silofs_uber_info *ubi);
-
-void silofs_ubref_set_ctlflags(struct silofs_uber_ref *ubref,
-                               enum silofs_flags       ctl_flags);
-
-bool silofs_ubref_is_rdonly(const struct silofs_uber_ref *ubref);
-
-void silofs_ubref_rwlock(struct silofs_uber_ref *ubref, bool ex);
-
-void silofs_ubref_rwunlock(struct silofs_uber_ref *ubref);
-
 #endif /* SILOFS_UBER_H_ */

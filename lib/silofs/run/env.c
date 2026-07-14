@@ -29,7 +29,6 @@ enum silofs_env_initf {
 	SILOFS_ENVF_QALLOC   = SILOFS_BIT(0),
 	SILOFS_ENVF_STDALLOC = SILOFS_BIT(1),
 	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(2),
-	SILOFS_ENVF_LOCKS    = SILOFS_BIT(3),
 	SILOFS_ENVF_CRYPT    = SILOFS_BIT(4),
 	SILOFS_ENVF_UCONV    = SILOFS_BIT(5),
 	SILOFS_ENVF_REPO     = SILOFS_BIT(6),
@@ -38,7 +37,6 @@ enum silofs_env_initf {
 	SILOFS_ENVF_FREESQS  = SILOFS_BIT(9),
 	SILOFS_ENVF_IDSMAP   = SILOFS_BIT(10),
 	SILOFS_ENVF_FSROOT   = SILOFS_BIT(11),
-	SILOFS_ENVF_UBREF    = SILOFS_BIT(12),
 	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(13),
 };
 
@@ -279,25 +277,6 @@ static void env_fini_fsroot(struct silofs_env *env)
 	}
 }
 
-static int env_init_locks(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_mutex_init(&env->mutex);
-	return_if_err(err);
-
-	env->initf |= SILOFS_ENVF_LOCKS;
-	return 0;
-}
-
-static void env_fini_locks(struct silofs_env *env)
-{
-	if (env->initf & SILOFS_ENVF_LOCKS) {
-		silofs_mutex_fini(&env->mutex);
-		env->initf &= ~SILOFS_ENVF_LOCKS;
-	}
-}
-
 static int env_init_crypt(struct silofs_env *env)
 {
 	int err;
@@ -457,25 +436,6 @@ static void env_fini_commons(struct silofs_env *env)
 	silofs_cred_fini(&env->owner_cred);
 }
 
-static int env_init_ubref(struct silofs_env *env)
-{
-	int err;
-
-	err = silofs_ubref_init(&env->ubref);
-	return_if_err(err);
-
-	env->initf |= SILOFS_ENVF_UBREF;
-	return 0;
-}
-
-static void env_fini_ubref(struct silofs_env *env)
-{
-	if (env->initf & SILOFS_ENVF_UBREF) {
-		silofs_ubref_fini(&env->ubref);
-		env->initf &= ~SILOFS_ENVF_UBREF;
-	}
-}
-
 static int env_init_prandgen(struct silofs_env *env)
 {
 	int err;
@@ -498,7 +458,6 @@ static void env_fini_prandgen(struct silofs_env *env)
 static void env_fini(struct silofs_env *env)
 {
 	env_unbind_fuseq(env);
-	env_fini_ubref(env);
 	env_fini_fsroot(env);
 	env_fini_idsmap(env);
 	env_fini_freesqs(env);
@@ -507,7 +466,6 @@ static void env_fini(struct silofs_env *env)
 	env_fini_repo(env);
 	env_fini_uconv(env);
 	env_fini_crypt(env);
-	env_fini_locks(env);
 	env_fini_prandgen(env);
 	env_fini_alloc(env);
 	env_fini_commons(env);
@@ -524,9 +482,6 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	goto_out_if_err(err);
 
 	err = env_init_prandgen(env);
-	goto_out_if_err(err);
-
-	err = env_init_locks(env);
 	goto_out_if_err(err);
 
 	err = env_init_crypt(env);
@@ -551,9 +506,6 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	goto_out_if_err(err);
 
 	err = env_init_fsroot(env);
-	goto_out_if_err(err);
-
-	err = env_init_ubref(env);
 	goto_out_if_err(err);
 
 	return 0;
@@ -805,7 +757,7 @@ static int env_update_fscap(struct silofs_env *env, size_t cap_want)
 
 static void env_setup_ctlflags(struct silofs_env *env, enum silofs_flags flags)
 {
-	silofs_ubref_set_ctlflags(&env->ubref, flags);
+	silofs_update_main_ctlflags(&env->fsroot, flags);
 }
 
 static int env_update_name(struct silofs_env *env, const char *fsname)
@@ -886,18 +838,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
 	env->fuseq = fq;
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-void silofs_env_lock(struct silofs_env *env)
-{
-	silofs_mutex_lock(&env->mutex);
-}
-
-void silofs_env_unlock(struct silofs_env *env)
-{
-	silofs_mutex_unlock(&env->mutex);
-}
-
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 void silofs_env_drop_caches(struct silofs_env *env)
@@ -912,7 +852,7 @@ void silofs_env_drop_caches(struct silofs_env *env)
 int silofs_env_shut(struct silofs_env *env)
 {
 	log_dbg("shut env: op_count=%lu", env->fsroot.opstat.op_count);
-	silofs_ubref_update(&env->ubref, nullptr);
+	silofs_update_uber_ref(&env->fsroot, nullptr);
 	return 0;
 }
 
@@ -1044,17 +984,29 @@ int silofs_env_sense_mbr(struct silofs_env *env,
 int silofs_env_commit_mbr(struct silofs_env *env,
                           struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(&env->repo.re_dstor, &env->fsroot, out_mbref);
+	int err;
+
+	err = silofs_commit_mbr(&env->repo.re_dstor, &env->fsroot, out_mbref);
+	silofs_burnstack();
+	return err;
 }
 
 int silofs_env_reload_mbr(struct silofs_env *env,
                           const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
+	int err;
+
+	err = silofs_reload_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
+	silofs_burnstack();
+	return err;
 }
 
 int silofs_env_unref_mbr(struct silofs_env *env,
                          const struct silofs_mbref *mbref)
 {
-	return silofs_unref_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
+	int err;
+
+	err = silofs_unref_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
+	silofs_burnstack();
+	return err;
 }

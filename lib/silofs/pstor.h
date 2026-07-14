@@ -33,10 +33,9 @@ struct silofs_pexec_ctx {
 	struct silofs_mdigest_hd *md_hd;
 	struct silofs_cipher_hd  *enc_ci_hd;
 	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_uber_ref   *ubref;
-
-	struct silofs_lcache  *lcache;
-	struct silofs_lspools *lspools;
+	struct silofs_fsroot     *fsroot;
+	struct silofs_lcache     *lcache;
+	struct silofs_lspools    *lspools;
 };
 
 #include <silofs/pstor/uber.h>

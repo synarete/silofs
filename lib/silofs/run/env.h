@@ -42,10 +42,8 @@ struct silofs_env {
 	struct silofs_pspools          pspools;
 	struct silofs_idsmap           idsmap;
 	struct silofs_fsroot           fsroot;
-	struct silofs_uber_ref         ubref;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;
-	struct silofs_mutex            mutex;
 	struct silofs_cipher_hd        enc_ci_hd;
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
@@ -63,10 +61,6 @@ struct silofs_env {
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq);
-
-void silofs_env_lock(struct silofs_env *env);
-
-void silofs_env_unlock(struct silofs_env *env);
 
 void silofs_env_refresh_root(struct silofs_env         *env,
                              const struct silofs_pnptr *pnptr);

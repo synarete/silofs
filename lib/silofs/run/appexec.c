@@ -172,6 +172,16 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void lock_fs(struct silofs_env *env)
+{
+	silofs_fsroot_lock(&env->fsroot);
+}
+
+static void unlock_fs(struct silofs_env *env)
+{
+	silofs_fsroot_unlock(&env->fsroot);
+}
+
 int silofs_post_exec_fs(struct silofs_env *env)
 {
 	const struct silofs_fuseq *fuseq = env->fuseq;
@@ -255,7 +265,7 @@ static int do_mount_and_exec(struct silofs_env *env, const char *mntdir)
 	struct silofs_fuseq *fuseq = env->fuseq;
 	int err;
 
-	err = silofs_fuseq_mount(fuseq, mntdir, env->ubref.ms_flags);
+	err = silofs_fuseq_mount(fuseq, mntdir, env->fsroot.ms_flags);
 	if (!err) {
 		err = silofs_fuseq_exec(fuseq);
 	}
@@ -295,11 +305,11 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 {
 	int err = 0;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	for (int i = 0; (i < 3) && !err; ++i) {
 		err = exec_resync_vmeta(env, drop);
 	}
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -370,9 +380,9 @@ int silofs_format_repo(struct silofs_env *env)
 {
 	int ret;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	ret = do_format_repo(env);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return ret;
 }
 
@@ -478,9 +488,9 @@ int silofs_format_fs(struct silofs_env *env, struct silofs_fsref *out_fsref)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = do_format_fs(env, out_fsref);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -521,9 +531,9 @@ int silofs_sense_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = do_sense_fs(env, fsref);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -546,9 +556,9 @@ int silofs_reload_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = do_reload_fs(env, fsref);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -568,9 +578,9 @@ int silofs_unload_fs(struct silofs_env *env)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = exec_unload_fs(env);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -604,9 +614,9 @@ int silofs_fork_fs(struct silofs_env *env, struct silofs_fsrefs *out_fsrefs)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = do_fork_fs(env, out_fsrefs);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -650,9 +660,9 @@ int silofs_remove_fs(struct silofs_env *env, const struct silofs_fsref *fsref)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = do_remove_fs(env, fsref);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	return err;
 }
 
@@ -677,9 +687,9 @@ int silofs_inspect_fs(struct silofs_env *env, bool view)
 {
 	int err;
 
-	silofs_env_lock(env);
+	lock_fs(env);
 	err = exec_inspect_fs(env);
-	silofs_env_unlock(env);
+	unlock_fs(env);
 	(void)view;
 	return err;
 }

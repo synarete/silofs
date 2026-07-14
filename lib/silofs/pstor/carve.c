@@ -70,7 +70,7 @@ static void generate_layerid(struct silofs_layerid *out_layerid)
 static const struct silofs_layerid *
 top_layerid(const struct silofs_pexec_ctx *pexec)
 {
-	const struct silofs_uber_info *ubi = pexec->ubref->ubi;
+	const struct silofs_uber_info *ubi = pexec->fsroot->ubi;
 
 	silofs_assert_not_null(ubi);
 	return silofs_ubi_layerid(ubi);
@@ -168,13 +168,13 @@ static void carve_next_space_of(const struct silofs_pexec_ctx *pexec,
 	struct silofs_spdesc spdesc_cur, spdesc_nxt;
 	struct silofs_paddr paddr_nxt;
 
-	silofs_ubi_spdesc_of(pexec->ubref->ubi, stype, &spdesc_cur);
+	silofs_ubi_spdesc_of(pexec->fsroot->ubi, stype, &spdesc_cur);
 
 	silofs_paddr_assign(out_paddr, &spdesc_cur.end);
 	silofs_paddr_next(&spdesc_cur.end, &paddr_nxt);
 
 	silofs_spdesc_setup(&spdesc_nxt, &spdesc_cur.beg, &paddr_nxt);
-	silofs_ubi_update_spdesc(pexec->ubref->ubi, &spdesc_nxt);
+	silofs_ubi_update_spdesc(pexec->fsroot->ubi, &spdesc_nxt);
 }
 
 static bool try_carve_free_space_of(const struct silofs_pexec_ctx *pexec,

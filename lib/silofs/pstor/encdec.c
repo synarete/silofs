@@ -35,20 +35,20 @@ static void calc_aad_by_paddr(const struct silofs_mdigest_hd *md_hd,
 }
 
 static void
-calc_aad_of(const struct silofs_pexec_ctx *pexec,
+calc_aad_of(const struct silofs_exec_refs *xrefs,
             const struct silofs_pnptr *pnptr, struct silofs_caad *out_caad)
 {
-	calc_aad_by_paddr(pexec->md_hd, &pnptr->paddr, out_caad);
+	calc_aad_by_paddr(xrefs->md_hd, &pnptr->paddr, out_caad);
 }
 
 static const struct silofs_caad *
-caad_by(const struct silofs_pexec_ctx *pexec, const struct silofs_pnptr *pnptr,
+caad_by(const struct silofs_exec_refs *xrefs, const struct silofs_pnptr *pnptr,
         const struct silofs_ctag *ctag, struct silofs_caad *caad)
 {
 	if (ctag == nullptr) {
 		caad = nullptr;
 	} else {
-		calc_aad_of(pexec, pnptr, caad);
+		calc_aad_of(xrefs, pnptr, caad);
 	}
 	return caad;
 }
@@ -102,17 +102,17 @@ pni_self(const struct silofs_pnode_info *pni)
 	return silofs_pni_self(pni);
 }
 
-int silofs_encrypt_pnode(const struct silofs_pexec_ctx *pexec,
+int silofs_encrypt_pnode(const struct silofs_exec_refs *xrefs,
                          const struct silofs_pnode_info *pni,
                          struct silofs_ctag *out_ctag)
 {
 	struct silofs_caad caad;
 	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
-		.ci_hd    = pexec->enc_ci_hd,
+		.ci_hd    = xrefs->enc_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
 		.ckey     = &pnptr->nmeta.civkey.key,
-		.caad     = caad_by(pexec, pnptr, out_ctag, &caad),
+		.caad     = caad_by(xrefs, pnptr, out_ctag, &caad),
 		.ctag_in  = nullptr,
 		.ctag_out = out_ctag,
 		.data_in  = pni_pview(pni),
@@ -123,17 +123,17 @@ int silofs_encrypt_pnode(const struct silofs_pexec_ctx *pexec,
 	return silofs_encrypt(&ed_ctx);
 }
 
-int silofs_decrypt_pnode(const struct silofs_pexec_ctx *pexec,
+int silofs_decrypt_pnode(const struct silofs_exec_refs *xrefs,
                          const struct silofs_pnode_info *pni,
                          const struct silofs_ctag *ctag)
 {
 	struct silofs_caad caad;
 	const struct silofs_pnptr *pnptr      = pni_self(pni);
 	const struct silofs_encdec_ctx ed_ctx = {
-		.ci_hd    = pexec->dec_ci_hd,
+		.ci_hd    = xrefs->dec_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
 		.ckey     = &pnptr->nmeta.civkey.key,
-		.caad     = caad_by(pexec, pnptr, ctag, &caad),
+		.caad     = caad_by(xrefs, pnptr, ctag, &caad),
 		.ctag_in  = ctag,
 		.ctag_out = nullptr,
 		.data_in  = pni_pviewx(pni),
@@ -187,17 +187,17 @@ lni_mut_lviewx(const struct silofs_lnode_info *lni)
 	return lviewx;
 }
 
-int silofs_encrypt_lnode(const struct silofs_pexec_ctx *pexec,
+int silofs_encrypt_lnode(const struct silofs_exec_refs *xrefs,
                          const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr *pnptr,
                          struct silofs_ctag *out_ctag)
 {
 	struct silofs_caad caad;
 	struct silofs_encdec_ctx ed_ctx = {
-		.ci_hd    = pexec->enc_ci_hd,
+		.ci_hd    = xrefs->enc_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
 		.ckey     = &pnptr->nmeta.civkey.key,
-		.caad     = caad_by(pexec, pnptr, out_ctag, &caad),
+		.caad     = caad_by(xrefs, pnptr, out_ctag, &caad),
 		.ctag_in  = nullptr,
 		.ctag_out = out_ctag,
 		.data_in  = lni_lview(lni),
@@ -208,17 +208,17 @@ int silofs_encrypt_lnode(const struct silofs_pexec_ctx *pexec,
 	return silofs_encrypt(&ed_ctx);
 }
 
-int silofs_decrypt_lnode(const struct silofs_pexec_ctx *pexec,
+int silofs_decrypt_lnode(const struct silofs_exec_refs *xrefs,
                          const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr *pnptr,
                          const struct silofs_ctag *ctag)
 {
 	struct silofs_caad caad;
 	const struct silofs_encdec_ctx ed_ctx = {
-		.ci_hd    = pexec->dec_ci_hd,
+		.ci_hd    = xrefs->dec_ci_hd,
 		.civ      = &pnptr->nmeta.civkey.iv,
 		.ckey     = &pnptr->nmeta.civkey.key,
-		.caad     = caad_by(pexec, pnptr, ctag, &caad),
+		.caad     = caad_by(xrefs, pnptr, ctag, &caad),
 		.ctag_in  = ctag,
 		.ctag_out = nullptr,
 		.data_in  = lni_lviewx(lni),

@@ -20,8 +20,6 @@
 
 #include <silofs/version.h>
 #include <silofs/ondisk.h>
-#include <silofs/infra.h>
-#include <silofs/nodes.h>
 #include <silofs/exec.h>
 
 static void swv64b_htox(struct silofs_sw_version64b *swv64,

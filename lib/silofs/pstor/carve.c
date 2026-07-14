@@ -68,47 +68,47 @@ static void generate_layerid(struct silofs_layerid *out_layerid)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const struct silofs_layerid *
-top_layerid(const struct silofs_pexec_ctx *pexec)
+top_layerid(const struct silofs_exec_refs *xrefs)
 {
-	const struct silofs_uber_info *ubi = pexec->fsroot->ubi;
+	const struct silofs_uber_info *ubi = xrefs->fsroot->ubi;
 
 	silofs_assert_not_null(ubi);
 	return silofs_ubi_layerid(ubi);
 }
 
-static void gen_layerid(const struct silofs_pexec_ctx *pexec,
+static void gen_layerid(const struct silofs_exec_refs *xrefs,
                         struct silofs_layerid *out_layerid)
 {
 	generate_layerid(out_layerid);
-	silofs_unused(pexec);
+	silofs_unused(xrefs);
 }
 
-static void gen_uniqid(const struct silofs_pexec_ctx *pexec,
+static void gen_uniqid(const struct silofs_exec_refs *xrefs,
                        struct silofs_uniqid *out_uniqid)
 {
-	generate_uniqid(pexec->prng, out_uniqid);
+	generate_uniqid(xrefs->prng, out_uniqid);
 }
 
-static void gen_civkey(const struct silofs_pexec_ctx *pexec,
+static void gen_civkey(const struct silofs_exec_refs *xrefs,
                        struct silofs_civkey *out_civkey)
 {
-	generate_ckey(pexec->prng, &out_civkey->key);
-	generate_civ(pexec->prng, &out_civkey->iv);
+	generate_ckey(xrefs->prng, &out_civkey->key);
+	generate_civ(xrefs->prng, &out_civkey->iv);
 }
 
 static int
-gen_pnptr_at(const struct silofs_pexec_ctx *pexec,
+gen_pnptr_at(const struct silofs_exec_refs *xrefs,
              const struct silofs_paddr *paddr, struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_civkey civkey;
 
-	gen_civkey(pexec, &civkey);
+	gen_civkey(xrefs, &civkey);
 	silofs_pnptr_setup(out_pnptr, paddr, &civkey);
 
 	return 0;
 }
 
-int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_ubspace(const struct silofs_exec_refs *xrefs,
                               struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_blobid blobid;
@@ -119,14 +119,14 @@ int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
 	};
 
 	silofs_blobid_init(&blobid, &stype, nullptr, nullptr);
-	gen_layerid(pexec, &blobid.layerid);
-	gen_uniqid(pexec, &blobid.uniqid);
+	gen_layerid(xrefs, &blobid.layerid);
+	gen_uniqid(xrefs, &blobid.uniqid);
 
 	silofs_paddr_init(&paddr, &blobid, 0);
-	return gen_pnptr_at(pexec, &paddr, out_pnptr);
+	return gen_pnptr_at(xrefs, &paddr, out_pnptr);
 }
 
-int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_btspace(const struct silofs_exec_refs *xrefs,
                               enum silofs_ltype ltype,
                               struct silofs_pnptr *out_pnptr)
 {
@@ -137,14 +137,14 @@ int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
 		.ltype = ltype,
 	};
 
-	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
-	gen_uniqid(pexec, &blobid.uniqid);
+	silofs_blobid_init(&blobid, &stype, top_layerid(xrefs), nullptr);
+	gen_uniqid(xrefs, &blobid.uniqid);
 	silofs_paddr_init(&paddr, &blobid, 0);
 
-	return gen_pnptr_at(pexec, &paddr, out_pnptr);
+	return gen_pnptr_at(xrefs, &paddr, out_pnptr);
 }
 
-int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_lspace(const struct silofs_exec_refs *xrefs,
                              enum silofs_ltype ltype,
                              struct silofs_paddr *out_paddr)
 {
@@ -154,52 +154,52 @@ int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
 		.ltype = ltype,
 	};
 
-	silofs_blobid_init(&blobid, &stype, top_layerid(pexec), nullptr);
-	gen_uniqid(pexec, &blobid.uniqid);
+	silofs_blobid_init(&blobid, &stype, top_layerid(xrefs), nullptr);
+	gen_uniqid(xrefs, &blobid.uniqid);
 	silofs_paddr_init(out_paddr, &blobid, 0);
 
 	return 0;
 }
 
-static void carve_next_space_of(const struct silofs_pexec_ctx *pexec,
+static void carve_next_space_of(const struct silofs_exec_refs *xrefs,
                                 const struct silofs_stype *stype,
                                 struct silofs_paddr *out_paddr)
 {
 	struct silofs_spdesc spdesc_cur, spdesc_nxt;
 	struct silofs_paddr paddr_nxt;
 
-	silofs_ubi_spdesc_of(pexec->fsroot->ubi, stype, &spdesc_cur);
+	silofs_ubi_spdesc_of(xrefs->fsroot->ubi, stype, &spdesc_cur);
 
 	silofs_paddr_assign(out_paddr, &spdesc_cur.end);
 	silofs_paddr_next(&spdesc_cur.end, &paddr_nxt);
 
 	silofs_spdesc_setup(&spdesc_nxt, &spdesc_cur.beg, &paddr_nxt);
-	silofs_ubi_update_spdesc(pexec->fsroot->ubi, &spdesc_nxt);
+	silofs_ubi_update_spdesc(xrefs->fsroot->ubi, &spdesc_nxt);
 }
 
-static bool try_carve_free_space_of(const struct silofs_pexec_ctx *pexec,
+static bool try_carve_free_space_of(const struct silofs_exec_refs *xrefs,
                                     const struct silofs_stype *stype,
                                     struct silofs_paddr *out_paddr)
 {
 	int err;
 
-	err = silofs_pspools_pull(pexec->pspools, stype, out_paddr);
+	err = silofs_pspools_pull(xrefs->pspools, stype, out_paddr);
 	return (err == 0);
 }
 
-static int carve_pnptr_of(const struct silofs_pexec_ctx *pexec,
+static int carve_pnptr_of(const struct silofs_exec_refs *xrefs,
                           const struct silofs_stype *stype,
                           struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_paddr paddr;
 
-	if (!try_carve_free_space_of(pexec, stype, &paddr)) {
-		carve_next_space_of(pexec, stype, &paddr);
+	if (!try_carve_free_space_of(xrefs, stype, &paddr)) {
+		carve_next_space_of(xrefs, stype, &paddr);
 	}
-	return gen_pnptr_at(pexec, &paddr, out_pnptr);
+	return gen_pnptr_at(xrefs, &paddr, out_pnptr);
 }
 
-int silofs_carve_btspace_pnptr(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_btspace_pnptr(const struct silofs_exec_refs *xrefs,
                                enum silofs_ltype ltype,
                                struct silofs_pnptr *out_pnptr)
 {
@@ -208,10 +208,10 @@ int silofs_carve_btspace_pnptr(const struct silofs_pexec_ctx *pexec,
 		.ltype = ltype,
 	};
 
-	return carve_pnptr_of(pexec, &stype, out_pnptr);
+	return carve_pnptr_of(xrefs, &stype, out_pnptr);
 }
 
-int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_lspace_pnptr(const struct silofs_exec_refs *xrefs,
                               enum silofs_ltype ltype,
                               struct silofs_pnptr *out_pnptr)
 {
@@ -220,5 +220,5 @@ int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
 		.ltype = ltype,
 	};
 
-	return carve_pnptr_of(pexec, &stype, out_pnptr);
+	return carve_pnptr_of(xrefs, &stype, out_pnptr);
 }

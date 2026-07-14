@@ -14,23 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PSTOR_H_
-#define SILOFS_PSTOR_H_
+#include <silofs/configs.h>
 
-#include <silofs/infra.h>
-#include <silofs/crypt.h>
-#include <silofs/addr.h>
-#include <silofs/nodes.h>
 #include <silofs/exec.h>
-
-#include <silofs/pstor/uber.h>
-#include <silofs/pstor/bldesc.h>
-#include <silofs/pstor/btnode.h>
-#include <silofs/pstor/btree.h>
-#include <silofs/pstor/stage.h>
-#include <silofs/pstor/carve.h>
-#include <silofs/pstor/encdec.h>
-#include <silofs/pstor/mapping.h>
-#include <silofs/pstor/spnode.h>
-
-#endif /* SILOFS_PSTOR_H_ */

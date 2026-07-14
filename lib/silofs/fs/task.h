@@ -29,7 +29,7 @@ struct silofs_task_auth {
 /* execution-context */
 struct silofs_task_ctx {
 	struct silofs_task_auth     auth;
-	struct silofs_pexec_ctx     pexec;
+	struct silofs_exec_refs    *xrefs;
 	struct silofs_lcache       *lcache;
 	struct silofs_lspools      *lspools;
 	struct silofs_env          *env;

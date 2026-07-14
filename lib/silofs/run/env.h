@@ -35,6 +35,7 @@ struct silofs_env {
 	struct silofs_prandgen         prandgen;
 	union silofs_alloc_u           alloc_u;
 	struct silofs_alloc           *alloc;
+	struct silofs_lblock          *nilbk;
 	struct silofs_repo             repo;
 	struct silofs_pcache           pcache;
 	struct silofs_lcache           lcache;
@@ -49,6 +50,7 @@ struct silofs_env {
 	struct silofs_mdigest_hd       md_hd;
 	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
+	struct silofs_exec_refs        xrefs;
 	struct silofs_strbuf           name;
 	char                          *repodir;
 	long                           initf;

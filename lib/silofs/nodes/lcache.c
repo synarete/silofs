@@ -449,56 +449,19 @@ static void lcache_fini_hmapqs(struct silofs_lcache *lcache)
 	lcache_fini_lni_hmapq(lcache);
 }
 
-static int lcache_init_nilbk(struct silofs_lcache *lcache)
-{
-	struct silofs_lblock *nilbk = nullptr;
-
-	nilbk = silofs_memalloc(lcache->lc_alloc, sizeof(*nilbk),
-	                        SILOFS_ALLOCF_BZERO);
-	if (nilbk == nullptr) {
-		return -SILOFS_ENOMEM;
-	}
-	lcache->lc_nilbk = nilbk;
-	return 0;
-}
-
-static void lcache_fini_nilbk(struct silofs_lcache *lcache)
-{
-	struct silofs_lblock *nilbk = lcache->lc_nilbk;
-
-	if (nilbk != nullptr) {
-		silofs_memfree(lcache->lc_alloc, nilbk, sizeof(*nilbk),
-		               SILOFS_ALLOCF_TRYPUNCH);
-		lcache->lc_nilbk = nullptr;
-	}
-}
-
 int silofs_lcache_init(struct silofs_lcache *lcache,
                        struct silofs_alloc *alloc)
 {
-	int err;
-
 	lcache->lc_alloc = alloc;
-	lcache->lc_nilbk = nullptr;
 	lcache_init_dq(lcache);
 
-	err = lcache_init_nilbk(lcache);
-	return_if_err(err);
-
-	err = lcache_init_hmapqs(lcache);
-	goto_if_err(err, out_fail);
-
-	return 0;
-out_fail:
-	lcache_fini_nilbk(lcache);
-	return err;
+	return lcache_init_hmapqs(lcache);
 }
 
 void silofs_lcache_fini(struct silofs_lcache *lcache)
 {
 	lcache_fini_dq(lcache);
 	lcache_fini_hmapqs(lcache);
-	lcache_fini_nilbk(lcache);
 	lcache->lc_alloc = nullptr;
 }
 

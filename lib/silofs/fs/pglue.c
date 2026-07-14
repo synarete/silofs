@@ -98,7 +98,7 @@ probe_lnode(const struct silofs_task_ctx *task,
 	int err;
 
 	pii_incref(pii);
-	err = silofs_resolve_ltop_mapping(&task->pexec, laddr, &pnptr);
+	err = silofs_resolve_ltop_mapping(task->xrefs, laddr, &pnptr);
 	pii_decref(pii);
 	return err;
 }
@@ -113,8 +113,7 @@ static int do_stage_lnode(const struct silofs_task_ctx *task,
 	err = silofs_probe_lspacef_at(task, laddr, &lspf);
 	return_if_err(err);
 
-	err = silofs_stage_lnode_by_mapping(&task->pexec, laddr, lspf,
-	                                    out_lni);
+	err = silofs_stage_lnode_by_mapping(task->xrefs, laddr, lspf, out_lni);
 	return_if_err(err);
 
 	return 0;
@@ -155,7 +154,7 @@ static int spawn_lnode_at(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_lnode_info **out_lni)
 {
-	return silofs_spawn_lnode_by_mapping(&task->pexec, laddr, out_lni);
+	return silofs_spawn_lnode_by_mapping(task->xrefs, laddr, out_lni);
 }
 
 static int
@@ -203,7 +202,7 @@ do_claim_lspace(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	err = claim_free_lspace(task, ltype, out_laddr);
 	return_if_err(err);
 
-	err = silofs_claim_lnode_mapping(&task->pexec, out_laddr);
+	err = silofs_claim_lnode_mapping(task->xrefs, out_laddr);
 	return_if_err(err);
 
 	return 0;
@@ -262,7 +261,7 @@ static int do_reclaim_mapping(const struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_reclaim_lnode_mapping(&task->pexec, laddr);
+	err = silofs_reclaim_lnode_mapping(task->xrefs, laddr);
 	return_if_err(err);
 
 	silofs_lspools_push(task->lspools, laddr);

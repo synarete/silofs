@@ -22,32 +22,32 @@ struct silofs_btree_path {
 	unsigned int               cnt;
 };
 
-int silofs_resolve_ltop_bpath(const struct silofs_pexec_ctx *pexec,
+int silofs_resolve_ltop_bpath(const struct silofs_exec_refs *xrefs,
                               const struct silofs_laddr     *laddr,
                               struct silofs_btree_path      *out_bpath);
 
-int silofs_resolve_ltop_parent(const struct silofs_pexec_ctx *pexec,
+int silofs_resolve_ltop_parent(const struct silofs_exec_refs *xrefs,
                                const struct silofs_laddr     *laddr,
                                const struct silofs_paddr     *paddr,
                                struct silofs_pnptr           *out_pnptr);
 
-int silofs_resolve_ltop_btleaf(const struct silofs_pexec_ctx *pexec,
+int silofs_resolve_ltop_btleaf(const struct silofs_exec_refs *xrefs,
                                const struct silofs_laddr     *laddr,
                                struct silofs_pnptr           *out_pnptr);
 
-int silofs_resolve_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_resolve_ltop_mapping(const struct silofs_exec_refs *xrefs,
                                 const struct silofs_laddr     *laddr,
                                 struct silofs_pnptr           *out_pnptr);
 
-int silofs_insert_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_insert_ltop_mapping(const struct silofs_exec_refs *xrefs,
                                const struct silofs_laddr     *laddr,
                                const struct silofs_pnptr     *pnptr);
 
-int silofs_update_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_update_ltop_mapping(const struct silofs_exec_refs *xrefs,
                                const struct silofs_laddr     *laddr,
                                const struct silofs_pnptr     *pnptr);
 
-int silofs_remove_ltop_mapping(const struct silofs_pexec_ctx *pexec,
+int silofs_remove_ltop_mapping(const struct silofs_exec_refs *xrefs,
                                const struct silofs_laddr     *laddr);
 
 #endif /* SILOFS_BTREE_H_ */

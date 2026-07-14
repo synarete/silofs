@@ -28,7 +28,8 @@
 enum silofs_env_initf {
 	SILOFS_ENVF_QALLOC   = SILOFS_BIT(0),
 	SILOFS_ENVF_STDALLOC = SILOFS_BIT(1),
-	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(2),
+	SILOFS_ENVF_NILBK    = SILOFS_BIT(2),
+	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(3),
 	SILOFS_ENVF_CRYPT    = SILOFS_BIT(4),
 	SILOFS_ENVF_UCONV    = SILOFS_BIT(5),
 	SILOFS_ENVF_REPO     = SILOFS_BIT(6),
@@ -37,7 +38,7 @@ enum silofs_env_initf {
 	SILOFS_ENVF_FREESQS  = SILOFS_BIT(9),
 	SILOFS_ENVF_IDSMAP   = SILOFS_BIT(10),
 	SILOFS_ENVF_FSROOT   = SILOFS_BIT(11),
-	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(13),
+	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(12),
 };
 
 /* Local functions */
@@ -436,6 +437,32 @@ static void env_fini_commons(struct silofs_env *env)
 	silofs_cred_fini(&env->owner_cred);
 }
 
+static int env_init_nilbk(struct silofs_env *env)
+{
+	struct silofs_lblock *nilbk = nullptr;
+
+	nilbk = silofs_memalloc(env->alloc, sizeof(*nilbk),
+	                        SILOFS_ALLOCF_BZERO);
+	if (nilbk == nullptr) {
+		return -SILOFS_ENOMEM;
+	}
+	env->nilbk = nilbk;
+	env->initf |= SILOFS_ENVF_NILBK;
+	return 0;
+}
+
+static void env_fini_nilbk(struct silofs_env *env)
+{
+	struct silofs_lblock *nilbk = env->nilbk;
+
+	if (env->initf & SILOFS_ENVF_NILBK) {
+		silofs_memfree(env->alloc, nilbk, sizeof(*nilbk),
+		               SILOFS_ALLOCF_TRYPUNCH);
+		env->nilbk = nullptr;
+		env->initf &= ~SILOFS_ENVF_NILBK;
+	}
+}
+
 static int env_init_prandgen(struct silofs_env *env)
 {
 	int err;
@@ -467,8 +494,26 @@ static void env_fini(struct silofs_env *env)
 	env_fini_uconv(env);
 	env_fini_crypt(env);
 	env_fini_prandgen(env);
+	env_fini_nilbk(env);
 	env_fini_alloc(env);
 	env_fini_commons(env);
+}
+
+static void env_init_xrefs(struct silofs_env *env)
+{
+	env->xrefs.alloc     = env->alloc;
+	env->xrefs.nilbk     = env->nilbk;
+	env->xrefs.prng      = &env->prandgen;
+	env->xrefs.dstor     = &env->repo.re_dstor;
+	env->xrefs.pcache    = &env->pcache;
+	env->xrefs.pspools   = &env->pspools;
+	env->xrefs.md_hd     = &env->md_hd;
+	env->xrefs.enc_ci_hd = &env->enc_ci_hd;
+	env->xrefs.dec_ci_hd = &env->dec_ci_hd;
+	env->xrefs.fsroot    = &env->fsroot;
+	env->xrefs.lcache    = &env->lcache;
+	env->xrefs.lspools   = &env->lspools;
+	env->xrefs.ubi       = nullptr;
 }
 
 static int
@@ -479,6 +524,9 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	env_init_commons(env);
 
 	err = env_init_alloc(env, memwant, flags);
+	goto_out_if_err(err);
+
+	err = env_init_nilbk(env);
 	goto_out_if_err(err);
 
 	err = env_init_prandgen(env);
@@ -507,6 +555,8 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 
 	err = env_init_fsroot(env);
 	goto_out_if_err(err);
+
+	env_init_xrefs(env);
 
 	return 0;
 out:

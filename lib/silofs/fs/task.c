@@ -74,33 +74,23 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	silofs_cred_init(&task->auth.creds.fs_cred);
 	silofs_cred_init(&task->auth.creds.host_cred);
 
-	task->env             = env;
-	task->fsroot          = &env->fsroot;
-	task->pexec.alloc     = env->alloc;
-	task->pexec.prng      = &env->prandgen;
-	task->pexec.dstor     = &env->repo.re_dstor;
-	task->pexec.pcache    = &env->pcache;
-	task->pexec.lcache    = &env->lcache;
-	task->pexec.lspools   = &env->lspools;
-	task->pexec.pspools   = &env->pspools;
-	task->pexec.md_hd     = &env->md_hd;
-	task->pexec.enc_ci_hd = &env->enc_ci_hd;
-	task->pexec.dec_ci_hd = &env->dec_ci_hd;
-	task->pexec.fsroot    = &env->fsroot;
-	task->lcache          = &env->lcache;
-	task->lspools         = &env->lspools;
-	task->idsm            = &env->idsmap;
-	task->repo            = &env->repo;
-	task->looseq          = nullptr;
-	task->upper_id        = 0;
-	task->interrupted     = 0;
-	task->fs_locked       = false;
-	task->rw_locked       = false;
-	task->exclusive       = false;
-	task->priv_op         = false;
-	task->kwrite          = false;
-	task->runnable        = true;
-	task->internal        = false;
+	task->env         = env;
+	task->fsroot      = &env->fsroot;
+	task->xrefs       = &env->xrefs;
+	task->lcache      = &env->lcache;
+	task->lspools     = &env->lspools;
+	task->idsm        = &env->idsmap;
+	task->repo        = &env->repo;
+	task->looseq      = nullptr;
+	task->upper_id    = 0;
+	task->interrupted = 0;
+	task->fs_locked   = false;
+	task->rw_locked   = false;
+	task->exclusive   = false;
+	task->priv_op     = false;
+	task->kwrite      = false;
+	task->runnable    = true;
+	task->internal    = false;
 }
 
 void silofs_task_fini(struct silofs_task_ctx *task)
@@ -299,5 +289,5 @@ int silofs_flush_dirty(struct silofs_task_ctx *task,
 
 int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 {
-	return silofs_destage_dirty_nodes(&task->pexec);
+	return silofs_destage_dirty_nodes(task->xrefs);
 }

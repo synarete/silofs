@@ -21,12 +21,12 @@
 
 static bool isock_allowed(const struct silofs_task_ctx *task)
 {
-	return (task->pexec.fsroot->ctl_flags & SILOFS_F_ALLOW_ISOCK) > 0;
+	return (task->xrefs->fsroot->ctl_flags & SILOFS_F_ALLOW_ISOCK) > 0;
 }
 
 static bool ififo_allowed(const struct silofs_task_ctx *task)
 {
-	return (task->pexec.fsroot->ctl_flags & SILOFS_F_ALLOW_IFIFO) > 0;
+	return (task->xrefs->fsroot->ctl_flags & SILOFS_F_ALLOW_IFIFO) > 0;
 }
 
 static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
@@ -165,7 +165,7 @@ static int fetch_cached_lni(struct silofs_task_ctx *task,
                             const struct silofs_laddr *laddr,
                             struct silofs_lnode_info **out_lni)
 {
-	*out_lni = silofs_lcache_lookup_lnode(task->pexec.lcache, laddr);
+	*out_lni = silofs_lcache_lookup_lnode(task->xrefs->lcache, laddr);
 	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 

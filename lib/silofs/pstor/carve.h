@@ -17,22 +17,22 @@
 #ifndef SILOFS_CARVE_H_
 #define SILOFS_CARVE_H_
 
-int silofs_carve_base_ubspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_ubspace(const struct silofs_exec_refs *xrefs,
                               struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_base_btspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_btspace(const struct silofs_exec_refs *xrefs,
                               enum silofs_ltype              ltype,
                               struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_base_lspace(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_base_lspace(const struct silofs_exec_refs *xrefs,
                              enum silofs_ltype              ltype,
                              struct silofs_paddr           *out_paddr);
 
-int silofs_carve_btspace_pnptr(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_btspace_pnptr(const struct silofs_exec_refs *xrefs,
                                enum silofs_ltype              ltype,
                                struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_lspace_pnptr(const struct silofs_pexec_ctx *pexec,
+int silofs_carve_lspace_pnptr(const struct silofs_exec_refs *xrefs,
                               enum silofs_ltype              ltype,
                               struct silofs_pnptr           *out_pnptr);
 

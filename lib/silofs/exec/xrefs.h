@@ -14,23 +14,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_PSTOR_H_
-#define SILOFS_PSTOR_H_
+#ifndef SILOFS_XREFS_H_
+#define SILOFS_XREFS_H_
 
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
-#include <silofs/addr.h>
 #include <silofs/nodes.h>
-#include <silofs/exec.h>
 
-#include <silofs/pstor/uber.h>
-#include <silofs/pstor/bldesc.h>
-#include <silofs/pstor/btnode.h>
-#include <silofs/pstor/btree.h>
-#include <silofs/pstor/stage.h>
-#include <silofs/pstor/carve.h>
-#include <silofs/pstor/encdec.h>
-#include <silofs/pstor/mapping.h>
-#include <silofs/pstor/spnode.h>
+struct silofs_exec_refs {
+	struct silofs_alloc      *alloc;
+	struct silofs_lblock     *nilbk;
+	struct silofs_prandgen   *prng;
+	struct silofs_mdigest_hd *md_hd;
+	struct silofs_cipher_hd  *enc_ci_hd;
+	struct silofs_cipher_hd  *dec_ci_hd;
+	struct silofs_fsroot     *fsroot;
+	struct silofs_dstor      *dstor;
+	struct silofs_pcache     *pcache;
+	struct silofs_pspools    *pspools;
+	struct silofs_lcache     *lcache;
+	struct silofs_lspools    *lspools;
+	struct silofs_uber_info  *ubi;
+};
 
-#endif /* SILOFS_PSTOR_H_ */
+#endif /* SILOFS_XREFS_H_ */

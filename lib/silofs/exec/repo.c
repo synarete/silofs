@@ -20,9 +20,7 @@
 #include <sys/file.h>
 #include <fcntl.h>
 
-#include <silofs/infra.h>
-#include <silofs/nodes.h>
-#include <silofs/pstor.h>
+#include <silofs/exec.h>
 
 /* local functions */
 static int repo_close(struct silofs_repo *repo);

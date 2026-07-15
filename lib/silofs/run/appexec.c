@@ -139,7 +139,7 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 static int
 remove_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_env_unref_mbr(task->env, mbref);
+	return silofs_unref_mbr(task->xrefs, mbref);
 }
 
 static int appexec_remove_fs(struct silofs_task_ctx *task,
@@ -170,7 +170,7 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_env_sense_mbr(task->env, mbref);
+	err = silofs_sense_mbr(task->xrefs, mbref);
 	return_if_err(err);
 
 	drop_caches(task);

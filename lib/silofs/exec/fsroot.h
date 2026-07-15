@@ -54,6 +54,8 @@ int silofs_fsroot_init(struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_fini(struct silofs_fsroot *fsroot);
 
+void silofs_fsroot_reset_mbref(struct silofs_fsroot *fsroot);
+
 void silofs_fsroot_lock(struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_unlock(struct silofs_fsroot *fsroot);
@@ -61,6 +63,20 @@ void silofs_fsroot_unlock(struct silofs_fsroot *fsroot);
 void silofs_fsroot_rwlock(struct silofs_fsroot *fsroot, bool ex);
 
 void silofs_fsroot_rwunlock(struct silofs_fsroot *fsroot);
+
+int silofs_fsroot_derive_meta(struct silofs_fsroot         *fsroot,
+                              const struct silofs_password *passwd);
+
+void silofs_fsroot_set_mbref(struct silofs_fsroot      *fsroot,
+                             const struct silofs_mbref *mbref);
+
+int silofs_fsroot_export_mbr1k(const struct silofs_fsroot *fsroot,
+                               struct silofs_mbref        *out_mbref,
+                               struct silofs_mbr1k        *out_mbr1k_enc);
+
+int silofs_fsroot_import_mbr1k(struct silofs_fsroot      *fsroot,
+                               const struct silofs_mbref *mbref,
+                               const struct silofs_mbr1k *mbr1k_enc);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -82,21 +98,9 @@ void silofs_update_root_uber(struct silofs_fsroot           *fsroot,
                              const struct silofs_pnptr      *pnptr,
                              const struct silofs_sw_version *swv);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_sense_mbr(struct silofs_dstor       *dstor,
-                     const struct silofs_mbref *mbref);
-
-int silofs_derive_mbr_meta(struct silofs_fsroot         *fsroot,
-                           const struct silofs_password *passwd);
-
-int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                      struct silofs_mbref *out_mbref);
-
-int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                      const struct silofs_mbref *mbref);
-
-int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                     const struct silofs_mbref *mbref);
+int silofs_stat_mbr_at(struct silofs_dstor       *dstor,
+                       const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_FSROOT_H_ */

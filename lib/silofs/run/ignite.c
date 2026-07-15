@@ -197,7 +197,7 @@ int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
 static int
 commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
-	return silofs_env_commit_mbr(task->env, out_mbref);
+	return silofs_commit_mbr(task->xrefs, out_mbref);
 }
 
 static int post_commit_mbr(struct silofs_task_ctx *task)
@@ -232,7 +232,7 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 static int
 reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_env_reload_mbr(task->env, mbref);
+	return silofs_reload_mbr(task->xrefs, mbref);
 }
 
 int silofs_exec_reload_meta(struct silofs_task_ctx *task,

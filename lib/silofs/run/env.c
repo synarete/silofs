@@ -779,7 +779,7 @@ env_use_password(struct silofs_env *env, const struct silofs_password *pw,
 	int err;
 
 	if ((flags & SILOFS_F_NOPASSWD) != SILOFS_F_NOPASSWD) {
-		err = silofs_derive_mbr_meta(&env->fsroot, pw);
+		err = silofs_fsroot_derive_meta(&env->fsroot, pw);
 		return_if_err(err);
 	}
 	return 0;
@@ -968,8 +968,6 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	return err;
 }
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
 static int
 env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 {
@@ -987,40 +985,4 @@ env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
 int silofs_env_reinit_ciphers(struct silofs_env *env)
 {
 	return env_reinit_ciphers(env, &env->fsroot.mbr_meta.nmeta.ciargs);
-}
-
-int silofs_env_sense_mbr(struct silofs_env *env,
-                         const struct silofs_mbref *mbref)
-{
-	return silofs_sense_mbr(&env->repo.re_dstor, mbref);
-}
-
-int silofs_env_commit_mbr(struct silofs_env *env,
-                          struct silofs_mbref *out_mbref)
-{
-	int err;
-
-	err = silofs_commit_mbr(&env->repo.re_dstor, &env->fsroot, out_mbref);
-	silofs_burnstack();
-	return err;
-}
-
-int silofs_env_reload_mbr(struct silofs_env *env,
-                          const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = silofs_reload_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
-	silofs_burnstack();
-	return err;
-}
-
-int silofs_env_unref_mbr(struct silofs_env *env,
-                         const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = silofs_unref_mbr(&env->repo.re_dstor, &env->fsroot, mbref);
-	silofs_burnstack();
-	return err;
 }

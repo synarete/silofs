@@ -547,7 +547,7 @@ static void fsroot_reset_mbr_meta(struct silofs_fsroot *fsroot)
 	fsroot_set_mbr_meta(fsroot, &meta_none);
 }
 
-static void fsroot_set_mbref(struct silofs_fsroot *fsroot,
+void silofs_fsroot_set_mbref(struct silofs_fsroot *fsroot,
                              const struct silofs_mbref *mbref)
 {
 	silofs_mbref_assign(&fsroot->mbref, mbref);
@@ -557,7 +557,7 @@ static void fsroot_reset_mbref(struct silofs_fsroot *fsroot)
 {
 	const struct silofs_mbref mbref = {};
 
-	fsroot_set_mbref(fsroot, &mbref);
+	silofs_fsroot_set_mbref(fsroot, &mbref);
 }
 
 static int fsroot_init_locks(struct silofs_fsroot *fsroot)
@@ -602,6 +602,11 @@ void silofs_fsroot_fini(struct silofs_fsroot *fsroot)
 	silofs_memzero(fsroot, sizeof(*fsroot));
 }
 
+void silofs_fsroot_reset_mbref(struct silofs_fsroot *fsroot)
+{
+	fsroot_reset_mbref(fsroot);
+}
+
 void silofs_fsroot_lock(struct silofs_fsroot *fsroot)
 {
 	silofs_mutex_lock(&fsroot->mutex);
@@ -638,7 +643,7 @@ static void fsroot_set_mbr1k(struct silofs_fsroot *fsroot,
 	memcpy(&fsroot->mbr1k, mbr1k, sizeof(fsroot->mbr1k));
 }
 
-static int fsroot_export_mbr1k(const struct silofs_fsroot *fsroot,
+int silofs_fsroot_export_mbr1k(const struct silofs_fsroot *fsroot,
                                struct silofs_mbref *out_mbref,
                                struct silofs_mbr1k *out_mbr1k_enc)
 {
@@ -659,7 +664,7 @@ out:
 	return err;
 }
 
-static int fsroot_import_mbr1k(struct silofs_fsroot *fsroot,
+int silofs_fsroot_import_mbr1k(struct silofs_fsroot *fsroot,
                                const struct silofs_mbref *mbref,
                                const struct silofs_mbr1k *mbr1k_enc)
 {
@@ -701,8 +706,8 @@ void silofs_update_root_uber(struct silofs_fsroot *fsroot,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int
-stat_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
+int silofs_stat_mbr_at(struct silofs_dstor *dstor,
+                       const struct silofs_mbref *mbref)
 {
 	struct stat st;
 	int err;
@@ -718,113 +723,8 @@ stat_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
 	return 0;
 }
 
-static int
-load_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref,
-            struct silofs_mbr1k *out_mbr1k)
-{
-	size_t msz;
-	int err;
-
-	msz = sizeof(*out_mbr1k);
-	err = silofs_dstor_load_mbr(dstor, mbref, out_mbr1k, msz);
-	if (err) {
-		log_dbg("failed to load mbr: msz=%zu err=%d", msz, err);
-		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
-	}
-	return 0;
-}
-
-static int
-save_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref,
-            const struct silofs_mbr1k *mbr1k)
-{
-	size_t msz;
-	int err;
-
-	msz = sizeof(*mbr1k);
-	err = silofs_dstor_save_mbr(dstor, mbref, mbr1k, msz);
-	if (err) {
-		log_dbg("failed to save mbr: msz=%zu err=%d", msz, err);
-		return err;
-	}
-	return 0;
-}
-
-static int
-unref_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = silofs_dstor_unref_mbr(dstor, mbref);
-	if (err) {
-		log_err("failed to unref mbr: err=%d", err);
-		return err;
-	}
-	return 0;
-}
-
-int silofs_commit_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                      struct silofs_mbref *out_mbref)
-{
-	struct silofs_mbr1k mbr1k = {
-		.mbr_magic = UINT64_MAX,
-	};
-	int err;
-
-	err = fsroot_export_mbr1k(fsroot, out_mbref, &mbr1k);
-	return_if_err(err);
-
-	err = save_mbr_at(dstor, out_mbref, &mbr1k);
-	return_if_err(err);
-
-	fsroot_set_mbref(fsroot, out_mbref);
-	return 0;
-}
-
-int silofs_sense_mbr(struct silofs_dstor *dstor,
-                     const struct silofs_mbref *mbref)
-{
-	return stat_mbr_at(dstor, mbref);
-}
-
-int silofs_reload_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                      const struct silofs_mbref *mbref)
-{
-	struct silofs_mbr1k mbr1k = {
-		.mbr_magic = UINT64_MAX,
-	};
-	int err;
-
-	err = stat_mbr_at(dstor, mbref);
-	return_if_err(err);
-
-	err = load_mbr_at(dstor, mbref, &mbr1k);
-	return_if_err(err);
-
-	err = fsroot_import_mbr1k(fsroot, mbref, &mbr1k);
-	return_if_err(err);
-
-	fsroot_set_mbref(fsroot, mbref);
-	return 0;
-}
-
-int silofs_unref_mbr(struct silofs_dstor *dstor, struct silofs_fsroot *fsroot,
-                     const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = silofs_reload_mbr(dstor, fsroot, mbref);
-	return_if_err(err);
-
-	err = unref_mbr_at(dstor, mbref);
-	return_if_err(err);
-
-	fsroot_reset_mbref(fsroot);
-	return 0;
-}
-
-int silofs_derive_mbr_meta(struct silofs_fsroot *fsroot,
-                           const struct silofs_password *passwd)
+int silofs_fsroot_derive_meta(struct silofs_fsroot *fsroot,
+                              const struct silofs_password *passwd)
 {
 	struct silofs_mbr_meta mbr_meta = {};
 	int err;

@@ -69,20 +69,6 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_env_sense_mbr(struct silofs_env         *env,
-                         const struct silofs_mbref *mbr);
-
 int silofs_env_reinit_ciphers(struct silofs_env *env);
-
-int silofs_env_commit_mbr(struct silofs_env   *env,
-                          struct silofs_mbref *out_mbref);
-
-int silofs_env_reload_mbr(struct silofs_env         *env,
-                          const struct silofs_mbref *mbref);
-
-int silofs_env_unref_mbr(struct silofs_env         *env,
-                         const struct silofs_mbref *mbref);
 
 #endif /* SILOFS_ENV_H_ */

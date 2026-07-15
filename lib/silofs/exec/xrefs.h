@@ -41,4 +41,16 @@ void silofs_relax_caches(const struct silofs_exec_refs *xrefs, int flags);
 
 void silofs_drop_caches(const struct silofs_exec_refs *xrefs);
 
+int silofs_sense_mbr(const struct silofs_exec_refs *xrefs,
+                     const struct silofs_mbref     *mbref);
+
+int silofs_commit_mbr(const struct silofs_exec_refs *xrefs,
+                      struct silofs_mbref           *out_mbref);
+
+int silofs_reload_mbr(const struct silofs_exec_refs *xrefs,
+                      const struct silofs_mbref     *mbref);
+
+int silofs_unref_mbr(const struct silofs_exec_refs *xrefs,
+                     const struct silofs_mbref     *mbref);
+
 #endif /* SILOFS_XREFS_H_ */

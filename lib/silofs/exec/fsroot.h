@@ -36,11 +36,12 @@ struct silofs_opstat {
 
 /* main boot-record, in-memory representation */
 struct silofs_fsroot {
+	struct silofs_rwlock     rwlock;
+	struct silofs_mutex      mutex;
+	struct silofs_baseref    baseref;
 	struct silofs_mbr1k      mbr1k;
 	struct silofs_mbref      mbref;
 	struct silofs_mbr_meta   mbr_meta;
-	struct silofs_rwlock     rwlock;
-	struct silofs_mutex      mutex;
 	struct silofs_opstat     opstat;
 	struct silofs_uber_info *ubi;
 	enum silofs_flags        ctl_flags;

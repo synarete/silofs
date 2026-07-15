@@ -51,7 +51,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static const char *repodir_of(const struct silofs_task_ctx *task)
 {
-	return task->env->repodir;
+	return task->xrefs->fsroot->baseref.repodir;
 }
 
 static int iter_repodir(const char *repodir, size_t *out_ndes)
@@ -125,7 +125,7 @@ int silofs_exec_format_repo(struct silofs_task_ctx *task)
 	if (err) {
 		return err;
 	}
-	err = silofs_repo_format(task->repo, task->env->repodir);
+	err = silofs_repo_format(task->repo, repodir_of(task));
 	if (err) {
 		return err;
 	}
@@ -140,7 +140,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 
 static int open_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_open(task->repo, task->env->repodir,
+	return silofs_repo_open(task->repo, repodir_of(task),
 	                        task->xrefs->fsroot->ctl_flags);
 }
 

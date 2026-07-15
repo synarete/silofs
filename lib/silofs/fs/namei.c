@@ -140,9 +140,10 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_task_ctx *task,
                             const struct silofs_inode_info *ii)
 {
-	const size_t total_iopen_max = task->fsroot->opstat.op_iopen_max;
-	const size_t total_iopn_cur  = task->fsroot->opstat.op_iopen;
-	const size_t iopen_max       = total_iopen_max / 2;
+	const struct silofs_fsroot *fsroot = task->xrefs->fsroot;
+	const size_t total_iopen_max       = fsroot->opstat.op_iopen_max;
+	const size_t total_iopn_cur        = fsroot->opstat.op_iopen;
+	const size_t iopen_max             = total_iopen_max / 2;
 
 	if (total_iopn_cur >= total_iopen_max) {
 		return -SILOFS_EMFILE;
@@ -156,13 +157,15 @@ static int check_open_limit(const struct silofs_task_ctx *task,
 static void
 update_nopen(struct silofs_task_ctx *task, struct silofs_inode_info *ii, int n)
 {
+	struct silofs_opstat *opstat = &task->xrefs->fsroot->opstat;
+
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
 
 	if ((n > 0) && (ii->i_nopen == 0)) {
-		task->fsroot->opstat.op_iopen++;
+		opstat->op_iopen++;
 	} else if ((n < 0) && (ii->i_nopen == 1)) {
-		task->fsroot->opstat.op_iopen--;
+		opstat->op_iopen--;
 	}
 	ii->i_nopen += n;
 }
@@ -247,7 +250,7 @@ static void inewp_update_by_parent(struct silofs_inew_params *inp,
 
 static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)
 {
-	return &task->env->prandgen;
+	return task->xrefs->prng;
 }
 
 static void
@@ -503,9 +506,9 @@ static int check_lookup(const struct silofs_task_ctx *task,
 }
 
 static const struct silofs_mdigest_hd *
-get_mdigest(const struct silofs_task_ctx *task)
+mdigest_of(const struct silofs_task_ctx *task)
 {
-	return &task->env->md_hd;
+	return task->xrefs->md_hd;
 }
 
 static int assign_namehash(const struct silofs_task_ctx *task,
@@ -519,7 +522,7 @@ static int assign_namehash(const struct silofs_task_ctx *task,
 	err = check_isdir(dir_ii);
 	return_if_err(err);
 
-	md_hd = get_mdigest(task);
+	md_hd = mdigest_of(task);
 	err   = silofs_dir_make_hname(dir_ii, md_hd, nstr, out_nstr);
 	return_if_err(err);
 
@@ -2268,8 +2271,9 @@ static void fill_query_repo(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query *query)
 {
 	struct silofs_strview strview;
+	const struct silofs_fsroot *fsroot = task->xrefs->fsroot;
 
-	silofs_strview_init(&strview, task->env->repodir);
+	silofs_strview_init(&strview, fsroot->baseref.repodir);
 	str_to_buf(&strview, query->u.repo.path, sizeof(query->u.repo.path));
 }
 
@@ -2277,22 +2281,18 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query *query)
 {
 	struct silofs_strview strview;
+	const struct silofs_fsroot *fsroot = task->xrefs->fsroot;
 
-	silofs_strview_init(&strview, task->env->name.str);
+	silofs_strview_init(&strview, fsroot->baseref.refname);
 	str_to_buf(&strview, query->u.boot.name, sizeof(query->u.boot.name));
-}
-
-static const struct silofs_fsroot *fs_mbi(const struct silofs_task_ctx *task)
-{
-	return &task->env->fsroot;
 }
 
 static void fill_query_boot_fsref(const struct silofs_task_ctx *task,
                                   struct silofs_ioc_query *query)
 {
-	const struct silofs_fsroot *mbi = fs_mbi(task);
+	const struct silofs_fsroot *fsroot = task->xrefs->fsroot;
 
-	silofs_fsref_export(&query->u.boot.fsref, &mbi->mbref);
+	silofs_fsref_export(&query->u.boot.fsref, &fsroot->mbref);
 }
 
 static void fill_query_boot(const struct silofs_task_ctx *task,

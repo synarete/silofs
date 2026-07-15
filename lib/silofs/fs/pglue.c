@@ -264,7 +264,7 @@ static int do_reclaim_mapping(const struct silofs_task_ctx *task,
 	err = silofs_reclaim_lnode_mapping(task->xrefs, laddr);
 	return_if_err(err);
 
-	silofs_lspools_push(task->lspools, laddr);
+	silofs_lspools_push(task->xrefs->lspools, laddr);
 	return 0;
 }
 

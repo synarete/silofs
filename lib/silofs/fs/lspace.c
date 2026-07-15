@@ -306,7 +306,7 @@ claim_free_by_lspool(const struct silofs_task_ctx *task,
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = silofs_lspools_pull(task->lspools, ltype, out_laddr);
+	err = silofs_lspools_pull(task->xrefs->lspools, ltype, out_laddr);
 	return_if_err(err);
 
 	err = stage_spnode_by(task, out_laddr, &spi);

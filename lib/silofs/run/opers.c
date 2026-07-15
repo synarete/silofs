@@ -48,7 +48,7 @@ static int op_start(struct silofs_task_ctx *task)
 
 	silofs_clock_gettime_mono(&task->op_start_time);
 	if (!task->internal) {
-		task->fsroot->opstat.op_count++;
+		task->xrefs->fsroot->opstat.op_count++;
 		op_feed_prng(task);
 	}
 	return 0;
@@ -62,10 +62,10 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 {
-	const uint32_t op_code = task->auth.opcode;
+	const struct silofs_opstat *opstat = &task->xrefs->fsroot->opstat;
 	time_t time_now, time_dif;
 
-	if (op_code == 0) {
+	if (task->auth.opcode == 0) {
 		return;
 	}
 	time_now = silofs_time_mono_now();
@@ -74,7 +74,7 @@ static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 		return;
 	}
 	log_warn("slow-oper: op_count=%zu op_code=%u dif=%ld res=%d",
-	         task->fsroot->opstat.op_count, op_code, time_dif, res);
+	         opstat->op_count, task->auth.opcode, time_dif, res);
 }
 
 static int op_unlooseq(struct silofs_task_ctx *task)

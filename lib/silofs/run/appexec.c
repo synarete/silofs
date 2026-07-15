@@ -94,16 +94,22 @@ appexec_fork_fs(struct silofs_task_ctx *task, struct silofs_mbrefs *out_mbrefs)
 	return 0;
 }
 
+static void release_uber(struct silofs_task_ctx *task)
+{
+	struct silofs_fsroot *fsroot = task->xrefs->fsroot;
+
+	log_dbg("release uber: op_count=%lu", fsroot->opstat.op_count);
+	silofs_update_uber_ref(fsroot, nullptr);
+}
+
 static int shutdown_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
 	err = silofs_repo_fsync_all(task->repo);
 	return_if_err(err);
-	drop_relax_caches(task);
 
-	err = silofs_env_shut(task->env);
-	return_if_err(err);
+	release_uber(task);
 	drop_relax_caches(task);
 
 	return 0;

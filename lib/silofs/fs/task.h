@@ -30,9 +30,7 @@ struct silofs_task_auth {
 struct silofs_task_ctx {
 	struct silofs_task_auth     auth;
 	struct silofs_exec_refs    *xrefs;
-	struct silofs_lspools      *lspools;
 	struct silofs_env          *env;
-	struct silofs_fsroot       *fsroot;
 	const struct silofs_idsmap *idsm;
 	struct silofs_repo         *repo;
 	struct silofs_inode_info   *looseq;

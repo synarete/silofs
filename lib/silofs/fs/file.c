@@ -1808,7 +1808,7 @@ static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
 
 	if (f_ctx->op == SILOFS_FILE_OP_WRITE) {
 		const enum silofs_flags ctl_flags =
-			f_ctx->task->fsroot->ctl_flags;
+			f_ctx->task->xrefs->fsroot->ctl_flags;
 
 		asyncwr = (ctl_flags & SILOFS_F_ASYNCWR) > 0;
 	}

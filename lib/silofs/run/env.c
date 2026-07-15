@@ -739,7 +739,8 @@ static int env_update_repodir(struct silofs_env *env, const char *repodir)
 	if (env->repodir != nullptr) {
 		len = silofs_str_length(env->repodir);
 		silofs_memfree(alloc, env->repodir, len + 1, 0);
-		env->repodir = nullptr;
+		env->repodir                = nullptr;
+		env->fsroot.baseref.repodir = nullptr;
 	}
 	if (repodir != nullptr) {
 		len          = silofs_str_length(repodir);
@@ -747,6 +748,7 @@ static int env_update_repodir(struct silofs_env *env, const char *repodir)
 		if (env->repodir == nullptr) {
 			return -SILOFS_ENOMEM;
 		}
+		env->fsroot.baseref.repodir = env->repodir;
 	}
 	return 0;
 }
@@ -806,22 +808,21 @@ static void env_setup_ctlflags(struct silofs_env *env, enum silofs_flags flags)
 
 static int env_update_name(struct silofs_env *env, const char *fsname)
 {
-	struct silofs_namestr nstr;
 	int err;
 
-	if (fsname == nullptr) {
-		silofs_strbuf_reset(&env->name);
-		goto out;
+	silofs_strbuf_reset(&env->name);
+	if (fsname != nullptr) {
+		struct silofs_namestr nstr;
+
+		err = silofs_namestr_init(&nstr, fsname);
+		return_if_err(err);
+
+		err = silofs_check_fsname(&nstr);
+		return_if_err(err);
+
+		silofs_strbuf_setup(&env->name, &nstr.sv);
 	}
-
-	err = silofs_namestr_init(&nstr, fsname);
-	return_if_err(err);
-
-	err = silofs_check_fsname(&nstr);
-	return_if_err(err);
-
-	silofs_strbuf_setup(&env->name, &nstr.sv);
-out:
+	env->fsroot.baseref.refname = env->name.str;
 	return 0;
 }
 
@@ -883,13 +884,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_env_shut(struct silofs_env *env)
-{
-	log_dbg("shut env: op_count=%lu", env->fsroot.opstat.op_count);
-	silofs_update_uber_ref(&env->fsroot, nullptr);
-	return 0;
-}
 
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 {

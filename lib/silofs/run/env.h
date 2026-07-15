@@ -66,8 +66,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq);
 
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 
-int silofs_env_shut(struct silofs_env *env);
-
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 

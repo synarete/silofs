@@ -33,4 +33,6 @@ void silofs_uuid_copyto(const struct silofs_uuid *uu, uint8_t u[16]);
 long silofs_uuid_compare(const struct silofs_uuid *uu1,
                          const struct silofs_uuid *uu2);
 
+size_t silofs_uuid_to_str(const struct silofs_uuid *uu, char *str, size_t len);
+
 #endif /* SILOFS_UUID_H_ */

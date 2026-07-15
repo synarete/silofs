@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 #include <silofs/configs.h>
+#include <string.h>
 #include <uuid/uuid.h>
 
 #include <silofs/macros.h>
@@ -48,4 +49,15 @@ long silofs_uuid_compare(const struct silofs_uuid *uu1,
                          const struct silofs_uuid *uu2)
 {
 	return uuid_compare(uu1->id, uu2->id);
+}
+
+size_t silofs_uuid_to_str(const struct silofs_uuid *uu, char *str, size_t len)
+{
+	size_t ret_len = 0;
+
+	if (len >= 37) {
+		uuid_unparse_lower(uu->id, str);
+		ret_len = strlen(str);
+	}
+	return ret_len;
 }

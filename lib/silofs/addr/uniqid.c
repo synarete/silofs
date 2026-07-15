@@ -63,6 +63,14 @@ bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
 	return (silofs_layerid_compare(layerid, other) == 0);
 }
 
+int silofs_layerid_to_str(const struct silofs_layerid *layerid, char *str,
+                          size_t len)
+{
+	const size_t n = silofs_uuid_to_str(&layerid->uuid, str, len);
+
+	return (n > 0) ? 0 : -SILOFS_EINVAL;
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_uniqid_reset(struct silofs_uniqid *uniqid)

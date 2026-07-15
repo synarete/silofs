@@ -35,6 +35,9 @@ long silofs_layerid_compare(const struct silofs_layerid *layerid,
 bool silofs_layerid_isequal(const struct silofs_layerid *layerid,
                             const struct silofs_layerid *other);
 
+int silofs_layerid_to_str(const struct silofs_layerid *layerid, char *str,
+                          size_t len);
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 void silofs_uniqid_reset(struct silofs_uniqid *uniqid);

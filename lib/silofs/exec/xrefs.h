@@ -37,4 +37,8 @@ struct silofs_exec_refs {
 	struct silofs_uber_info  *ubi;
 };
 
+void silofs_relax_caches(const struct silofs_exec_refs *xrefs, int flags);
+
+void silofs_drop_caches(const struct silofs_exec_refs *xrefs);
+
 #endif /* SILOFS_XREFS_H_ */

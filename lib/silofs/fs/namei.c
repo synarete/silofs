@@ -2187,25 +2187,25 @@ int silofs_do_rename(struct silofs_task_ctx *task,
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-fill_proc(const struct silofs_env *env, struct silofs_query_proc *qpr)
+fill_proc(const struct silofs_task_ctx *task, struct silofs_query_proc *qpr)
 {
-	struct silofs_alloc_stat alst;
+	struct silofs_alloc_stat alloc_stat;
 	time_t uptime;
 
-	silofs_env_uptime(env, &uptime);
-	silofs_env_allocstat(env, &alst);
+	silofs_env_uptime(task->env, &uptime);
+	silofs_memstat(task->xrefs->alloc, &alloc_stat);
 
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid       = env->owner_cred.uid;
-	qpr->gid       = env->owner_cred.gid;
+	qpr->uid       = task->env->owner_cred.uid;
+	qpr->gid       = task->env->owner_cred.gid;
 	qpr->pid       = getpid();
-	qpr->msflags   = env->fsroot.ms_flags;
+	qpr->msflags   = task->xrefs->fsroot->ms_flags;
 	qpr->uptime    = uptime;
-	qpr->iopen_max = env->fsroot.opstat.op_iopen_max;
-	qpr->iopen_cur = env->fsroot.opstat.op_iopen;
-	qpr->memsz_max = alst.nbytes_max;
-	qpr->memsz_cur = alst.nbytes_use;
-	qpr->bopen_cur = env->repo.re_dstor.ds_hq.dsq_lru.sz;
+	qpr->iopen_max = task->xrefs->fsroot->opstat.op_iopen_max;
+	qpr->iopen_cur = task->xrefs->fsroot->opstat.op_iopen;
+	qpr->memsz_max = alloc_stat.nbytes_max;
+	qpr->memsz_cur = alloc_stat.nbytes_use;
+	qpr->bopen_cur = task->xrefs->dstor->ds_hq.dsq_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2306,7 +2306,7 @@ static void fill_query_boot(const struct silofs_task_ctx *task,
 static void fill_query_proc(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query *query)
 {
-	fill_proc(task->env, &query->u.proc);
+	fill_proc(task, &query->u.proc);
 }
 
 static void fill_query_spstats(const struct silofs_task_ctx *task,
@@ -2632,7 +2632,7 @@ int silofs_do_syncfs(struct silofs_task_ctx *task,
 
 int silofs_do_maintain(struct silofs_task_ctx *task, int flags)
 {
-	silofs_env_relax_caches(task->env, flags);
+	silofs_relax_caches(task->xrefs, flags);
 	return silofs_flush_dirty(task, nullptr, flags);
 }
 

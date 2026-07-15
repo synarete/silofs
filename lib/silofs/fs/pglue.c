@@ -419,7 +419,7 @@ out:
 static void try_forget_cached_lni(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr *laddr)
 {
-	struct silofs_lcache *lcache  = task->lcache;
+	struct silofs_lcache *lcache  = task->xrefs->lcache;
 	struct silofs_lnode_info *lni = nullptr;
 	;
 

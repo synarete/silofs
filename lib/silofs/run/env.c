@@ -731,12 +731,6 @@ int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_env_refresh_root(struct silofs_env *env,
-                             const struct silofs_pnptr *pnptr)
-{
-	silofs_update_root_uber(&env->fsroot, pnptr, &silofs_sw_vers);
-}
-
 static int env_update_repodir(struct silofs_env *env, const char *repodir)
 {
 	struct silofs_alloc *alloc = env->alloc;
@@ -890,15 +884,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_env_drop_caches(struct silofs_env *env)
-{
-	silofs_pspools_drop(&env->pspools);
-	silofs_lspools_drop(&env->lspools);
-	silofs_lcache_drop(&env->lcache);
-	silofs_pcache_drop(&env->pcache);
-	silofs_repo_drop_some(&env->repo);
-}
-
 int silofs_env_shut(struct silofs_env *env)
 {
 	log_dbg("shut env: op_count=%lu", env->fsroot.opstat.op_count);
@@ -906,26 +891,11 @@ int silofs_env_shut(struct silofs_env *env)
 	return 0;
 }
 
-void silofs_env_relax_caches(struct silofs_env *env, int flags)
-{
-	silofs_pcache_relax(&env->pcache, flags);
-	silofs_lcache_relax(&env->lcache, flags);
-	if (flags & SILOFS_CTLF_IDLE) {
-		silofs_repo_relax(&env->repo);
-	}
-}
-
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
 {
 	const time_t now = silofs_time_mono_now();
 
 	*out_uptime = now - env->init_time;
-}
-
-void silofs_env_allocstat(const struct silofs_env *env,
-                          struct silofs_alloc_stat *out_alst)
-{
-	silofs_memstat(env->alloc, out_alst);
 }
 
 #if 0

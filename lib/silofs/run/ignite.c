@@ -28,12 +28,12 @@
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_env_drop_caches(task->env);
+	silofs_drop_caches(task->xrefs);
 }
 
 static void relax_caches(struct silofs_task_ctx *task)
 {
-	silofs_env_relax_caches(task->env, SILOFS_CTLF_IDLE);
+	silofs_relax_caches(task->xrefs, SILOFS_CTLF_IDLE);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -171,7 +171,7 @@ static int pre_format(struct silofs_task_ctx *task)
 static int
 post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
-	silofs_env_refresh_root(task->env, pnptr);
+	silofs_update_root_uber(task->xrefs->fsroot, pnptr, &silofs_sw_vers);
 	return flush_dirty(task);
 }
 

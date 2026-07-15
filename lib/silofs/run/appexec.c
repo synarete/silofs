@@ -30,8 +30,9 @@
 
 static void relax_caches(struct silofs_task_ctx *task, bool now)
 {
-	silofs_env_relax_caches(task->env, //
-	                        now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE);
+	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
+
+	silofs_relax_caches(task->xrefs, flags);
 }
 
 static int flush_dirty(struct silofs_task_ctx *task)
@@ -41,7 +42,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_env_drop_caches(task->env);
+	silofs_drop_caches(task->xrefs);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -281,14 +282,13 @@ int silofs_exec_fs(struct silofs_env *env, const char *mntdir)
 	if (fuseq == nullptr) {
 		return -SILOFS_EINVAL;
 	}
+
 	err = silofs_fuseq_update(fuseq, &env->owner_cred);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = do_mount_and_exec(env, mntdir);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -321,27 +321,30 @@ void silofs_collect_stats(const struct silofs_env *env,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int check_format_repo(struct silofs_env *env)
+static int check_format_repodir(const struct silofs_env *env)
 {
-	struct stat st;
-	const char *path  = env->repodir;
-	const size_t len  = silofs_str_length(path);
-	const int o_flags = O_DIRECTORY | O_RDONLY | O_PATH;
-	int dfd           = -1;
-	int err;
+	const size_t len = silofs_str_length(env->repodir);
 
 	if (!len || (len > SILOFS_REPOPATH_MAX)) {
-		err = -SILOFS_EINVAL;
-		goto out;
+		return -SILOFS_EINVAL;
 	}
+	return 0;
+}
+
+static int check_format_repo(const struct silofs_env *env)
+{
+	struct stat st;
+	constexpr int o_flags = O_DIRECTORY | O_RDONLY | O_PATH;
+	int err, dfd = -1;
+
+	err = check_format_repodir(env);
+	goto_out_if_err(err);
+
 	err = silofs_sys_open(env->repodir, o_flags, 0, &dfd);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
+
 	err = silofs_sys_fstat(dfd, &st);
-	if (err) {
-		goto out;
-	}
+	goto_out_if_err(err);
 out:
 	silofs_sys_closefd(&dfd);
 	return err;

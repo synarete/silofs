@@ -77,7 +77,6 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 	task->env         = env;
 	task->fsroot      = &env->fsroot;
 	task->xrefs       = &env->xrefs;
-	task->lcache      = &env->lcache;
 	task->lspools     = &env->lspools;
 	task->idsm        = &env->idsmap;
 	task->repo        = &env->repo;
@@ -246,7 +245,7 @@ static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
-	silofs_memstat(task->env->alloc, &alst);
+	silofs_memstat(task->xrefs->alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}

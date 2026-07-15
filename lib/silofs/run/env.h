@@ -64,17 +64,7 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq);
 
-void silofs_env_refresh_root(struct silofs_env         *env,
-                             const struct silofs_pnptr *pnptr);
-
-void silofs_env_relax_caches(struct silofs_env *env, int flags);
-
 void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
-
-void silofs_env_allocstat(const struct silofs_env  *env,
-                          struct silofs_alloc_stat *out_alst);
-
-void silofs_env_drop_caches(struct silofs_env *env);
 
 int silofs_env_shut(struct silofs_env *env);
 

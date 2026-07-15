@@ -17,3 +17,21 @@
 #include <silofs/configs.h>
 
 #include <silofs/exec.h>
+
+void silofs_relax_caches(const struct silofs_exec_refs *xrefs, int flags)
+{
+	silofs_pcache_relax(xrefs->pcache, flags);
+	silofs_lcache_relax(xrefs->lcache, flags);
+	if (flags & SILOFS_CTLF_IDLE) {
+		silofs_dstor_relax(xrefs->dstor);
+	}
+}
+
+void silofs_drop_caches(const struct silofs_exec_refs *xrefs)
+{
+	silofs_pspools_drop(xrefs->pspools);
+	silofs_lspools_drop(xrefs->lspools);
+	silofs_pcache_drop(xrefs->pcache);
+	silofs_lcache_drop(xrefs->lcache);
+	silofs_dstor_drop(xrefs->dstor);
+}

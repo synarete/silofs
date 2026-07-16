@@ -14,14 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_XREFS_H_
-#define SILOFS_XREFS_H_
+#ifndef SILOFS_ECTX_H_
+#define SILOFS_ECTX_H_
 
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/nodes.h>
 
-struct silofs_exec_refs {
+struct silofs_exec_ctx {
 	struct silofs_alloc      *alloc;
 	struct silofs_lblock     *nilbk;
 	struct silofs_prandgen   *prng;
@@ -37,20 +37,20 @@ struct silofs_exec_refs {
 	struct silofs_uber_info  *ubi;
 };
 
-void silofs_relax_caches(const struct silofs_exec_refs *xrefs, int flags);
+void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);
 
-void silofs_drop_caches(const struct silofs_exec_refs *xrefs);
+void silofs_drop_caches(const struct silofs_exec_ctx *ectx);
 
-int silofs_sense_mbr(const struct silofs_exec_refs *xrefs,
-                     const struct silofs_mbref     *mbref);
+int silofs_sense_mbr(const struct silofs_exec_ctx *ectx,
+                     const struct silofs_mbref    *mbref);
 
-int silofs_commit_mbr(const struct silofs_exec_refs *xrefs,
-                      struct silofs_mbref           *out_mbref);
+int silofs_commit_mbr(const struct silofs_exec_ctx *ectx,
+                      struct silofs_mbref          *out_mbref);
 
-int silofs_reload_mbr(const struct silofs_exec_refs *xrefs,
-                      const struct silofs_mbref     *mbref);
+int silofs_reload_mbr(const struct silofs_exec_ctx *ectx,
+                      const struct silofs_mbref    *mbref);
 
-int silofs_unref_mbr(const struct silofs_exec_refs *xrefs,
-                     const struct silofs_mbref     *mbref);
+int silofs_unref_mbr(const struct silofs_exec_ctx *ectx,
+                     const struct silofs_mbref    *mbref);
 
-#endif /* SILOFS_XREFS_H_ */
+#endif /* SILOFS_ECTX_H_ */

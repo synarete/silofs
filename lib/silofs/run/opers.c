@@ -39,7 +39,7 @@ static void op_feed_prng(const struct silofs_task_ctx *task)
 		(uint32_t)gettid(),
 	};
 
-	silofs_prandgen_feed(task->xrefs->prng, d, sizeof(d));
+	silofs_prandgen_feed(task->ectx->prng, d, sizeof(d));
 }
 
 static int op_start(struct silofs_task_ctx *task)
@@ -48,7 +48,7 @@ static int op_start(struct silofs_task_ctx *task)
 
 	silofs_clock_gettime_mono(&task->op_start_time);
 	if (!task->internal) {
-		task->xrefs->fsroot->opstat.op_count++;
+		task->ectx->fsroot->opstat.op_count++;
 		op_feed_prng(task);
 	}
 	return 0;
@@ -62,7 +62,7 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 {
-	const struct silofs_opstat *opstat = &task->xrefs->fsroot->opstat;
+	const struct silofs_opstat *opstat = &task->ectx->fsroot->opstat;
 	time_t time_now, time_dif;
 
 	if (task->auth.opcode == 0) {
@@ -157,7 +157,7 @@ static bool op_is_fsowner(const struct silofs_task_ctx *task)
 static bool
 op_has_ctl_flags(const struct silofs_task_ctx *task, enum silofs_flags mask)
 {
-	return ((task->xrefs->fsroot->ctl_flags & mask) == mask);
+	return ((task->ectx->fsroot->ctl_flags & mask) == mask);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task_ctx *task)

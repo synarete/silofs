@@ -499,21 +499,21 @@ static void env_fini(struct silofs_env *env)
 	env_fini_commons(env);
 }
 
-static void env_init_xrefs(struct silofs_env *env)
+static void env_init_ectx(struct silofs_env *env)
 {
-	env->xrefs.alloc     = env->alloc;
-	env->xrefs.nilbk     = env->nilbk;
-	env->xrefs.prng      = &env->prandgen;
-	env->xrefs.dstor     = &env->repo.re_dstor;
-	env->xrefs.pcache    = &env->pcache;
-	env->xrefs.pspools   = &env->pspools;
-	env->xrefs.md_hd     = &env->md_hd;
-	env->xrefs.enc_ci_hd = &env->enc_ci_hd;
-	env->xrefs.dec_ci_hd = &env->dec_ci_hd;
-	env->xrefs.fsroot    = &env->fsroot;
-	env->xrefs.lcache    = &env->lcache;
-	env->xrefs.lspools   = &env->lspools;
-	env->xrefs.ubi       = nullptr;
+	env->ectx.alloc     = env->alloc;
+	env->ectx.nilbk     = env->nilbk;
+	env->ectx.prng      = &env->prandgen;
+	env->ectx.dstor     = &env->repo.re_dstor;
+	env->ectx.pcache    = &env->pcache;
+	env->ectx.pspools   = &env->pspools;
+	env->ectx.md_hd     = &env->md_hd;
+	env->ectx.enc_ci_hd = &env->enc_ci_hd;
+	env->ectx.dec_ci_hd = &env->dec_ci_hd;
+	env->ectx.fsroot    = &env->fsroot;
+	env->ectx.lcache    = &env->lcache;
+	env->ectx.lspools   = &env->lspools;
+	env->ectx.ubi       = nullptr;
 }
 
 static int
@@ -556,7 +556,7 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	err = env_init_fsroot(env);
 	goto_out_if_err(err);
 
-	env_init_xrefs(env);
+	env_init_ectx(env);
 
 	return 0;
 out:

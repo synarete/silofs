@@ -141,14 +141,14 @@ libsilofs_la_SOURCES += nodes/view.c
 libsilofs_la_SOURCES += nodes/view.h
 libsilofs_la_SOURCES += nodes.h
 
+libsilofs_la_SOURCES += exec/ectx.c
+libsilofs_la_SOURCES += exec/ectx.h
 libsilofs_la_SOURCES += exec/dstor.c
 libsilofs_la_SOURCES += exec/dstor.h
 libsilofs_la_SOURCES += exec/fsroot.c
 libsilofs_la_SOURCES += exec/fsroot.h
 libsilofs_la_SOURCES += exec/repo.c
 libsilofs_la_SOURCES += exec/repo.h
-libsilofs_la_SOURCES += exec/xrefs.c
-libsilofs_la_SOURCES += exec/xrefs.h
 libsilofs_la_SOURCES += exec.h
 
 libsilofs_la_SOURCES += pstor/bldesc.c

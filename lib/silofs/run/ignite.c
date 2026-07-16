@@ -28,12 +28,12 @@
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_drop_caches(task->xrefs);
+	silofs_drop_caches(task->ectx);
 }
 
 static void relax_caches(struct silofs_task_ctx *task)
 {
-	silofs_relax_caches(task->xrefs, SILOFS_CTLF_IDLE);
+	silofs_relax_caches(task->ectx, SILOFS_CTLF_IDLE);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -51,7 +51,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static const char *repodir_of(const struct silofs_task_ctx *task)
 {
-	return task->xrefs->fsroot->baseref.repodir;
+	return task->ectx->fsroot->baseref.repodir;
 }
 
 static int iter_repodir(const char *repodir, size_t *out_ndes)
@@ -141,7 +141,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 static int open_repo(struct silofs_task_ctx *task)
 {
 	return silofs_repo_open(task->repo, repodir_of(task),
-	                        task->xrefs->fsroot->ctl_flags);
+	                        task->ectx->fsroot->ctl_flags);
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)
@@ -171,7 +171,7 @@ static int pre_format(struct silofs_task_ctx *task)
 static int
 post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
-	silofs_update_root_uber(task->xrefs->fsroot, pnptr, &silofs_sw_vers);
+	silofs_update_root_uber(task->ectx->fsroot, pnptr, &silofs_sw_vers);
 	return flush_dirty(task);
 }
 
@@ -197,7 +197,7 @@ int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
 static int
 commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(task->xrefs, out_mbref);
+	return silofs_commit_mbr(task->ectx, out_mbref);
 }
 
 static int post_commit_mbr(struct silofs_task_ctx *task)
@@ -232,7 +232,7 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 static int
 reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(task->xrefs, mbref);
+	return silofs_reload_mbr(task->ectx, mbref);
 }
 
 int silofs_exec_reload_meta(struct silofs_task_ctx *task,

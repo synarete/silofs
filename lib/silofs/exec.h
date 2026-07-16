@@ -25,6 +25,6 @@
 #include <silofs/exec/dstor.h>
 #include <silofs/exec/repo.h>
 #include <silofs/exec/fsroot.h>
-#include <silofs/exec/xrefs.h>
+#include <silofs/exec/ectx.h>
 
 #endif /* SILOFS_EXEC_H_ */

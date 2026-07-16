@@ -50,7 +50,7 @@ struct silofs_env {
 	struct silofs_mdigest_hd       md_hd;
 	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
-	struct silofs_exec_refs        xrefs;
+	struct silofs_exec_ctx         ectx;
 	struct silofs_strbuf           name;
 	char                          *repodir;
 	long                           initf;

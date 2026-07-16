@@ -23,13 +23,13 @@
 
 static void drop_caches(const struct silofs_task_ctx *task)
 {
-	silofs_lcache_drop(task->xrefs->lcache);
-	silofs_pcache_drop(task->xrefs->pcache);
+	silofs_lcache_drop(task->ectx->lcache);
+	silofs_pcache_drop(task->ectx->pcache);
 }
 
 static int flush_dirty(const struct silofs_task_ctx *task)
 {
-	return silofs_destage_dirty_nodes(task->xrefs);
+	return silofs_destage_dirty_nodes(task->ectx);
 }
 
 static int flush_dirty_nodes(const struct silofs_task_ctx *task, bool drop)
@@ -47,11 +47,11 @@ static int flush_dirty_nodes(const struct silofs_task_ctx *task, bool drop)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void update_active_uber(const struct silofs_exec_refs *xrefs,
+static void update_active_uber(const struct silofs_exec_ctx *ectx,
                                struct silofs_uber_info *ubi)
 {
 	log_dbg("update uber: ubi=%p", (void *)ubi);
-	silofs_update_uber_ref(xrefs->fsroot, ubi);
+	silofs_update_uber_ref(ectx->fsroot, ubi);
 }
 
 static int format_uber(struct silofs_task_ctx *task)
@@ -60,13 +60,13 @@ static int format_uber(struct silofs_task_ctx *task)
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_carve_base_ubspace(task->xrefs, &pnptr);
+	err = silofs_carve_base_ubspace(task->ectx, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_uber(task->xrefs, &pnptr, &ubi);
+	err = silofs_spawn_uber(task->ectx, &pnptr, &ubi);
 	return_if_err(err);
 
-	update_active_uber(task->xrefs, ubi);
+	update_active_uber(task->ectx, ubi);
 	return 0;
 }
 
@@ -84,10 +84,10 @@ spawn_btroot_of(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_carve_base_btspace(task->xrefs, ltype, &pnptr);
+	err = silofs_carve_base_btspace(task->ectx, ltype, &pnptr);
 	return_if_err(err);
 
-	err = silofs_spawn_btnode(task->xrefs, &pnptr, out_bti);
+	err = silofs_spawn_btnode(task->ectx, &pnptr, out_bti);
 	return_if_err(err);
 
 	fixup_spawned_btroot(*out_bti, ltype);
@@ -103,7 +103,7 @@ bti_paddr(const struct silofs_btnode_info *bti)
 static void update_formatted_btroot(const struct silofs_task_ctx *task,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = task->xrefs->fsroot->ubi;
+	struct silofs_uber_info *ubi = task->ectx->fsroot->ubi;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
 	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
@@ -128,10 +128,10 @@ static int format_lspace_root_of(const struct silofs_task_ctx *task,
 	struct silofs_paddr paddr = {};
 	int err;
 
-	err = silofs_carve_base_lspace(task->xrefs, ltype, &paddr);
+	err = silofs_carve_base_lspace(task->ectx, ltype, &paddr);
 	return_if_err(err);
 
-	silofs_ubi_start_spdesc(task->xrefs->fsroot->ubi, &paddr);
+	silofs_ubi_start_spdesc(task->ectx->fsroot->ubi, &paddr);
 	return 0;
 }
 
@@ -391,7 +391,7 @@ static int format_lspace_nodes(const struct silofs_task_ctx *task)
 static void resolve_uber(const struct silofs_task_ctx *task,
                          struct silofs_pnptr *out_pnptr)
 {
-	const struct silofs_uber_info *ubi = task->xrefs->fsroot->ubi;
+	const struct silofs_uber_info *ubi = task->ectx->fsroot->ubi;
 
 	silofs_pnptr_assign(out_pnptr, silofs_ubi_self(ubi));
 }
@@ -451,7 +451,7 @@ static void update_rootdir(struct silofs_inode_info *rootd_ii, bool utf8_names)
 
 static bool use_utf8_names(const struct silofs_task_ctx *task)
 {
-	return (task->xrefs->fsroot->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
+	return (task->ectx->fsroot->ctl_flags & SILOFS_F_UTF8NAMES) > 0;
 }
 
 static int format_rootdir(struct silofs_task_ctx *task)
@@ -502,10 +502,10 @@ static int reload_uber(const struct silofs_task_ctx *task,
 	struct silofs_uber_info *ubi = nullptr;
 	int err;
 
-	err = silofs_stage_uber(task->xrefs, pnptr, &ubi);
+	err = silofs_stage_uber(task->ectx, pnptr, &ubi);
 	return_if_err(err);
 
-	update_active_uber(task->xrefs, ubi);
+	update_active_uber(task->ectx, ubi);
 	return 0;
 }
 
@@ -516,12 +516,12 @@ static int reload_btree_root_of(const struct silofs_task_ctx *task,
 	struct silofs_btnode_info *bti;
 	int err;
 
-	silofs_ubi_btroot_of(task->xrefs->fsroot->ubi, ltype, &pnptr);
+	silofs_ubi_btroot_of(task->ectx->fsroot->ubi, ltype, &pnptr);
 	if (silofs_pnptr_isnull(&pnptr)) {
 		log_dbg("missing btree root: ltype=%d", ltype);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	err = silofs_stage_btnode(task->xrefs, &pnptr, &bti);
+	err = silofs_stage_btnode(task->ectx, &pnptr, &bti);
 	if (err) {
 		log_dbg("failed to reload btroot: ltype=%d", ltype);
 		return err;

@@ -32,7 +32,7 @@ static void relax_caches(struct silofs_task_ctx *task, bool now)
 {
 	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
 
-	silofs_relax_caches(task->xrefs, flags);
+	silofs_relax_caches(task->ectx, flags);
 }
 
 static int flush_dirty(struct silofs_task_ctx *task)
@@ -42,7 +42,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_drop_caches(task->xrefs);
+	silofs_drop_caches(task->ectx);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -96,7 +96,7 @@ appexec_fork_fs(struct silofs_task_ctx *task, struct silofs_mbrefs *out_mbrefs)
 
 static void release_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_fsroot *fsroot = task->xrefs->fsroot;
+	struct silofs_fsroot *fsroot = task->ectx->fsroot;
 
 	log_dbg("release uber: op_count=%lu", fsroot->opstat.op_count);
 	silofs_update_uber_ref(fsroot, nullptr);
@@ -139,7 +139,7 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 static int
 remove_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_unref_mbr(task->xrefs, mbref);
+	return silofs_unref_mbr(task->ectx, mbref);
 }
 
 static int appexec_remove_fs(struct silofs_task_ctx *task,
@@ -170,7 +170,7 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_sense_mbr(task->xrefs, mbref);
+	err = silofs_sense_mbr(task->ectx, mbref);
 	return_if_err(err);
 
 	drop_caches(task);

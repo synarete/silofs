@@ -35,3 +35,18 @@ void silofs_drop_caches(const struct silofs_exec_ctx *ectx)
 	silofs_lcache_drop(ectx->lcache);
 	silofs_dstor_drop(ectx->dstor);
 }
+
+int silofs_reinit_ciphers(const struct silofs_exec_ctx *ectx)
+{
+	const struct silofs_mbr_meta *mbr_meta = &ectx->fsroot->mbr_meta;
+	const struct silofs_ciargs *ciargs     = &mbr_meta->nmeta.ciargs;
+	int err;
+
+	err = silofs_cipher_reinit(ectx->enc_ci_hd, ciargs);
+	return_if_err(err);
+
+	err = silofs_cipher_reinit(ectx->dec_ci_hd, ciargs);
+	return_if_err(err);
+
+	return 0;
+}

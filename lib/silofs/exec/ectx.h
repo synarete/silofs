@@ -41,4 +41,6 @@ void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);
 
 void silofs_drop_caches(const struct silofs_exec_ctx *ectx);
 
+int silofs_reinit_ciphers(const struct silofs_exec_ctx *ectx);
+
 #endif /* SILOFS_ECTX_H_ */

@@ -163,9 +163,9 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int pre_format(struct silofs_task_ctx *task)
+static int reinit_ciphers(struct silofs_task_ctx *task)
 {
-	return silofs_env_reinit_ciphers(task->env);
+	return silofs_reinit_ciphers(task->ectx);
 }
 
 static int
@@ -180,7 +180,7 @@ int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = pre_format(task);
+	err = reinit_ciphers(task);
 	return_if_err(err);
 
 	err = silofs_format(task, fs_capacity, &pnptr);
@@ -226,7 +226,7 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 {
 	struct silofs_sw_version swv;
 
-	return silofs_resolve_root_uber(&task->env->fsroot, out_pnptr, &swv);
+	return silofs_resolve_root_uber(task->ectx->fsroot, out_pnptr, &swv);
 }
 
 static int
@@ -242,6 +242,9 @@ int silofs_exec_reload_meta(struct silofs_task_ctx *task,
 	int err;
 
 	err = reload_mbr(task, mbref);
+	return_if_err(err);
+
+	err = reinit_ciphers(task);
 	return_if_err(err);
 
 	err = resolve_root_uber(task, &pnptr);

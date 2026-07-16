@@ -69,6 +69,4 @@ void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);
 
-int silofs_env_reinit_ciphers(struct silofs_env *env);
-
 #endif /* SILOFS_ENV_H_ */

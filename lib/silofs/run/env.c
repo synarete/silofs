@@ -967,22 +967,3 @@ int silofs_env_forkfs(struct silofs_env *env, struct silofs_mbrefs *out_mbrefs)
 	(void)env;
 	return err;
 }
-
-static int
-env_reinit_ciphers(struct silofs_env *env, const struct silofs_ciargs *ciargs)
-{
-	int err;
-
-	err = silofs_cipher_reinit(&env->enc_ci_hd, ciargs);
-	return_if_err(err);
-
-	err = silofs_cipher_reinit(&env->dec_ci_hd, ciargs);
-	return_if_err(err);
-
-	return 0;
-}
-
-int silofs_env_reinit_ciphers(struct silofs_env *env)
-{
-	return env_reinit_ciphers(env, &env->fsroot.mbr_meta.nmeta.ciargs);
-}

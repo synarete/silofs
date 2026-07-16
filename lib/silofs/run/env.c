@@ -424,7 +424,6 @@ static void env_fini_idsmap(struct silofs_env *env)
 static void env_init_commons(struct silofs_env *env)
 {
 	silofs_strbuf_reset(&env->name);
-	silofs_cred_init(&env->owner_cred);
 	env->init_time = silofs_time_mono_now();
 	env->alloc     = nullptr;
 	env->repodir   = nullptr;
@@ -434,7 +433,8 @@ static void env_init_commons(struct silofs_env *env)
 
 static void env_fini_commons(struct silofs_env *env)
 {
-	silofs_cred_fini(&env->owner_cred);
+	env->alloc     = nullptr;
+	env->vfs_hooks = nullptr;
 }
 
 static int env_init_nilbk(struct silofs_env *env)
@@ -513,6 +513,7 @@ static void env_init_ectx(struct silofs_env *env)
 	env->ectx.fsroot    = &env->fsroot;
 	env->ectx.lcache    = &env->lcache;
 	env->ectx.lspools   = &env->lspools;
+	env->ectx.idsmap    = &env->idsmap;
 	env->ectx.ubi       = nullptr;
 }
 
@@ -756,20 +757,7 @@ static int env_update_repodir(struct silofs_env *env, const char *repodir)
 static int
 env_setup_owner(struct silofs_env *env, const struct silofs_cred *cred)
 {
-	if (silofs_uid_isnull(cred->uid)) {
-		log_dbg("illegal owner uid: %u", cred->uid);
-		return -SILOFS_EINVAL;
-	}
-	if (silofs_gid_isnull(cred->gid)) {
-		log_dbg("illegal owner gid: %u", cred->gid);
-		return -SILOFS_EINVAL;
-	}
-	if (cred->umask == 0) {
-		log_dbg("zero umask: uid=%u gid=%u", cred->uid, cred->gid);
-		return -SILOFS_EINVAL;
-	}
-	silofs_cred_assign(&env->owner_cred, cred);
-	return 0;
+	return silofs_fsroot_setup_owner(&env->fsroot, cred);
 }
 
 static int

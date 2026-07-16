@@ -584,9 +584,20 @@ static void fsroot_fini_locks(struct silofs_fsroot *fsroot)
 	silofs_mutex_fini(&fsroot->mutex);
 }
 
+static void fsroot_init_owner(struct silofs_fsroot *fsroot)
+{
+	silofs_cred_init(&fsroot->owner);
+}
+
+static void fsroot_fini_owner(struct silofs_fsroot *fsroot)
+{
+	silofs_cred_fini(&fsroot->owner);
+}
+
 int silofs_fsroot_init(struct silofs_fsroot *fsroot)
 {
 	mbr1k_init(&fsroot->mbr1k, &silofs_sw_vers);
+	fsroot_init_owner(fsroot);
 	fsroot_reset_mbr_meta(fsroot);
 	fsroot_reset_mbref(fsroot);
 	fsroot->ubi       = nullptr;
@@ -600,8 +611,28 @@ void silofs_fsroot_fini(struct silofs_fsroot *fsroot)
 	fsroot_fini_locks(fsroot);
 	fsroot_reset_mbr_meta(fsroot);
 	fsroot_reset_mbref(fsroot);
+	fsroot_fini_owner(fsroot);
 	fsroot->ubi = nullptr;
 	silofs_memzero(fsroot, sizeof(*fsroot));
+}
+
+int silofs_fsroot_setup_owner(struct silofs_fsroot *fsroot,
+                              const struct silofs_cred *cred)
+{
+	if (silofs_uid_isnull(cred->uid)) {
+		log_dbg("illegal owner uid: %u", cred->uid);
+		return -SILOFS_EINVAL;
+	}
+	if (silofs_gid_isnull(cred->gid)) {
+		log_dbg("illegal owner gid: %u", cred->gid);
+		return -SILOFS_EINVAL;
+	}
+	if (cred->umask == 0) {
+		log_dbg("zero umask: uid=%u gid=%u", cred->uid, cred->gid);
+		return -SILOFS_EINVAL;
+	}
+	silofs_cred_assign(&fsroot->owner, cred);
+	return 0;
 }
 
 void silofs_fsroot_reset_mbref(struct silofs_fsroot *fsroot)

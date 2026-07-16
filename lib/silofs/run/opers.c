@@ -149,9 +149,10 @@ static bool op_is_admin(const struct silofs_task_ctx *task)
 
 static bool op_is_fsowner(const struct silofs_task_ctx *task)
 {
-	const struct silofs_creds *creds = &task->auth.creds;
+	const struct silofs_creds *creds   = &task->auth.creds;
+	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
 
-	return silofs_uid_eq(creds->host_cred.uid, task->env->owner_cred.uid);
+	return silofs_uid_eq(creds->host_cred.uid, fsroot->owner.uid);
 }
 
 static bool
@@ -196,9 +197,10 @@ static int op_authorize(const struct silofs_task_ctx *task)
 static int op_map_uidgid(const struct silofs_task_ctx *task, uid_t uid,
                          gid_t gid, uid_t *out_uid, gid_t *out_gid)
 {
+	const struct silofs_idsmap *idsmap = task->ectx->idsmap;
 	int ret;
 
-	ret = silofs_idsmap_mapcreds(task->idsm, uid, gid, out_uid, out_gid);
+	ret = silofs_idsmap_mapcreds(idsmap, uid, gid, out_uid, out_gid);
 	return (ret == -SILOFS_ENOENT) ? -SILOFS_EPERM : ret;
 }
 
@@ -235,8 +237,8 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 	 * silofs_idsmap_rmap_gid). In case of rmap failure, emit 'nobody' only
 	 * for the relevant id.
 	 */
-	ret = silofs_idsmap_rmapcreds(task->idsm, uid_in, gid_in, &uid_out,
-	                              &gid_out);
+	ret = silofs_idsmap_rmapcreds(task->ectx->idsmap, uid_in, gid_in,
+	                              &uid_out, &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;
 	return (ret == -SILOFS_ENOENT) ? 0 : ret;

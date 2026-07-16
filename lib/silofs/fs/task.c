@@ -76,7 +76,6 @@ void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
 
 	task->env         = env;
 	task->ectx        = &env->ectx;
-	task->idsm        = &env->idsmap;
 	task->repo        = &env->repo;
 	task->looseq      = nullptr;
 	task->upper_id    = 0;

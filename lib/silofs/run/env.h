@@ -21,6 +21,8 @@
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 
@@ -48,7 +50,6 @@ struct silofs_env {
 	struct silofs_cipher_hd        enc_ci_hd;
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
-	struct silofs_cred             owner_cred;
 	struct silofs_uconv            uconv;
 	struct silofs_exec_ctx         ectx;
 	struct silofs_strbuf           name;

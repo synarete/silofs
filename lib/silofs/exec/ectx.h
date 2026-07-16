@@ -22,19 +22,20 @@
 #include <silofs/nodes.h>
 
 struct silofs_exec_ctx {
-	struct silofs_alloc      *alloc;
-	struct silofs_lblock     *nilbk;
-	struct silofs_prandgen   *prng;
-	struct silofs_mdigest_hd *md_hd;
-	struct silofs_cipher_hd  *enc_ci_hd;
-	struct silofs_cipher_hd  *dec_ci_hd;
-	struct silofs_fsroot     *fsroot;
-	struct silofs_dstor      *dstor;
-	struct silofs_pcache     *pcache;
-	struct silofs_pspools    *pspools;
-	struct silofs_lcache     *lcache;
-	struct silofs_lspools    *lspools;
-	struct silofs_uber_info  *ubi;
+	struct silofs_alloc        *alloc;
+	struct silofs_lblock       *nilbk;
+	struct silofs_prandgen     *prng;
+	struct silofs_mdigest_hd   *md_hd;
+	struct silofs_cipher_hd    *enc_ci_hd;
+	struct silofs_cipher_hd    *dec_ci_hd;
+	struct silofs_fsroot       *fsroot;
+	struct silofs_dstor        *dstor;
+	struct silofs_pcache       *pcache;
+	struct silofs_pspools      *pspools;
+	struct silofs_lcache       *lcache;
+	struct silofs_lspools      *lspools;
+	struct silofs_uber_info    *ubi;
+	const struct silofs_idsmap *idsmap;
 };
 
 void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);

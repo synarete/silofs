@@ -2199,8 +2199,8 @@ fill_proc(const struct silofs_task_ctx *task, struct silofs_query_proc *qpr)
 	silofs_memstat(task->ectx->alloc, &alloc_stat);
 
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid       = task->env->owner_cred.uid;
-	qpr->gid       = task->env->owner_cred.gid;
+	qpr->uid       = task->ectx->fsroot->owner.uid;
+	qpr->gid       = task->ectx->fsroot->owner.gid;
 	qpr->pid       = getpid();
 	qpr->msflags   = task->ectx->fsroot->ms_flags;
 	qpr->uptime    = uptime;
@@ -2410,7 +2410,7 @@ int silofs_do_query(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 static int check_fsowner(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds = &task->auth.creds;
-	const uid_t owner_uid            = task->env->owner_cred.uid;
+	const uid_t owner_uid            = task->ectx->fsroot->owner.uid;
 	const uid_t host_uid             = creds->host_cred.uid;
 
 	return silofs_uid_eq(host_uid, owner_uid) ? 0 : -SILOFS_EPERM;

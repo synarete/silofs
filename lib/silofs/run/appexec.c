@@ -203,22 +203,26 @@ int silofs_post_exec_fs(struct silofs_env *env)
 
 static int do_map_task_creds(struct silofs_task_ctx *task)
 {
-	const struct silofs_cred *xcred = &task->auth.creds.host_cred;
-	struct silofs_cred *icred       = &task->auth.creds.fs_cred;
+	const struct silofs_cred *host_cred = &task->auth.creds.host_cred;
+	struct silofs_cred *fs_cred         = &task->auth.creds.fs_cred;
 
-	return silofs_idsmap_mapcreds(task->idsm, xcred->uid, xcred->gid,
-	                              &icred->uid, &icred->gid);
+	return silofs_idsmap_mapcreds(task->ectx->idsmap, host_cred->uid,
+	                              host_cred->gid, &fs_cred->uid,
+	                              &fs_cred->gid);
 }
 
 static int map_task_creds(struct silofs_task_ctx *task)
 {
-	const struct silofs_idsmap *idsm = task->idsm;
-	int err                          = 0;
+	const struct silofs_idsmap *idsmap = task->ectx->idsmap;
+	int err;
 
-	if (idsm->idm_usize || idsm->idm_gsize) {
-		err = do_map_task_creds(task);
+	if (idsmap->idm_usize || idsmap->idm_gsize) {
+		err            = do_map_task_creds(task);
+		task->runnable = (err == 0);
+	} else {
+		task->runnable = true;
+		err            = 0;
 	}
-	task->runnable = (err == 0);
 	return err;
 }
 
@@ -289,7 +293,7 @@ int silofs_exec_fs(struct silofs_env *env, const char *mntdir)
 		return -SILOFS_EINVAL;
 	}
 
-	err = silofs_fuseq_update(fuseq, &env->owner_cred);
+	err = silofs_fuseq_update(fuseq, &env->fsroot.owner);
 	return_if_err(err);
 
 	err = do_mount_and_exec(env, mntdir);
@@ -409,16 +413,16 @@ static int check_fs_capacity(size_t fscap)
 
 static int check_owner_ids(const struct silofs_env *env)
 {
-	const struct silofs_cred *owner_cred = &env->owner_cred;
+	const struct silofs_cred *fsowner = &env->fsroot.owner;
 	uid_t suid;
 	gid_t sgid;
 	int err;
 
-	err = silofs_idsmap_mapcreds(&env->idsmap, owner_cred->uid,
-	                             owner_cred->gid, &suid, &sgid);
+	err = silofs_idsmap_mapcreds(&env->idsmap, fsowner->uid, fsowner->gid,
+	                             &suid, &sgid);
 	if (err) {
 		log_err("unable to map owner credentials: uid=%u gid=%u",
-		        owner_cred->uid, owner_cred->gid);
+		        fsowner->uid, fsowner->gid);
 		return err;
 	}
 	return 0;

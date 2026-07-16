@@ -39,6 +39,7 @@ struct silofs_fsroot {
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
 	struct silofs_baseref    baseref;
+	struct silofs_cred       owner;
 	struct silofs_mbr1k      mbr1k;
 	struct silofs_mbref      mbref;
 	struct silofs_mbr_meta   mbr_meta;
@@ -54,8 +55,6 @@ int silofs_fsroot_init(struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_fini(struct silofs_fsroot *fsroot);
 
-void silofs_fsroot_reset_mbref(struct silofs_fsroot *fsroot);
-
 void silofs_fsroot_lock(struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_unlock(struct silofs_fsroot *fsroot);
@@ -63,6 +62,11 @@ void silofs_fsroot_unlock(struct silofs_fsroot *fsroot);
 void silofs_fsroot_rwlock(struct silofs_fsroot *fsroot, bool ex);
 
 void silofs_fsroot_rwunlock(struct silofs_fsroot *fsroot);
+
+int silofs_fsroot_setup_owner(struct silofs_fsroot     *fsroot,
+                              const struct silofs_cred *cred);
+
+void silofs_fsroot_reset_mbref(struct silofs_fsroot *fsroot);
 
 int silofs_fsroot_derive_meta(struct silofs_fsroot         *fsroot,
                               const struct silofs_password *passwd);

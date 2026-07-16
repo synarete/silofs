@@ -14,18 +14,22 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_EXEC_H_
-#define SILOFS_EXEC_H_
+#ifndef SILOFS_MBROPS_H_
+#define SILOFS_MBROPS_H_
 
 #include <silofs/infra.h>
-#include <silofs/crypt.h>
 #include <silofs/addr.h>
-#include <silofs/nodes.h>
 
-#include <silofs/exec/dstor.h>
-#include <silofs/exec/repo.h>
-#include <silofs/exec/fsroot.h>
-#include <silofs/exec/ectx.h>
-#include <silofs/exec/mbrops.h>
+int silofs_sense_mbr(const struct silofs_exec_ctx *ectx,
+                     const struct silofs_mbref    *mbref);
 
-#endif /* SILOFS_EXEC_H_ */
+int silofs_commit_mbr(const struct silofs_exec_ctx *ectx,
+                      struct silofs_mbref          *out_mbref);
+
+int silofs_reload_mbr(const struct silofs_exec_ctx *ectx,
+                      const struct silofs_mbref    *mbref);
+
+int silofs_unref_mbr(const struct silofs_exec_ctx *ectx,
+                     const struct silofs_mbref    *mbref);
+
+#endif /* SILOFS_MBROPS_H_ */

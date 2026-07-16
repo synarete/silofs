@@ -98,9 +98,4 @@ void silofs_update_root_uber(struct silofs_fsroot           *fsroot,
                              const struct silofs_pnptr      *pnptr,
                              const struct silofs_sw_version *swv);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_stat_mbr_at(struct silofs_dstor       *dstor,
-                       const struct silofs_mbref *mbref);
-
 #endif /* SILOFS_FSROOT_H_ */

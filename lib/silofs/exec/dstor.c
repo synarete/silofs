@@ -23,7 +23,8 @@
 #include <silofs/errors.h>
 #include <silofs/syscall.h>
 #include <silofs/infra.h>
-#include <silofs/exec.h>
+#include <silofs/nodes.h>
+#include <silofs/exec/dstor.h>
 
 /*
  * TODO-0035: Define proper upper-bound for cache limit.
@@ -921,9 +922,9 @@ int silofs_dstor_remove_blob(struct silofs_dstor *dstor,
 	return dstor_remove_blob(dstor, &blobidx);
 }
 
-static int
-dstor_stat_blob(struct silofs_dstor *dstor,
-                const struct silofs_blobidx *blobidx, struct stat *out_st)
+int silofs_dstor_stat_blob_by(struct silofs_dstor *dstor,
+                              const struct silofs_blobidx *blobidx,
+                              struct stat *out_st)
 {
 	struct silofs_blobfile *bf = nullptr;
 	int err;
@@ -942,7 +943,7 @@ static int dstor_sense_blob(struct silofs_dstor *dstor,
 {
 	struct stat st;
 
-	return dstor_stat_blob(dstor, blobidx, &st);
+	return silofs_dstor_stat_blob_by(dstor, blobidx, &st);
 }
 
 int silofs_dstor_stat_blob(struct silofs_dstor *dstor,
@@ -952,7 +953,7 @@ int silofs_dstor_stat_blob(struct silofs_dstor *dstor,
 	struct silofs_blobidx blobidx;
 
 	dstor_blobidx_of(dstor, blobid, &blobidx);
-	return dstor_stat_blob(dstor, &blobidx, out_st);
+	return silofs_dstor_stat_blob_by(dstor, &blobidx, out_st);
 }
 
 int silofs_dstor_stage_blob(struct silofs_dstor *dstor,
@@ -1170,52 +1171,45 @@ int silofs_dstor_writev_blob_at(struct silofs_dstor *dstor,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_dstor_stat_mbr(struct silofs_dstor *dstor,
-                          const struct silofs_mbref *mbref,
-                          struct stat *out_st)
-{
-	return dstor_stat_blob(dstor, &mbref->bx, out_st);
-}
-
-int silofs_dstor_save_mbr(struct silofs_dstor *dstor,
-                          const struct silofs_mbref *mbref, const void *buf,
-                          size_t len)
+int silofs_dstor_save_blob_by(struct silofs_dstor *dstor,
+                              const struct silofs_blobidx *blobidx,
+                              const void *buf, size_t len)
 {
 	int err;
 
-	err = dstor_require_blob(dstor, &mbref->bx);
+	err = dstor_require_blob(dstor, blobidx);
 	return_if_err(err);
 
-	err = dstor_write_blob(dstor, &mbref->bx, 0, buf, len);
+	err = dstor_write_blob(dstor, blobidx, 0, buf, len);
 	return_if_err(err);
 
 	return 0;
 }
 
-int silofs_dstor_load_mbr(struct silofs_dstor *dstor,
-                          const struct silofs_mbref *mbref, void *buf,
-                          size_t len)
+int silofs_dstor_load_blob_by(struct silofs_dstor *dstor,
+                              const struct silofs_blobidx *blobidx, void *buf,
+                              size_t len)
 {
 	int err;
 
-	err = dstor_sense_blob(dstor, &mbref->bx);
+	err = dstor_sense_blob(dstor, blobidx);
 	return_if_err(err);
 
-	err = dstor_read_blob(dstor, &mbref->bx, 0, buf, len);
+	err = dstor_read_blob(dstor, blobidx, 0, buf, len);
 	return_if_err(err);
 
 	return 0;
 }
 
-int silofs_dstor_unref_mbr(struct silofs_dstor *dstor,
-                           const struct silofs_mbref *mbref)
+int silofs_dstor_unref_blob_by(struct silofs_dstor *dstor,
+                               const struct silofs_blobidx *blobidx)
 {
 	int err;
 
-	err = dstor_sense_blob(dstor, &mbref->bx);
+	err = dstor_sense_blob(dstor, blobidx);
 	return_if_err(err);
 
-	err = dstor_remove_blob(dstor, &mbref->bx);
+	err = dstor_remove_blob(dstor, blobidx);
 	return_if_err(err);
 
 	return 0;

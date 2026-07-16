@@ -20,7 +20,9 @@
 
 #include <silofs/version.h>
 #include <silofs/ondisk.h>
-#include <silofs/exec.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+#include <silofs/exec/fsroot.h>
 
 static void swv64b_htox(struct silofs_sw_version64b *swv64,
                         const struct silofs_sw_version *swv)
@@ -705,23 +707,6 @@ void silofs_update_root_uber(struct silofs_fsroot *fsroot,
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-int silofs_stat_mbr_at(struct silofs_dstor *dstor,
-                       const struct silofs_mbref *mbref)
-{
-	struct stat st;
-	int err;
-
-	err = silofs_dstor_stat_mbr(dstor, mbref, &st);
-	if (err) {
-		return (err == -ENOENT) ? -SILOFS_ENOMBR : err;
-	}
-	if (st.st_size != SILOFS_MBR_SIZE) {
-		log_warn("bad mbr: size=%zd", st.st_size);
-		return -SILOFS_EBADMBR;
-	}
-	return 0;
-}
 
 int silofs_fsroot_derive_meta(struct silofs_fsroot *fsroot,
                               const struct silofs_password *passwd)

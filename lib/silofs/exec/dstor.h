@@ -97,19 +97,19 @@ int silofs_dstor_writev_blob_at(struct silofs_dstor        *dstor,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_dstor_stat_mbr(struct silofs_dstor       *dstor,
-                          const struct silofs_mbref *mbref,
-                          struct stat               *out_st);
+int silofs_dstor_stat_blob_by(struct silofs_dstor         *dstor,
+                              const struct silofs_blobidx *blobidx,
+                              struct stat                 *out_st);
 
-int silofs_dstor_save_mbr(struct silofs_dstor       *dstor,
-                          const struct silofs_mbref *mbref, const void *buf,
-                          size_t len);
+int silofs_dstor_save_blob_by(struct silofs_dstor         *dstor,
+                              const struct silofs_blobidx *blobidx,
+                              const void *buf, size_t len);
 
-int silofs_dstor_load_mbr(struct silofs_dstor       *dstor,
-                          const struct silofs_mbref *mbref, void *buf,
-                          size_t len);
+int silofs_dstor_load_blob_by(struct silofs_dstor         *dstor,
+                              const struct silofs_blobidx *blobidx, void *buf,
+                              size_t len);
 
-int silofs_dstor_unref_mbr(struct silofs_dstor       *dstor,
-                           const struct silofs_mbref *mbref);
+int silofs_dstor_unref_blob_by(struct silofs_dstor         *dstor,
+                               const struct silofs_blobidx *blobidx);
 
 #endif /* SILOFS_DSTOR_H_ */

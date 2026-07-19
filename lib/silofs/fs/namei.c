@@ -470,11 +470,6 @@ static int check_dir_waccess(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static const struct silofs_uconv *get_uconv(const struct silofs_task_ctx *task)
-{
-	return &task->env->uconv;
-}
-
 static int check_dir_and_name(const struct silofs_task_ctx *task,
                               const struct silofs_inode_info *dir_ii,
                               const struct silofs_namestr *name)
@@ -484,7 +479,7 @@ static int check_dir_and_name(const struct silofs_task_ctx *task,
 	err = check_isdir(dir_ii);
 	return_if_err(err);
 
-	err = silofs_dir_check_name(dir_ii, get_uconv(task), name);
+	err = silofs_dir_check_name(dir_ii, task->ectx->uconv, name);
 	return_if_err(err);
 
 	return 0;
@@ -2193,17 +2188,14 @@ static void
 fill_proc(const struct silofs_task_ctx *task, struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alloc_stat;
-	time_t uptime;
 
-	silofs_env_uptime(task->env, &uptime);
 	silofs_memstat(task->ectx->alloc, &alloc_stat);
-
 	silofs_memzero(qpr, sizeof(*qpr));
 	qpr->uid       = task->ectx->fsroot->owner.uid;
 	qpr->gid       = task->ectx->fsroot->owner.gid;
 	qpr->pid       = getpid();
 	qpr->msflags   = task->ectx->fsroot->ms_flags;
-	qpr->uptime    = uptime;
+	qpr->uptime    = silofs_fsroot_uptime(task->ectx->fsroot);
 	qpr->iopen_max = task->ectx->fsroot->opstat.op_iopen_max;
 	qpr->iopen_cur = task->ectx->fsroot->opstat.op_iopen;
 	qpr->memsz_max = alloc_stat.nbytes_max;

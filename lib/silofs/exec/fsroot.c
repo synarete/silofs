@@ -603,6 +603,7 @@ int silofs_fsroot_init(struct silofs_fsroot *fsroot)
 	fsroot->ubi       = nullptr;
 	fsroot->ctl_flags = 0;
 	fsroot->ms_flags  = 0;
+	fsroot->init_time = silofs_time_mono_now();
 	return fsroot_init_locks(fsroot);
 }
 
@@ -614,6 +615,11 @@ void silofs_fsroot_fini(struct silofs_fsroot *fsroot)
 	fsroot_fini_owner(fsroot);
 	fsroot->ubi = nullptr;
 	silofs_memzero(fsroot, sizeof(*fsroot));
+}
+
+time_t silofs_fsroot_uptime(const struct silofs_fsroot *fsroot)
+{
+	return silofs_time_mono_now() - fsroot->init_time;
 }
 
 int silofs_fsroot_setup_owner(struct silofs_fsroot *fsroot,

@@ -34,7 +34,7 @@ struct silofs_opstat {
 	/* TODO: Have counter per-operation */
 };
 
-/* main boot-record, in-memory representation */
+/* file-system's root meta-state */
 struct silofs_fsroot {
 	struct silofs_rwlock     rwlock;
 	struct silofs_mutex      mutex;
@@ -47,6 +47,7 @@ struct silofs_fsroot {
 	struct silofs_uber_info *ubi;
 	enum silofs_flags        ctl_flags;
 	unsigned long            ms_flags;
+	time_t                   init_time;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -54,6 +55,8 @@ struct silofs_fsroot {
 int silofs_fsroot_init(struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_fini(struct silofs_fsroot *fsroot);
+
+time_t silofs_fsroot_uptime(const struct silofs_fsroot *fsroot);
 
 void silofs_fsroot_lock(struct silofs_fsroot *fsroot);
 

@@ -28,21 +28,21 @@ struct silofs_task_auth {
 
 /* execution-context */
 struct silofs_task_ctx {
-	struct silofs_task_auth   auth;
-	struct silofs_exec_ctx   *ectx;
-	struct silofs_env        *env;
-	struct silofs_repo       *repo;
-	struct silofs_inode_info *looseq;
-	uint64_t                  upper_id;
-	struct timespec           op_start_time;
-	volatile int8_t           interrupted;
-	volatile bool             fs_locked;
-	volatile bool             rw_locked;
-	bool                      exclusive;
-	bool                      priv_op;
-	bool                      kwrite;
-	bool                      runnable;
-	bool                      internal;
+	struct silofs_task_auth       auth;
+	const struct silofs_exec_ctx *ectx;
+	struct silofs_env            *env;
+	struct silofs_repo           *repo;
+	struct silofs_inode_info     *looseq;
+	uint64_t                      upper_id;
+	struct timespec               op_start_time;
+	volatile int8_t               interrupted;
+	volatile bool                 fs_locked;
+	volatile bool                 rw_locked;
+	bool                          exclusive;
+	bool                          priv_op;
+	bool                          kwrite;
+	bool                          runnable;
+	bool                          internal;
 };
 
 void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env);

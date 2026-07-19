@@ -312,12 +312,21 @@ static void env_fini_crypt(struct silofs_env *env)
 
 static int env_init_uconv(struct silofs_env *env)
 {
-	return silofs_uconv_init(&env->uconv);
+	int err;
+
+	err = silofs_uconv_init(&env->uconv);
+	return_if_err(err);
+
+	env->initf |= SILOFS_ENVF_UCONV;
+	return 0;
 }
 
 static void env_fini_uconv(struct silofs_env *env)
 {
-	silofs_uconv_fini(&env->uconv);
+	if (env->initf & SILOFS_ENVF_UCONV) {
+		silofs_uconv_fini(&env->uconv);
+		env->initf &= ~SILOFS_ENVF_UCONV;
+	}
 }
 
 static int env_init_repo(struct silofs_env *env)
@@ -424,7 +433,6 @@ static void env_fini_idsmap(struct silofs_env *env)
 static void env_init_commons(struct silofs_env *env)
 {
 	silofs_strbuf_reset(&env->name);
-	env->init_time = silofs_time_mono_now();
 	env->alloc     = nullptr;
 	env->repodir   = nullptr;
 	env->fuseq     = nullptr;
@@ -433,6 +441,7 @@ static void env_init_commons(struct silofs_env *env)
 
 static void env_fini_commons(struct silofs_env *env)
 {
+	silofs_strbuf_reset(&env->name);
 	env->alloc     = nullptr;
 	env->vfs_hooks = nullptr;
 }
@@ -501,20 +510,23 @@ static void env_fini(struct silofs_env *env)
 
 static void env_init_ectx(struct silofs_env *env)
 {
-	env->ectx.alloc     = env->alloc;
-	env->ectx.nilbk     = env->nilbk;
-	env->ectx.prng      = &env->prandgen;
-	env->ectx.dstor     = &env->repo.re_dstor;
-	env->ectx.pcache    = &env->pcache;
-	env->ectx.pspools   = &env->pspools;
-	env->ectx.md_hd     = &env->md_hd;
-	env->ectx.enc_ci_hd = &env->enc_ci_hd;
-	env->ectx.dec_ci_hd = &env->dec_ci_hd;
-	env->ectx.fsroot    = &env->fsroot;
-	env->ectx.lcache    = &env->lcache;
-	env->ectx.lspools   = &env->lspools;
-	env->ectx.idsmap    = &env->idsmap;
-	env->ectx.ubi       = nullptr;
+	struct silofs_exec_ctx *ectx = &env->ectx;
+
+	ectx->alloc     = env->alloc;
+	ectx->nilbk     = env->nilbk;
+	ectx->prng      = &env->prandgen;
+	ectx->dstor     = &env->repo.re_dstor;
+	ectx->pcache    = &env->pcache;
+	ectx->pspools   = &env->pspools;
+	ectx->md_hd     = &env->md_hd;
+	ectx->enc_ci_hd = &env->enc_ci_hd;
+	ectx->dec_ci_hd = &env->dec_ci_hd;
+	ectx->fsroot    = &env->fsroot;
+	ectx->lcache    = &env->lcache;
+	ectx->lspools   = &env->lspools;
+	ectx->idsmap    = &env->idsmap;
+	ectx->uconv     = &env->uconv;
+	ectx->ubi       = nullptr;
 }
 
 static int
@@ -872,13 +884,6 @@ void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime)
-{
-	const time_t now = silofs_time_mono_now();
-
-	*out_uptime = now - env->init_time;
-}
 
 #if 0
 static int env_fork_rebind_super(struct silofs_env *env,

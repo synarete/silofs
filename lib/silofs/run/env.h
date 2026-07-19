@@ -56,7 +56,6 @@ struct silofs_env {
 	char                          *repodir;
 	long                           initf;
 	size_t                         fscap;
-	time_t                         init_time;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -64,8 +63,6 @@ struct silofs_env {
 int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec);
 
 void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq);
-
-void silofs_env_uptime(const struct silofs_env *env, time_t *out_uptime);
 
 int silofs_env_forkfs(struct silofs_env    *env,
                       struct silofs_mbrefs *out_mbrefs);

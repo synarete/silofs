@@ -36,6 +36,7 @@ struct silofs_exec_ctx {
 	struct silofs_lspools      *lspools;
 	struct silofs_uber_info    *ubi;
 	const struct silofs_idsmap *idsmap;
+	const struct silofs_uconv  *uconv;
 };
 
 void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);

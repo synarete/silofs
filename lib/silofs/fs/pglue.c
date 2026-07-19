@@ -1019,3 +1019,57 @@ int silofs_stage_curr_lnode(const struct silofs_task_ctx *task,
 {
 	return stage_lnode(task, laddr, nullptr, SILOFS_STG_CUR, out_lni);
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_curr_sbi(const struct silofs_task_ctx *task,
+                    struct silofs_sbnode_info **out_sbi)
+{
+	return silofs_stage_super(task, SILOFS_STG_CUR, out_sbi);
+}
+
+int silofs_flush_dirty_now(const struct silofs_task_ctx *task)
+{
+	return silofs_destage_dirty_nodes(task->corefs);
+}
+
+static bool need_flush_by_alloc(const struct silofs_alloc *alloc,
+                                size_t percentage_threshold)
+{
+	struct silofs_alloc_stat alst = {
+		.nbytes_use = 0,
+		.nbytes_max = 0,
+	};
+	size_t usage_ratio;
+
+	silofs_memstat(alloc, &alst);
+	if (!alst.nbytes_max) {
+		return false;
+	}
+	usage_ratio = ((alst.nbytes_use * 100) / alst.nbytes_max);
+	return (usage_ratio > percentage_threshold);
+}
+
+static bool need_flush(const struct silofs_task_ctx *task, int flags)
+{
+	size_t percentage_threshold;
+
+	if (flags & SILOFS_CTLF_IDLE) {
+		percentage_threshold = 0;
+	} else if (flags & (SILOFS_CTLF_OPSTART | SILOFS_CTLF_INTERN)) {
+		percentage_threshold = 25;
+	} else {
+		percentage_threshold = 50;
+	}
+	return need_flush_by_alloc(task->corefs->alloc, percentage_threshold);
+}
+
+int silofs_try_flush_dirty(const struct silofs_task_ctx *task, int flags)
+{
+	int ret = 0;
+
+	if (need_flush(task, flags)) {
+		ret = silofs_flush_dirty_now(task);
+	}
+	return ret;
+}

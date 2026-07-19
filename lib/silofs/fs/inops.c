@@ -161,7 +161,7 @@ int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
 	return 0;
 }
 
-static int fetch_cached_lni(struct silofs_task_ctx *task,
+static int fetch_cached_lni(const struct silofs_task_ctx *task,
                             const struct silofs_laddr *laddr,
                             struct silofs_lnode_info **out_lni)
 {
@@ -169,9 +169,9 @@ static int fetch_cached_lni(struct silofs_task_ctx *task,
 	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
-static int
-fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_laddr *laddr,
-                struct silofs_inode_info **out_ii)
+static int fetch_cached_ii(const struct silofs_task_ctx *task,
+                           const struct silofs_laddr *laddr,
+                           struct silofs_inode_info **out_ii)
 {
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
@@ -183,7 +183,7 @@ fetch_cached_ii(struct silofs_task_ctx *task, const struct silofs_laddr *laddr,
 	return 0;
 }
 
-int silofs_lookup_cached_inode(struct silofs_task_ctx *task, ino_t ino,
+int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
                                struct silofs_inode_info **out_ii)
 {
 	struct silofs_laddr laddr = { .off = -1 };
@@ -195,5 +195,133 @@ int silofs_lookup_cached_inode(struct silofs_task_ctx *task, ino_t ino,
 	err = fetch_cached_ii(task, &laddr, out_ii);
 	return_if_err(err);
 
+	return 0;
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static size_t flush_threshold_of(int flags)
+{
+	size_t threshold;
+
+	if (flags & SILOFS_CTLF_RELEASE) {
+		threshold = SILOFS_MEGA / 2;
+	} else if (flags & SILOFS_CTLF_INTERN) {
+		threshold = SILOFS_MEGA;
+	} else if (flags & SILOFS_CTLF_OPSTART) {
+		threshold = 2 * SILOFS_MEGA;
+	} else {
+		threshold = 4 * SILOFS_MEGA;
+	}
+	return threshold;
+}
+
+static bool need_flush_by_alloc(const struct silofs_alloc *alloc)
+{
+	struct silofs_alloc_stat alst = {
+		.nbytes_use = 0,
+		.nbytes_max = 0,
+	};
+
+	silofs_memstat(alloc, &alst);
+	return (alst.nbytes_use > (alst.nbytes_max / 2));
+}
+
+static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
+{
+	size_t threshold;
+
+	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_FSYNC)) {
+		return true;
+	}
+	threshold = flush_threshold_of(flags);
+	silofs_unused(ii);        /* XXX TODO : use me */
+	silofs_unused(threshold); /* XXX TODO : use me */
+	return false;
+}
+
+static bool need_flush(const struct silofs_core_refs *corefs,
+                       const struct silofs_inode_info *ii, int flags)
+{
+	return (need_flush_by_ii(ii, flags) ||
+	        need_flush_by_alloc(corefs->alloc));
+}
+
+int silofs_flush_dirty_of(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info *ii, int flags)
+{
+	if (unlikely(ii == nullptr)) {
+		return 0;
+	}
+	if (!silofs_ii_isdirty(ii)) {
+		return 0;
+	}
+	if (!need_flush(task->corefs, ii, flags)) {
+		return 0;
+	}
+	return silofs_destage_dirty_nodes(task->corefs);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+void silofs_enq_loose_inode(struct silofs_task_ctx *task,
+                            struct silofs_inode_info *ii)
+{
+	silofs_assert_null(ii->i_looseq_next);
+	silofs_assert_eq(ii->i_lni.vn_flags & SILOFS_LNF_PINNED, 0);
+
+	if (!ii->i_in_looseq) {
+		ii->i_looseq_next = task->looseq;
+		ii->i_in_looseq   = true;
+		task->looseq      = ii;
+		silofs_ii_incref(ii);
+	}
+}
+
+static struct silofs_inode_info *deq_loose_inode(struct silofs_task_ctx *task)
+{
+	struct silofs_inode_info *ii = nullptr;
+
+	if (task->looseq != nullptr) {
+		ii                = task->looseq;
+		task->looseq      = ii->i_looseq_next;
+		ii->i_looseq_next = nullptr;
+		ii->i_in_looseq   = false;
+		silofs_ii_decref(ii);
+	}
+	return ii;
+}
+
+static void forget_loose_inodes(struct silofs_task_ctx *task)
+{
+	struct silofs_inode_info *ii;
+	int err;
+
+	ii = deq_loose_inode(task);
+	while (ii != nullptr) {
+		err = silofs_forget_loose_ii(task, ii);
+		if (err) {
+			/* TODO: maybe have retry loop ? */
+			silofs_panic("failed to forget loose inode: "
+			             "ino=%ld flags=%x err=%d",
+			             ii->i_ino, ii->i_lni.vn_flags, err);
+		}
+		ii = deq_loose_inode(task);
+	}
+}
+
+int silofs_purge_loose_inodes(struct silofs_task_ctx *task)
+{
+	if (task->looseq != nullptr) {
+		if (task->fs_locked) {
+			/* case 1: already fs-locked; keep it locked post op */
+			forget_loose_inodes(task);
+		} else {
+			/* case 2: need to protect with fs-lock/unlock pair */
+			silofs_lock_fs_by(task);
+			forget_loose_inodes(task);
+			silofs_unlock_fs_by(task);
+		}
+	}
 	return 0;
 }

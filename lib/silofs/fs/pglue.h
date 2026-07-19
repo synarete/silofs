@@ -180,4 +180,13 @@ int silofs_stage_curr_lnode(const struct silofs_task_ctx *task,
                             const struct silofs_laddr    *laddr,
                             struct silofs_lnode_info    **out_lni);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_curr_sbi(const struct silofs_task_ctx *task,
+                    struct silofs_sbnode_info   **out_sbi);
+
+int silofs_flush_dirty_now(const struct silofs_task_ctx *task);
+
+int silofs_try_flush_dirty(const struct silofs_task_ctx *task, int flags);
+
 #endif /* SILOFS_PGLUE_H_ */

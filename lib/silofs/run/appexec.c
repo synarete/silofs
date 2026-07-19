@@ -240,7 +240,7 @@ static int term_task(struct silofs_task_ctx *task, int status)
 	int err = 0;
 
 	if (task->runnable) {
-		err = silofs_task_submit(task, true);
+		err = silofs_purge_loose_inodes(task);
 	}
 	silofs_task_fini(task);
 	return status ? status : err;

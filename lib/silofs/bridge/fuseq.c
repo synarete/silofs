@@ -38,7 +38,6 @@
 
 /* XXX rm */
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 #include "fqtypes.h"
 #include "fuseq.h"
@@ -409,9 +408,9 @@ static int sanitize_err(int err, uint32_t opcode)
 
 	if (unlikely(err2 >= SILOFS_ERRBASE2)) {
 		fuseq_log_err("internal error: err=%d op=%u", err, opcode);
-		err2 = silofs_remap_status_code(err);
+		err2 = silofs_sanitize_status_code(err);
 	} else if (err2 >= SILOFS_ERRBASE) {
-		err2 = silofs_remap_status_code(err);
+		err2 = silofs_sanitize_status_code(err);
 	}
 	return -abs(err2);
 }
@@ -3451,7 +3450,7 @@ static int
 fqs_submit_by(const struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 {
 	silofs_unused(fqs);
-	return silofs_task_submit(task, false);
+	return silofs_purge_loose_inodes(task);
 }
 
 static int

@@ -21,7 +21,6 @@
 #include <limits.h>
 
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 static void ii_setdirty(struct silofs_inode_info *ii);
 static void ii_update_itimes(struct silofs_inode_info *ii,

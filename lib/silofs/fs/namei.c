@@ -1130,7 +1130,7 @@ static void
 enqueue_if_loose(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	if (silofs_ii_isloose(ii) && !ii_ispinned(ii)) {
-		silofs_task_enq_loose(task, ii);
+		silofs_enq_loose_inode(task, ii);
 	}
 }
 
@@ -1631,17 +1631,6 @@ check_releasedir(const struct silofs_inode_info *dir_ii, int o_flags)
 	return 0;
 }
 
-static int flush_dirty_of(struct silofs_task_ctx *task,
-                          struct silofs_inode_info *ii, int flags)
-{
-	int ret = 0;
-
-	if (silofs_ii_isdirty(ii)) {
-		ret = silofs_flush_dirty(task, ii, flags);
-	}
-	return ret;
-}
-
 static int
 do_releasedir_flush(struct silofs_task_ctx *task,
                     struct silofs_inode_info *dir_ii, int o_flags, bool flush)
@@ -1654,7 +1643,7 @@ do_releasedir_flush(struct silofs_task_ctx *task,
 	if (flush) {
 		flags |= SILOFS_CTLF_NOW;
 	}
-	return flush_dirty_of(task, dir_ii, flags);
+	return silofs_flush_dirty_of(task, dir_ii, flags);
 }
 
 static int
@@ -1761,7 +1750,7 @@ static int do_release(struct silofs_task_ctx *task,
 	err = check_release(ii);
 	return_if_err(err);
 
-	err = flush_dirty_of(task, ii, flags);
+	err = silofs_flush_dirty_of(task, ii, flags);
 	return_if_err(err);
 
 	update_nopen(task, ii, -1);
@@ -1793,7 +1782,7 @@ do_fsyncdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii)
 	err = check_fsyncdir(dir_ii);
 	return_if_err(err);
 
-	err = flush_dirty_of(task, dir_ii, SILOFS_CTLF_FSYNC);
+	err = silofs_flush_dirty_of(task, dir_ii, SILOFS_CTLF_FSYNC);
 	return_if_err(err);
 
 	return 0;
@@ -1824,7 +1813,7 @@ static int do_fsync(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	err = check_fsync(ii);
 	return_if_err(err);
 
-	err = flush_dirty_of(task, ii, SILOFS_CTLF_FSYNC);
+	err = silofs_flush_dirty_of(task, ii, SILOFS_CTLF_FSYNC);
 	return_if_err(err);
 
 	return 0;
@@ -1855,7 +1844,7 @@ int silofs_do_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 {
 	const int flags = now ? SILOFS_CTLF_NOW : 0;
 
-	return flush_dirty_of(task, ii, flags);
+	return silofs_flush_dirty_of(task, ii, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2624,7 +2613,7 @@ int silofs_do_syncfs(struct silofs_task_ctx *task,
 int silofs_do_maintain(struct silofs_task_ctx *task, int flags)
 {
 	silofs_relax_caches(task->corefs, flags);
-	return silofs_flush_dirty(task, nullptr, flags);
+	return silofs_try_flush_dirty(task, flags);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

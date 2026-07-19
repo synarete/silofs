@@ -58,11 +58,6 @@ void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask);
 
 void silofs_task_update_times(struct silofs_task_ctx *task, bool rt);
 
-int silofs_task_submit(struct silofs_task_ctx *task, bool all);
-
-void silofs_task_enq_loose(struct silofs_task_ctx   *task,
-                           struct silofs_inode_info *ii);
-
 void silofs_lock_fs_by(struct silofs_task_ctx *task);
 
 void silofs_unlock_fs_by(struct silofs_task_ctx *task);
@@ -70,15 +65,5 @@ void silofs_unlock_fs_by(struct silofs_task_ctx *task);
 void silofs_rwlock_fs_by(struct silofs_task_ctx *task);
 
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task);
-
-int silofs_curr_sbi(const struct silofs_task_ctx *task,
-                    struct silofs_sbnode_info   **out_sbi);
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_flush_dirty(struct silofs_task_ctx   *task,
-                       struct silofs_inode_info *ii, int flags);
-
-int silofs_flush_dirty_now(struct silofs_task_ctx *task);
 
 #endif /* SILOFS_TASK_H_ */

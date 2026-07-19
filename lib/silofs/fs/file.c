@@ -27,7 +27,6 @@
 #include <silofs/nodes.h>
 #include <silofs/vfs.h>
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 #define SILOFS_USE_FILE_PRIVATE 1
 #include "filep.h"
@@ -2854,7 +2853,7 @@ static int write_iter_actor(struct silofs_rwiter_ctx *rwi,
 
 static int filc_flush_dirty_of(const struct silofs_file_ctx *f_ctx, int flags)
 {
-	return silofs_flush_dirty(f_ctx->task, f_ctx->ii, flags);
+	return silofs_flush_dirty_of(f_ctx->task, f_ctx->ii, flags);
 }
 
 static int filc_flush_dirty_now(const struct silofs_file_ctx *f_ctx)

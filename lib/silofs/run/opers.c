@@ -57,7 +57,7 @@ static int op_start(struct silofs_task_ctx *task)
 static int
 op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
-	return silofs_flush_dirty(task, ii, SILOFS_CTLF_OPSTART);
+	return silofs_flush_dirty_of(task, ii, SILOFS_CTLF_OPSTART);
 }
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int res)

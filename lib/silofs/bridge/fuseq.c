@@ -4515,10 +4515,8 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 }
 
 static void fuseq_init_common(struct silofs_fuseq *fq,
-                              const struct silofs_core_refs *corefs,
-                              const struct silofs_fuseq_subs *subx)
+                              const struct silofs_core_refs *corefs)
 {
-	memcpy(&fq->fq_subs, subx, sizeof(fq->fq_subs));
 	fq->fq_subs.fq_nsub_run = 0;
 	listq_init(&fq->fq_curr_opers);
 	fq->fq_vfs_hooks       = nullptr;
@@ -4540,27 +4538,27 @@ static void fuseq_init_common(struct silofs_fuseq *fq,
 	fq->fq_allow_interrupt = false;
 }
 
-static int fuseq_init_subs(struct silofs_fuseq *fq)
+static int fuseq_init_subs(struct silofs_fuseq *fq,
+                           struct silofs_fuseq_sub *fq_subs, size_t nsubs)
 {
-	struct silofs_fuseq_sub *fqs = nullptr;
 	int err;
 
+	fq->fq_subs.fq_subs     = fq_subs;
+	fq->fq_subs.fq_nsub_lim = (uint32_t)nsubs;
 	for (uint32_t i = 0; i < fq->fq_subs.fq_nsub_lim; ++i) {
-		fqs = &fq->fq_subs.fq_subs[i];
+		struct silofs_fuseq_sub *fqs = &fq->fq_subs.fq_subs[i];
+
 		err = fqs_init(fqs, fq, i);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }
 
 static void fuseq_fini_subs(struct silofs_fuseq *fq)
 {
-	struct silofs_fuseq_sub *fqs = nullptr;
-
 	for (uint32_t i = 0; i < fq->fq_subs.fq_nsub_lim; ++i) {
-		fqs = &fq->fq_subs.fq_subs[i];
+		struct silofs_fuseq_sub *fqs = &fq->fq_subs.fq_subs[i];
+
 		fqs_fini(fqs);
 	}
 }
@@ -4707,13 +4705,13 @@ static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 
 static int
 fuseq_init(struct silofs_fuseq *fq, const struct silofs_core_refs *corefs,
-           const struct silofs_fuseq_subs *subx)
+           struct silofs_fuseq_sub *fq_subs, size_t nsubs)
 {
 	int err;
 
 	silofs_check_fuse_proto();
 
-	fuseq_init_common(fq, corefs, subx);
+	fuseq_init_common(fq, corefs);
 	fuseq_init_conn_info(fq);
 
 	err = fuseq_init_nilfd(fq);
@@ -4725,7 +4723,7 @@ fuseq_init(struct silofs_fuseq *fq, const struct silofs_core_refs *corefs,
 	err = fuseq_init_locks(fq);
 	goto_if_err(err, out_err);
 
-	err = fuseq_init_subs(fq);
+	err = fuseq_init_subs(fq, fq_subs, nsubs);
 	goto_if_err(err, out_err);
 
 	return 0;
@@ -4930,9 +4928,9 @@ void silofs_fuseq_term(struct silofs_fuseq *fq)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void *address_at(void *ptr, ptrdiff_t dif)
+static void *address_at(void *ptr, size_t dif)
 {
-	return (int8_t *)ptr + dif;
+	return silofs_nextof(ptr, dif);
 }
 
 static uint32_t calc_nsub_lim(void)
@@ -4942,23 +4940,22 @@ static uint32_t calc_nsub_lim(void)
 	return clamp(nproc, 2, 16);
 }
 
-static size_t fuseq_calc_selfsize(const struct silofs_fuseq *fq,
-                                  const struct silofs_fuseq_subs *subx)
+static size_t
+fuseq_calc_selfsize(const struct silofs_fuseq *fq, size_t nsub_lim)
 {
 	const size_t pgsz = (size_t)silofs_sc_page_size();
-	const size_t dsz  = sizeof(subx->fq_subs[0]);
+	const size_t dsz  = sizeof(*fq->fq_subs.fq_subs);
 	size_t sz;
 
 	sz = sizeof(*fq);
-	sz += (subx->fq_nsub_lim * dsz);
+	sz += (nsub_lim * dsz);
 	sz = silofs_div_round_up(sz, pgsz) * pgsz;
 	return sz;
 }
 
-static void
-fuseq_resolve_subx(struct silofs_fuseq *fq, struct silofs_fuseq_subs *subx)
+static struct silofs_fuseq_sub *fuseq_resolve_subs(struct silofs_fuseq *fq)
 {
-	subx->fq_subs = address_at(fq, sizeof(*fq));
+	return address_at(fq, sizeof(*fq));
 }
 
 int silofs_fuseq_new(const struct silofs_core_refs *corefs,
@@ -4966,42 +4963,38 @@ int silofs_fuseq_new(const struct silofs_core_refs *corefs,
                      struct silofs_fuseq **out_fuseq)
 {
 	struct silofs_fuseq *fq          = nullptr;
-	struct silofs_fuseq_subs fq_subs = {
-		.fq_subs     = nullptr,
-		.fq_nsub_lim = calc_nsub_lim(),
-		.fq_nsub_run = 0,
-	};
-	size_t fq_msz = 0;
-	void *fq_mem  = nullptr;
+	struct silofs_fuseq_sub *fs_subs = nullptr;
+	size_t nsubs, fq_msz = 0;
+	void *fq_mem = nullptr;
 	int err;
 
-	fq_msz = fuseq_calc_selfsize(fq, &fq_subs);
-	fq_mem = silofs_memalloc(corefs->alloc, fq_msz, SILOFS_ALLOCF_BZERO);
-	if (fq_mem == nullptr) {
-		return -SILOFS_ENOMEM;
-	}
+	nsubs  = calc_nsub_lim();
+	fq_msz = fuseq_calc_selfsize(fq, nsubs);
+	err    = silofs_new_core_obj(fq_msz, &fq_mem);
+	goto_if_err(err, out_err);
 
-	fq = fq_mem;
-	fuseq_resolve_subx(fq, &fq_subs);
-	err = fuseq_init(fq, corefs, &fq_subs);
-	if (err) {
-		silofs_memfree(corefs->alloc, fq_mem, fq_msz, 0);
-		return err;
-	}
+	fq      = fq_mem;
+	fs_subs = fuseq_resolve_subs(fq);
+	err     = fuseq_init(fq, corefs, fs_subs, nsubs);
+	goto_if_err(err, out_err);
+
 	fq->fq_selfsize  = (uint32_t)fq_msz;
 	fq->fq_corefs    = corefs;
 	fq->fq_vfs_hooks = vfs_hooks;
 
 	*out_fuseq = fq;
 	return 0;
+
+out_err:
+	silofs_del_core_obj(fq_mem, fq_msz);
+	return err;
 }
 
 void silofs_fuseq_del(struct silofs_fuseq *fq)
 {
-	struct silofs_alloc *alloc = fq->fq_corefs->alloc;
-	const size_t fq_msz        = fq->fq_selfsize;
-	void *fq_mem               = fq;
+	const size_t fq_msz = fq->fq_selfsize;
+	void *fq_mem        = fq;
 
 	fuseq_fini(fq);
-	silofs_memfree(alloc, fq_mem, fq_msz, SILOFS_ALLOCF_TRYPUNCH);
+	silofs_del_core_obj(fq_mem, fq_msz);
 }

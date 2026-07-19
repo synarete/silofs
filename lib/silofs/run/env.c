@@ -42,7 +42,7 @@ enum silofs_env_initf {
 };
 
 /* Local functions */
-static void env_unbind_fuseq(struct silofs_env *env);
+static void env_detach_fuseq(struct silofs_env *env);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -493,7 +493,7 @@ static void env_fini_prandgen(struct silofs_env *env)
 
 static void env_fini(struct silofs_env *env)
 {
-	env_unbind_fuseq(env);
+	env_detach_fuseq(env);
 	env_fini_fsroot(env);
 	env_fini_idsmap(env);
 	env_fini_freesqs(env);
@@ -578,52 +578,23 @@ out:
 	return err;
 }
 
-static size_t page_size(void)
+static int env_new_raw(struct silofs_env **out_env)
 {
-	return (size_t)silofs_sc_page_size();
-}
-
-static size_t env_memsize(const struct silofs_env *env)
-{
-	constexpr size_t ensz = sizeof(*env);
-	const size_t pgsz     = page_size();
-	const size_t npgs     = silofs_div_round_up(ensz, pgsz);
-
-	STATICASSERT_LT(sizeof(*env), 65536);
-
-	return npgs * pgsz;
-}
-
-static int env_malloc_mlock(struct silofs_env **out_env)
-{
-	const size_t msz = env_memsize(*out_env);
-	void *mem        = nullptr;
+	void *mem = nullptr;
 	int err;
 
-	err = posix_memalign(&mem, page_size(), msz);
-	if (err) {
-		log_err("posix_memalign failed: msz=%zu err=%d", msz, err);
-		return -abs(err);
-	}
-	err = silofs_sys_mlock(mem, msz);
-	if (err) {
-		free(mem);
-		log_err("mlock failed: msz=%zu err=%d", msz, err);
-		return err;
-	}
-	explicit_bzero(mem, msz);
+	err = silofs_new_core_obj(sizeof(**out_env), &mem);
+	return_if_err(err);
+
 	*out_env = mem;
 	return 0;
 }
 
-static void env_munlock_free(struct silofs_env *env)
+static void env_del_raw(struct silofs_env *env)
 {
-	const size_t msz = env_memsize(env);
-	void *mem        = env;
-
-	explicit_bzero(mem, msz);
-	silofs_sys_munlock(mem, msz);
-	free(mem);
+	if (env != nullptr) {
+		silofs_del_core_obj(env, sizeof(*env));
+	}
 }
 
 static int
@@ -633,13 +604,13 @@ env_new(size_t memwant, enum silofs_flags flags, struct silofs_env **out_env)
 	struct silofs_env *env = nullptr;
 	int err;
 
-	err = env_malloc_mlock(&env);
+	err = env_new_raw(&env);
 	if (err) {
 		return err;
 	}
 	err = env_init(env, memwant, flags);
 	if (err) {
-		env_munlock_free(env);
+		env_del_raw(env);
 		return err;
 	}
 	*out_env = env;
@@ -650,7 +621,7 @@ env_new(size_t memwant, enum silofs_flags flags, struct silofs_env **out_env)
 static void env_del(struct silofs_env *env)
 {
 	env_fini(env);
-	env_munlock_free(env);
+	env_del_raw(env);
 	silofs_burnstack();
 }
 
@@ -699,7 +670,7 @@ static int env_attach_fuseq(struct silofs_env *env)
 	return 0;
 }
 
-static void env_unbind_fuseq(struct silofs_env *env)
+static void env_detach_fuseq(struct silofs_env *env)
 {
 	if (env->initf & SILOFS_ENVF_FUSEQ) {
 		silofs_fuseq_del(env->fuseq);

@@ -67,3 +67,57 @@ int silofs_reinit_ciphers(const struct silofs_core_refs *corefs)
 
 	return 0;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static size_t page_size(void)
+{
+	return (size_t)silofs_sc_page_size();
+}
+
+static size_t aliged_size_of(size_t objsz)
+{
+	const size_t pgsz  = page_size();
+	const size_t npgs  = silofs_div_round_up(objsz, pgsz);
+	const size_t memsz = npgs * pgsz;
+
+	silofs_assert_le(memsz, 65536);
+
+	return memsz;
+}
+
+int silofs_new_core_obj(size_t objsz, void **out_obj)
+{
+	void *mem = nullptr;
+	size_t msz;
+	int err;
+
+	msz = aliged_size_of(objsz);
+	err = posix_memalign(&mem, page_size(), msz);
+	if (err) {
+		log_err("posix_memalign failed: msz=%zu err=%d", msz, err);
+		return -abs(err);
+	}
+	err = silofs_sys_mlock(mem, msz);
+	if (err) {
+		free(mem);
+		log_err("mlock failed: msz=%zu err=%d", msz, err);
+		return err;
+	}
+	explicit_bzero(mem, msz);
+	*out_obj = mem;
+	return 0;
+}
+
+void silofs_del_core_obj(void *obj, size_t objsz)
+{
+	void *mem = obj;
+
+	if (mem != nullptr) {
+		const size_t msz = aliged_size_of(objsz);
+		explicit_bzero(mem, msz);
+
+		silofs_sys_munlock(mem, msz);
+		free(mem);
+	}
+}

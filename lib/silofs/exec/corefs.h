@@ -48,4 +48,10 @@ void silofs_drop_caches(const struct silofs_core_refs *corefs);
 
 int silofs_reinit_ciphers(const struct silofs_core_refs *corefs);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+int silofs_new_core_obj(size_t objsz, void **out_obj);
+
+void silofs_del_core_obj(void *obj, size_t objsz);
+
 #endif /* SILOFS_COREFS_H_ */

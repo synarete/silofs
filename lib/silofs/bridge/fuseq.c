@@ -32,7 +32,12 @@
 #include <silofs/ioctls.h>
 #include <silofs/mntsvc.h>
 #include <silofs/infra.h>
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
 #include <silofs/vfs.h>
+
+/* XXX rm */
+#include <silofs/fs.h>
 #include <silofs/run.h>
 
 #include "fqtypes.h"
@@ -1653,7 +1658,7 @@ static bool fuseq_has_memory_pressure(const struct silofs_fuseq *fq)
 {
 	struct silofs_alloc_stat st;
 
-	silofs_memstat(fq->fq_alloc, &st);
+	silofs_memstat(fq->fq_ectx->alloc, &st);
 	return st.nbytes_use > (st.nbytes_max / 10);
 }
 
@@ -3318,7 +3323,7 @@ static void fqs_setup_task(const struct silofs_fuseq_sub *fqs,
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
 
-	silofs_task_init(task, fq->fq_env);
+	silofs_task_init(task, fq->fq_ectx);
 	fqs_update_task(fqs, task);
 }
 
@@ -3969,7 +3974,7 @@ static struct silofs_alloc *fqs_alloc(const struct silofs_fuseq_sub *fqs)
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
 
-	return fq->fq_alloc;
+	return fq->fq_ectx->alloc;
 }
 
 static int fqs_init_bufs(struct silofs_fuseq_sub *fqs)
@@ -4269,7 +4274,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 	const struct silofs_fuseq *fq  = fqs_fuseq(fqs);
 	const struct silofs_cred *cred = &fq->fq_fsowner;
 
-	silofs_task_init(task, fq->fq_env);
+	silofs_task_init(task, fq->fq_ectx);
 	silofs_task_update_creds(task, cred->uid, cred->gid, cred->umask);
 	silofs_task_update_times(task, false);
 	task->auth.pid  = getpid();
@@ -4414,19 +4419,18 @@ static void fuseq_set_non_active(struct silofs_fuseq *fq)
 
 static int fuseq_update_pipes(struct silofs_fuseq *fq)
 {
-	int mode_flags = (int)(fq->fq_mode_flags);
-	int err;
+	int ret = 0;
 
-	if (fuseq_may_splice(fq) && fuseq_cap_splice(fq)) {
-		err = fuseq_open_pipes(fq);
-		if (err) {
-			fuseq_log_warn("failed to open pipes: err=%d", err);
-			mode_flags &= ~SILOFS_F_MAY_SPLICE;
-			fq->fq_mode_flags = (enum silofs_flags)mode_flags;
-			return err;
+	if (!fuseq_may_splice(fq) || !fuseq_cap_splice(fq)) {
+		fq->fq_may_splice = false;
+	} else {
+		ret = fuseq_open_pipes(fq);
+		if (ret) {
+			fuseq_log_warn("failed to open pipes: err=%d", ret);
+			fq->fq_may_splice = false;
 		}
 	}
-	return 0;
+	return ret;
 }
 
 static int fuseq_init_nilfd(struct silofs_fuseq *fq)
@@ -4511,22 +4515,22 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 }
 
 static void
-fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
+fuseq_init_common(struct silofs_fuseq *fq, const struct silofs_exec_ctx *ectx,
                   const struct silofs_fuseq_subs *subx)
 {
 	memcpy(&fq->fq_subs, subx, sizeof(fq->fq_subs));
 	fq->fq_subs.fq_nsub_run = 0;
 	listq_init(&fq->fq_curr_opers);
-	fq->fq_env             = nullptr;
 	fq->fq_vfs_hooks       = nullptr;
 	fq->fq_pagesize        = (uint32_t)silofs_sc_page_size();
 	fq->fq_nprocs          = (uint32_t)silofs_sc_nproc_onln();
-	fq->fq_alloc           = alloc;
+	fq->fq_ectx            = ectx;
 	fq->fq_nopers          = 0;
 	fq->fq_nexecs          = 0;
 	fq->fq_active          = 0;
 	fq->fq_halt_signal     = 0;
 	fq->fq_fuse_fd         = -1;
+	fq->fq_may_splice      = true;
 	fq->fq_got_init        = false;
 	fq->fq_reply_init_ok   = false;
 	fq->fq_got_destroy     = false;
@@ -4534,7 +4538,6 @@ fuseq_init_common(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
 	fq->fq_mount           = false;
 	fq->fq_umount          = false;
 	fq->fq_allow_interrupt = false;
-	fq->fq_mode_flags      = SILOFS_F_MAY_SPLICE;
 }
 
 static int fuseq_init_subs(struct silofs_fuseq *fq)
@@ -4564,12 +4567,14 @@ static void fuseq_fini_subs(struct silofs_fuseq *fq)
 
 static bool fuseq_may(const struct silofs_fuseq *fq, enum silofs_flags mode)
 {
-	return (fq->fq_mode_flags & mode) == mode;
+	const struct silofs_fsroot *fsroot = fq->fq_ectx->fsroot;
+
+	return (fsroot->ctl_flags & mode) == mode;
 }
 
 static bool fuseq_may_splice(const struct silofs_fuseq *fq)
 {
-	return fuseq_may(fq, SILOFS_F_MAY_SPLICE);
+	return fq->fq_may_splice && fuseq_may(fq, SILOFS_F_MAY_SPLICE);
 }
 
 static size_t fuseq_bufsize_max(const struct silofs_fuseq *fq)
@@ -4653,13 +4658,11 @@ static int fuseq_update_conn_info(struct silofs_fuseq *fq)
 	int err;
 
 	err = fuseq_resolve_bufsize(fq, &bufsize);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = fuseq_calc_max_write(fq, bufsize, &max_write);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	coni->buffsize      = bufsize;
 	coni->max_write     = (uint32_t)max_write;
 	coni->max_read      = (uint32_t)max_write;
@@ -4702,32 +4705,29 @@ static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 	coni->congestion_threshold = coni->max_background / 2;
 }
 
-static int fuseq_init(struct silofs_fuseq *fq, struct silofs_alloc *alloc,
-                      const struct silofs_fuseq_subs *subx)
+static int
+fuseq_init(struct silofs_fuseq *fq, const struct silofs_exec_ctx *ectx,
+           const struct silofs_fuseq_subs *subx)
 {
 	int err;
 
 	silofs_check_fuse_proto();
 
-	fuseq_init_common(fq, alloc, subx);
+	fuseq_init_common(fq, ectx, subx);
 	fuseq_init_conn_info(fq);
 
 	err = fuseq_init_nilfd(fq);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = fuseq_init_pipes(fq);
-	if (err) {
-		goto out_err;
-	}
+	goto_if_err(err, out_err);
+
 	err = fuseq_init_locks(fq);
-	if (err) {
-		goto out_err;
-	}
+	goto_if_err(err, out_err);
+
 	err = fuseq_init_subs(fq);
-	if (err) {
-		goto out_err;
-	}
+	goto_if_err(err, out_err);
+
 	return 0;
 out_err:
 	fuseq_fini_subs(fq);
@@ -4755,8 +4755,6 @@ static void fuseq_fini(struct silofs_fuseq *fq)
 	fuseq_fini_pipes(fq);
 	fuseq_fini_nilfd(fq);
 	silofs_listq_fini(&fq->fq_curr_opers);
-	fq->fq_alloc = nullptr;
-	fq->fq_env   = nullptr;
 }
 
 static void fuseq_update_fsowner(struct silofs_fuseq *fq,
@@ -4928,7 +4926,6 @@ int silofs_fuseq_exec(struct silofs_fuseq *fq)
 void silofs_fuseq_term(struct silofs_fuseq *fq)
 {
 	fuseq_fini_fuse_fd(fq);
-	fq->fq_env = nullptr;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -4964,8 +4961,9 @@ fuseq_resolve_subx(struct silofs_fuseq *fq, struct silofs_fuseq_subs *subx)
 	subx->fq_subs = address_at(fq, sizeof(*fq));
 }
 
-struct silofs_fuseq *
-silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags)
+int silofs_fuseq_new(const struct silofs_exec_ctx *ectx,
+                     const struct silofs_vfs_hooks *vfs_hooks,
+                     struct silofs_fuseq **out_fuseq)
 {
 	struct silofs_fuseq *fq          = nullptr;
 	struct silofs_fuseq_subs fq_subs = {
@@ -4978,27 +4976,31 @@ silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags)
 	int err;
 
 	fq_msz = fuseq_calc_selfsize(fq, &fq_subs);
-	fq_mem = silofs_memalloc(alloc, fq_msz, SILOFS_ALLOCF_BZERO);
+	fq_mem = silofs_memalloc(ectx->alloc, fq_msz, SILOFS_ALLOCF_BZERO);
 	if (fq_mem == nullptr) {
-		return nullptr;
+		return -SILOFS_ENOMEM;
 	}
 
 	fq = fq_mem;
 	fuseq_resolve_subx(fq, &fq_subs);
-	err = fuseq_init(fq, alloc, &fq_subs);
+	err = fuseq_init(fq, ectx, &fq_subs);
 	if (err) {
-		silofs_memfree(alloc, fq_mem, fq_msz, 0);
-		return nullptr;
+		silofs_memfree(ectx->alloc, fq_mem, fq_msz, 0);
+		return err;
 	}
-	fq->fq_selfsize   = (uint32_t)fq_msz;
-	fq->fq_mode_flags = mode_flags;
-	return fq;
+	fq->fq_selfsize  = (uint32_t)fq_msz;
+	fq->fq_ectx      = ectx;
+	fq->fq_vfs_hooks = vfs_hooks;
+
+	*out_fuseq = fq;
+	return 0;
 }
 
-void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc)
+void silofs_fuseq_del(struct silofs_fuseq *fq)
 {
-	const size_t fq_msz = fq->fq_selfsize;
-	void *fq_mem        = fq;
+	struct silofs_alloc *alloc = fq->fq_ectx->alloc;
+	const size_t fq_msz        = fq->fq_selfsize;
+	void *fq_mem               = fq;
 
 	fuseq_fini(fq);
 	silofs_memfree(alloc, fq_mem, fq_msz, SILOFS_ALLOCF_TRYPUNCH);

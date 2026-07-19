@@ -68,15 +68,12 @@ static int task_apply(const struct silofs_task_ctx *task, bool all)
 	return 0;
 }
 
-void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env)
+void silofs_task_init(struct silofs_task_ctx *task,
+                      const struct silofs_exec_ctx *ectx)
 {
-	memset(task, 0, sizeof(*task));
-	silofs_cred_init(&task->auth.creds.fs_cred);
-	silofs_cred_init(&task->auth.creds.host_cred);
-
-	task->env         = env;
-	task->ectx        = &env->ectx;
-	task->repo        = &env->repo;
+	silofs_memzero(task, sizeof(*task));
+	silofs_creds_init(&task->auth.creds);
+	task->ectx        = ectx;
 	task->looseq      = nullptr;
 	task->upper_id    = 0;
 	task->interrupted = 0;
@@ -94,7 +91,9 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_null(task->looseq);
 	silofs_assert_eq(task->fs_locked, false);
 
-	memset(task, 0, sizeof(*task));
+	silofs_creds_fini(&task->auth.creds);
+	task->ectx     = nullptr;
+	task->looseq   = nullptr;
 	task->runnable = false;
 }
 

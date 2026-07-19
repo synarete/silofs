@@ -516,6 +516,7 @@ static void env_init_ectx(struct silofs_env *env)
 	ectx->nilbk     = env->nilbk;
 	ectx->prng      = &env->prandgen;
 	ectx->dstor     = &env->repo.re_dstor;
+	ectx->repo      = &env->repo;
 	ectx->pcache    = &env->pcache;
 	ectx->pspools   = &env->pspools;
 	ectx->md_hd     = &env->md_hd;
@@ -684,27 +685,24 @@ env_populate_idsmap(struct silofs_env *env, const struct silofs_spec *spec)
 	return silofs_idsmap_populate(idsmap, &spec->fsids, allow_hostids);
 }
 
-static int
-env_attach_fuseq(struct silofs_env *env, const struct silofs_spec *spec)
+static int env_attach_fuseq(struct silofs_env *env)
 {
-	struct silofs_fuseq *fuseq;
+	struct silofs_fuseq *fuseq = nullptr;
+	int err;
 
-	fuseq = silofs_fuseq_new(env->alloc, spec->flags);
-	if (fuseq == nullptr) {
-		log_warn("failed to create fuseq: flags=0x%x", spec->flags);
-		return -SILOFS_ENOMEM;
-	}
+	err = silofs_fuseq_new(&env->ectx, env->vfs_hooks, &fuseq);
+	return_if_err(err);
+
 	env->initf |= SILOFS_ENVF_FUSEQ;
 	env->fuseq = fuseq;
 
-	silofs_env_bind_fuseq(env, fuseq);
 	return 0;
 }
 
 static void env_unbind_fuseq(struct silofs_env *env)
 {
 	if (env->initf & SILOFS_ENVF_FUSEQ) {
-		silofs_fuseq_del(env->fuseq, env->alloc);
+		silofs_fuseq_del(env->fuseq);
 		env->fuseq = nullptr;
 		env->initf &= ~SILOFS_ENVF_FUSEQ;
 	}
@@ -735,7 +733,7 @@ int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec)
 	return_if_err(err);
 
 	if (with_fuse(spec)) {
-		err = env_attach_fuseq(env, spec);
+		err = env_attach_fuseq(env);
 		return_if_err(err);
 	}
 
@@ -872,15 +870,6 @@ int silofs_env_setup(struct silofs_env *env, const struct silofs_spec *spec)
 	env_bind_vfs_hooks(env);
 
 	return 0;
-}
-
-void silofs_env_bind_fuseq(struct silofs_env *env, struct silofs_fuseq *fq)
-{
-	if (fq != nullptr) {
-		fq->fq_env       = env;
-		fq->fq_vfs_hooks = env->vfs_hooks;
-	}
-	env->fuseq = fq;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

@@ -18,6 +18,23 @@
 
 #include <silofs/exec.h>
 
+int silofs_sanitize_status_code(int status)
+{
+	int err;
+
+	if (!status) {
+		return 0;
+	}
+	err = abs(status);
+	if (err >= SILOFS_ERRBASE2) {
+		return -EUCLEAN;
+	}
+	if (err >= SILOFS_ERRBASE) {
+		return -abs(err - SILOFS_ERRBASE);
+	}
+	return -err;
+}
+
 void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags)
 {
 	silofs_pcache_relax(ectx->pcache, flags);

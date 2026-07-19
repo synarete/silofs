@@ -95,3 +95,17 @@ void silofs_cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid,
 	cred->gid   = gid;
 	cred->umask = umsk;
 }
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_creds_init(struct silofs_creds *creds)
+{
+	silofs_cred_init(&creds->fs_cred);
+	silofs_cred_init(&creds->host_cred);
+}
+
+void silofs_creds_fini(struct silofs_creds *creds)
+{
+	silofs_cred_fini(&creds->fs_cred);
+	silofs_cred_fini(&creds->host_cred);
+}

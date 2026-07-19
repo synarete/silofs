@@ -49,4 +49,10 @@ void silofs_cred_assign(struct silofs_cred       *cred,
 void silofs_cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid,
                        mode_t umsk);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_creds_init(struct silofs_creds *creds);
+
+void silofs_creds_fini(struct silofs_creds *creds);
+
 #endif /* SILOFS_CREDS_H_ */

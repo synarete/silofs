@@ -106,7 +106,7 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = silofs_repo_fsync_all(task->repo);
+	err = silofs_repo_fsync_all(task->ectx->repo);
 	return_if_err(err);
 
 	release_uber(task);
@@ -117,7 +117,7 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 
 static int close_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_close(task->repo);
+	return silofs_repo_close(task->ectx->repo);
 }
 
 static int appexec_unload_fs(struct silofs_task_ctx *task)
@@ -228,7 +228,7 @@ static int map_task_creds(struct silofs_task_ctx *task)
 
 static int make_priv_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
-	silofs_task_init(task, env);
+	silofs_task_init(task, &env->ectx);
 	silofs_task_update_times(task, true);
 	silofs_task_update_creds(task, getuid(), getgid(), 0077);
 	task->priv_op = true;
@@ -938,24 +938,12 @@ void silofs_getfsmeta(struct silofs_fsmeta *out_fsmeta)
 	silofs_fsmeta_setup(out_fsmeta);
 }
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-int silofs_remap_status_code(int status)
-{
-	int ret = status;
-
-	if (ret) {
-		ret = abs(status);
-		if (ret >= SILOFS_ERRBASE2) {
-			ret = EUCLEAN;
-		} else if (ret >= SILOFS_ERRBASE) {
-			ret = (ret - SILOFS_ERRBASE);
-		}
-	}
-	return -ret;
-}
-
 int silofs_mkpasswd(struct silofs_password *pw, const char *s)
 {
 	return silofs_password_setup(pw, s);
+}
+
+int silofs_remap_status_code(int status)
+{
+	return silofs_sanitize_status_code(status);
 }

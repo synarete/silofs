@@ -30,8 +30,6 @@ struct silofs_task_auth {
 struct silofs_task_ctx {
 	struct silofs_task_auth       auth;
 	const struct silofs_exec_ctx *ectx;
-	struct silofs_env            *env;
-	struct silofs_repo           *repo;
 	struct silofs_inode_info     *looseq;
 	uint64_t                      upper_id;
 	struct timespec               op_start_time;
@@ -45,7 +43,8 @@ struct silofs_task_ctx {
 	bool                          internal;
 };
 
-void silofs_task_init(struct silofs_task_ctx *task, struct silofs_env *env);
+void silofs_task_init(struct silofs_task_ctx       *task,
+                      const struct silofs_exec_ctx *ectx);
 
 void silofs_task_fini(struct silofs_task_ctx *task);
 

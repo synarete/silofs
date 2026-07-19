@@ -19,7 +19,6 @@
 
 #include <silofs/ioctls.h>
 
-struct silofs_task_ctx;
 struct silofs_readdir_ctx;
 struct silofs_rwiter_ctx;
 struct silofs_listxattr_ctx;

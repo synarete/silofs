@@ -2445,7 +2445,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 	err = silofs_flush_dirty_now(task);
 	return_if_err(err);
 
-	err = silofs_repo_fsync_all(task->repo);
+	err = silofs_repo_fsync_all(task->ectx->repo);
 	return_if_err(err);
 
 	return 0;
@@ -2455,7 +2455,6 @@ static int
 do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
           int flags, struct silofs_mbrefs *out_mbrefs)
 {
-	struct silofs_env *env = task->env;
 	int err;
 
 	err = check_clone(task, dir_ii, flags);
@@ -2464,7 +2463,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = flush_and_sync(task);
 	return_if_err(err);
 
-	err = silofs_env_forkfs(env, out_mbrefs);
+	err = silofs_env_forkfs(nullptr, out_mbrefs); /* XXX FIXME */
 	return_if_err(err);
 
 	err = flush_and_sync(task);

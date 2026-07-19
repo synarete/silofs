@@ -30,6 +30,7 @@ struct silofs_exec_ctx {
 	struct silofs_cipher_hd    *dec_ci_hd;
 	struct silofs_fsroot       *fsroot;
 	struct silofs_dstor        *dstor;
+	struct silofs_repo         *repo;
 	struct silofs_pcache       *pcache;
 	struct silofs_pspools      *pspools;
 	struct silofs_lcache       *lcache;
@@ -38,6 +39,8 @@ struct silofs_exec_ctx {
 	const struct silofs_idsmap *idsmap;
 	const struct silofs_uconv  *uconv;
 };
+
+int silofs_sanitize_status_code(int status);
 
 void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);
 

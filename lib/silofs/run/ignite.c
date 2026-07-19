@@ -122,13 +122,11 @@ int silofs_exec_format_repo(struct silofs_task_ctx *task)
 	int err;
 
 	err = pre_format_repo(task);
-	if (err) {
-		return err;
-	}
-	err = silofs_repo_format(task->repo, repodir_of(task));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
+	err = silofs_repo_format(task->ectx->repo, repodir_of(task));
+	return_if_err(err);
+
 	post_format_repo(task);
 	return 0;
 }
@@ -140,7 +138,7 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 
 static int open_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_open(task->repo, repodir_of(task),
+	return silofs_repo_open(task->ectx->repo, repodir_of(task),
 	                        task->ectx->fsroot->ctl_flags);
 }
 
@@ -148,7 +146,7 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 {
 	int err;
 
-	if (task->repo->re_opened) {
+	if (task->ectx->repo->re_opened) {
 		return 0; /* no-op */
 	}
 

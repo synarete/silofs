@@ -89,38 +89,38 @@ struct silofs_fuseq {
 	struct silofs_mutex            fq_op_lock;
 	struct silofs_mutex            fq_ctl_lock;
 	struct silofs_sem              fq_sem;
-	struct silofs_env             *fq_env;
-	struct silofs_alloc           *fq_alloc;
 	struct silofs_fuseq_subs       fq_subs;
 	struct silofs_listq            fq_pipes_freeq;
 	struct silofs_listq            fq_curr_opers;
+	const struct silofs_exec_ctx  *fq_ectx;
 	const struct silofs_vfs_hooks *fq_vfs_hooks;
 	volatile int                   fq_fuse_fd;
 	volatile int                   fq_halt_signal;
 
 	/* control state */
-	enum silofs_flags fq_mode_flags;
-	uint32_t          fq_selfsize;
-	uint32_t          fq_pagesize;
-	uint32_t          fq_nprocs;
-	int64_t           fq_nexecs;
-	int64_t           fq_nopers;
-	int               fq_active;
-	bool              fq_init_pipes;
-	bool              fq_init_locks;
-	bool              fq_got_init;
-	bool              fq_reply_init_ok;
-	bool              fq_got_destroy;
-	bool              fq_deny_others;
-	bool              fq_mount;
-	bool              fq_umount;
-	bool              fq_allow_interrupt;
+	uint32_t fq_selfsize;
+	uint32_t fq_pagesize;
+	uint32_t fq_nprocs;
+	int64_t  fq_nexecs;
+	int64_t  fq_nopers;
+	int      fq_active;
+	bool     fq_may_splice;
+	bool     fq_init_pipes;
+	bool     fq_init_locks;
+	bool     fq_got_init;
+	bool     fq_reply_init_ok;
+	bool     fq_got_destroy;
+	bool     fq_deny_others;
+	bool     fq_mount;
+	bool     fq_umount;
+	bool     fq_allow_interrupt;
 } silofs_attr_aligned64;
 
-struct silofs_fuseq *
-silofs_fuseq_new(struct silofs_alloc *alloc, enum silofs_flags mode_flags);
+int silofs_fuseq_new(const struct silofs_exec_ctx  *ectx,
+                     const struct silofs_vfs_hooks *vfs_hooks,
+                     struct silofs_fuseq          **out_fuseq);
 
-void silofs_fuseq_del(struct silofs_fuseq *fq, struct silofs_alloc *alloc);
+void silofs_fuseq_del(struct silofs_fuseq *fq);
 
 int silofs_fuseq_update(struct silofs_fuseq      *fq,
                         const struct silofs_cred *fsowner);

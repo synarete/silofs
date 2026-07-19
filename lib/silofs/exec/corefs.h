@@ -14,14 +14,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  */
-#ifndef SILOFS_ECTX_H_
-#define SILOFS_ECTX_H_
+#ifndef SILOFS_COREFS_H_
+#define SILOFS_COREFS_H_
 
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/nodes.h>
 
-struct silofs_exec_ctx {
+struct silofs_core_refs {
 	struct silofs_alloc        *alloc;
 	struct silofs_lblock       *nilbk;
 	struct silofs_prandgen     *prng;
@@ -42,10 +42,10 @@ struct silofs_exec_ctx {
 
 int silofs_sanitize_status_code(int status);
 
-void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags);
+void silofs_relax_caches(const struct silofs_core_refs *corefs, int flags);
 
-void silofs_drop_caches(const struct silofs_exec_ctx *ectx);
+void silofs_drop_caches(const struct silofs_core_refs *corefs);
 
-int silofs_reinit_ciphers(const struct silofs_exec_ctx *ectx);
+int silofs_reinit_ciphers(const struct silofs_core_refs *corefs);
 
-#endif /* SILOFS_ECTX_H_ */
+#endif /* SILOFS_COREFS_H_ */

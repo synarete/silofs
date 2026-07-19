@@ -35,34 +35,34 @@ int silofs_sanitize_status_code(int status)
 	return -err;
 }
 
-void silofs_relax_caches(const struct silofs_exec_ctx *ectx, int flags)
+void silofs_relax_caches(const struct silofs_core_refs *corefs, int flags)
 {
-	silofs_pcache_relax(ectx->pcache, flags);
-	silofs_lcache_relax(ectx->lcache, flags);
+	silofs_pcache_relax(corefs->pcache, flags);
+	silofs_lcache_relax(corefs->lcache, flags);
 	if (flags & SILOFS_CTLF_IDLE) {
-		silofs_dstor_relax(ectx->dstor);
+		silofs_dstor_relax(corefs->dstor);
 	}
 }
 
-void silofs_drop_caches(const struct silofs_exec_ctx *ectx)
+void silofs_drop_caches(const struct silofs_core_refs *corefs)
 {
-	silofs_pspools_drop(ectx->pspools);
-	silofs_lspools_drop(ectx->lspools);
-	silofs_pcache_drop(ectx->pcache);
-	silofs_lcache_drop(ectx->lcache);
-	silofs_dstor_drop(ectx->dstor);
+	silofs_pspools_drop(corefs->pspools);
+	silofs_lspools_drop(corefs->lspools);
+	silofs_pcache_drop(corefs->pcache);
+	silofs_lcache_drop(corefs->lcache);
+	silofs_dstor_drop(corefs->dstor);
 }
 
-int silofs_reinit_ciphers(const struct silofs_exec_ctx *ectx)
+int silofs_reinit_ciphers(const struct silofs_core_refs *corefs)
 {
-	const struct silofs_mbr_meta *mbr_meta = &ectx->fsroot->mbr_meta;
+	const struct silofs_mbr_meta *mbr_meta = &corefs->fsroot->mbr_meta;
 	const struct silofs_ciargs *ciargs     = &mbr_meta->nmeta.ciargs;
 	int err;
 
-	err = silofs_cipher_reinit(ectx->enc_ci_hd, ciargs);
+	err = silofs_cipher_reinit(corefs->enc_ci_hd, ciargs);
 	return_if_err(err);
 
-	err = silofs_cipher_reinit(ectx->dec_ci_hd, ciargs);
+	err = silofs_cipher_reinit(corefs->dec_ci_hd, ciargs);
 	return_if_err(err);
 
 	return 0;

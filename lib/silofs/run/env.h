@@ -51,7 +51,7 @@ struct silofs_env {
 	struct silofs_cipher_hd        dec_ci_hd;
 	struct silofs_mdigest_hd       md_hd;
 	struct silofs_uconv            uconv;
-	struct silofs_exec_ctx         ectx;
+	struct silofs_core_refs        corefs;
 	struct silofs_strbuf           name;
 	char                          *repodir;
 	long                           initf;

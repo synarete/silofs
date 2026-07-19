@@ -45,7 +45,7 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 
 void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task)
 {
-	silofs_task_init(task, &ute->env->ectx);
+	silofs_task_init(task, &ute->env->corefs);
 	silofs_task_update_creds(task, getuid(), getgid(), 0002);
 	silofs_task_update_times(task, true);
 	task->auth.unique = ut_unique_opid(ute);

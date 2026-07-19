@@ -92,7 +92,7 @@ struct silofs_fuseq {
 	struct silofs_fuseq_subs       fq_subs;
 	struct silofs_listq            fq_pipes_freeq;
 	struct silofs_listq            fq_curr_opers;
-	const struct silofs_exec_ctx  *fq_ectx;
+	const struct silofs_core_refs *fq_corefs;
 	const struct silofs_vfs_hooks *fq_vfs_hooks;
 	volatile int                   fq_fuse_fd;
 	volatile int                   fq_halt_signal;
@@ -116,7 +116,7 @@ struct silofs_fuseq {
 	bool     fq_allow_interrupt;
 } silofs_attr_aligned64;
 
-int silofs_fuseq_new(const struct silofs_exec_ctx  *ectx,
+int silofs_fuseq_new(const struct silofs_core_refs *corefs,
                      const struct silofs_vfs_hooks *vfs_hooks,
                      struct silofs_fuseq          **out_fuseq);
 

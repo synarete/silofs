@@ -171,26 +171,26 @@ static void bpath_dup(const struct silofs_btree_path *bpath,
 struct silofs_btree_ctx {
 	struct silofs_btree_path bpath;
 	struct silofs_laddr laddr;
-	const struct silofs_exec_ctx *ectx;
+	const struct silofs_core_refs *corefs;
 	struct silofs_uber_info *ubi;
 	uint64_t key;
 };
 
 static void
-btc_init(struct silofs_btree_ctx *btc, const struct silofs_exec_ctx *ectx,
+btc_init(struct silofs_btree_ctx *btc, const struct silofs_core_refs *corefs,
          const struct silofs_laddr *laddr)
 {
 	silofs_memzero(btc, sizeof(*btc));
 	bpath_init(&btc->bpath);
 	silofs_laddr_assign(&btc->laddr, laddr);
-	btc->ectx = ectx;
-	btc->ubi  = ectx->fsroot->ubi;
+	btc->corefs = corefs;
+	btc->ubi    = corefs->fsroot->ubi;
 }
 
 static void btc_fini(struct silofs_btree_ctx *btc)
 {
 	bpath_fini(&btc->bpath);
-	btc->ectx = nullptr;
+	btc->corefs = nullptr;
 }
 
 static uint64_t btc_key(const struct silofs_btree_ctx *btc)
@@ -279,7 +279,7 @@ static int btc_stage_btnode(const struct silofs_btree_ctx *btc,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_btnode_info **out_bti)
 {
-	return silofs_stage_btnode(btc->ectx, pnptr, out_bti);
+	return silofs_stage_btnode(btc->corefs, pnptr, out_bti);
 }
 
 static void btc_resolve_btroot(const struct silofs_btree_ctx *btc,
@@ -503,14 +503,14 @@ static int btc_spawn_btnode_at(const struct silofs_btree_ctx *btc,
                                const struct silofs_pnptr *pnptr,
                                struct silofs_btnode_info **out_bti)
 {
-	return silofs_spawn_btnode(btc->ectx, pnptr, out_bti);
+	return silofs_spawn_btnode(btc->corefs, pnptr, out_bti);
 }
 
 static int btc_carve_btspace(const struct silofs_btree_ctx *btc,
                              struct silofs_pnptr *out_pnptr)
 {
 	/* TODO: check avail space, RDONLY etc */
-	return silofs_carve_btspace_pnptr(btc->ectx, btc_vspace(btc),
+	return silofs_carve_btspace_pnptr(btc->corefs, btc_vspace(btc),
 	                                  out_pnptr);
 }
 
@@ -960,20 +960,20 @@ static int btc_remove_ltop(struct silofs_btree_ctx *btc)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_resolve_ltop_bpath(const struct silofs_exec_ctx *ectx,
+int silofs_resolve_ltop_bpath(const struct silofs_core_refs *corefs,
                               const struct silofs_laddr *laddr,
                               struct silofs_btree_path *out_bpath)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_resolve_bpath(&btc, out_bpath);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_resolve_ltop_parent(const struct silofs_exec_ctx *ectx,
+int silofs_resolve_ltop_parent(const struct silofs_core_refs *corefs,
                                const struct silofs_laddr *laddr,
                                const struct silofs_paddr *paddr,
                                struct silofs_pnptr *out_pnptr)
@@ -981,71 +981,71 @@ int silofs_resolve_ltop_parent(const struct silofs_exec_ctx *ectx,
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_resolve_parent(&btc, paddr, out_pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_resolve_ltop_btleaf(const struct silofs_exec_ctx *ectx,
+int silofs_resolve_ltop_btleaf(const struct silofs_core_refs *corefs,
                                const struct silofs_laddr *laddr,
                                struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_resolve_btleaf(&btc, out_pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_resolve_ltop_mapping(const struct silofs_exec_ctx *ectx,
+int silofs_resolve_ltop_mapping(const struct silofs_core_refs *corefs,
                                 const struct silofs_laddr *laddr,
                                 struct silofs_pnptr *out_pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_resolve_ltop(&btc, out_pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_insert_ltop_mapping(const struct silofs_exec_ctx *ectx,
+int silofs_insert_ltop_mapping(const struct silofs_core_refs *corefs,
                                const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_insert_ltop(&btc, pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_update_ltop_mapping(const struct silofs_exec_ctx *ectx,
+int silofs_update_ltop_mapping(const struct silofs_core_refs *corefs,
                                const struct silofs_laddr *laddr,
                                const struct silofs_pnptr *pnptr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_update_ltop(&btc, pnptr);
 	btc_fini(&btc);
 	return err;
 }
 
-int silofs_remove_ltop_mapping(const struct silofs_exec_ctx *ectx,
+int silofs_remove_ltop_mapping(const struct silofs_core_refs *corefs,
                                const struct silofs_laddr *laddr)
 {
 	struct silofs_btree_ctx btc;
 	int err;
 
-	btc_init(&btc, ectx, laddr);
+	btc_init(&btc, corefs, laddr);
 	err = btc_remove_ltop(&btc);
 	btc_fini(&btc);
 	return err;

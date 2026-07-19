@@ -28,12 +28,12 @@
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_drop_caches(task->ectx);
+	silofs_drop_caches(task->corefs);
 }
 
 static void relax_caches(struct silofs_task_ctx *task)
 {
-	silofs_relax_caches(task->ectx, SILOFS_CTLF_IDLE);
+	silofs_relax_caches(task->corefs, SILOFS_CTLF_IDLE);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -51,7 +51,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static const char *repodir_of(const struct silofs_task_ctx *task)
 {
-	return task->ectx->fsroot->baseref.repodir;
+	return task->corefs->fsroot->baseref.repodir;
 }
 
 static int iter_repodir(const char *repodir, size_t *out_ndes)
@@ -124,7 +124,7 @@ int silofs_exec_format_repo(struct silofs_task_ctx *task)
 	err = pre_format_repo(task);
 	return_if_err(err);
 
-	err = silofs_repo_format(task->ectx->repo, repodir_of(task));
+	err = silofs_repo_format(task->corefs->repo, repodir_of(task));
 	return_if_err(err);
 
 	post_format_repo(task);
@@ -138,15 +138,15 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 
 static int open_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_open(task->ectx->repo, repodir_of(task),
-	                        task->ectx->fsroot->ctl_flags);
+	return silofs_repo_open(task->corefs->repo, repodir_of(task),
+	                        task->corefs->fsroot->ctl_flags);
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 {
 	int err;
 
-	if (task->ectx->repo->re_opened) {
+	if (task->corefs->repo->re_opened) {
 		return 0; /* no-op */
 	}
 
@@ -163,13 +163,13 @@ int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 
 static int reinit_ciphers(struct silofs_task_ctx *task)
 {
-	return silofs_reinit_ciphers(task->ectx);
+	return silofs_reinit_ciphers(task->corefs);
 }
 
 static int
 post_format(struct silofs_task_ctx *task, const struct silofs_pnptr *pnptr)
 {
-	silofs_update_root_uber(task->ectx->fsroot, pnptr, &silofs_sw_vers);
+	silofs_update_root_uber(task->corefs->fsroot, pnptr, &silofs_sw_vers);
 	return flush_dirty(task);
 }
 
@@ -195,7 +195,7 @@ int silofs_exec_format_meta(struct silofs_task_ctx *task, size_t fs_capacity)
 static int
 commit_mbr(struct silofs_task_ctx *task, struct silofs_mbref *out_mbref)
 {
-	return silofs_commit_mbr(task->ectx, out_mbref);
+	return silofs_commit_mbr(task->corefs, out_mbref);
 }
 
 static int post_commit_mbr(struct silofs_task_ctx *task)
@@ -224,13 +224,13 @@ static int resolve_root_uber(const struct silofs_task_ctx *task,
 {
 	struct silofs_sw_version swv;
 
-	return silofs_resolve_root_uber(task->ectx->fsroot, out_pnptr, &swv);
+	return silofs_resolve_root_uber(task->corefs->fsroot, out_pnptr, &swv);
 }
 
 static int
 reload_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_reload_mbr(task->ectx, mbref);
+	return silofs_reload_mbr(task->corefs, mbref);
 }
 
 int silofs_exec_reload_meta(struct silofs_task_ctx *task,

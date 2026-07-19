@@ -27,7 +27,7 @@ static int resolve_spnode_mapping(const struct silofs_task_ctx *task,
 {
 	silofs_assert_eq(laddr->ltype, SILOFS_LTYPE_SPNODE);
 
-	return silofs_resolve_ltop_mapping(task->ectx, laddr, out_pnptr);
+	return silofs_resolve_ltop_mapping(task->corefs, laddr, out_pnptr);
 }
 
 static int stage_spnode_with(const struct silofs_task_ctx *task,
@@ -39,7 +39,7 @@ static int stage_spnode_with(const struct silofs_task_ctx *task,
 	struct silofs_lnode_info *lni      = nullptr;
 	int err;
 
-	err = silofs_stage_lnode_with(task->ectx, laddr, pnptr, lspf, &lni);
+	err = silofs_stage_lnode_with(task->corefs, laddr, pnptr, lspf, &lni);
 	return_if_err(err);
 
 	*out_spi = silofs_spi_from_lni(lni);
@@ -306,7 +306,7 @@ claim_free_by_lspool(const struct silofs_task_ctx *task,
 	struct silofs_spnode_info *spi = nullptr;
 	int err;
 
-	err = silofs_lspools_pull(task->ectx->lspools, ltype, out_laddr);
+	err = silofs_lspools_pull(task->corefs->lspools, ltype, out_laddr);
 	return_if_err(err);
 
 	err = stage_spnode_by(task, out_laddr, &spi);

@@ -28,23 +28,23 @@ struct silofs_task_auth {
 
 /* execution-context */
 struct silofs_task_ctx {
-	struct silofs_task_auth       auth;
-	const struct silofs_exec_ctx *ectx;
-	struct silofs_inode_info     *looseq;
-	uint64_t                      upper_id;
-	struct timespec               op_start_time;
-	volatile int8_t               interrupted;
-	volatile bool                 fs_locked;
-	volatile bool                 rw_locked;
-	bool                          exclusive;
-	bool                          priv_op;
-	bool                          kwrite;
-	bool                          runnable;
-	bool                          internal;
+	struct silofs_task_auth        auth;
+	const struct silofs_core_refs *corefs;
+	struct silofs_inode_info      *looseq;
+	uint64_t                       upper_id;
+	struct timespec                op_start_time;
+	volatile int8_t                interrupted;
+	volatile bool                  fs_locked;
+	volatile bool                  rw_locked;
+	bool                           exclusive;
+	bool                           priv_op;
+	bool                           kwrite;
+	bool                           runnable;
+	bool                           internal;
 };
 
-void silofs_task_init(struct silofs_task_ctx       *task,
-                      const struct silofs_exec_ctx *ectx);
+void silofs_task_init(struct silofs_task_ctx        *task,
+                      const struct silofs_core_refs *corefs);
 
 void silofs_task_fini(struct silofs_task_ctx *task);
 

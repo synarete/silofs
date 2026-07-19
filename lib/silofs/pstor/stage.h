@@ -17,52 +17,52 @@
 #ifndef SILOFS_STAGE_H_
 #define SILOFS_STAGE_H_
 
-int silofs_spawn_uber(const struct silofs_exec_ctx *ectx,
-                      const struct silofs_pnptr    *pnptr,
-                      struct silofs_uber_info     **out_ubi);
+int silofs_spawn_uber(const struct silofs_core_refs *corefs,
+                      const struct silofs_pnptr     *pnptr,
+                      struct silofs_uber_info      **out_ubi);
 
-int silofs_stage_uber(const struct silofs_exec_ctx *ectx,
-                      const struct silofs_pnptr    *pnptr,
-                      struct silofs_uber_info     **out_ubi);
+int silofs_stage_uber(const struct silofs_core_refs *corefs,
+                      const struct silofs_pnptr     *pnptr,
+                      struct silofs_uber_info      **out_ubi);
 
-int silofs_spawn_bldesc(const struct silofs_exec_ctx *ectx,
-                        const struct silofs_pnptr    *pnptr,
-                        struct silofs_bldesc_info   **out_bdi);
+int silofs_spawn_bldesc(const struct silofs_core_refs *corefs,
+                        const struct silofs_pnptr     *pnptr,
+                        struct silofs_bldesc_info    **out_bdi);
 
-int silofs_stage_bldesc(const struct silofs_exec_ctx *ectx,
-                        const struct silofs_pnptr    *pnptr,
-                        struct silofs_bldesc_info   **out_bdi);
+int silofs_stage_bldesc(const struct silofs_core_refs *corefs,
+                        const struct silofs_pnptr     *pnptr,
+                        struct silofs_bldesc_info    **out_bdi);
 
-int silofs_spawn_btnode(const struct silofs_exec_ctx *ectx,
-                        const struct silofs_pnptr    *pnptr,
-                        struct silofs_btnode_info   **out_bti);
+int silofs_spawn_btnode(const struct silofs_core_refs *corefs,
+                        const struct silofs_pnptr     *pnptr,
+                        struct silofs_btnode_info    **out_bti);
 
-int silofs_stage_btnode(const struct silofs_exec_ctx *ectx,
-                        const struct silofs_pnptr    *pnptr,
-                        struct silofs_btnode_info   **out_bti);
+int silofs_stage_btnode(const struct silofs_core_refs *corefs,
+                        const struct silofs_pnptr     *pnptr,
+                        struct silofs_btnode_info    **out_bti);
 
-int silofs_spawn_lnode_with(const struct silofs_exec_ctx *ectx,
-                            const struct silofs_laddr    *laddr,
-                            const struct silofs_pnptr    *pnptr,
-                            struct silofs_lnode_info    **out_lni);
+int silofs_spawn_lnode_with(const struct silofs_core_refs *corefs,
+                            const struct silofs_laddr     *laddr,
+                            const struct silofs_pnptr     *pnptr,
+                            struct silofs_lnode_info     **out_lni);
 
-int silofs_claim_lnode_pspace(const struct silofs_exec_ctx *ectx,
-                              const struct silofs_laddr    *laddr,
-                              const struct silofs_pnptr    *pnptr);
+int silofs_claim_lnode_pspace(const struct silofs_core_refs *corefs,
+                              const struct silofs_laddr     *laddr,
+                              const struct silofs_pnptr     *pnptr);
 
-int silofs_stage_lnode_with(const struct silofs_exec_ctx *ectx,
-                            const struct silofs_laddr    *laddr,
-                            const struct silofs_pnptr    *pnptr,
-                            enum silofs_lspacef           spacef,
-                            struct silofs_lnode_info    **out_lni);
+int silofs_stage_lnode_with(const struct silofs_core_refs *corefs,
+                            const struct silofs_laddr     *laddr,
+                            const struct silofs_pnptr     *pnptr,
+                            enum silofs_lspacef            spacef,
+                            struct silofs_lnode_info     **out_lni);
 
-int silofs_detach_lnode_at(const struct silofs_exec_ctx *ectx,
-                           const struct silofs_laddr    *laddr,
-                           const struct silofs_pnptr    *pnptr);
+int silofs_detach_lnode_at(const struct silofs_core_refs *corefs,
+                           const struct silofs_laddr     *laddr,
+                           const struct silofs_pnptr     *pnptr);
 
-int silofs_require_paddr(const struct silofs_exec_ctx *ectx,
-                         const struct silofs_paddr    *paddr);
+int silofs_require_paddr(const struct silofs_core_refs *corefs,
+                         const struct silofs_paddr     *paddr);
 
-int silofs_destage_dirty_nodes(const struct silofs_exec_ctx *ectx);
+int silofs_destage_dirty_nodes(const struct silofs_core_refs *corefs);
 
 #endif /* SILOFS_STAGE_H_ */

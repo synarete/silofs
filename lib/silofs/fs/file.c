@@ -853,7 +853,7 @@ static void filc_decref(const struct silofs_file_ctx *f_ctx)
 
 static void *filc_nilbk(const struct silofs_file_ctx *f_ctx)
 {
-	struct silofs_lblock *nilbk = f_ctx->task->ectx->nilbk;
+	struct silofs_lblock *nilbk = f_ctx->task->corefs->nilbk;
 
 	return nilbk->u.bk;
 }
@@ -1808,7 +1808,7 @@ static bool filc_asyncwr_mode(const struct silofs_file_ctx *f_ctx)
 
 	if (f_ctx->op == SILOFS_FILE_OP_WRITE) {
 		const enum silofs_flags ctl_flags =
-			f_ctx->task->ectx->fsroot->ctl_flags;
+			f_ctx->task->corefs->fsroot->ctl_flags;
 
 		asyncwr = (ctl_flags & SILOFS_F_ASYNCWR) > 0;
 	}

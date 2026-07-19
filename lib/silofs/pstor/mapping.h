@@ -17,19 +17,19 @@
 #ifndef SILOFS_MAPPING_H_
 #define SILOFS_MAPPING_H_
 
-int silofs_stage_lnode_by_mapping(const struct silofs_exec_ctx *ectx,
-                                  const struct silofs_laddr    *laddr,
-                                  enum silofs_lspacef           lspf,
-                                  struct silofs_lnode_info    **out_lni);
+int silofs_stage_lnode_by_mapping(const struct silofs_core_refs *corefs,
+                                  const struct silofs_laddr     *laddr,
+                                  enum silofs_lspacef            lspf,
+                                  struct silofs_lnode_info     **out_lni);
 
-int silofs_spawn_lnode_by_mapping(const struct silofs_exec_ctx *ectx,
-                                  const struct silofs_laddr    *laddr,
-                                  struct silofs_lnode_info    **out_lni);
+int silofs_spawn_lnode_by_mapping(const struct silofs_core_refs *corefs,
+                                  const struct silofs_laddr     *laddr,
+                                  struct silofs_lnode_info     **out_lni);
 
-int silofs_claim_lnode_mapping(const struct silofs_exec_ctx *ectx,
-                               const struct silofs_laddr    *laddr);
+int silofs_claim_lnode_mapping(const struct silofs_core_refs *corefs,
+                               const struct silofs_laddr     *laddr);
 
-int silofs_reclaim_lnode_mapping(const struct silofs_exec_ctx *ectx,
-                                 const struct silofs_laddr    *laddr);
+int silofs_reclaim_lnode_mapping(const struct silofs_core_refs *corefs,
+                                 const struct silofs_laddr     *laddr);
 
 #endif /* SILOFS_MAPPING_H_ */

@@ -20,16 +20,16 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-int silofs_sense_mbr(const struct silofs_exec_ctx *ectx,
-                     const struct silofs_mbref    *mbref);
+int silofs_sense_mbr(const struct silofs_core_refs *corefs,
+                     const struct silofs_mbref     *mbref);
 
-int silofs_commit_mbr(const struct silofs_exec_ctx *ectx,
-                      struct silofs_mbref          *out_mbref);
+int silofs_commit_mbr(const struct silofs_core_refs *corefs,
+                      struct silofs_mbref           *out_mbref);
 
-int silofs_reload_mbr(const struct silofs_exec_ctx *ectx,
-                      const struct silofs_mbref    *mbref);
+int silofs_reload_mbr(const struct silofs_core_refs *corefs,
+                      const struct silofs_mbref     *mbref);
 
-int silofs_unref_mbr(const struct silofs_exec_ctx *ectx,
-                     const struct silofs_mbref    *mbref);
+int silofs_unref_mbr(const struct silofs_core_refs *corefs,
+                     const struct silofs_mbref     *mbref);
 
 #endif /* SILOFS_MBROPS_H_ */

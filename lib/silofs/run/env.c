@@ -508,26 +508,26 @@ static void env_fini(struct silofs_env *env)
 	env_fini_commons(env);
 }
 
-static void env_init_ectx(struct silofs_env *env)
+static void env_init_corefs(struct silofs_env *env)
 {
-	struct silofs_exec_ctx *ectx = &env->ectx;
+	struct silofs_core_refs *corefs = &env->corefs;
 
-	ectx->alloc     = env->alloc;
-	ectx->nilbk     = env->nilbk;
-	ectx->prng      = &env->prandgen;
-	ectx->dstor     = &env->repo.re_dstor;
-	ectx->repo      = &env->repo;
-	ectx->pcache    = &env->pcache;
-	ectx->pspools   = &env->pspools;
-	ectx->md_hd     = &env->md_hd;
-	ectx->enc_ci_hd = &env->enc_ci_hd;
-	ectx->dec_ci_hd = &env->dec_ci_hd;
-	ectx->fsroot    = &env->fsroot;
-	ectx->lcache    = &env->lcache;
-	ectx->lspools   = &env->lspools;
-	ectx->idsmap    = &env->idsmap;
-	ectx->uconv     = &env->uconv;
-	ectx->ubi       = nullptr;
+	corefs->alloc     = env->alloc;
+	corefs->nilbk     = env->nilbk;
+	corefs->prng      = &env->prandgen;
+	corefs->dstor     = &env->repo.re_dstor;
+	corefs->repo      = &env->repo;
+	corefs->pcache    = &env->pcache;
+	corefs->pspools   = &env->pspools;
+	corefs->md_hd     = &env->md_hd;
+	corefs->enc_ci_hd = &env->enc_ci_hd;
+	corefs->dec_ci_hd = &env->dec_ci_hd;
+	corefs->fsroot    = &env->fsroot;
+	corefs->lcache    = &env->lcache;
+	corefs->lspools   = &env->lspools;
+	corefs->idsmap    = &env->idsmap;
+	corefs->uconv     = &env->uconv;
+	corefs->ubi       = nullptr;
 }
 
 static int
@@ -570,7 +570,7 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	err = env_init_fsroot(env);
 	goto_out_if_err(err);
 
-	env_init_ectx(env);
+	env_init_corefs(env);
 
 	return 0;
 out:
@@ -690,7 +690,7 @@ static int env_attach_fuseq(struct silofs_env *env)
 	struct silofs_fuseq *fuseq = nullptr;
 	int err;
 
-	err = silofs_fuseq_new(&env->ectx, env->vfs_hooks, &fuseq);
+	err = silofs_fuseq_new(&env->corefs, env->vfs_hooks, &fuseq);
 	return_if_err(err);
 
 	env->initf |= SILOFS_ENVF_FUSEQ;

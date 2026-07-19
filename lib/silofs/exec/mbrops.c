@@ -93,43 +93,43 @@ unref_mbr_at(struct silofs_dstor *dstor, const struct silofs_mbref *mbref)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-int silofs_sense_mbr(const struct silofs_exec_ctx *ectx,
+int silofs_sense_mbr(const struct silofs_core_refs *corefs,
                      const struct silofs_mbref *mbref)
 {
-	return stat_mbr_at(ectx->dstor, mbref);
+	return stat_mbr_at(corefs->dstor, mbref);
 }
 
-static int
-commit_mbr(const struct silofs_exec_ctx *ectx, struct silofs_mbref *out_mbref)
+static int commit_mbr(const struct silofs_core_refs *corefs,
+                      struct silofs_mbref *out_mbref)
 {
 	struct silofs_mbr1k mbr1k = {
 		.mbr_magic = UINT64_MAX,
 	};
 	int err;
 
-	err = silofs_fsroot_export_mbr1k(ectx->fsroot, out_mbref, &mbr1k);
+	err = silofs_fsroot_export_mbr1k(corefs->fsroot, out_mbref, &mbr1k);
 	return_if_err(err);
 
-	err = save_mbr_at(ectx->dstor, out_mbref, &mbr1k);
+	err = save_mbr_at(corefs->dstor, out_mbref, &mbr1k);
 	return_if_err(err);
 
-	silofs_fsroot_set_mbref(ectx->fsroot, out_mbref);
+	silofs_fsroot_set_mbref(corefs->fsroot, out_mbref);
 
 	return 0;
 }
 
-int silofs_commit_mbr(const struct silofs_exec_ctx *ectx,
+int silofs_commit_mbr(const struct silofs_core_refs *corefs,
                       struct silofs_mbref *out_mbref)
 {
 	int err;
 
-	err = commit_mbr(ectx, out_mbref);
+	err = commit_mbr(corefs, out_mbref);
 	silofs_burnstack();
 
 	return err;
 }
 
-static int reload_mbr(const struct silofs_exec_ctx *ectx,
+static int reload_mbr(const struct silofs_core_refs *corefs,
                       const struct silofs_mbref *mbref)
 {
 	struct silofs_mbr1k mbr1k = {
@@ -137,51 +137,51 @@ static int reload_mbr(const struct silofs_exec_ctx *ectx,
 	};
 	int err;
 
-	err = stat_mbr_at(ectx->dstor, mbref);
+	err = stat_mbr_at(corefs->dstor, mbref);
 	return_if_err(err);
 
-	err = load_mbr_at(ectx->dstor, mbref, &mbr1k);
+	err = load_mbr_at(corefs->dstor, mbref, &mbr1k);
 	return_if_err(err);
 
-	err = silofs_fsroot_import_mbr1k(ectx->fsroot, mbref, &mbr1k);
+	err = silofs_fsroot_import_mbr1k(corefs->fsroot, mbref, &mbr1k);
 	return_if_err(err);
 
-	silofs_fsroot_set_mbref(ectx->fsroot, mbref);
+	silofs_fsroot_set_mbref(corefs->fsroot, mbref);
 	return 0;
 }
 
-int silofs_reload_mbr(const struct silofs_exec_ctx *ectx,
+int silofs_reload_mbr(const struct silofs_core_refs *corefs,
                       const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = reload_mbr(ectx, mbref);
+	err = reload_mbr(corefs, mbref);
 	silofs_burnstack();
 
 	return err;
 }
 
-static int
-unref_mbr(const struct silofs_exec_ctx *ectx, const struct silofs_mbref *mbref)
-{
-	int err;
-
-	err = reload_mbr(ectx, mbref);
-	return_if_err(err);
-
-	err = unref_mbr_at(ectx->dstor, mbref);
-	return_if_err(err);
-
-	silofs_fsroot_reset_mbref(ectx->fsroot);
-	return 0;
-}
-
-int silofs_unref_mbr(const struct silofs_exec_ctx *ectx,
+static int unref_mbr(const struct silofs_core_refs *corefs,
                      const struct silofs_mbref *mbref)
 {
 	int err;
 
-	err = unref_mbr(ectx, mbref);
+	err = reload_mbr(corefs, mbref);
+	return_if_err(err);
+
+	err = unref_mbr_at(corefs->dstor, mbref);
+	return_if_err(err);
+
+	silofs_fsroot_reset_mbref(corefs->fsroot);
+	return 0;
+}
+
+int silofs_unref_mbr(const struct silofs_core_refs *corefs,
+                     const struct silofs_mbref *mbref)
+{
+	int err;
+
+	err = unref_mbr(corefs, mbref);
 	silofs_burnstack();
 
 	return err;

@@ -246,7 +246,7 @@ static bool lni_has_asyncwr(const struct silofs_lnode_info *lni)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 struct silofs_stage_ctx {
-	const struct silofs_exec_ctx *ectx;
+	const struct silofs_core_refs *corefs;
 	struct silofs_alloc *alloc;
 	struct silofs_dstor *dstor;
 	struct silofs_pcache *pcache;
@@ -254,28 +254,28 @@ struct silofs_stage_ctx {
 	enum silofs_lspacef lspf;
 };
 
-static void
-stc_init(struct silofs_stage_ctx *st_ctx, const struct silofs_exec_ctx *ectx)
+static void stc_init(struct silofs_stage_ctx *st_ctx,
+                     const struct silofs_core_refs *corefs)
 {
-	st_ctx->ectx   = ectx;
-	st_ctx->alloc  = ectx->alloc;
-	st_ctx->dstor  = ectx->dstor;
-	st_ctx->pcache = ectx->pcache;
-	st_ctx->lcache = ectx->lcache;
+	st_ctx->corefs = corefs;
+	st_ctx->alloc  = corefs->alloc;
+	st_ctx->dstor  = corefs->dstor;
+	st_ctx->pcache = corefs->pcache;
+	st_ctx->lcache = corefs->lcache;
 	st_ctx->lspf   = SILOFS_LSPACEF_NONE;
 }
 
 static void
-stc_init2(struct silofs_stage_ctx *st_ctx, const struct silofs_exec_ctx *ectx,
-          enum silofs_lspacef lspf)
+stc_init2(struct silofs_stage_ctx *st_ctx,
+          const struct silofs_core_refs *corefs, enum silofs_lspacef lspf)
 {
-	stc_init(st_ctx, ectx);
+	stc_init(st_ctx, corefs);
 	st_ctx->lspf = lspf;
 }
 
 static void stc_fini(struct silofs_stage_ctx *st_ctx)
 {
-	st_ctx->ectx = nullptr;
+	st_ctx->corefs = nullptr;
 }
 
 static int stc_attach_pviewx(const struct silofs_stage_ctx *st_ctx,
@@ -373,7 +373,7 @@ static int stc_decrypt_pnode(struct silofs_stage_ctx *st_ctx,
 	const struct silofs_ctag *ctag   = //
 		pni_isuber(pni) ? nullptr : &pnptr->nmeta.ctag;
 
-	return silofs_decrypt_pnode(st_ctx->ectx, pni, ctag);
+	return silofs_decrypt_pnode(st_ctx->corefs, pni, ctag);
 }
 
 static int stc_decrypt_verify_pnode(struct silofs_stage_ctx *st_ctx,
@@ -528,14 +528,14 @@ static int stc_spawn_uber(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_uber(const struct silofs_exec_ctx *ectx,
+int silofs_spawn_uber(const struct silofs_core_refs *corefs,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_spawn_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -562,14 +562,14 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_uber(const struct silofs_exec_ctx *ectx,
+int silofs_stage_uber(const struct silofs_core_refs *corefs,
                       const struct silofs_pnptr *pnptr,
                       struct silofs_uber_info **out_ubi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_stage_uber(&st_ctx, pnptr, out_ubi);
 	stc_fini(&st_ctx);
 	return err;
@@ -618,14 +618,14 @@ static int stc_spawn_bldesc(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_bldesc(const struct silofs_exec_ctx *ectx,
+int silofs_spawn_bldesc(const struct silofs_core_refs *corefs,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_spawn_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -652,14 +652,14 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_bldesc(const struct silofs_exec_ctx *ectx,
+int silofs_stage_bldesc(const struct silofs_core_refs *corefs,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_bldesc_info **out_bdi)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_stage_bldesc(&st_ctx, pnptr, out_bdi);
 	stc_fini(&st_ctx);
 	return err;
@@ -687,9 +687,9 @@ static int stc_validate_staged_btnode(struct silofs_stage_ctx *st_ctx,
 
 static struct silofs_uber_info *stc_ubi(const struct silofs_stage_ctx *st_ctx)
 {
-	silofs_assert_not_null(st_ctx->ectx->fsroot->ubi);
+	silofs_assert_not_null(st_ctx->corefs->fsroot->ubi);
 
-	return st_ctx->ectx->fsroot->ubi;
+	return st_ctx->corefs->fsroot->ubi;
 }
 
 static void stc_update_spawned_btnode(const struct silofs_stage_ctx *st_ctx,
@@ -715,14 +715,14 @@ static int stc_spawn_btnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_btnode(const struct silofs_exec_ctx *ectx,
+int silofs_spawn_btnode(const struct silofs_core_refs *corefs,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_spawn_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
@@ -748,26 +748,26 @@ static int stc_stage_btnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_stage_btnode(const struct silofs_exec_ctx *ectx,
+int silofs_stage_btnode(const struct silofs_core_refs *corefs,
                         const struct silofs_pnptr *pnptr,
                         struct silofs_btnode_info **out_bti)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_stage_btnode(&st_ctx, pnptr, out_bti);
 	stc_fini(&st_ctx);
 	return err;
 }
 
-int silofs_require_paddr(const struct silofs_exec_ctx *ectx,
+int silofs_require_paddr(const struct silofs_core_refs *corefs,
                          const struct silofs_paddr *paddr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_require_paddr(&st_ctx, paddr);
 	stc_fini(&st_ctx);
 	return err;
@@ -825,7 +825,7 @@ static int stc_spawn_lnode(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_spawn_lnode_with(const struct silofs_exec_ctx *ectx,
+int silofs_spawn_lnode_with(const struct silofs_core_refs *corefs,
                             const struct silofs_laddr *laddr,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_lnode_info **out_lni)
@@ -833,7 +833,7 @@ int silofs_spawn_lnode_with(const struct silofs_exec_ctx *ectx,
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_spawn_lnode(&st_ctx, laddr, pnptr, out_lni);
 	stc_fini(&st_ctx);
 	return err;
@@ -852,14 +852,14 @@ static int stc_claim_lnode_pspace(const struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_claim_lnode_pspace(const struct silofs_exec_ctx *ectx,
+int silofs_claim_lnode_pspace(const struct silofs_core_refs *corefs,
                               const struct silofs_laddr *laddr,
                               const struct silofs_pnptr *pnptr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_claim_lnode_pspace(&st_ctx, laddr, pnptr);
 	stc_fini(&st_ctx);
 	return err;
@@ -879,7 +879,7 @@ static int stc_decrypt_lnode(struct silofs_stage_ctx *st_ctx,
 {
 	const struct silofs_ctag *ctag = &pnptr->nmeta.ctag;
 
-	return silofs_decrypt_lnode(st_ctx->ectx, lni, pnptr, ctag);
+	return silofs_decrypt_lnode(st_ctx->corefs, lni, pnptr, ctag);
 }
 
 static int stc_decrypt_verify_lnode(struct silofs_stage_ctx *st_ctx,
@@ -958,7 +958,7 @@ out_ok:
 	return 0;
 }
 
-int silofs_stage_lnode_with(const struct silofs_exec_ctx *ectx,
+int silofs_stage_lnode_with(const struct silofs_core_refs *corefs,
                             const struct silofs_laddr *laddr,
                             const struct silofs_pnptr *pnptr,
                             enum silofs_lspacef lspf,
@@ -967,7 +967,7 @@ int silofs_stage_lnode_with(const struct silofs_exec_ctx *ectx,
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init2(&st_ctx, ectx, lspf);
+	stc_init2(&st_ctx, corefs, lspf);
 	err = stc_stage_lnode(&st_ctx, laddr, pnptr, out_lni);
 	stc_fini(&st_ctx);
 	return err;
@@ -1011,14 +1011,14 @@ static int stc_detach_lnode(struct silofs_stage_ctx *st_ctx,
 	return 0;
 }
 
-int silofs_detach_lnode_at(const struct silofs_exec_ctx *ectx,
+int silofs_detach_lnode_at(const struct silofs_core_refs *corefs,
                            const struct silofs_laddr *laddr,
                            const struct silofs_pnptr *pnptr)
 {
 	struct silofs_stage_ctx st_ctx = {};
 	int err;
 
-	stc_init(&st_ctx, ectx);
+	stc_init(&st_ctx, corefs);
 	err = stc_detach_lnode(&st_ctx, laddr, pnptr);
 	stc_fini(&st_ctx);
 	return err;
@@ -1040,7 +1040,7 @@ mkalt_pnptr(const struct silofs_pnptr *pnptr_cur,
 
 struct silofs_destage_ctx {
 	struct silofs_destageq dsq;
-	const struct silofs_exec_ctx *ectx;
+	const struct silofs_core_refs *corefs;
 	struct silofs_alloc *alloc;
 	struct silofs_dirtyq *drq;
 	struct silofs_uber_info *ubi;
@@ -1048,40 +1048,40 @@ struct silofs_destage_ctx {
 	bool cleardirty;
 };
 
-static void
-dsc_init(struct silofs_destage_ctx *ds_ctx, const struct silofs_exec_ctx *ectx)
+static void dsc_init(struct silofs_destage_ctx *ds_ctx,
+                     const struct silofs_core_refs *corefs)
 {
 	silofs_destageq_init(&ds_ctx->dsq);
-	ds_ctx->ectx       = ectx;
-	ds_ctx->alloc      = ectx->alloc;
+	ds_ctx->corefs     = corefs;
+	ds_ctx->alloc      = corefs->alloc;
 	ds_ctx->drq        = nullptr;
-	ds_ctx->ubi        = ectx->fsroot->ubi;
-	ds_ctx->dstor      = ectx->dstor;
+	ds_ctx->ubi        = corefs->fsroot->ubi;
+	ds_ctx->dstor      = corefs->dstor;
 	ds_ctx->cleardirty = false;
 }
 
 static void dsc_initp(struct silofs_destage_ctx *ds_ctx,
-                      const struct silofs_exec_ctx *ectx)
+                      const struct silofs_core_refs *corefs)
 {
-	dsc_init(ds_ctx, ectx);
-	ds_ctx->drq = &ectx->pcache->pc_dirtyq;
+	dsc_init(ds_ctx, corefs);
+	ds_ctx->drq = &corefs->pcache->pc_dirtyq;
 }
 
 static void dsc_initv(struct silofs_destage_ctx *ds_ctx,
-                      const struct silofs_exec_ctx *ectx)
+                      const struct silofs_core_refs *corefs)
 {
-	dsc_init(ds_ctx, ectx);
-	ds_ctx->drq = &ectx->lcache->lc_dirtyq;
+	dsc_init(ds_ctx, corefs);
+	ds_ctx->drq = &corefs->lcache->lc_dirtyq;
 }
 
 static void dsc_fini(struct silofs_destage_ctx *ds_ctx)
 {
 	silofs_destageq_fini(&ds_ctx->dsq);
-	ds_ctx->ectx  = nullptr;
-	ds_ctx->alloc = nullptr;
-	ds_ctx->drq   = nullptr;
-	ds_ctx->ubi   = nullptr;
-	ds_ctx->dstor = nullptr;
+	ds_ctx->corefs = nullptr;
+	ds_ctx->alloc  = nullptr;
+	ds_ctx->drq    = nullptr;
+	ds_ctx->ubi    = nullptr;
+	ds_ctx->dstor  = nullptr;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1091,7 +1091,7 @@ static int dsc_stage_btnode(const struct silofs_destage_ctx *ds_ctx,
                             struct silofs_btnode_info **out_bti)
 {
 	silofs_assert_eq(pnptr->paddr.ptype, SILOFS_PTYPE_BTNODE);
-	return silofs_stage_btnode(ds_ctx->ectx, pnptr, out_bti);
+	return silofs_stage_btnode(ds_ctx->corefs, pnptr, out_bti);
 }
 
 static void dsc_populate_dsq(struct silofs_destage_ctx *ds_ctx)
@@ -1148,9 +1148,9 @@ static int dsc_encrypt_pnode(const struct silofs_destage_ctx *ds_ctx,
 	int err;
 
 	if (pni_isuber(pni)) {
-		err = silofs_encrypt_pnode(ds_ctx->ectx, pni, nullptr);
+		err = silofs_encrypt_pnode(ds_ctx->corefs, pni, nullptr);
 	} else {
-		err = silofs_encrypt_pnode(ds_ctx->ectx, pni, out_ctag);
+		err = silofs_encrypt_pnode(ds_ctx->corefs, pni, out_ctag);
 	}
 	return err;
 }
@@ -1205,7 +1205,7 @@ static int dsc_resolve_btnode_parent(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_laddr laddr;
 
 	bti_base_laddr(bti, &laddr);
-	return silofs_resolve_ltop_parent(ds_ctx->ectx, &laddr, //
+	return silofs_resolve_ltop_parent(ds_ctx->corefs, &laddr, //
 	                                  bti_paddr(bti), out_pnptr);
 }
 
@@ -1414,12 +1414,12 @@ out:
 	return err;
 }
 
-static int destage_pnodes(const struct silofs_exec_ctx *ectx)
+static int destage_pnodes(const struct silofs_core_refs *corefs)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
 
-	dsc_initp(&ds_ctx, ectx);
+	dsc_initp(&ds_ctx, corefs);
 	err = dsc_destage_pnodes(&ds_ctx);
 	dsc_fini(&ds_ctx);
 	return err;
@@ -1450,7 +1450,7 @@ static int dsc_resolve_lnode(const struct silofs_destage_ctx *ds_ctx,
                              const struct silofs_lnode_info *lni,
                              struct silofs_pnptr *out_pnptr)
 {
-	return silofs_resolve_ltop_mapping(ds_ctx->ectx, lni_laddr(lni),
+	return silofs_resolve_ltop_mapping(ds_ctx->corefs, lni_laddr(lni),
 	                                   out_pnptr);
 }
 
@@ -1460,7 +1460,7 @@ static int dsc_resolve_lnode_parent(const struct silofs_destage_ctx *ds_ctx,
 {
 	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
 
-	return silofs_resolve_ltop_btleaf(ds_ctx->ectx, laddr, out_pnptr);
+	return silofs_resolve_ltop_btleaf(ds_ctx->corefs, laddr, out_pnptr);
 }
 
 static int dsc_encrypt_lnode(const struct silofs_destage_ctx *ds_ctx,
@@ -1471,7 +1471,7 @@ static int dsc_encrypt_lnode(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_ctag ctag = {};
 	int err;
 
-	err = silofs_encrypt_lnode(ds_ctx->ectx, lni, pnptr_cur, &ctag);
+	err = silofs_encrypt_lnode(ds_ctx->corefs, lni, pnptr_cur, &ctag);
 	if (err) {
 		return err;
 	}
@@ -1561,7 +1561,8 @@ static int dsc_stain_lnode_parents(const struct silofs_destage_ctx *ds_ctx,
 	struct silofs_btree_path bpath = { .cnt = 0 };
 	int err;
 
-	err = silofs_resolve_ltop_bpath(ds_ctx->ectx, lni_laddr(lni), &bpath);
+	err = silofs_resolve_ltop_bpath(ds_ctx->corefs, lni_laddr(lni),
+	                                &bpath);
 	return_if_err(err);
 
 	for (size_t i = 0; i < bpath.cnt; ++i) {
@@ -1663,12 +1664,12 @@ out:
 	return err;
 }
 
-static int destage_lnodes(const struct silofs_exec_ctx *ectx)
+static int destage_lnodes(const struct silofs_core_refs *corefs)
 {
 	struct silofs_destage_ctx ds_ctx;
 	int err;
 
-	dsc_initv(&ds_ctx, ectx);
+	dsc_initv(&ds_ctx, corefs);
 	err = dsc_destage_lnodes(&ds_ctx);
 	dsc_fini(&ds_ctx);
 	return err;
@@ -1683,37 +1684,37 @@ static void dsc_postop_cleanup(struct silofs_destage_ctx *ds_ctx)
 	dsc_cleanup_depopulate_pnodes(ds_ctx);
 }
 
-static void postop_cleanup(const struct silofs_exec_ctx *ectx)
+static void postop_cleanup(const struct silofs_core_refs *corefs)
 {
 	struct silofs_destage_ctx ds_ctx;
 
-	dsc_initp(&ds_ctx, ectx);
+	dsc_initp(&ds_ctx, corefs);
 	dsc_postop_cleanup(&ds_ctx);
 	dsc_fini(&ds_ctx);
 }
 
-static void postop_report(const struct silofs_exec_ctx *ectx, int status)
+static void postop_report(const struct silofs_core_refs *corefs, int status)
 {
 	if (status != 0) {
 		log_err("destage failure: status=%d", status);
 	}
-	unused(ectx);
+	unused(corefs);
 }
 
-int silofs_destage_dirty_nodes(const struct silofs_exec_ctx *ectx)
+int silofs_destage_dirty_nodes(const struct silofs_core_refs *corefs)
 {
 	int err;
 
 	/* Leaf nodes. */
-	err = destage_lnodes(ectx);
+	err = destage_lnodes(corefs);
 	goto_out_if_err(err);
 
 	/* Internal mapping nodes */
-	err = destage_pnodes(ectx);
+	err = destage_pnodes(corefs);
 	goto_out_if_err(err);
 
 out:
-	postop_cleanup(ectx);
-	postop_report(ectx, err);
+	postop_cleanup(corefs);
+	postop_report(corefs, err);
 	return err;
 }

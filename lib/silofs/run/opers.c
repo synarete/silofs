@@ -39,7 +39,7 @@ static void op_feed_prng(const struct silofs_task_ctx *task)
 		(uint32_t)gettid(),
 	};
 
-	silofs_prandgen_feed(task->ectx->prng, d, sizeof(d));
+	silofs_prandgen_feed(task->corefs->prng, d, sizeof(d));
 }
 
 static int op_start(struct silofs_task_ctx *task)
@@ -48,7 +48,7 @@ static int op_start(struct silofs_task_ctx *task)
 
 	silofs_clock_gettime_mono(&task->op_start_time);
 	if (!task->internal) {
-		task->ectx->fsroot->opstat.op_count++;
+		task->corefs->fsroot->opstat.op_count++;
 		op_feed_prng(task);
 	}
 	return 0;
@@ -62,7 +62,7 @@ op_try_flush(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 
 static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 {
-	const struct silofs_opstat *opstat = &task->ectx->fsroot->opstat;
+	const struct silofs_opstat *opstat = &task->corefs->fsroot->opstat;
 	time_t time_now, time_dif;
 
 	if (task->auth.opcode == 0) {
@@ -150,7 +150,7 @@ static bool op_is_admin(const struct silofs_task_ctx *task)
 static bool op_is_fsowner(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds   = &task->auth.creds;
-	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	const struct silofs_fsroot *fsroot = task->corefs->fsroot;
 
 	return silofs_uid_eq(creds->host_cred.uid, fsroot->owner.uid);
 }
@@ -158,7 +158,7 @@ static bool op_is_fsowner(const struct silofs_task_ctx *task)
 static bool
 op_has_ctl_flags(const struct silofs_task_ctx *task, enum silofs_flags mask)
 {
-	return ((task->ectx->fsroot->ctl_flags & mask) == mask);
+	return ((task->corefs->fsroot->ctl_flags & mask) == mask);
 }
 
 static bool op_cap_sys_admin(const struct silofs_task_ctx *task)
@@ -197,7 +197,7 @@ static int op_authorize(const struct silofs_task_ctx *task)
 static int op_map_uidgid(const struct silofs_task_ctx *task, uid_t uid,
                          gid_t gid, uid_t *out_uid, gid_t *out_gid)
 {
-	const struct silofs_idsmap *idsmap = task->ectx->idsmap;
+	const struct silofs_idsmap *idsmap = task->corefs->idsmap;
 	int ret;
 
 	ret = silofs_idsmap_mapcreds(idsmap, uid, gid, out_uid, out_gid);
@@ -237,7 +237,7 @@ op_rmap_stat(const struct silofs_task_ctx *task, struct silofs_stat *st)
 	 * silofs_idsmap_rmap_gid). In case of rmap failure, emit 'nobody' only
 	 * for the relevant id.
 	 */
-	ret = silofs_idsmap_rmapcreds(task->ectx->idsmap, uid_in, gid_in,
+	ret = silofs_idsmap_rmapcreds(task->corefs->idsmap, uid_in, gid_in,
 	                              &uid_out, &gid_out);
 	st->st.st_uid = st->stx.stx_uid = uid_out;
 	st->st.st_gid = st->stx.stx_gid = gid_out;

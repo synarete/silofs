@@ -1658,7 +1658,7 @@ static bool fuseq_has_memory_pressure(const struct silofs_fuseq *fq)
 {
 	struct silofs_alloc_stat st;
 
-	silofs_memstat(fq->fq_ectx->alloc, &st);
+	silofs_memstat(fq->fq_corefs->alloc, &st);
 	return st.nbytes_use > (st.nbytes_max / 10);
 }
 
@@ -3323,7 +3323,7 @@ static void fqs_setup_task(const struct silofs_fuseq_sub *fqs,
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
 
-	silofs_task_init(task, fq->fq_ectx);
+	silofs_task_init(task, fq->fq_corefs);
 	fqs_update_task(fqs, task);
 }
 
@@ -3974,7 +3974,7 @@ static struct silofs_alloc *fqs_alloc(const struct silofs_fuseq_sub *fqs)
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
 
-	return fq->fq_ectx->alloc;
+	return fq->fq_corefs->alloc;
 }
 
 static int fqs_init_bufs(struct silofs_fuseq_sub *fqs)
@@ -4274,7 +4274,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 	const struct silofs_fuseq *fq  = fqs_fuseq(fqs);
 	const struct silofs_cred *cred = &fq->fq_fsowner;
 
-	silofs_task_init(task, fq->fq_ectx);
+	silofs_task_init(task, fq->fq_corefs);
 	silofs_task_update_creds(task, cred->uid, cred->gid, cred->umask);
 	silofs_task_update_times(task, false);
 	task->auth.pid  = getpid();
@@ -4514,9 +4514,9 @@ static void fuseq_fini_locks(struct silofs_fuseq *fq)
 	}
 }
 
-static void
-fuseq_init_common(struct silofs_fuseq *fq, const struct silofs_exec_ctx *ectx,
-                  const struct silofs_fuseq_subs *subx)
+static void fuseq_init_common(struct silofs_fuseq *fq,
+                              const struct silofs_core_refs *corefs,
+                              const struct silofs_fuseq_subs *subx)
 {
 	memcpy(&fq->fq_subs, subx, sizeof(fq->fq_subs));
 	fq->fq_subs.fq_nsub_run = 0;
@@ -4524,7 +4524,7 @@ fuseq_init_common(struct silofs_fuseq *fq, const struct silofs_exec_ctx *ectx,
 	fq->fq_vfs_hooks       = nullptr;
 	fq->fq_pagesize        = (uint32_t)silofs_sc_page_size();
 	fq->fq_nprocs          = (uint32_t)silofs_sc_nproc_onln();
-	fq->fq_ectx            = ectx;
+	fq->fq_corefs          = corefs;
 	fq->fq_nopers          = 0;
 	fq->fq_nexecs          = 0;
 	fq->fq_active          = 0;
@@ -4567,7 +4567,7 @@ static void fuseq_fini_subs(struct silofs_fuseq *fq)
 
 static bool fuseq_may(const struct silofs_fuseq *fq, enum silofs_flags mode)
 {
-	const struct silofs_fsroot *fsroot = fq->fq_ectx->fsroot;
+	const struct silofs_fsroot *fsroot = fq->fq_corefs->fsroot;
 
 	return (fsroot->ctl_flags & mode) == mode;
 }
@@ -4706,14 +4706,14 @@ static void fuseq_init_conn_info(struct silofs_fuseq *fq)
 }
 
 static int
-fuseq_init(struct silofs_fuseq *fq, const struct silofs_exec_ctx *ectx,
+fuseq_init(struct silofs_fuseq *fq, const struct silofs_core_refs *corefs,
            const struct silofs_fuseq_subs *subx)
 {
 	int err;
 
 	silofs_check_fuse_proto();
 
-	fuseq_init_common(fq, ectx, subx);
+	fuseq_init_common(fq, corefs, subx);
 	fuseq_init_conn_info(fq);
 
 	err = fuseq_init_nilfd(fq);
@@ -4961,7 +4961,7 @@ fuseq_resolve_subx(struct silofs_fuseq *fq, struct silofs_fuseq_subs *subx)
 	subx->fq_subs = address_at(fq, sizeof(*fq));
 }
 
-int silofs_fuseq_new(const struct silofs_exec_ctx *ectx,
+int silofs_fuseq_new(const struct silofs_core_refs *corefs,
                      const struct silofs_vfs_hooks *vfs_hooks,
                      struct silofs_fuseq **out_fuseq)
 {
@@ -4976,20 +4976,20 @@ int silofs_fuseq_new(const struct silofs_exec_ctx *ectx,
 	int err;
 
 	fq_msz = fuseq_calc_selfsize(fq, &fq_subs);
-	fq_mem = silofs_memalloc(ectx->alloc, fq_msz, SILOFS_ALLOCF_BZERO);
+	fq_mem = silofs_memalloc(corefs->alloc, fq_msz, SILOFS_ALLOCF_BZERO);
 	if (fq_mem == nullptr) {
 		return -SILOFS_ENOMEM;
 	}
 
 	fq = fq_mem;
 	fuseq_resolve_subx(fq, &fq_subs);
-	err = fuseq_init(fq, ectx, &fq_subs);
+	err = fuseq_init(fq, corefs, &fq_subs);
 	if (err) {
-		silofs_memfree(ectx->alloc, fq_mem, fq_msz, 0);
+		silofs_memfree(corefs->alloc, fq_mem, fq_msz, 0);
 		return err;
 	}
 	fq->fq_selfsize  = (uint32_t)fq_msz;
-	fq->fq_ectx      = ectx;
+	fq->fq_corefs    = corefs;
 	fq->fq_vfs_hooks = vfs_hooks;
 
 	*out_fuseq = fq;
@@ -4998,7 +4998,7 @@ int silofs_fuseq_new(const struct silofs_exec_ctx *ectx,
 
 void silofs_fuseq_del(struct silofs_fuseq *fq)
 {
-	struct silofs_alloc *alloc = fq->fq_ectx->alloc;
+	struct silofs_alloc *alloc = fq->fq_corefs->alloc;
 	const size_t fq_msz        = fq->fq_selfsize;
 	void *fq_mem               = fq;
 

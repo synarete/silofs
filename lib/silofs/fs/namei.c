@@ -75,7 +75,7 @@ static void put_sbi(struct silofs_sbnode_info *sbi)
 
 static bool has_nlookup_mode(const struct silofs_task_ctx *task)
 {
-	return (task->ectx->fsroot->ctl_flags & SILOFS_F_NLOOKUP) > 0;
+	return (task->corefs->fsroot->ctl_flags & SILOFS_F_NLOOKUP) > 0;
 }
 
 static void sub_nlookup(const struct silofs_task_ctx *task,
@@ -140,7 +140,7 @@ static int check_reg_or_fifo(const struct silofs_inode_info *ii)
 static int check_open_limit(const struct silofs_task_ctx *task,
                             const struct silofs_inode_info *ii)
 {
-	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	const struct silofs_fsroot *fsroot = task->corefs->fsroot;
 	const size_t total_iopen_max       = fsroot->opstat.op_iopen_max;
 	const size_t total_iopn_cur        = fsroot->opstat.op_iopen;
 	const size_t iopen_max             = total_iopen_max / 2;
@@ -157,7 +157,7 @@ static int check_open_limit(const struct silofs_task_ctx *task,
 static void
 update_nopen(struct silofs_task_ctx *task, struct silofs_inode_info *ii, int n)
 {
-	struct silofs_opstat *opstat = &task->ectx->fsroot->opstat;
+	struct silofs_opstat *opstat = &task->corefs->fsroot->opstat;
 
 	silofs_assert_ge(ii->i_nopen + n, 0);
 	silofs_assert_lt(ii->i_nopen + n, INT_MAX);
@@ -250,7 +250,7 @@ static void inewp_update_by_parent(struct silofs_inew_params *inp,
 
 static struct silofs_prandgen *prng_of(const struct silofs_task_ctx *task)
 {
-	return task->ectx->prng;
+	return task->corefs->prng;
 }
 
 static void
@@ -430,7 +430,7 @@ int silofs_do_access(const struct silofs_task_ctx *task,
 
 static int check_on_writable_fs(const struct silofs_task_ctx *task)
 {
-	const bool rdonly = silofs_test_rdonly_fs(task->ectx->fsroot);
+	const bool rdonly = silofs_test_rdonly_fs(task->corefs->fsroot);
 
 	return rdonly ? -SILOFS_ERDONLY : 0;
 }
@@ -479,7 +479,7 @@ static int check_dir_and_name(const struct silofs_task_ctx *task,
 	err = check_isdir(dir_ii);
 	return_if_err(err);
 
-	err = silofs_dir_check_name(dir_ii, task->ectx->uconv, name);
+	err = silofs_dir_check_name(dir_ii, task->corefs->uconv, name);
 	return_if_err(err);
 
 	return 0;
@@ -503,7 +503,7 @@ static int check_lookup(const struct silofs_task_ctx *task,
 static const struct silofs_mdigest_hd *
 mdigest_of(const struct silofs_task_ctx *task)
 {
-	return task->ectx->md_hd;
+	return task->corefs->md_hd;
 }
 
 static int assign_namehash(const struct silofs_task_ctx *task,
@@ -814,7 +814,7 @@ check_mknod(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 		if (rdev == 0) {
 			return -SILOFS_EINVAL;
 		}
-		if (task->ectx->fsroot->ms_flags & MS_NODEV) {
+		if (task->corefs->fsroot->ms_flags & MS_NODEV) {
 			return -SILOFS_EOPNOTSUPP;
 		}
 	} else {
@@ -2189,18 +2189,18 @@ fill_proc(const struct silofs_task_ctx *task, struct silofs_query_proc *qpr)
 {
 	struct silofs_alloc_stat alloc_stat;
 
-	silofs_memstat(task->ectx->alloc, &alloc_stat);
+	silofs_memstat(task->corefs->alloc, &alloc_stat);
 	silofs_memzero(qpr, sizeof(*qpr));
-	qpr->uid       = task->ectx->fsroot->owner.uid;
-	qpr->gid       = task->ectx->fsroot->owner.gid;
+	qpr->uid       = task->corefs->fsroot->owner.uid;
+	qpr->gid       = task->corefs->fsroot->owner.gid;
 	qpr->pid       = getpid();
-	qpr->msflags   = task->ectx->fsroot->ms_flags;
-	qpr->uptime    = silofs_fsroot_uptime(task->ectx->fsroot);
-	qpr->iopen_max = task->ectx->fsroot->opstat.op_iopen_max;
-	qpr->iopen_cur = task->ectx->fsroot->opstat.op_iopen;
+	qpr->msflags   = task->corefs->fsroot->ms_flags;
+	qpr->uptime    = silofs_fsroot_uptime(task->corefs->fsroot);
+	qpr->iopen_max = task->corefs->fsroot->opstat.op_iopen_max;
+	qpr->iopen_cur = task->corefs->fsroot->opstat.op_iopen;
 	qpr->memsz_max = alloc_stat.nbytes_max;
 	qpr->memsz_cur = alloc_stat.nbytes_use;
-	qpr->bopen_cur = task->ectx->dstor->ds_hq.dsq_lru.sz;
+	qpr->bopen_cur = task->corefs->dstor->ds_hq.dsq_lru.sz;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2215,7 +2215,7 @@ do_statvfs(const struct silofs_task_ctx *task, struct statvfs *out_stv)
 	/*
 	 * TODO-0068: Export uber stats via dedicated ioctl.
 	 */
-	silofs_ubi_collect_stats(task->ectx->fsroot->ubi, &ub_stats);
+	silofs_ubi_collect_stats(task->corefs->fsroot->ubi, &ub_stats);
 
 	err = get_sbi(task, &sbi);
 	return_if_err(err);
@@ -2263,7 +2263,7 @@ static void fill_query_repo(const struct silofs_task_ctx *task,
                             struct silofs_ioc_query *query)
 {
 	struct silofs_strview strview;
-	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	const struct silofs_fsroot *fsroot = task->corefs->fsroot;
 
 	silofs_strview_init(&strview, fsroot->baseref.repodir);
 	str_to_buf(&strview, query->u.repo.path, sizeof(query->u.repo.path));
@@ -2273,7 +2273,7 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
                                  struct silofs_ioc_query *query)
 {
 	struct silofs_strview strview;
-	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	const struct silofs_fsroot *fsroot = task->corefs->fsroot;
 
 	silofs_strview_init(&strview, fsroot->baseref.refname);
 	str_to_buf(&strview, query->u.boot.name, sizeof(query->u.boot.name));
@@ -2282,7 +2282,7 @@ static void fill_query_boot_name(const struct silofs_task_ctx *task,
 static void fill_query_boot_fsref(const struct silofs_task_ctx *task,
                                   struct silofs_ioc_query *query)
 {
-	const struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	const struct silofs_fsroot *fsroot = task->corefs->fsroot;
 
 	silofs_fsref_export(&query->u.boot.fsref, &fsroot->mbref);
 }
@@ -2402,7 +2402,7 @@ int silofs_do_query(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 static int check_fsowner(const struct silofs_task_ctx *task)
 {
 	const struct silofs_creds *creds = &task->auth.creds;
-	const uid_t owner_uid            = task->ectx->fsroot->owner.uid;
+	const uid_t owner_uid            = task->corefs->fsroot->owner.uid;
 	const uid_t host_uid             = creds->host_cred.uid;
 
 	return silofs_uid_eq(host_uid, owner_uid) ? 0 : -SILOFS_EPERM;
@@ -2445,7 +2445,7 @@ static int flush_and_sync(struct silofs_task_ctx *task)
 	err = silofs_flush_dirty_now(task);
 	return_if_err(err);
 
-	err = silofs_repo_fsync_all(task->ectx->repo);
+	err = silofs_repo_fsync_all(task->corefs->repo);
 	return_if_err(err);
 
 	return 0;
@@ -2474,7 +2474,7 @@ do_forkfs(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 
 static void relax_post_forkfs(const struct silofs_task_ctx *task)
 {
-	silofs_lcache_relax(task->ectx->lcache, SILOFS_CTLF_NOW);
+	silofs_lcache_relax(task->corefs->lcache, SILOFS_CTLF_NOW);
 }
 
 static int do_forkfs_and_relex(struct silofs_task_ctx *task,
@@ -2623,7 +2623,7 @@ int silofs_do_syncfs(struct silofs_task_ctx *task,
 
 int silofs_do_maintain(struct silofs_task_ctx *task, int flags)
 {
-	silofs_relax_caches(task->ectx, flags);
+	silofs_relax_caches(task->corefs, flags);
 	return silofs_flush_dirty(task, nullptr, flags);
 }
 
@@ -2669,7 +2669,7 @@ static int try_forget_cached_ii(const struct silofs_task_ctx *task,
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
 		struct silofs_lnode_info *lni = silofs_ii_to_lni(ii);
 
-		silofs_lcache_forget_lnode(task->ectx->lcache, lni);
+		silofs_lcache_forget_lnode(task->corefs->lcache, lni);
 	}
 	return 0;
 }

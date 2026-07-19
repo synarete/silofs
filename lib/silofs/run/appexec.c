@@ -32,7 +32,7 @@ static void relax_caches(struct silofs_task_ctx *task, bool now)
 {
 	const int flags = now ? SILOFS_CTLF_NOW : SILOFS_CTLF_IDLE;
 
-	silofs_relax_caches(task->ectx, flags);
+	silofs_relax_caches(task->corefs, flags);
 }
 
 static int flush_dirty(struct silofs_task_ctx *task)
@@ -42,7 +42,7 @@ static int flush_dirty(struct silofs_task_ctx *task)
 
 static void drop_caches(struct silofs_task_ctx *task)
 {
-	silofs_drop_caches(task->ectx);
+	silofs_drop_caches(task->corefs);
 }
 
 static void drop_relax_caches(struct silofs_task_ctx *task)
@@ -96,7 +96,7 @@ appexec_fork_fs(struct silofs_task_ctx *task, struct silofs_mbrefs *out_mbrefs)
 
 static void release_uber(struct silofs_task_ctx *task)
 {
-	struct silofs_fsroot *fsroot = task->ectx->fsroot;
+	struct silofs_fsroot *fsroot = task->corefs->fsroot;
 
 	log_dbg("release uber: op_count=%lu", fsroot->opstat.op_count);
 	silofs_update_uber_ref(fsroot, nullptr);
@@ -106,7 +106,7 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 {
 	int err;
 
-	err = silofs_repo_fsync_all(task->ectx->repo);
+	err = silofs_repo_fsync_all(task->corefs->repo);
 	return_if_err(err);
 
 	release_uber(task);
@@ -117,7 +117,7 @@ static int shutdown_fs(struct silofs_task_ctx *task)
 
 static int close_repo(struct silofs_task_ctx *task)
 {
-	return silofs_repo_close(task->ectx->repo);
+	return silofs_repo_close(task->corefs->repo);
 }
 
 static int appexec_unload_fs(struct silofs_task_ctx *task)
@@ -139,7 +139,7 @@ static int appexec_unload_fs(struct silofs_task_ctx *task)
 static int
 remove_mbr(struct silofs_task_ctx *task, const struct silofs_mbref *mbref)
 {
-	return silofs_unref_mbr(task->ectx, mbref);
+	return silofs_unref_mbr(task->corefs, mbref);
 }
 
 static int appexec_remove_fs(struct silofs_task_ctx *task,
@@ -170,7 +170,7 @@ static int appexec_sense_fs(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_sense_mbr(task->ectx, mbref);
+	err = silofs_sense_mbr(task->corefs, mbref);
 	return_if_err(err);
 
 	drop_caches(task);
@@ -206,14 +206,14 @@ static int do_map_task_creds(struct silofs_task_ctx *task)
 	const struct silofs_cred *host_cred = &task->auth.creds.host_cred;
 	struct silofs_cred *fs_cred         = &task->auth.creds.fs_cred;
 
-	return silofs_idsmap_mapcreds(task->ectx->idsmap, host_cred->uid,
+	return silofs_idsmap_mapcreds(task->corefs->idsmap, host_cred->uid,
 	                              host_cred->gid, &fs_cred->uid,
 	                              &fs_cred->gid);
 }
 
 static int map_task_creds(struct silofs_task_ctx *task)
 {
-	const struct silofs_idsmap *idsmap = task->ectx->idsmap;
+	const struct silofs_idsmap *idsmap = task->corefs->idsmap;
 	int err;
 
 	if (idsmap->idm_usize || idsmap->idm_gsize) {
@@ -228,7 +228,7 @@ static int map_task_creds(struct silofs_task_ctx *task)
 
 static int make_priv_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
-	silofs_task_init(task, &env->ectx);
+	silofs_task_init(task, &env->corefs);
 	silofs_task_update_times(task, true);
 	silofs_task_update_creds(task, getuid(), getgid(), 0077);
 	task->priv_op = true;

@@ -17,20 +17,20 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
-int silofs_encrypt_pnode(const struct silofs_exec_ctx   *ectx,
+int silofs_encrypt_pnode(const struct silofs_core_refs  *corefs,
                          const struct silofs_pnode_info *pni,
                          struct silofs_ctag             *out_ctag);
 
-int silofs_decrypt_pnode(const struct silofs_exec_ctx   *ectx,
+int silofs_decrypt_pnode(const struct silofs_core_refs  *corefs,
                          const struct silofs_pnode_info *pni,
                          const struct silofs_ctag       *ctag);
 
-int silofs_encrypt_lnode(const struct silofs_exec_ctx   *ectx,
+int silofs_encrypt_lnode(const struct silofs_core_refs  *corefs,
                          const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr      *pnptr,
                          struct silofs_ctag             *out_ctag);
 
-int silofs_decrypt_lnode(const struct silofs_exec_ctx   *ectx,
+int silofs_decrypt_lnode(const struct silofs_core_refs  *corefs,
                          const struct silofs_lnode_info *lni,
                          const struct silofs_pnptr      *pnptr,
                          const struct silofs_ctag       *ctag);

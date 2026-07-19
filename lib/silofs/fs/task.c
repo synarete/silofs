@@ -69,11 +69,11 @@ static int task_apply(const struct silofs_task_ctx *task, bool all)
 }
 
 void silofs_task_init(struct silofs_task_ctx *task,
-                      const struct silofs_exec_ctx *ectx)
+                      const struct silofs_core_refs *corefs)
 {
 	silofs_memzero(task, sizeof(*task));
 	silofs_creds_init(&task->auth.creds);
-	task->ectx        = ectx;
+	task->corefs      = corefs;
 	task->looseq      = nullptr;
 	task->upper_id    = 0;
 	task->interrupted = 0;
@@ -92,7 +92,7 @@ void silofs_task_fini(struct silofs_task_ctx *task)
 	silofs_assert_eq(task->fs_locked, false);
 
 	silofs_creds_fini(&task->auth.creds);
-	task->ectx     = nullptr;
+	task->corefs   = nullptr;
 	task->looseq   = nullptr;
 	task->runnable = false;
 }
@@ -161,7 +161,7 @@ static void task_purge(struct silofs_task_ctx *task)
 void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->fs_locked && !task->priv_op) {
-		silofs_fsroot_lock(task->ectx->fsroot);
+		silofs_fsroot_lock(task->corefs->fsroot);
 		task->fs_locked = true;
 	}
 }
@@ -169,7 +169,7 @@ void silofs_lock_fs_by(struct silofs_task_ctx *task)
 void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->fs_locked && !task->priv_op) {
-		silofs_fsroot_unlock(task->ectx->fsroot);
+		silofs_fsroot_unlock(task->corefs->fsroot);
 		task->fs_locked = false;
 	}
 }
@@ -177,7 +177,7 @@ void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->rw_locked) {
-		silofs_fsroot_rwlock(task->ectx->fsroot, task->exclusive);
+		silofs_fsroot_rwlock(task->corefs->fsroot, task->exclusive);
 		task->rw_locked = true;
 	}
 }
@@ -185,7 +185,7 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->rw_locked) {
-		silofs_fsroot_rwunlock(task->ectx->fsroot);
+		silofs_fsroot_rwunlock(task->corefs->fsroot);
 		task->rw_locked = false;
 	}
 }
@@ -241,7 +241,7 @@ static bool need_flush_now(const struct silofs_task_ctx *task, int flags)
 	if (flags & SILOFS_CTLF_NOW) {
 		return true;
 	}
-	silofs_memstat(task->ectx->alloc, &alst);
+	silofs_memstat(task->corefs->alloc, &alst);
 	if (alst.nbytes_use > (alst.nbytes_max / 2)) {
 		return true;
 	}
@@ -284,5 +284,5 @@ int silofs_flush_dirty(struct silofs_task_ctx *task,
 
 int silofs_flush_dirty_now(struct silofs_task_ctx *task)
 {
-	return silofs_destage_dirty_nodes(task->ectx);
+	return silofs_destage_dirty_nodes(task->corefs);
 }

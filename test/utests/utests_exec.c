@@ -64,9 +64,9 @@ static struct ut_tgroup const g_ut_tgroups[] = {
 	UT_DEFTGRP(ut_tdefs_file_mthreads),
 	/* fs (pre clone)*/
 	UT_DEFTGRP(ut_tdefs_reload),
+	UT_DEFTGRP(ut_tdefs_fillfs),
 #if 0
 	UT_DEFTGRP(ut_tdefs_inspect),
-	UT_DEFTGRP(ut_tdefs_fillfs),
 	/* clone */
 	UT_DEFTGRP(ut_tdefs_clone_basic),
 	UT_DEFTGRP(ut_tdefs_clone_io),

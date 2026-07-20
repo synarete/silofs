@@ -66,7 +66,7 @@ static int verify_lview_of(const struct silofs_lview *lview,
 
 static int verify_staged_lnode(const struct silofs_lnode_info *lni)
 {
-	const struct silofs_lview *lview = lni->vn_ni.view.lview;
+	const struct silofs_lview *lview = lni->ln_ni.view.lview;
 	const struct silofs_laddr *laddr = silofs_lni_laddr(lni);
 
 	return verify_lview_of(lview, laddr);

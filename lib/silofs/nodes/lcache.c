@@ -23,7 +23,7 @@ static void lcache_evict_some(struct silofs_lcache *lcache);
 
 static struct silofs_hmapq_elem *lni_to_hmqe(struct silofs_lnode_info *lni)
 {
-	return &lni->vn_ni.hmqe;
+	return &lni->ln_ni.hmqe;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -127,7 +127,7 @@ static void
 lcache_remove_lni(struct silofs_lcache *lcache, struct silofs_lnode_info *lni)
 {
 	silofs_lni_remove_from(lni, &lcache->lc_hmapq);
-	lni->vn_ni.hmqe.hme_forgot = false;
+	lni->ln_ni.hmqe.hme_forgot = false;
 }
 
 static void
@@ -146,7 +146,7 @@ static void lcache_store_lni_hmapq(struct silofs_lcache *lcache,
 static void
 lcache_store_lni(struct silofs_lcache *lcache, struct silofs_lnode_info *lni)
 {
-	silofs_hkey_by_laddr(&lni->vn_ni.hmqe.hme_key, &lni->vn_laddr);
+	silofs_hkey_by_laddr(&lni->ln_ni.hmqe.hme_key, &lni->ln_laddr);
 	lcache_store_lni_hmapq(lcache, lni);
 }
 
@@ -267,7 +267,7 @@ void silofs_lcache_forget_lnode(struct silofs_lcache *lcache,
 	silofs_lni_cleardirty(lni);
 	if (silofs_lni_refcnt(lni) > 0) {
 		lcache_unmap_lni(lcache, lni);
-		lni->vn_ni.hmqe.hme_forgot = true;
+		lni->ln_ni.hmqe.hme_forgot = true;
 	} else {
 		lcache_evict_lni(lcache, lni);
 	}

@@ -31,12 +31,12 @@ enum silofs_lni_flags {
 
 /* lnode */
 struct silofs_lnode_info {
-	struct silofs_node_info vn_ni;
-	struct silofs_laddr     vn_laddr;
-	struct silofs_paddr     vn_curr_paddr;
-	uint64_t                vn_magic;
-	uint32_t                vn_flags;
-	int                     vn_asyncwr;
+	struct silofs_node_info ln_ni;
+	struct silofs_laddr     ln_laddr;
+	struct silofs_paddr     ln_curr_paddr;
+	uint64_t                ln_magic;
+	uint32_t                ln_flags;
+	int                     ln_asyncwr;
 
 	bool (*isevictable_fn)(const struct silofs_lnode_info *lni);
 };

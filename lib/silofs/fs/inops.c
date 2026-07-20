@@ -301,7 +301,7 @@ void silofs_purge_loose_inodes(struct silofs_task_ctx *task)
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("failed to forget loose inode: "
 			             "ino=%ld flags=%x err=%d",
-			             ii->i_ino, ii->i_lni.vn_flags, err);
+			             ii->i_ino, ii->i_lni.ln_flags, err);
 		}
 		ii = deq_loose_inode(task);
 	}
@@ -311,7 +311,7 @@ void silofs_enqueue_loose_inode(struct silofs_task_ctx *task,
                                 struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
-	silofs_assert_eq(ii->i_lni.vn_flags & SILOFS_LNF_PINNED, 0);
+	silofs_assert_eq(ii->i_lni.ln_flags & SILOFS_LNF_PINNED, 0);
 
 	if (!ii->i_in_looseq) {
 		enq_loose_inode(task, ii);

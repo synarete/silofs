@@ -314,7 +314,7 @@ static void fdi_pre_io(struct silofs_fdnode_info *fdi, bool asyncwr_mode)
 {
 	fdi_incref(fdi);
 	if (asyncwr_mode) {
-		silofs_atomic_sqc_add(&fdi->fdn_lni.vn_asyncwr, 1);
+		silofs_atomic_sqc_add(&fdi->fdn_lni.ln_asyncwr, 1);
 	}
 }
 
@@ -322,7 +322,7 @@ static void fdi_post_io(struct silofs_fdnode_info *fdi, bool asyncwr_mode)
 {
 	fdi_decref(fdi);
 	if (asyncwr_mode) {
-		silofs_atomic_sqc_sub(&fdi->fdn_lni.vn_asyncwr, 1);
+		silofs_atomic_sqc_sub(&fdi->fdn_lni.ln_asyncwr, 1);
 	}
 }
 

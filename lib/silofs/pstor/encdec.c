@@ -149,7 +149,7 @@ int silofs_decrypt_pnode(const struct silofs_core_refs *corefs,
 
 static size_t lni_lview_len(const struct silofs_lnode_info *lni)
 {
-	return silofs_ni_view_size(&lni->vn_ni);
+	return silofs_ni_view_size(&lni->ln_ni);
 }
 
 static const struct silofs_lview * //

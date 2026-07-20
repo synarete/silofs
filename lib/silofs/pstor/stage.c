@@ -209,36 +209,36 @@ static bool lni_has_lviewx(const struct silofs_lnode_info *lni)
 
 static size_t lni_lview_size(const struct silofs_lnode_info *lni)
 {
-	return silofs_ni_view_size(&lni->vn_ni);
+	return silofs_ni_view_size(&lni->ln_ni);
 }
 
 static const struct silofs_paddr *
 lni_curr_paddr(const struct silofs_lnode_info *lni)
 {
-	return &lni->vn_curr_paddr;
+	return &lni->ln_curr_paddr;
 }
 
 static void lni_update_curr_paddr(struct silofs_lnode_info *lni,
                                   const struct silofs_paddr *paddr)
 {
-	silofs_paddr_assign(&lni->vn_curr_paddr, paddr);
+	silofs_paddr_assign(&lni->ln_curr_paddr, paddr);
 }
 
 static int
 lni_attach_viewx(struct silofs_lnode_info *lni, struct silofs_alloc *alloc)
 {
-	return silofs_ni_attach_viewx(&lni->vn_ni, alloc);
+	return silofs_ni_attach_viewx(&lni->ln_ni, alloc);
 }
 
 static void
 lni_detach_viewx(struct silofs_lnode_info *lni, struct silofs_alloc *alloc)
 {
-	silofs_ni_detach_viewx(&lni->vn_ni, alloc);
+	silofs_ni_detach_viewx(&lni->ln_ni, alloc);
 }
 
 static bool lni_has_asyncwr(const struct silofs_lnode_info *lni)
 {
-	const int asyncwr = silofs_atomic_sqc_get(&lni->vn_asyncwr);
+	const int asyncwr = silofs_atomic_sqc_get(&lni->ln_asyncwr);
 
 	return (asyncwr > 0);
 }

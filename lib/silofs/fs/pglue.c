@@ -379,6 +379,12 @@ give_lnode_of(struct silofs_sbnode_info *sbi, const struct silofs_laddr *laddr)
 }
 
 static int
+check_take_lnode(const struct silofs_sbnode_info *sbi, enum silofs_ltype ltype)
+{
+	return silofs_sbi_check_avail(sbi, ltype);
+}
+
+static int
 spawn_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
                  struct silofs_inode_info *pii,
                  struct silofs_lnode_info **out_lni)
@@ -387,6 +393,9 @@ spawn_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	int err;
 
 	err = get_sbi(task, &sbi);
+	goto_out_if_err(err);
+
+	err = check_take_lnode(sbi, ltype);
 	goto_out_if_err(err);
 
 	err = claim_spawn_lnode(task, ltype, pii, out_lni);
@@ -406,6 +415,9 @@ claim_take_lnode(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	int err;
 
 	err = get_sbi(task, &sbi);
+	goto_out_if_err(err);
+
+	err = check_take_lnode(sbi, ltype);
 	goto_out_if_err(err);
 
 	err = claim_lnode(task, ltype, pii, out_laddr);

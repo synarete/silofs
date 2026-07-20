@@ -264,12 +264,9 @@ int silofs_flush_dirty_of(const struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-void silofs_enq_loose_inode(struct silofs_task_ctx *task,
-                            struct silofs_inode_info *ii)
+static void
+enq_loose_inode(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
-	silofs_assert_null(ii->i_looseq_next);
-	silofs_assert_eq(ii->i_lni.vn_flags & SILOFS_LNF_PINNED, 0);
-
 	if (!ii->i_in_looseq) {
 		ii->i_looseq_next = task->looseq;
 		ii->i_in_looseq   = true;
@@ -292,7 +289,7 @@ static struct silofs_inode_info *deq_loose_inode(struct silofs_task_ctx *task)
 	return ii;
 }
 
-static void forget_loose_inodes(struct silofs_task_ctx *task)
+void silofs_purge_loose_inodes(struct silofs_task_ctx *task)
 {
 	struct silofs_inode_info *ii;
 	int err;
@@ -310,18 +307,13 @@ static void forget_loose_inodes(struct silofs_task_ctx *task)
 	}
 }
 
-int silofs_purge_loose_inodes(struct silofs_task_ctx *task)
+void silofs_enqueue_loose_inode(struct silofs_task_ctx *task,
+                                struct silofs_inode_info *ii)
 {
-	if (task->looseq != nullptr) {
-		if (task->fs_locked) {
-			/* case 1: already fs-locked; keep it locked post op */
-			forget_loose_inodes(task);
-		} else {
-			/* case 2: need to protect with fs-lock/unlock pair */
-			silofs_lock_fs_by(task);
-			forget_loose_inodes(task);
-			silofs_unlock_fs_by(task);
-		}
+	silofs_assert_null(ii->i_looseq_next);
+	silofs_assert_eq(ii->i_lni.vn_flags & SILOFS_LNF_PINNED, 0);
+
+	if (!ii->i_in_looseq) {
+		enq_loose_inode(task, ii);
 	}
-	return 0;
 }

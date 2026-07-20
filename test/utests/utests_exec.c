@@ -328,7 +328,7 @@ static void ut_post_test(struct ut_env *ute)
 
 	ut_setup_task(ute, &task);
 	err = silofs_exec_idle(&task, SILOFS_CTLF_NOW);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	silofs_assert_ok(err);
 }
 

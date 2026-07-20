@@ -1130,7 +1130,7 @@ static void
 enqueue_if_loose(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	if (silofs_ii_isloose(ii) && !ii_ispinned(ii)) {
-		silofs_enq_loose_inode(task, ii);
+		silofs_enqueue_loose_inode(task, ii);
 	}
 }
 

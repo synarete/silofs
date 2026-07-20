@@ -34,9 +34,9 @@ int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
 int silofs_flush_dirty_of(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags);
 
-void silofs_enq_loose_inode(struct silofs_task_ctx   *task,
-                            struct silofs_inode_info *ii);
+void silofs_enqueue_loose_inode(struct silofs_task_ctx   *task,
+                                struct silofs_inode_info *ii);
 
-int silofs_purge_loose_inodes(struct silofs_task_ctx *task);
+void silofs_purge_loose_inodes(struct silofs_task_ctx *task);
 
 #endif /* SILOFS_INOPS_H_ */

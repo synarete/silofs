@@ -214,36 +214,28 @@ static int do_map_task_creds(struct silofs_task_ctx *task)
 static int map_task_creds(struct silofs_task_ctx *task)
 {
 	const struct silofs_idsmap *idsmap = task->corefs->idsmap;
-	int err;
+	int ret;
 
 	if (idsmap->idm_usize || idsmap->idm_gsize) {
-		err            = do_map_task_creds(task);
-		task->runnable = (err == 0);
+		ret = do_map_task_creds(task);
 	} else {
-		task->runnable = true;
-		err            = 0;
+		ret = 0;
 	}
-	return err;
+	return ret;
 }
 
 static int make_priv_task(struct silofs_env *env, struct silofs_task_ctx *task)
 {
 	silofs_task_init(task, &env->corefs);
-	silofs_task_update_times(task, true);
-	silofs_task_update_creds(task, getuid(), getgid(), 0077);
-	task->priv_op = true;
+	silofs_task_set_time(task, true);
+	silofs_task_set_creds(task, getuid(), getgid(), 0077);
 	return map_task_creds(task);
 }
 
 static int term_task(struct silofs_task_ctx *task, int status)
 {
-	int err = 0;
-
-	if (task->runnable) {
-		err = silofs_purge_loose_inodes(task);
-	}
 	silofs_task_fini(task);
-	return status ? status : err;
+	return status;
 }
 
 static int

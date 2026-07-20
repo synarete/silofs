@@ -1987,7 +1987,7 @@ static int do_mknod(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mknod.rdev   = (dev_t)fcc->in->u.mknod.arg.rdev;
 	fcc->args->in.mknod.mode   = (mode_t)fcc->in->u.mknod.arg.mode;
 	fcc->args->in.mknod.umask  = (mode_t)fcc->in->u.mknod.arg.umask;
-	silofs_task_update_umask(fcc->task, fcc->args->in.mknod.umask);
+	silofs_task_set_umask(fcc->task, fcc->args->in.mknod.umask);
 
 	err = fcc_exec_hook(fcc, mknod);
 	return fcc_reply_entry(fcc, &fcc->args->out.mknod.st, err);
@@ -2002,7 +2002,7 @@ static int do_mkdir(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.mkdir.mode   = (mode_t)(fcc->in->u.mkdir.arg.mode);
 	fcc->args->in.mkdir.mode |= S_IFDIR;
 	fcc->args->in.mkdir.umask = (mode_t)fcc->in->u.mkdir.arg.umask;
-	silofs_task_update_umask(fcc->task, fcc->args->in.mkdir.umask);
+	silofs_task_set_umask(fcc->task, fcc->args->in.mkdir.umask);
 
 	err = fcc_exec_hook(fcc, mkdir);
 	return fcc_reply_entry(fcc, &fcc->args->out.mkdir.st, err);
@@ -2305,7 +2305,7 @@ static int do_create(const struct silofs_fuseq_cmd_ctx *fcc)
 	fcc->args->in.create.kill_suidgid =
 		testf(fcc->in->u.create.arg.open_flags,
 	              FUSE_OPEN_KILL_SUIDGID);
-	silofs_task_update_umask(fcc->task, fcc->args->in.create.umask);
+	silofs_task_set_umask(fcc->task, fcc->args->in.create.umask);
 
 	err = fcc_exec_hook(fcc, create);
 	return fcc_reply_create(fcc, &fcc->args->out.create.st, err);
@@ -3311,10 +3311,10 @@ static void fqs_update_task(const struct silofs_fuseq_sub *fqs,
 	const struct silofs_fuseq_in *in = fqs_in_of2(fqs);
 	const struct fuse_in_header *hdr = &in->u.hdr.hdr;
 
-	silofs_task_update_creds(task, hdr->uid, hdr->gid, 0);
-	silofs_task_update_auth(task, (pid_t)hdr->pid, hdr->unique,
-	                        fqs_in_opcode(fqs),
-	                        fqs_has_exclusive_cmd(fqs));
+	silofs_task_set_creds(task, hdr->uid, hdr->gid, 0);
+	silofs_task_set_auth(task, (pid_t)hdr->pid, hdr->unique,
+	                     fqs_in_opcode(fqs));
+	silofs_task_set_excl(task, fqs_has_exclusive_cmd(fqs));
 }
 
 static void fqs_setup_task(const struct silofs_fuseq_sub *fqs,
@@ -3447,24 +3447,17 @@ fqs_call_oper(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 }
 
 static int
-fqs_submit_by(const struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
-{
-	silofs_unused(fqs);
-	return silofs_purge_loose_inodes(task);
-}
-
-static int
 fqs_do_exec_request(struct silofs_fuseq_sub *fqs, struct silofs_task_ctx *task)
 {
-	int err1, err2;
+	int err;
 
 	fqs_pre_exec_request(fqs);
+
 	silofs_rwlock_fs_by(task);
-	err1 = fqs_call_oper(fqs, task);
-	err2 = fqs_submit_by(fqs, task);
+	err = fqs_call_oper(fqs, task);
 	silofs_rwunlock_fs_by(task);
 
-	return err1 ? err1 : err2;
+	return err;
 }
 
 static void fqs_refresh_task_by_cmd(const struct silofs_fuseq_sub *fqs,
@@ -3473,7 +3466,7 @@ static void fqs_refresh_task_by_cmd(const struct silofs_fuseq_sub *fqs,
 	const struct silofs_fuseq_cmd_desc *cmd_desc;
 
 	cmd_desc = cmd_desc_of(task->auth.opcode);
-	silofs_task_update_times(task, cmd_desc && (cmd_desc->realtime > 0));
+	silofs_task_set_time(task, cmd_desc && (cmd_desc->realtime > 0));
 	silofs_unused(fqs);
 }
 
@@ -4274,11 +4267,10 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 	const struct silofs_cred *cred = &fq->fq_fsowner;
 
 	silofs_task_init(task, fq->fq_corefs);
-	silofs_task_update_creds(task, cred->uid, cred->gid, cred->umask);
-	silofs_task_update_times(task, false);
-	task->auth.pid  = getpid();
-	task->exclusive = false;
-	task->internal  = true;
+	silofs_task_set_creds(task, cred->uid, cred->gid, cred->umask);
+	silofs_task_set_time(task, false);
+	task->auth.pid = getpid();
+	task->internal = true;
 }
 
 static int fqs_do_exec_idle(struct silofs_fuseq_sub *fqs,
@@ -4286,16 +4278,15 @@ static int fqs_do_exec_idle(struct silofs_fuseq_sub *fqs,
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
 	struct silofs_vfs_args *args  = &fqs->fqs_args;
-	int err1, err2;
+	int err;
 
 	silofs_rwlock_fs_by(task);
 	args->in.idle.flags = flags;
 	/* TODO: find clean way to use fcc */
-	err1 = fq->fq_vfs_hooks->idle(task, args);
-	err2 = fqs_submit_by(fqs, task);
+	err = fq->fq_vfs_hooks->idle(task, args);
 	silofs_rwunlock_fs_by(task);
 
-	return err1 ? err1 : err2;
+	return err;
 }
 
 static int fqs_exec_idle(struct silofs_fuseq_sub *fqs, int flags)

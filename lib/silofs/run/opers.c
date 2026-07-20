@@ -46,7 +46,7 @@ static int op_start(struct silofs_task_ctx *task)
 {
 	silofs_lock_fs_by(task);
 
-	silofs_clock_gettime_mono(&task->op_start_time);
+	silofs_clock_gettime_mono(&task->start_time);
 	if (!task->internal) {
 		task->corefs->fsroot->opstat.op_count++;
 		op_feed_prng(task);
@@ -69,7 +69,7 @@ static void op_probe_duration(const struct silofs_task_ctx *task, int res)
 		return;
 	}
 	time_now = silofs_time_mono_now();
-	time_dif = time_now - task->op_start_time.tv_sec;
+	time_dif = time_now - task->start_time.tv_sec;
 	if (time_dif < 30) {
 		return;
 	}
@@ -86,12 +86,12 @@ static int op_unlooseq(struct silofs_task_ctx *task)
 	 * alive but could not be fully dropped as they are still under to-be
 	 * written state in submit-queue. This rare case may happen on heavy
 	 * load with unlinked files. In this special case, we must do forced
-	 * flush-all to purge and evict those pending inodes while current task
+	 * purge and flush-all to evict those pending inodes while current task
 	 * still holds the fs-lock.
 	 */
 	if (task->looseq != nullptr) {
+		silofs_purge_loose_inodes(task);
 		ret = silofs_flush_dirty_now(task);
-		silofs_assert_null(task->looseq);
 	}
 	return ret;
 }

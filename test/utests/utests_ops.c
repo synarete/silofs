@@ -46,19 +46,16 @@ static uint64_t ut_unique_opid(struct ut_env *ute)
 void ut_setup_task(struct ut_env *ute, struct silofs_task_ctx *task)
 {
 	silofs_task_init(task, &ute->env->corefs);
-	silofs_task_update_creds(task, getuid(), getgid(), 0002);
-	silofs_task_update_times(task, true);
+	silofs_task_set_creds(task, getuid(), getgid(), 0002);
+	silofs_task_set_time(task, true);
 	task->auth.unique = ut_unique_opid(ute);
 	task->auth.pid    = getpid();
 }
 
-void ut_release_task(struct ut_env *ute, struct silofs_task_ctx *task)
+void ut_complete_task(struct ut_env *ute, struct silofs_task_ctx *task)
 {
-	int err;
-
-	err = silofs_purge_loose_inodes(task);
-	ut_expect_ok(err);
 	silofs_task_fini(task);
+
 	silofs_unused(ute);
 }
 
@@ -85,7 +82,7 @@ static int ut_do_statfs(struct ut_env *ute, ino_t ino, struct statvfs *st)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_statfs(&task, ino, st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -98,7 +95,7 @@ static int ut_do_statx(struct ut_env *ute, ino_t ino, uint32_t sx_want_mask,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_statx(&task, ino, sx_want_mask, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_statx(stx, &st);
 	return sanitize_status(ret);
 }
@@ -110,7 +107,7 @@ static int ut_do_access(struct ut_env *ute, ino_t ino, int mode)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_access(&task, ino, mode);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -122,7 +119,7 @@ static int ut_do_getattr(struct ut_env *ute, ino_t ino, struct stat *out_st)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_getattr(&task, ino, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -136,7 +133,7 @@ static int ut_do_lookup(struct ut_env *ute, ino_t parent, const char *name,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_lookup(&task, parent, name, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -161,7 +158,7 @@ static int ut_do_utimens(struct ut_env *ute, ino_t ino, const struct stat *tms,
 	stat_to_itimes(tms, &itimes);
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_utimens(&task, ino, &itimes, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -175,7 +172,7 @@ static int ut_do_mkdir(struct ut_env *ute, ino_t parent, const char *name,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_mkdir(&task, parent, name, mode | S_IFDIR, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -187,7 +184,7 @@ static int ut_do_rmdir(struct ut_env *ute, ino_t parent, const char *name)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_rmdir(&task, parent, name);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -198,7 +195,7 @@ static int ut_do_opendir(struct ut_env *ute, ino_t ino)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_opendir(&task, ino, 0);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -209,7 +206,7 @@ static int ut_do_releasedir(struct ut_env *ute, ino_t ino)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_releasedir(&task, ino, 0);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -220,7 +217,7 @@ static int ut_do_fsyncdir(struct ut_env *ute, ino_t ino, bool datasync)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fsyncdir(&task, ino, datasync);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -233,7 +230,7 @@ static int ut_do_symlink(struct ut_env *ute, ino_t parent, const char *name,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_symlink(&task, parent, name, val, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -246,7 +243,7 @@ static int ut_do_readlink(struct ut_env *ute, ino_t ino, char *buf, size_t len,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_readlink(&task, ino, buf, len, out_len);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -259,7 +256,7 @@ static int ut_do_link(struct ut_env *ute, ino_t ino, ino_t parent,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_link(&task, ino, parent, name, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -271,7 +268,7 @@ static int ut_do_unlink(struct ut_env *ute, ino_t parent, const char *name)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_unlink(&task, parent, name);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -284,7 +281,7 @@ static int ut_do_create(struct ut_env *ute, ino_t parent, const char *name,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_create(&task, parent, name, 0, mode, false, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -296,7 +293,7 @@ static int ut_do_open(struct ut_env *ute, ino_t ino, int flags)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_open(&task, ino, flags, true);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -307,7 +304,7 @@ static int ut_do_release(struct ut_env *ute, ino_t ino, bool flush)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_release(&task, ino, 0, flush);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -320,7 +317,7 @@ static int ut_do_truncate(struct ut_env *ute, ino_t ino, off_t length,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_truncate(&task, ino, length, false, &st);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	assign_stat(out_st, &st);
 	return sanitize_status(ret);
 }
@@ -332,7 +329,7 @@ static int ut_do_fsync(struct ut_env *ute, ino_t ino, bool datasync)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fsync(&task, ino, datasync);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -345,7 +342,7 @@ static int ut_do_rename(struct ut_env *ute, ino_t parent, const char *name,
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_rename(&task, parent, name, newparent, newname,
 	                         flags);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -356,7 +353,7 @@ static int ut_do_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fiemap(&task, ino, fm);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -368,7 +365,7 @@ ut_do_lseek(struct ut_env *ute, ino_t ino, off_t off, int whence, off_t *out)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_lseek(&task, ino, off, whence, out);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -382,7 +379,7 @@ static int ut_do_copy_file_range(struct ut_env *ute, ino_t ino_in,
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_copy_file_range(&task, ino_in, off_in, ino_out,
 	                                  off_out, len, 0, out_len);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -395,7 +392,7 @@ ut_do_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_query(&task, ino, qtype, out_qry);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -406,7 +403,7 @@ static int ut_do_flush(struct ut_env *ute, ino_t ino, bool now)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_flush(&task, ino, now);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -418,7 +415,7 @@ static int ut_do_read(struct ut_env *ute, ino_t ino, void *buf, size_t len,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_read(&task, ino, buf, len, off, 0, out_len);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -430,7 +427,7 @@ static int ut_do_fallocate(struct ut_env *ute, ino_t ino, int mode,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_fallocate(&task, ino, mode, offset, len);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -442,7 +439,7 @@ static int ut_do_write(struct ut_env *ute, ino_t ino, const void *buf,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_write(&task, ino, buf, len, off, 0, false, out_len);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -538,10 +535,8 @@ static bool ut_with_aswyncwr(const struct ut_env *ute)
 static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
                             size_t len, off_t off, size_t *out_len)
 {
-	struct silofs_task_ctx task = {
-		.interrupted = -1,
-	};
-	struct ut_write_iter wri = {
+	struct silofs_task_ctx task = {};
+	struct ut_write_iter wri    = {
 		.dat       = buf,
 		.dat_len   = 0,
 		.dat_max   = len,
@@ -559,14 +554,14 @@ static int ut_do_write_iter(struct ut_env *ute, ino_t ino, const void *buf,
 
 	ut_setup_task(ute, &task);
 	err1 = silofs_exec_write_iter(&task, ino, 0, false, &wri.rwi);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 
 	err2     = ut_write_iter_copy_rem(&wri);
 	*out_len = wri.dat_len;
 
 	ut_setup_task(ute, &task);
 	err3 = silofs_exec_rdwr_post(&task, 1, wri.iov, wri.cnt);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 
 	return sanitize_status(err1 || err2 || err3);
 }
@@ -622,7 +617,7 @@ static int ut_do_readdir(struct ut_env *ute, ino_t ino, off_t doff,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_readdir(&task, ino, rd_ctx);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -640,7 +635,7 @@ static int ut_do_readdirplus(struct ut_env *ute, ino_t ino, off_t doff,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_readdirplus(&task, ino, rd_ctx);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -653,7 +648,7 @@ static int ut_do_setxattr(struct ut_env *ute, ino_t ino, const char *name,
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_setxattr(&task, ino, name, value, size, flags,
 	                           false);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -665,7 +660,7 @@ static int ut_do_getxattr(struct ut_env *ute, ino_t ino, const char *name,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_getxattr(&task, ino, name, buf, size, out_size);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -676,7 +671,7 @@ static int ut_do_removexattr(struct ut_env *ute, ino_t ino, const char *name)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_removexattr(&task, ino, name);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -717,7 +712,7 @@ static int ut_do_listxattr(struct ut_env *ute, ino_t ino,
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_listxattr(&task, ino, lxa_ctx);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -729,7 +724,7 @@ ut_do_tune(struct ut_env *ute, ino_t ino, int iflags_want, int iflags_dont)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_tune(&task, ino, iflags_want, iflags_dont);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 
@@ -740,7 +735,7 @@ static int ut_do_timedout(struct ut_env *ute)
 
 	ut_setup_task(ute, &task);
 	ret = silofs_exec_idle(&task, SILOFS_CTLF_IDLE);
-	ut_release_task(ute, &task);
+	ut_complete_task(ute, &task);
 	return sanitize_status(ret);
 }
 

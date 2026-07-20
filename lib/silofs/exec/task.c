@@ -18,8 +18,33 @@
 #include <silofs/infra.h>
 #include <silofs/exec.h>
 
-void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
-                              gid_t gid, mode_t umsk)
+void silofs_task_init(struct silofs_task_ctx *task,
+                      const struct silofs_core_refs *corefs)
+{
+	silofs_memzero(task, sizeof(*task));
+	silofs_creds_init(&task->auth.creds);
+	task->corefs      = corefs;
+	task->looseq      = nullptr;
+	task->upper_id    = 0;
+	task->interrupted = 0;
+	task->fs_locked   = 0;
+	task->rw_locked   = 0;
+	task->exclusive   = 0;
+	task->kwrite      = false;
+	task->internal    = false;
+}
+
+void silofs_task_fini(struct silofs_task_ctx *task)
+{
+	silofs_assert_null(task->looseq);
+
+	silofs_creds_fini(&task->auth.creds);
+	task->corefs = nullptr;
+	task->looseq = nullptr;
+}
+
+void silofs_task_set_creds(struct silofs_task_ctx *task, uid_t uid, gid_t gid,
+                           mode_t umsk)
 {
 	struct silofs_creds *creds = &task->auth.creds;
 
@@ -27,23 +52,22 @@ void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
 	silofs_cred_setup(&creds->fs_cred, uid, gid, umsk);
 }
 
-void silofs_task_update_auth(struct silofs_task_ctx *task, pid_t pid,
-                             uint64_t unique, uint32_t opcode, bool exclusive)
+void silofs_task_set_auth(struct silofs_task_ctx *task, pid_t pid,
+                          uint64_t unique, uint32_t opcode)
 {
 	task->auth.pid    = pid;
 	task->auth.unique = unique;
 	task->auth.opcode = opcode;
-	task->exclusive   = exclusive;
 }
 
-void silofs_task_update_umask(struct silofs_task_ctx *task, mode_t umask)
+void silofs_task_set_umask(struct silofs_task_ctx *task, mode_t umask)
 {
 	struct silofs_creds *creds = &task->auth.creds;
 
 	creds->host_cred.umask = creds->fs_cred.umask = umask;
 }
 
-void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
+void silofs_task_set_time(struct silofs_task_ctx *task, bool rt)
 {
 	struct timespec *ts = &task->auth.ts;
 
@@ -54,48 +78,24 @@ void silofs_task_update_times(struct silofs_task_ctx *task, bool rt)
 	}
 }
 
-void silofs_task_init(struct silofs_task_ctx *task,
-                      const struct silofs_core_refs *corefs)
+void silofs_task_set_excl(struct silofs_task_ctx *task, bool excl)
 {
-	silofs_memzero(task, sizeof(*task));
-	silofs_creds_init(&task->auth.creds);
-	task->corefs      = corefs;
-	task->looseq      = nullptr;
-	task->upper_id    = 0;
-	task->interrupted = 0;
-	task->fs_locked   = false;
-	task->rw_locked   = false;
-	task->exclusive   = false;
-	task->priv_op     = false;
-	task->kwrite      = false;
-	task->runnable    = true;
-	task->internal    = false;
-}
-
-void silofs_task_fini(struct silofs_task_ctx *task)
-{
-	silofs_assert_null(task->looseq);
-	silofs_assert_eq(task->fs_locked, false);
-
-	silofs_creds_fini(&task->auth.creds);
-	task->corefs   = nullptr;
-	task->looseq   = nullptr;
-	task->runnable = false;
+	task->exclusive = excl ? 1 : 0;
 }
 
 void silofs_lock_fs_by(struct silofs_task_ctx *task)
 {
-	if (!task->fs_locked && !task->priv_op) {
+	if (!task->fs_locked) {
 		silofs_fsroot_lock(task->corefs->fsroot);
-		task->fs_locked = true;
+		task->fs_locked = 1;
 	}
 }
 
 void silofs_unlock_fs_by(struct silofs_task_ctx *task)
 {
-	if (task->fs_locked && !task->priv_op) {
+	if (task->fs_locked) {
 		silofs_fsroot_unlock(task->corefs->fsroot);
-		task->fs_locked = false;
+		task->fs_locked = 0;
 	}
 }
 
@@ -103,7 +103,7 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->rw_locked) {
 		silofs_fsroot_rwlock(task->corefs->fsroot, task->exclusive);
-		task->rw_locked = true;
+		task->fs_locked = 1;
 	}
 }
 
@@ -111,6 +111,6 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->rw_locked) {
 		silofs_fsroot_rwunlock(task->corefs->fsroot);
-		task->rw_locked = false;
+		task->fs_locked = 0;
 	}
 }

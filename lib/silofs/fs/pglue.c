@@ -1045,35 +1045,22 @@ int silofs_flush_dirty_now(const struct silofs_task_ctx *task)
 	return silofs_destage_dirty_nodes(task->corefs);
 }
 
-static bool need_flush_by_alloc(const struct silofs_alloc *alloc,
-                                size_t percentage_threshold)
-{
-	struct silofs_alloc_stat alst = {
-		.nbytes_use = 0,
-		.nbytes_max = 0,
-	};
-	size_t usage_ratio;
-
-	silofs_memstat(alloc, &alst);
-	if (!alst.nbytes_max) {
-		return false;
-	}
-	usage_ratio = ((alst.nbytes_use * 100) / alst.nbytes_max);
-	return (usage_ratio > percentage_threshold);
-}
-
 static bool need_flush(const struct silofs_task_ctx *task, int flags)
 {
-	size_t percentage_threshold;
+	bool ret = false;
 
 	if (flags & SILOFS_CTLF_IDLE) {
-		percentage_threshold = 0;
-	} else if (flags & (SILOFS_CTLF_OPSTART | SILOFS_CTLF_INTERN)) {
-		percentage_threshold = 25;
+		ret = true;
 	} else {
-		percentage_threshold = 50;
+		const uint32_t mempress = silofs_mempress(task->corefs->alloc);
+
+		if (flags & (SILOFS_CTLF_OPSTART | SILOFS_CTLF_INTERN)) {
+			ret = (mempress > 25);
+		} else {
+			ret = (mempress > 50);
+		}
 	}
-	return need_flush_by_alloc(task->corefs->alloc, percentage_threshold);
+	return ret;
 }
 
 int silofs_try_flush_dirty(const struct silofs_task_ctx *task, int flags)

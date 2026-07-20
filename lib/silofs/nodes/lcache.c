@@ -19,8 +19,6 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-static void lcache_evict_some(struct silofs_lcache *lcache);
-
 static struct silofs_hmapq_elem *lni_to_hmqe(struct silofs_lnode_info *lni)
 {
 	return &lni->ln_ni.hmqe;
@@ -69,28 +67,6 @@ static bool test_evictable_lni(const struct silofs_lnode_info *lni)
 		ret = lni->isevictable_fn(lni);
 	}
 	return ret;
-}
-
-static int visit_evictable_lni(struct silofs_hmapq_elem *hmqe, void *arg)
-{
-	struct silofs_lnode_info *lni = silofs_lni_from_hmqe(hmqe);
-
-	if (unlikely(lni == nullptr) || !test_evictable_lni(lni)) {
-		return 0;
-	}
-	*(struct silofs_lnode_info **)arg = lni;
-	return 1;
-}
-
-static struct silofs_lnode_info *
-lcache_find_evictable_lni(struct silofs_lcache *lcache)
-{
-	struct silofs_hmapq *hmapq      = &lcache->lc_hmapq;
-	struct silofs_lnode_info *lni   = nullptr;
-	struct silofs_lnode_info **plni = &lni;
-
-	silofs_hmapq_riterate(hmapq, 10, visit_evictable_lni, (void *)plni);
-	return lni;
 }
 
 static struct silofs_lnode_info *
@@ -245,12 +221,13 @@ lcache_require_lni(struct silofs_lcache *lcache,
 {
 	struct silofs_lnode_info *lni = nullptr;
 
-	for (int i = 0; i < 4; ++i) {
-		lni = lcache_new_lni(lcache, laddr);
-		if (lni != nullptr) {
-			break;
-		}
-		lcache_evict_some(lcache);
+	lni = lcache_new_lni(lcache, laddr);
+	if (lni == nullptr) {
+		struct silofs_alloc_stat alst;
+
+		silofs_memstat(lcache->lc_alloc, &alst);
+		log_dbg("new lni failed: nbytes_use=%zu nbytes_max=%zu",
+		        alst.nbytes_use, alst.nbytes_max);
 	}
 	return lni;
 }
@@ -304,59 +281,19 @@ lcache_shrink_some_lnis(struct silofs_lcache *lcache, size_t count, int flags)
 	return lcache_shrink_or_relru_lnis(lcache, count, flags);
 }
 
-static size_t
-lcache_shrink_some(struct silofs_lcache *lcache, size_t count, int flags)
+static size_t lcache_mempress(const struct silofs_lcache *lcache)
 {
-	return lcache_shrink_some_lnis(lcache, count, flags);
-}
-
-static void lcache_evict_some(struct silofs_lcache *lcache)
-{
-	struct silofs_lnode_info *lni = nullptr;
-
-	lni = lcache_find_evictable_lni(lcache);
-	if ((lni != nullptr) && test_evictable_lni(lni)) {
-		lcache_evict_lni(lcache, lni);
-	} else {
-		lcache_shrink_some(lcache, 1, 0);
-	}
-}
-
-/* returns memory-pressure as ratio of total available memory, normalized to
- * a value within the range [0,1000] */
-static size_t lcache_memory_pressure(const struct silofs_lcache *lcache)
-{
-	struct silofs_alloc_stat st;
-	size_t mem_press = 0;
-
-	silofs_memstat(lcache->lc_alloc, &st);
-	if (likely(st.nbytes_max > 0)) {
-		mem_press = ((1000UL * st.nbytes_use) / st.nbytes_max);
-	}
-	return mem_press;
+	return silofs_mempress(lcache->lc_alloc);
 }
 
 static size_t lcache_calc_niter(const struct silofs_lcache *lcache, int flags)
 {
-	const size_t mempress            = lcache_memory_pressure(lcache);
-	const size_t mempress_percentage = mempress / 10;
-	size_t niter                     = 0;
+	const size_t mempress = lcache_mempress(lcache);
+	size_t niter;
 
-	if (mempress_percentage > 60) {
-		niter += 10;
-	} else if (mempress_percentage > 20) {
-		if (flags & SILOFS_CTLF_INTERN) {
-			niter += 5;
-		}
-		if (flags & SILOFS_CTLF_OPSTART) {
-			niter += 1;
-		}
-	}
-	if (flags & SILOFS_CTLF_NOW) {
-		niter += 2 + silofs_min(mempress_percentage, 5);
-	}
-	if (!niter && (flags & SILOFS_CTLF_IDLE)) {
-		niter += 2 + silofs_min(mempress_percentage, 3);
+	niter = mempress / 10;
+	if (flags & SILOFS_CTLF_IDLE) {
+		niter += 1;
 	}
 	return niter;
 }

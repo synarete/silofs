@@ -1635,7 +1635,7 @@ static int
 do_releasedir_flush(struct silofs_task_ctx *task,
                     struct silofs_inode_info *dir_ii, int o_flags, bool flush)
 {
-	int flags = SILOFS_CTLF_RELEASE;
+	int flags = 0;
 
 	if (o_flags & (O_SYNC | O_DSYNC)) {
 		flags |= SILOFS_CTLF_FSYNC;
@@ -1744,7 +1744,7 @@ static int check_release(const struct silofs_inode_info *ii)
 static int do_release(struct silofs_task_ctx *task,
                       struct silofs_inode_info *ii, bool flush)
 {
-	const int flags = flush ? SILOFS_CTLF_NOW : SILOFS_CTLF_RELEASE;
+	const int flags = flush ? SILOFS_CTLF_NOW : 0;
 	int err;
 
 	err = check_release(ii);

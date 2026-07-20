@@ -71,6 +71,8 @@ silofs_memdup(struct silofs_alloc *alloc, const void *p, size_t n, int flags);
 void silofs_memstat(const struct silofs_alloc *alloc,
                     struct silofs_alloc_stat  *out_stat);
 
+uint32_t silofs_mempress(const struct silofs_alloc *alloc);
+
 /* extra memory utilities */
 void silofs_memzero(void *s, size_t n);
 

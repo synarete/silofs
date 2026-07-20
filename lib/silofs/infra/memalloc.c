@@ -262,6 +262,22 @@ void silofs_memstat(const struct silofs_alloc *alloc,
 	}
 }
 
+/*
+ * Returns memory-pressure as ratio of total available memory, normalized to
+ * a value within the range [0,100]
+ */
+uint32_t silofs_mempress(const struct silofs_alloc *alloc)
+{
+	struct silofs_alloc_stat al_st;
+	size_t mem_press = 0;
+
+	silofs_memstat(alloc, &al_st);
+	if (al_st.nbytes_max > 0) {
+		mem_press = ((100UL * al_st.nbytes_use) / al_st.nbytes_max);
+	}
+	return (uint32_t)mem_press;
+}
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static int getmemlimit(uint64_t *out_lim)

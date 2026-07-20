@@ -332,22 +332,15 @@ void silofs_pcache_drop(struct silofs_pcache *pcache)
 	}
 }
 
-static size_t pcache_memory_pressure(const struct silofs_pcache *pcache)
+static size_t pcache_mempress(const struct silofs_pcache *pcache)
 {
-	struct silofs_alloc_stat st;
-	size_t mem_pres = 0;
-
-	silofs_memstat(pcache->pc_alloc, &st);
-	if (likely(st.nbytes_max > 0)) {
-		mem_pres = ((100UL * st.nbytes_use) / st.nbytes_max);
-	}
-	return mem_pres; /* percentage of total available memory */
+	return silofs_mempress(pcache->pc_alloc);
 }
 
 static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
                               size_t *out_niter, bool *out_iterall)
 {
-	size_t mem_pres;
+	const size_t mem_pres = pcache_mempress(pcache);
 
 	*out_niter   = 0;
 	*out_iterall = false;
@@ -359,7 +352,6 @@ static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
 		*out_niter += 1;
 		*out_iterall = false;
 	}
-	mem_pres = pcache_memory_pressure(pcache);
 	if (mem_pres > 50) {
 		*out_niter += mem_pres / 10;
 		*out_iterall = true;

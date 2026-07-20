@@ -200,43 +200,17 @@ int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static size_t flush_threshold_of(int flags)
-{
-	size_t threshold;
-
-	if (flags & SILOFS_CTLF_RELEASE) {
-		threshold = SILOFS_MEGA / 2;
-	} else if (flags & SILOFS_CTLF_INTERN) {
-		threshold = SILOFS_MEGA;
-	} else if (flags & SILOFS_CTLF_OPSTART) {
-		threshold = 2 * SILOFS_MEGA;
-	} else {
-		threshold = 4 * SILOFS_MEGA;
-	}
-	return threshold;
-}
-
 static bool need_flush_by_alloc(const struct silofs_alloc *alloc)
 {
-	struct silofs_alloc_stat alst = {
-		.nbytes_use = 0,
-		.nbytes_max = 0,
-	};
-
-	silofs_memstat(alloc, &alst);
-	return (alst.nbytes_use > (alst.nbytes_max / 2));
+	return (silofs_mempress(alloc) > 50);
 }
 
 static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 {
-	size_t threshold;
-
 	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_FSYNC)) {
 		return true;
 	}
-	threshold = flush_threshold_of(flags);
-	silofs_unused(ii);        /* XXX TODO : use me */
-	silofs_unused(threshold); /* XXX TODO : use me */
+	silofs_unused(ii); /* XXX TODO : use me */
 	return false;
 }
 

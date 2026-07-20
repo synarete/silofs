@@ -1653,14 +1653,6 @@ static void fuseq_update_nexecs(struct silofs_fuseq *fq, int n)
 	fuseq_unlock_ctl(fq);
 }
 
-static bool fuseq_has_memory_pressure(const struct silofs_fuseq *fq)
-{
-	struct silofs_alloc_stat st;
-
-	silofs_memstat(fq->fq_corefs->alloc, &st);
-	return st.nbytes_use > (st.nbytes_max / 10);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 #define fcc_exec_hook(fcc_, hook_) \
@@ -4303,38 +4295,42 @@ static int fqs_exec_idle(struct silofs_fuseq_sub *fqs, int flags)
 static int fqs_exec_maintain_once(struct silofs_fuseq_sub *fqs)
 {
 	const struct silofs_fuseq *fq = fqs_fuseq(fqs);
-	int ret                       = 0;
 
 	if (!fuseq_is_normal(fq)) {
-		/* yield to let other have a chance to do some work */
+		/* Yield to let other have a chance to do some work */
 		silofs_sys_sched_yield();
-	} else if (!fqs->fqs_exec_ok) {
-		/* do flush-and-relax in idle mode */
-		ret = fqs_exec_idle(fqs, SILOFS_CTLF_IDLE);
-	} else if (fuseq_has_memory_pressure(fq)) {
-		/* do flush-and-relax along-side other threads */
-		ret = fqs_exec_idle(fqs, SILOFS_CTLF_INTERN);
+		return 0;
 	}
-	return ret;
+	if (fqs->fqs_exec_ok) {
+		/* Last request was executed fine, go immediately to next */
+		return 0;
+	}
+	/* do flush-and-relax in idle mode */
+	return fqs_exec_idle(fqs, SILOFS_CTLF_IDLE);
+}
+
+static int fqs_do_exec_loop(struct silofs_fuseq_sub *fqs)
+{
+	int err;
+
+	while (fqs_has_exec_mode(fqs)) {
+		err = fqs_exec_once(fqs);
+		return_if_err(err);
+
+		err = fqs_exec_maintain_once(fqs);
+		return_if_err(err);
+	}
+	return 0;
 }
 
 static int fqs_exec_loop(struct silofs_fuseq_sub *fqs)
 {
-	const uint32_t idx = fqs->fqs_th.idx;
-	int err            = 0;
+	int err;
 
-	while (fqs_has_exec_mode(fqs)) {
-		err = fqs_exec_once(fqs);
-		if (err) {
-			break;
-		}
-		err = fqs_exec_maintain_once(fqs);
-		if (err) {
-			break;
-		}
-	}
+	err = fqs_do_exec_loop(fqs);
 	if (err && (err != -ENODEV)) {
-		fuseq_log_warn("sub-thread done: idx=%u err=%d", idx, err);
+		fuseq_log_warn("sub-thread done: idx=%u err=%d",
+		               fqs->fqs_th.idx, err);
 	}
 	return err;
 }

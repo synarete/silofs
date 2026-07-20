@@ -1431,7 +1431,8 @@ void ut_write_nospc(struct ut_env *ute, ino_t ino, const void *buf, size_t bsz,
 	int err;
 
 	*out_nwr = 0;
-	err      = ut_do_write(ute, ino, buf, bsz, off, out_nwr);
+
+	err = ut_do_write(ute, ino, buf, bsz, off, out_nwr);
 	if (err) {
 		ut_expect_status(err, -ENOSPC);
 	}

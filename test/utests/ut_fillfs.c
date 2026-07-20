@@ -35,10 +35,8 @@ static size_t calc_wr_size(const struct statvfs *stv, size_t limit)
 static void ut_fillfs_simple(struct ut_env *ute)
 {
 	void *buf = nullptr;
-	ino_t ino;
-	ino_t dino;
-	size_t len;
-	size_t nwr;
+	ino_t dino, ino;
+	size_t len, nwr;
 	off_t off;
 	struct stat st;
 	struct statvfs stv[2];
@@ -85,23 +83,20 @@ static void ut_fillfs_simple(struct ut_env *ute)
 
 static void ut_fillfs_mixed(struct ut_env *ute)
 {
-	size_t idx     = 0;
-	size_t idx_end = 0;
-	off_t off;
-	ino_t ino;
-	ino_t dino;
-	size_t len = 0;
-	size_t nwr = 0;
 	struct statvfs stv;
-	const char *name;
 	const char *dname = UT_NAME;
 	size_t bsz        = UT_IOSIZE_MAX;
 	const void *buf   = ut_randbuf(ute, bsz);
+	size_t idx = 0, idx_end = 0;
+	size_t len = 0, nwr = 0;
+	ino_t dino, ino;
 
 	ut_mkdir_at_root(ute, dname, &dino);
 	ut_statfs(ute, dino, &stv);
 	while ((nwr == len) && (stv.f_bfree > 2) && bsz) {
-		name = ut_make_name(ute, dname, idx++);
+		const char *name = ut_make_name(ute, dname, idx++);
+		off_t off;
+
 		ut_mkdir2(ute, dino, name, &ino);
 		ut_create_file(ute, ino, name, &ino);
 		len = calc_wr_size(&stv, bsz--);
@@ -115,7 +110,8 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 	}
 	idx = 0;
 	while (idx < idx_end) {
-		name = ut_make_name(ute, dname, idx++);
+		const char *name = ut_make_name(ute, dname, idx++);
+
 		ut_lookup_ino(ute, dino, name, &ino);
 		ut_unlink_file(ute, ino, name);
 		ut_rmdir(ute, dino, name);
@@ -127,11 +123,8 @@ static void ut_fillfs_mixed(struct ut_env *ute)
 
 static void ut_fillfs_append_(struct ut_env *ute, ino_t ino, size_t bsz)
 {
-	size_t nwr = bsz;
-	size_t fs_size_bytes;
-	size_t fs_free_bytes;
-	struct stat st;
 	struct statvfs stv;
+	size_t fs_size_bytes, fs_free_bytes, nwr;
 	const void *buf = ut_randbuf(ute, bsz);
 
 	ut_statfs(ute, ino, &stv);
@@ -140,26 +133,29 @@ static void ut_fillfs_append_(struct ut_env *ute, ino_t ino, size_t bsz)
 	ut_expect_le(fs_free_bytes, fs_size_bytes);
 	ut_expect_lt(bsz, fs_free_bytes);
 
+	nwr = bsz;
 	while ((nwr == bsz) && stv.f_bfree) {
-		ut_getattr_reg(ute, ino, &st);
+		struct stat st;
+
 		nwr = 0;
+		ut_getattr_reg(ute, ino, &st);
 		ut_write_nospc(ute, ino, buf, bsz, st.st_size, &nwr);
 		ut_statfs(ute, ino, &stv);
 		ut_timedout(ute);
 	}
+
 	ut_statfs(ute, ino, &stv);
 	fs_size_bytes = stv.f_blocks * stv.f_frsize;
 	fs_free_bytes = stv.f_bfree * stv.f_bsize;
 	ut_expect_le(fs_free_bytes, fs_size_bytes);
-	ut_expect_le(bsz, fs_free_bytes);
+	ut_expect_gt(2 * bsz, fs_free_bytes);
 }
 
 static void ut_fillfs_data_(struct ut_env *ute, size_t bsz)
 {
-	ino_t ino;
-	ino_t dino;
 	struct statvfs stv[2];
 	const char *name = UT_NAME;
+	ino_t dino, ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs(ute, dino, &stv[0]);
@@ -180,10 +176,9 @@ static void ut_fillfs_data(struct ut_env *ute)
 
 static void ut_fillfs_reload_(struct ut_env *ute, size_t bsz)
 {
-	ino_t ino;
-	ino_t dino;
 	struct statvfs stv[2];
 	const char *name = UT_NAME;
+	ino_t dino, ino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_statfs(ute, dino, &stv[0]);

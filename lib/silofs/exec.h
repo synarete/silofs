@@ -27,5 +27,6 @@
 #include <silofs/exec/fsroot.h>
 #include <silofs/exec/corefs.h>
 #include <silofs/exec/mbrops.h>
+#include <silofs/exec/task.h>
 
 #endif /* SILOFS_EXEC_H_ */

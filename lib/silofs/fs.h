@@ -36,7 +36,6 @@
 #include <silofs/fs/dir.h>
 #include <silofs/fs/symlink.h>
 #include <silofs/fs/xattr.h>
-#include <silofs/fs/task.h>
 #include <silofs/fs/format.h>
 
 #endif /* SILOFS_FS_H_ */

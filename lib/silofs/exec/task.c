@@ -17,8 +17,6 @@
 #include <silofs/configs.h>
 #include <silofs/infra.h>
 #include <silofs/exec.h>
-#include <silofs/pstor.h>
-#include <silofs/fs.h>
 
 void silofs_task_update_creds(struct silofs_task_ctx *task, uid_t uid,
                               gid_t gid, mode_t umsk)

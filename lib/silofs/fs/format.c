@@ -37,12 +37,10 @@ static int flush_dirty_nodes(const struct silofs_task_ctx *task, bool drop)
 	int err;
 
 	err = flush_dirty(task);
-	return_if_err(err);
-
-	if (drop) {
+	if (!err && drop) {
 		drop_caches(task);
 	}
-	return 0;
+	return err;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

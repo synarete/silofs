@@ -249,8 +249,8 @@ static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 {
 	int err;
 
-	err = silofs_stage_symval2(sl_ctx->task, laddr, sl_ctx->lnk_ii,
-	                           sl_ctx->stg_mode, out_svi);
+	err = silofs_stage_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii,
+	                          sl_ctx->stg_mode, out_svi);
 	if (err) {
 		return err;
 	}
@@ -363,13 +363,13 @@ int silofs_do_readlink(struct silofs_task_ctx *task,
 static int slc_spawn_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             struct silofs_symval_info **out_svi)
 {
-	return silofs_spawn_symval2(sl_ctx->task, sl_ctx->lnk_ii, out_svi);
+	return silofs_spawn_symval(sl_ctx->task, sl_ctx->lnk_ii, out_svi);
 }
 
 static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
                                 const struct silofs_laddr *laddr)
 {
-	return silofs_remove_symval2(sl_ctx->task, laddr, sl_ctx->lnk_ii);
+	return silofs_remove_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii);
 }
 
 static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,

@@ -1417,8 +1417,8 @@ filc_test_unwritten_at(const struct silofs_file_ctx *f_ctx,
 
 	*out_unwritten = true;
 	if (!laddr_isnull(laddr)) {
-		ret = silofs_test_unwritten_fdnode2(f_ctx->task, laddr,
-		                                    f_ctx->ii, out_unwritten);
+		ret = silofs_test_unwritten_fdnode(f_ctx->task, laddr,
+		                                   f_ctx->ii, out_unwritten);
 	}
 	return ret;
 }
@@ -1456,8 +1456,8 @@ static int filc_stage_fdnode(const struct silofs_file_ctx *f_ctx,
 {
 	int err;
 
-	err = silofs_stage_fdnode2(f_ctx->task, laddr, f_ctx->ii,
-	                           f_ctx->stg_mode, out_fdi);
+	err = silofs_stage_fdnode(f_ctx->task, laddr, f_ctx->ii,
+	                          f_ctx->stg_mode, out_fdi);
 	return_if_err(err);
 
 	err = filc_recheck_fdnode(f_ctx, *out_fdi);
@@ -1544,8 +1544,8 @@ static int filc_stage_ftnode(const struct silofs_file_ctx *f_ctx,
 	err = filc_check_sub_laddr(f_ctx, laddr);
 	return_if_err(err);
 
-	err = silofs_stage_ftnode2(f_ctx->task, laddr, f_ctx->ii,
-	                           f_ctx->stg_mode, out_fti);
+	err = silofs_stage_ftnode(f_ctx->task, laddr, f_ctx->ii,
+	                          f_ctx->stg_mode, out_fti);
 	return_if_err(err);
 
 	err = filc_recheck_ftnode(f_ctx, *out_fti);
@@ -2242,7 +2242,7 @@ int silofs_do_read(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 static int filc_clear_unwritten_at(const struct silofs_file_ctx *f_ctx,
                                    const struct silofs_laddr *laddr)
 {
-	return silofs_clear_unwritten_fdnode2(f_ctx->task, laddr, f_ctx->ii);
+	return silofs_clear_unwritten_fdnode(f_ctx->task, laddr, f_ctx->ii);
 }
 
 static int filc_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
@@ -2267,31 +2267,31 @@ static int
 filc_claim_fdnode(const struct silofs_file_ctx *f_ctx, enum silofs_ltype ltype,
                   struct silofs_laddr *out_laddr)
 {
-	return silofs_claim_fdnode2(f_ctx->task, ltype, f_ctx->ii, out_laddr);
+	return silofs_claim_fdnode(f_ctx->task, ltype, f_ctx->ii, out_laddr);
 }
 
 static int filc_share_fdnode(const struct silofs_file_ctx *f_ctx,
                              const struct silofs_laddr *laddr)
 {
-	return silofs_share_fdnode2(f_ctx->task, laddr, f_ctx->ii);
+	return silofs_share_fdnode(f_ctx->task, laddr, f_ctx->ii);
 }
 
 static int filc_unshare_fdnode(const struct silofs_file_ctx *f_ctx,
                                const struct silofs_laddr *laddr)
 {
-	return silofs_unshare_fdnode2(f_ctx->task, laddr, f_ctx->ii);
+	return silofs_unshare_fdnode(f_ctx->task, laddr, f_ctx->ii);
 }
 
 static int filc_remove_fdnode(const struct silofs_file_ctx *f_ctx,
                               const struct silofs_laddr *laddr)
 {
-	return silofs_remove_fdnode2(f_ctx->task, laddr, f_ctx->ii);
+	return silofs_remove_fdnode(f_ctx->task, laddr, f_ctx->ii);
 }
 
 static int filc_spawn_ftnode(const struct silofs_file_ctx *f_ctx,
                              struct silofs_ftnode_info **out_fti)
 {
-	return silofs_spawn_ftnode2(f_ctx->task, f_ctx->ii, out_fti);
+	return silofs_spawn_ftnode(f_ctx->task, f_ctx->ii, out_fti);
 }
 
 static int filc_remove_ftnode(const struct silofs_file_ctx *f_ctx,
@@ -2300,7 +2300,7 @@ static int filc_remove_ftnode(const struct silofs_file_ctx *f_ctx,
 	struct silofs_laddr laddr;
 
 	fti_get_laddr(fti, &laddr);
-	return silofs_remove_ftnode2(f_ctx->task, &laddr, f_ctx->ii);
+	return silofs_remove_ftnode(f_ctx->task, &laddr, f_ctx->ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2659,8 +2659,8 @@ static int filc_detect_shared_by(const struct silofs_file_ctx *f_ctx,
 	int ret = 0;
 
 	if (fdr->tree && fdr->has_data && !fdr->shared) {
-		ret = silofs_isshared_fdnode2(f_ctx->task, &fdr->laddr,
-		                              f_ctx->ii, &fdr->shared);
+		ret = silofs_isshared_fdnode(f_ctx->task, &fdr->laddr,
+		                             f_ctx->ii, &fdr->shared);
 	}
 	return ret;
 }
@@ -3276,8 +3276,8 @@ static int filc_discard_entire_by(const struct silofs_file_ctx *f_ctx,
 static int filc_discard_via_unwritten_by(const struct silofs_file_ctx *f_ctx,
                                          const struct silofs_fdnode_ref *fdr)
 {
-	return silofs_mark_unwritten_fdnode2(f_ctx->task, &fdr->laddr,
-	                                     f_ctx->ii);
+	return silofs_mark_unwritten_fdnode(f_ctx->task, &fdr->laddr,
+	                                    f_ctx->ii);
 }
 
 static bool filc_zero_range_mode(const struct silofs_file_ctx *f_ctx)

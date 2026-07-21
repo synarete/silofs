@@ -1505,8 +1505,8 @@ static int dirc_stage_dtnode(const struct silofs_dir_ctx *d_ctx,
 	int err;
 
 	silofs_assert_gt(laddr->off, 0);
-	err = silofs_stage_dtnode2(d_ctx->task, laddr, d_ctx->dir_ii,
-	                           d_ctx->stg_mode, out_dti);
+	err = silofs_stage_dtnode(d_ctx->task, laddr, d_ctx->dir_ii,
+	                          d_ctx->stg_mode, out_dti);
 	return_if_err(err);
 
 	err = dirc_recheck_dnode(d_ctx, *out_dti);
@@ -1545,7 +1545,7 @@ static int dirc_stage_child_by_name(const struct silofs_dir_ctx *d_ctx,
 static int dirc_spawn_dtnode(const struct silofs_dir_ctx *d_ctx,
                              struct silofs_dtnode_info **out_dti)
 {
-	return silofs_spawn_dtnode2(d_ctx->task, d_ctx->dir_ii, out_dti);
+	return silofs_spawn_dtnode(d_ctx->task, d_ctx->dir_ii, out_dti);
 }
 
 static int dirc_remove_dtnode(const struct silofs_dir_ctx *d_ctx,
@@ -1554,7 +1554,7 @@ static int dirc_remove_dtnode(const struct silofs_dir_ctx *d_ctx,
 	struct silofs_laddr laddr;
 
 	dti_get_laddr(dti, &laddr);
-	return silofs_remove_dtnode2(d_ctx->task, &laddr, d_ctx->dir_ii);
+	return silofs_remove_dtnode(d_ctx->task, &laddr, d_ctx->dir_ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -70,7 +70,7 @@ int silofs_spawn_inode_by(struct silofs_task_ctx *task,
 	err = check_itype(task, inp->mode);
 	return_if_err(err);
 
-	err = silofs_spawn_inode2(task, out_ii);
+	err = silofs_spawn_inode(task, out_ii);
 	return_if_err(err);
 
 	silofs_ii_update_spawned(*out_ii, inp);
@@ -91,7 +91,7 @@ int silofs_remove_inode_by(struct silofs_task_ctx *task,
 	laddr_of(ii, &laddr);
 	silofs_ii_cleardirty(ii);
 
-	return silofs_remove_inode2(task, &laddr);
+	return silofs_remove_inode(task, &laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -109,7 +109,7 @@ static int stage_update_inode_at(struct silofs_task_ctx *task,
 {
 	int err;
 
-	err = silofs_stage_inode2(task, laddr, stg_mode, out_ii);
+	err = silofs_stage_inode(task, laddr, stg_mode, out_ii);
 	return_if_err(err);
 
 	silofs_ii_update_staged(*out_ii);
@@ -149,7 +149,7 @@ int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
 	err = resolve_inode_laddr(ino, &laddr);
 	return_if_err(err);
 
-	err = silofs_probe_inode2(task, &laddr);
+	err = silofs_probe_inode(task, &laddr);
 	return_if_err(err);
 
 	err = stage_update_inode_at(task, &laddr, stg_mode, out_ii);

@@ -148,13 +148,13 @@ pcache_search(const struct silofs_pcache *pcache,
 	return pni_from_hmqe(hmqe);
 }
 
-static void
-pcache_promote(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
+static void pcache_promote(struct silofs_pcache *pcache,
+                           struct silofs_pnode_info *pni, bool now)
 {
 	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
 
 	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_promote(hmapq, pni_to_mut_hmqe(pni), false);
+		silofs_hmapq_promote(hmapq, pni_to_mut_hmqe(pni), now);
 	}
 }
 
@@ -166,7 +166,7 @@ pcache_search_and_relru(struct silofs_pcache *pcache,
 
 	pni = pcache_search(pcache, paddr);
 	if (pni != nullptr) {
-		pcache_promote(pcache, pni);
+		pcache_promote(pcache, pni, false);
 	}
 	return pni;
 }
@@ -269,47 +269,50 @@ pcache_evict_by(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 	silofs_pcache_delete_pnode(pcache, pni);
 }
 
-static int visit_evictable_pni(struct silofs_hmapq_elem *hmqe, void *arg)
-{
-	struct silofs_pnode_info *pni = pni_from_hmqe(hmqe);
-
-	if (unlikely(pni == nullptr)) {
-		return 0;
-	}
-	if (!pni_isevictable(pni)) {
-		return 0;
-	}
-	*(struct silofs_pnode_info **)arg = pni; /* candidate for eviction */
-	return 1;
-}
-
 static struct silofs_pnode_info *
-pcache_find_evictable(struct silofs_pcache *pcache, bool iterall)
+pcache_get_lru(const struct silofs_pcache *pcache)
 {
-	struct silofs_pnode_info *pni    = nullptr;
-	struct silofs_pnode_info **p_pni = &pni;
+	struct silofs_hmapq_elem *hmqe;
+	struct silofs_pnode_info *pni = nullptr;
 
-	silofs_hmapq_riterate(&pcache->pc_hmapq,
-	                      iterall ? SILOFS_HMAPQ_ITERALL : 10,
-	                      visit_evictable_pni, (void *)p_pni);
+	hmqe = silofs_hmapq_get_lru(&pcache->pc_hmapq);
+	if (hmqe != nullptr) {
+		pni = pni_from_hmqe(hmqe);
+	}
 	return pni;
 }
 
-static size_t
-pcache_evict_some(struct silofs_pcache *pcache, size_t niter, bool iterall)
+static bool pcache_evict_or_promote(struct silofs_pcache *pcache)
 {
 	struct silofs_pnode_info *pni;
-	size_t cnt = 0;
 
-	while (niter-- > 0) {
-		pni = pcache_find_evictable(pcache, iterall);
-		if (pni == nullptr) {
-			break;
-		}
-		pcache_evict_by(pcache, pni);
-		cnt++;
+	pni = pcache_get_lru(pcache);
+	if (pni == nullptr) {
+		return true;
 	}
-	return cnt;
+	if (pni_isevictable(pni)) {
+		pcache_evict_by(pcache, pni);
+		return true;
+	}
+	pcache_promote(pcache, pni, true);
+	return false;
+}
+
+static size_t pcache_lru_size(const struct silofs_pcache *pcache)
+{
+	return pcache->pc_hmapq.hmq_lru.sz;
+}
+
+static void pcache_evict_some(struct silofs_pcache *pcache, size_t nevict_max)
+{
+	const size_t sz = pcache_lru_size(pcache);
+	size_t nevicted = 0;
+
+	for (size_t i = 0; (i < sz) && (nevicted < nevict_max); ++i) {
+		if (pcache_evict_or_promote(pcache)) {
+			nevicted += 1;
+		}
+	}
 }
 
 static size_t pcache_usage(const struct silofs_pcache *pcache)
@@ -324,12 +327,9 @@ bool silofs_pcache_isempty(const struct silofs_pcache *pcache)
 
 void silofs_pcache_drop(struct silofs_pcache *pcache)
 {
-	size_t cnt;
+	const size_t n = pcache_lru_size(pcache);
 
-	cnt = pcache_evict_some(pcache, 1, true);
-	while (cnt > 0) {
-		cnt = pcache_evict_some(pcache, 1, true);
-	}
+	pcache_evict_some(pcache, n);
 }
 
 static size_t pcache_mempress(const struct silofs_pcache *pcache)
@@ -337,34 +337,24 @@ static size_t pcache_mempress(const struct silofs_pcache *pcache)
 	return silofs_mempress(pcache->pc_alloc);
 }
 
-static void pcache_relax_args(const struct silofs_pcache *pcache, int flags,
-                              size_t *out_niter, bool *out_iterall)
+static size_t pcache_relax_count(const struct silofs_pcache *pcache, int flags)
 {
-	const size_t mem_pres = pcache_mempress(pcache);
+	const size_t lrusize = pcache_lru_size(pcache);
+	const size_t mempres = pcache_mempress(pcache);
+	size_t cnt;
 
-	*out_niter   = 0;
-	*out_iterall = false;
-	if (flags & SILOFS_CTLF_NOW) {
-		*out_niter += 2;
-		*out_iterall = true;
-	}
+	cnt = (lrusize * mempres) / 100;
 	if (flags & SILOFS_CTLF_IDLE) {
-		*out_niter += 1;
-		*out_iterall = false;
+		cnt += 1;
 	}
-	if (mem_pres > 50) {
-		*out_niter += mem_pres / 10;
-		*out_iterall = true;
-	}
+	return cnt;
 }
 
 void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
 {
-	size_t niter = 0;
-	bool iterall = false;
+	const size_t cnt = pcache_relax_count(pcache, flags);
 
-	pcache_relax_args(pcache, flags, &niter, &iterall);
-	pcache_evict_some(pcache, niter, iterall);
+	pcache_evict_some(pcache, cnt);
 }
 
 struct silofs_pnode_info *

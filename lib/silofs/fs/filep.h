@@ -60,7 +60,7 @@ struct silofs_file_ctx {
 	bool                      kill_suidgid;
 };
 
-struct silofs_fdnode_ref {
+struct silofs_flnode_ref {
 	struct silofs_laddr        laddr;
 	struct silofs_inode_info  *ii;
 	struct silofs_ftnode_info *parent_fti;

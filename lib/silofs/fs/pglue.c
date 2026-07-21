@@ -898,28 +898,28 @@ int silofs_remove_ftnode(struct silofs_task_ctx *task,
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static struct silofs_fdnode_info *lni_to_fdi(struct silofs_lnode_info *lni)
+static struct silofs_flnode_info *lni_to_fli(struct silofs_lnode_info *lni)
 {
-	struct silofs_fdnode_info *fdi = nullptr;
+	struct silofs_flnode_info *fli = nullptr;
 
 	if (unlikely(lni == nullptr)) {
 		silofs_panic("nullptr: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	fdi = silofs_fdi_from_lni(lni);
-	if (unlikely(fdi == nullptr)) {
+	fli = silofs_fli_from_lni(lni);
+	if (unlikely(fli == nullptr)) {
 		silofs_panic("upcast failure: lni=%" PRIxPTR, (uintptr_t)lni);
 	}
-	if (unlikely(fdi->fdn.dn64 == nullptr)) {
-		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fdi);
+	if (unlikely(fli->fln.dn64 == nullptr)) {
+		silofs_panic("missing ftleaf: fli=%" PRIxPTR, (uintptr_t)fli);
 	}
-	return fdi;
+	return fli;
 }
 
-int silofs_stage_fdnode(const struct silofs_task_ctx *task,
+int silofs_stage_flnode(const struct silofs_task_ctx *task,
                         const struct silofs_laddr *laddr,
                         struct silofs_inode_info *pii,
                         enum silofs_stg_mode stg_mode,
-                        struct silofs_fdnode_info **out_fdi)
+                        struct silofs_flnode_info **out_fli)
 {
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
@@ -929,11 +929,11 @@ int silofs_stage_fdnode(const struct silofs_task_ctx *task,
 	err = stage_verify_lnode(task, laddr, pii, stg_mode, &lni);
 	return_if_err(err);
 
-	*out_fdi = lni_to_fdi(lni);
+	*out_fli = lni_to_fli(lni);
 	return 0;
 }
 
-int silofs_claim_fdnode(const struct silofs_task_ctx *task,
+int silofs_claim_flnode(const struct silofs_task_ctx *task,
                         enum silofs_ltype ltype, struct silofs_inode_info *pii,
                         struct silofs_laddr *out_laddr)
 {
@@ -941,7 +941,7 @@ int silofs_claim_fdnode(const struct silofs_task_ctx *task,
 	return claim_take_lnode(task, ltype, pii, out_laddr);
 }
 
-int silofs_remove_fdnode(const struct silofs_task_ctx *task,
+int silofs_remove_flnode(const struct silofs_task_ctx *task,
                          const struct silofs_laddr *laddr,
                          struct silofs_inode_info *pii)
 {
@@ -949,7 +949,7 @@ int silofs_remove_fdnode(const struct silofs_task_ctx *task,
 	return reclaim_give_lnode(task, laddr, pii);
 }
 
-int silofs_share_fdnode(const struct silofs_task_ctx *task,
+int silofs_share_flnode(const struct silofs_task_ctx *task,
                         const struct silofs_laddr *laddr,
                         struct silofs_inode_info *pii)
 {
@@ -957,7 +957,7 @@ int silofs_share_fdnode(const struct silofs_task_ctx *task,
 	return share_lnode(task, laddr, pii);
 }
 
-int silofs_unshare_fdnode(const struct silofs_task_ctx *task,
+int silofs_unshare_flnode(const struct silofs_task_ctx *task,
                           const struct silofs_laddr *laddr,
                           struct silofs_inode_info *pii)
 {
@@ -965,7 +965,7 @@ int silofs_unshare_fdnode(const struct silofs_task_ctx *task,
 	return reclaim_give_lnode(task, laddr, pii);
 }
 
-int silofs_isshared_fdnode(const struct silofs_task_ctx *task,
+int silofs_isshared_flnode(const struct silofs_task_ctx *task,
                            const struct silofs_laddr *laddr,
                            struct silofs_inode_info *pii, bool *out_res)
 {
@@ -973,7 +973,7 @@ int silofs_isshared_fdnode(const struct silofs_task_ctx *task,
 	return isshared_lnode(task, laddr, pii, out_res);
 }
 
-int silofs_mark_unwritten_fdnode(const struct silofs_task_ctx *task,
+int silofs_mark_unwritten_flnode(const struct silofs_task_ctx *task,
                                  const struct silofs_laddr *laddr,
                                  struct silofs_inode_info *pii)
 {
@@ -981,7 +981,7 @@ int silofs_mark_unwritten_fdnode(const struct silofs_task_ctx *task,
 	return mark_unwritten(task, laddr, pii);
 }
 
-int silofs_clear_unwritten_fdnode(const struct silofs_task_ctx *task,
+int silofs_clear_unwritten_flnode(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr *laddr,
                                   struct silofs_inode_info *pii)
 {
@@ -989,7 +989,7 @@ int silofs_clear_unwritten_fdnode(const struct silofs_task_ctx *task,
 	return clear_unwritten(task, laddr, pii);
 }
 
-int silofs_test_unwritten_fdnode(const struct silofs_task_ctx *task,
+int silofs_test_unwritten_flnode(const struct silofs_task_ctx *task,
                                  const struct silofs_laddr *laddr,
                                  struct silofs_inode_info *pii,
                                  bool *out_unwritten)

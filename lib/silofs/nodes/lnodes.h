@@ -91,16 +91,16 @@ struct silofs_ftnode_info {
 	struct silofs_ftree_node *ftn;
 };
 
-/* file data node */
-union silofs_fdnode_u {
+/* file leaf (data) node */
+union silofs_flnode_u {
 	struct silofs_data_node1  *dn1;
 	struct silofs_data_node4  *dn4;
 	struct silofs_data_node64 *dn64;
 };
 
-struct silofs_fdnode_info {
-	struct silofs_lnode_info fdn_lni;
-	union silofs_fdnode_u    fdn;
+struct silofs_flnode_info {
+	struct silofs_lnode_info fln_lni;
+	union silofs_flnode_u    fln;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -169,7 +169,7 @@ struct silofs_dtnode_info *silofs_dti_from_lni(struct silofs_lnode_info *lni);
 
 struct silofs_ftnode_info *silofs_fti_from_lni(struct silofs_lnode_info *lni);
 
-struct silofs_fdnode_info *silofs_fdi_from_lni(struct silofs_lnode_info *lni);
+struct silofs_flnode_info *silofs_fli_from_lni(struct silofs_lnode_info *lni);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 

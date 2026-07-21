@@ -1077,78 +1077,78 @@ struct silofs_ftnode_info *silofs_fti_from_lni(struct silofs_lnode_info *lni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static struct silofs_lnode_info *fdi_to_lni(struct silofs_fdnode_info *fdi)
+static struct silofs_lnode_info *fli_to_lni(struct silofs_flnode_info *fli)
 {
-	return likely(fdi != nullptr) ? &fdi->fdn_lni : nullptr;
+	return likely(fli != nullptr) ? &fli->fln_lni : nullptr;
 }
 
-static struct silofs_fdnode_info *fdi_from_lni(struct silofs_lnode_info *lni)
+static struct silofs_flnode_info *fli_from_lni(struct silofs_lnode_info *lni)
 {
-	return mut_container_of(lni, struct silofs_fdnode_info, fdn_lni);
-}
-
-static void
-fdi_init(struct silofs_fdnode_info *fdi, const struct silofs_laddr *laddr)
-{
-	lni_init(&fdi->fdn_lni, laddr);
-}
-
-static void fdi_fini(struct silofs_fdnode_info *fdi)
-{
-	lni_fini(&fdi->fdn_lni);
-	fdi->fdn.dn64 = nullptr;
-}
-
-static struct silofs_fdnode_info *fdi_malloc(struct silofs_alloc *alloc)
-{
-	struct silofs_fdnode_info *fdi;
-
-	fdi = malloc_node_info(alloc, sizeof(*fdi));
-	return fdi;
+	return mut_container_of(lni, struct silofs_flnode_info, fln_lni);
 }
 
 static void
-fdi_free(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+fli_init(struct silofs_flnode_info *fli, const struct silofs_laddr *laddr)
 {
-	mfree_node_info(alloc, fdi, sizeof(*fdi));
+	lni_init(&fli->fln_lni, laddr);
 }
 
-static struct silofs_fdnode_info *
-fdi_malloc_init(struct silofs_alloc *alloc, const struct silofs_laddr *laddr)
+static void fli_fini(struct silofs_flnode_info *fli)
 {
-	struct silofs_fdnode_info *fdi;
+	lni_fini(&fli->fln_lni);
+	fli->fln.dn64 = nullptr;
+}
 
-	fdi = fdi_malloc(alloc);
-	if (fdi != nullptr) {
-		fdi_init(fdi, laddr);
+static struct silofs_flnode_info *fli_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_flnode_info *fli;
+
+	fli = malloc_node_info(alloc, sizeof(*fli));
+	return fli;
+}
+
+static void
+fli_free(struct silofs_flnode_info *fli, struct silofs_alloc *alloc)
+{
+	mfree_node_info(alloc, fli, sizeof(*fli));
+}
+
+static struct silofs_flnode_info *
+fli_malloc_init(struct silofs_alloc *alloc, const struct silofs_laddr *laddr)
+{
+	struct silofs_flnode_info *fli;
+
+	fli = fli_malloc(alloc);
+	if (fli != nullptr) {
+		fli_init(fli, laddr);
 	}
-	return fdi;
+	return fli;
 }
 
 static void
-fdi_fini_free(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+fli_fini_free(struct silofs_flnode_info *fli, struct silofs_alloc *alloc)
 {
-	fdi_fini(fdi);
-	fdi_free(fdi, alloc);
+	fli_fini(fli);
+	fli_free(fli, alloc);
 }
 
 static int
-fdi_attach_lview(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+fli_attach_lview(struct silofs_flnode_info *fli, struct silofs_alloc *alloc)
 {
 	struct silofs_lview *lview = nullptr;
 	int err;
 
-	err = lni_attach_lview(&fdi->fdn_lni, alloc);
+	err = lni_attach_lview(&fli->fln_lni, alloc);
 	if (!err) {
-		const enum silofs_ltype ltype = lni_ltype(&fdi->fdn_lni);
+		const enum silofs_ltype ltype = lni_ltype(&fli->fln_lni);
 
-		lview = silofs_lni_lview(&fdi->fdn_lni);
+		lview = silofs_lni_lview(&fli->fln_lni);
 		if (ltype == SILOFS_LTYPE_DATA1K) {
-			fdi->fdn.dn1 = &lview->u.dn1;
+			fli->fln.dn1 = &lview->u.dn1;
 		} else if (ltype == SILOFS_LTYPE_DATA4K) {
-			fdi->fdn.dn4 = &lview->u.dn4;
+			fli->fln.dn4 = &lview->u.dn4;
 		} else if (ltype == SILOFS_LTYPE_DATA64K) {
-			fdi->fdn.dn64 = &lview->u.dn64;
+			fli->fln.dn64 = &lview->u.dn64;
 		} else {
 			silofs_panic("not a data ltype: %d", (int)ltype);
 		}
@@ -1157,39 +1157,39 @@ fdi_attach_lview(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
 }
 
 static void
-fdi_detach_lview(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+fli_detach_lview(struct silofs_flnode_info *fli, struct silofs_alloc *alloc)
 {
-	lni_detach_lview(&fdi->fdn_lni, alloc);
+	lni_detach_lview(&fli->fln_lni, alloc);
 }
 
-static struct silofs_fdnode_info *
-fdi_new(struct silofs_alloc *alloc, const struct silofs_laddr *laddr)
+static struct silofs_flnode_info *
+fli_new(struct silofs_alloc *alloc, const struct silofs_laddr *laddr)
 {
-	struct silofs_fdnode_info *fdi;
+	struct silofs_flnode_info *fli;
 	int err;
 
-	fdi = fdi_malloc_init(alloc, laddr);
-	if (fdi == nullptr) {
+	fli = fli_malloc_init(alloc, laddr);
+	if (fli == nullptr) {
 		return nullptr;
 	}
-	err = fdi_attach_lview(fdi, alloc);
+	err = fli_attach_lview(fli, alloc);
 	if (err) {
-		fdi_fini_free(fdi, alloc);
+		fli_fini_free(fli, alloc);
 		return nullptr;
 	}
-	return fdi;
+	return fli;
 }
 
-static void fdi_del(struct silofs_fdnode_info *fdi, struct silofs_alloc *alloc)
+static void fli_del(struct silofs_flnode_info *fli, struct silofs_alloc *alloc)
 {
-	fdi_detach_lview(fdi, alloc);
-	fdi_fini_free(fdi, alloc);
+	fli_detach_lview(fli, alloc);
+	fli_fini_free(fli, alloc);
 }
 
-struct silofs_fdnode_info *silofs_fdi_from_lni(struct silofs_lnode_info *lni)
+struct silofs_flnode_info *silofs_fli_from_lni(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
-	return fdi_from_lni(lni);
+	return fli_from_lni(lni);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -1225,7 +1225,7 @@ silofs_new_lnode(struct silofs_alloc *alloc, const struct silofs_laddr *laddr)
 	case SILOFS_LTYPE_DATA1K:
 	case SILOFS_LTYPE_DATA4K:
 	case SILOFS_LTYPE_DATA64K:
-		lni = fdi_to_lni(fdi_new(alloc, laddr));
+		lni = fli_to_lni(fli_new(alloc, laddr));
 		break;
 	case SILOFS_LTYPE_NONE:
 	case SILOFS_LTYPE_LAST:
@@ -1266,7 +1266,7 @@ void silofs_del_lnode(struct silofs_lnode_info *lni,
 	case SILOFS_LTYPE_DATA1K:
 	case SILOFS_LTYPE_DATA4K:
 	case SILOFS_LTYPE_DATA64K:
-		fdi_del(fdi_from_lni(lni), alloc);
+		fli_del(fli_from_lni(lni), alloc);
 		break;
 	case SILOFS_LTYPE_NONE:
 	case SILOFS_LTYPE_LAST:

@@ -32,15 +32,15 @@ static int flush_dirty(const struct silofs_task_ctx *task)
 	return silofs_destage_dirty_nodes(task->corefs);
 }
 
-static int flush_dirty_nodes(const struct silofs_task_ctx *task, bool drop)
+static int flush_and_drop(const struct silofs_task_ctx *task)
 {
 	int err;
 
 	err = flush_dirty(task);
-	if (!err && drop) {
-		drop_caches(task);
-	}
-	return err;
+	return_if_err(err);
+
+	drop_caches(task);
+	return 0;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -65,6 +65,10 @@ static int format_uber(struct silofs_task_ctx *task)
 	return_if_err(err);
 
 	update_active_uber(task->corefs, ubi);
+
+	err = flush_and_drop(task);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -130,6 +134,10 @@ static int format_lspace_root_of(const struct silofs_task_ctx *task,
 	return_if_err(err);
 
 	silofs_ubi_start_spdesc(task->corefs->fsroot->ubi, &paddr);
+
+	err = flush_and_drop(task);
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -252,7 +260,7 @@ static int format_zero_node_step1(const struct silofs_task_ctx *task,
 	err = check_zero_node_by(lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(task, true);
+	err = flush_and_drop(task);
 	return_if_err(err);
 
 	return 0;
@@ -284,7 +292,7 @@ static int format_zero_node_step2(const struct silofs_task_ctx *task,
 	err = reclaim_lnode(task, lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(task, true);
+	err = flush_and_drop(task);
 	return_if_err(err);
 
 	return 0;
@@ -303,7 +311,7 @@ static int format_zero_node_step3(const struct silofs_task_ctx *task,
 	err = check_zero_node_by(lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(task, true);
+	err = flush_and_drop(task);
 	return_if_err(err);
 
 	return 0;
@@ -352,7 +360,7 @@ static int format_base_node_of(const struct silofs_task_ctx *task,
 	err = reclaim_lnode(task, lni);
 	return_if_err(err);
 
-	err = flush_dirty_nodes(task, true);
+	err = flush_and_drop(task);
 	return_if_err(err);
 
 	return 0;

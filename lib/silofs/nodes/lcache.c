@@ -59,14 +59,19 @@ static void lcache_fini_lni_hmapq(struct silofs_lcache *lcache)
 	silofs_hmapq_fini(&lcache->lc_hmapq, lcache->lc_alloc);
 }
 
-static bool test_evictable_lni(const struct silofs_lnode_info *lni)
+static bool test_evictable_ni(const struct silofs_node_info *ni)
 {
 	bool ret = true;
 
-	if (lni->isevictable_fn != nullptr) {
-		ret = lni->isevictable_fn(lni);
+	if (ni->isevictable_fn != nullptr) {
+		ret = ni->isevictable_fn(ni);
 	}
 	return ret;
+}
+
+static bool test_evictable_lni(const struct silofs_lnode_info *lni)
+{
+	return test_evictable_ni(&lni->ln_ni);
 }
 
 static struct silofs_lnode_info *

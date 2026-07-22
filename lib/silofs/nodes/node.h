@@ -40,9 +40,11 @@ enum silofs_ni_flags {
 struct silofs_node_info {
 	struct silofs_hmapq_elem hmqe;
 	struct silofs_dq_elem    dqe;
+	int                      flags;
 	union silofs_view        view;
 	union silofs_view        viewx;
-	int                      flags;
+
+	bool (*isevictable_fn)(const struct silofs_node_info *ni);
 };
 
 void silofs_ni_init(struct silofs_node_info *ni, size_t view_size);

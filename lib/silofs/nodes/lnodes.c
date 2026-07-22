@@ -63,8 +63,6 @@ lni_init(struct silofs_lnode_info *lni, const struct silofs_laddr *laddr)
 	silofs_paddr_reset(&lni->ln_curr_paddr);
 	lni->ln_asyncwr = 0;
 	lni->ln_magic   = SILOFS_VI_MAGIC;
-
-	lni->isevictable_fn = silofs_lni_isevictable;
 }
 
 static void lni_fini(struct silofs_lnode_info *lni)
@@ -78,25 +76,35 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	lni->ln_magic = UINT64_MAX;
 }
 
-static struct silofs_lnode_info *lni_from_ni(const struct silofs_node_info *ni)
+struct silofs_lnode_info *silofs_lni_from_ni(const struct silofs_node_info *ni)
 {
 	const struct silofs_lnode_info *lni = nullptr;
 
-	if (likely(ni != nullptr)) {
-		lni = container_of(ni, struct silofs_lnode_info, ln_ni);
-	}
+	silofs_assume_not_null(ni);
+
+	lni = container_of(ni, struct silofs_lnode_info, ln_ni);
 	return lni_unconst(lni);
 }
 
 static struct silofs_lnode_info *
 lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 {
-	return lni_from_ni(silofs_ni_from_hmqe(hmqe));
+	struct silofs_lnode_info *lni = nullptr;
+
+	if (likely(hmqe != nullptr)) {
+		lni = silofs_lni_from_ni(silofs_ni_from_hmqe(hmqe));
+	}
+	return lni;
 }
 
 static struct silofs_lnode_info *lni_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	return lni_from_ni(silofs_ni_from_dqe(dqe));
+	struct silofs_lnode_info *lni = nullptr;
+
+	if (likely(dqe != nullptr)) {
+		lni = silofs_lni_from_ni(silofs_ni_from_dqe(dqe));
+	}
+	return lni;
 }
 
 struct silofs_lnode_info *silofs_lni_from_dqe(const struct silofs_dq_elem *dqe)

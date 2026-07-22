@@ -46,10 +46,10 @@ struct silofs_hmapq_elem {
 	struct silofs_list_head hme_lru_lh;
 	int64_t                 hme_lru_hitcnt;
 	struct silofs_hkey      hme_key;
-	bool                    hme_mapped;
-	bool                    hme_forgot;
 	int32_t                 hme_refcnt;
 	int32_t                 hme_magic;
+	bool                    hme_mapped;
+	bool                    hme_forgot;
 };
 
 /* LRU + hash-map */

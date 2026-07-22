@@ -29,8 +29,6 @@ struct silofs_lnode_info {
 	struct silofs_paddr     ln_curr_paddr;
 	uint64_t                ln_magic;
 	int                     ln_asyncwr;
-
-	bool (*isevictable_fn)(const struct silofs_lnode_info *lni);
 };
 
 /* super node */
@@ -135,6 +133,9 @@ silofs_lni_from_dqe(const struct silofs_dq_elem *dqe);
 
 struct silofs_lnode_info * //
 silofs_lni_from_hmqe(struct silofs_hmapq_elem *hmqe);
+
+struct silofs_lnode_info * //
+silofs_lni_from_ni(const struct silofs_node_info *ni);
 
 void silofs_lni_remove_from(struct silofs_lnode_info *lni,
                             struct silofs_hmapq      *hmapq);

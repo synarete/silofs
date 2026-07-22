@@ -368,9 +368,15 @@ ii_from_lni2(const struct silofs_lnode_info *lni)
 	return container_of(lni, struct silofs_inode_info, i_lni);
 }
 
-static bool ii_isevictable_as(const struct silofs_lnode_info *lni)
+static const struct silofs_inode_info *
+ii_from_ni(const struct silofs_node_info *ni)
 {
-	const struct silofs_inode_info *ii = ii_from_lni2(lni);
+	return ii_from_lni2(silofs_lni_from_ni(ni));
+}
+
+static bool ii_isevictable_as(const struct silofs_node_info *ni)
+{
+	const struct silofs_inode_info *ii = ii_from_ni(ni);
 
 	return silofs_ii_isevictable(ii);
 }
@@ -541,7 +547,7 @@ bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
 	bool ret = false;
 
 	if (ii->i_nopen == 0) {
-		ret = silofs_lni_isevictable(&ii->i_lni);
+		ret = silofs_ni_isevictable(&ii->i_lni.ln_ni);
 	}
 	return ret;
 }
@@ -682,7 +688,7 @@ static void ii_update_self(struct silofs_inode_info *ii)
 	silofs_assert_not_null(ii->inode);
 
 	ii_update_ino_by_laddr(ii);
-	ii->i_lni.isevictable_fn = ii_isevictable_as;
+	ii->i_lni.ln_ni.isevictable_fn = ii_isevictable_as;
 }
 
 void silofs_ii_update_spawned(struct silofs_inode_info *ii,

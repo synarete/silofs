@@ -21,6 +21,20 @@
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static bool ni_isevictable(const struct silofs_node_info *ni)
+{
+	if (silofs_ni_testf(ni, SILOFS_NIF_PINNED)) {
+		return false;
+	}
+	if (silofs_dqe_isinq(&ni->dqe)) {
+		return false;
+	}
+	if (silofs_ni_refcnt(ni) > 0) {
+		return false;
+	}
+	return true;
+}
+
 void silofs_ni_init(struct silofs_node_info *ni, size_t sz)
 {
 	silofs_hmqe_init(&ni->hmqe);
@@ -28,6 +42,7 @@ void silofs_ni_init(struct silofs_node_info *ni, size_t sz)
 	ni->view.opaque_view  = nullptr;
 	ni->viewx.opaque_view = nullptr;
 	ni->flags             = 0;
+	ni->isevictable_fn    = ni_isevictable;
 }
 
 void silofs_ni_fini(struct silofs_node_info *ni)
@@ -74,16 +89,7 @@ size_t silofs_ni_refcnt(const struct silofs_node_info *ni)
 
 bool silofs_ni_isevictable(const struct silofs_node_info *ni)
 {
-	if (silofs_ni_testf(ni, SILOFS_NIF_PINNED)) {
-		return false;
-	}
-	if (silofs_dqe_isinq(&ni->dqe)) {
-		return false;
-	}
-	if (silofs_ni_refcnt(ni) > 0) {
-		return false;
-	}
-	return true;
+	return ni_isevictable(ni);
 }
 
 const struct silofs_node_info *

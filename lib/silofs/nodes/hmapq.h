@@ -113,12 +113,14 @@ void silofs_hmapq_remove(struct silofs_hmapq      *hmapq,
 struct silofs_hmapq_elem *
 silofs_hmapq_get_lru(const struct silofs_hmapq *hmapq);
 
-void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
-                           silofs_hmapq_elem_fn cb, void *arg);
-
 size_t silofs_hmapq_overpop(const struct silofs_hmapq *hmapq);
 
 size_t silofs_hmapq_usage(const struct silofs_hmapq *hmapq);
+
+typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
+
+void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
+                           silofs_hmapq_elem_fn cb, void *arg);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

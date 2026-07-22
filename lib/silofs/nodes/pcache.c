@@ -315,6 +315,39 @@ static void pcache_evict_some(struct silofs_pcache *pcache, size_t nevict_max)
 	}
 }
 
+struct silofs_pcache_evict_ctx {
+	struct silofs_pcache *pcache;
+	size_t evict_max;
+	size_t evict_cnt;
+};
+
+static int try_evict_pni(struct silofs_pcache_evict_ctx *pcec,
+                         struct silofs_pnode_info *pni)
+{
+	if ((pcec->evict_cnt < pcec->evict_max) && pni_isevictable(pni)) {
+		pcache_evict_by(pcec->pcache, pni);
+		pcec->evict_cnt += 1;
+	}
+	return (pcec->evict_cnt < pcec->evict_max) ? 0 : 1;
+}
+
+static int try_evict_pni_cb(struct silofs_hmapq_elem *hmqe, void *arg)
+{
+	return try_evict_pni(arg, pni_from_hmqe(hmqe));
+}
+
+static void pcache_evict_many(struct silofs_pcache *pcache, size_t nevict_max)
+{
+	struct silofs_pcache_evict_ctx pcec = {
+		.pcache    = pcache,
+		.evict_max = nevict_max,
+		.evict_cnt = 0,
+	};
+
+	silofs_hmapq_riterate(&pcache->pc_hmapq, pcache_lru_size(pcache),
+	                      try_evict_pni_cb, &pcec);
+}
+
 static size_t pcache_usage(const struct silofs_pcache *pcache)
 {
 	return silofs_hmapq_usage(&pcache->pc_hmapq);
@@ -327,9 +360,7 @@ bool silofs_pcache_isempty(const struct silofs_pcache *pcache)
 
 void silofs_pcache_drop(struct silofs_pcache *pcache)
 {
-	const size_t n = pcache_lru_size(pcache);
-
-	pcache_evict_some(pcache, n);
+	pcache_evict_many(pcache, pcache_lru_size(pcache));
 }
 
 static size_t pcache_mempress(const struct silofs_pcache *pcache)
@@ -337,24 +368,20 @@ static size_t pcache_mempress(const struct silofs_pcache *pcache)
 	return silofs_mempress(pcache->pc_alloc);
 }
 
-static size_t pcache_relax_count(const struct silofs_pcache *pcache, int flags)
+void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
 {
 	const size_t lrusize = pcache_lru_size(pcache);
 	const size_t mempres = pcache_mempress(pcache);
-	size_t cnt;
+	size_t count;
 
-	cnt = (lrusize * mempres) / 100;
-	if (flags & SILOFS_CTLF_IDLE) {
-		cnt += 1;
+	if (mempres > 40) {
+		count = lrusize / 5;
+		pcache_evict_many(pcache, count);
+	} else if (mempres > 20) {
+		pcache_evict_some(pcache, lrusize / 10);
+	} else if (flags & SILOFS_CTLF_IDLE) {
+		pcache_evict_some(pcache, 1);
 	}
-	return cnt;
-}
-
-void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
-{
-	const size_t cnt = pcache_relax_count(pcache, flags);
-
-	pcache_evict_some(pcache, cnt);
 }
 
 struct silofs_pnode_info *

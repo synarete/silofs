@@ -607,22 +607,22 @@ silofs_hmapq_get_lru(const struct silofs_hmapq *hmapq)
 	return hmqe;
 }
 
-typedef int (*silofs_hmapq_elem_fn)(struct silofs_hmapq_elem *, void *);
-
 void silofs_hmapq_riterate(struct silofs_hmapq *hmapq, size_t limit,
                            silofs_hmapq_elem_fn cb, void *arg)
 {
-	struct silofs_list_head *itr   = nullptr;
-	struct silofs_hmapq_elem *hmqe = nullptr;
-	struct silofs_listq *lru       = &hmapq->hmq_lru;
-	size_t cnt                     = silofs_min(limit, lru->sz);
-	int ret                        = 0;
+	struct silofs_list_head *itr = nullptr;
+	struct silofs_listq *lru     = &hmapq->hmq_lru;
+	size_t cnt;
+	int ret;
 
+	cnt = silofs_min(limit, lru->sz);
 	itr = lru->ls.prev; /* backward iteration */
+	ret = 0;
 	while (!ret && cnt-- && (itr != &lru->ls)) {
-		hmqe = hmqe_from_lru_link(itr);
-		itr  = itr->prev;
-		ret  = cb(hmqe, arg);
+		struct silofs_hmapq_elem *hmqe = hmqe_from_lru_link(itr);
+
+		itr = itr->prev;
+		ret = cb(hmqe, arg);
 	}
 }
 

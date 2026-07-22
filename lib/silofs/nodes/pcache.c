@@ -66,7 +66,7 @@ struct silofs_pnode_info *silofs_pni_from_mut_ni(struct silofs_node_info *ni)
 
 static bool pni_isevictable(const struct silofs_pnode_info *pni)
 {
-	return !silofs_ni_ispinned(&pni->pn_base);
+	return silofs_ni_isevictable(&pni->pn_base);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/

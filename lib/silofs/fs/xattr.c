@@ -562,24 +562,34 @@ static void xei_discard_entry(const struct silofs_xentry_info *xei)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static int xac_recheck_node(const struct silofs_xattr_ctx *xa_ctx,
-                            struct silofs_xanode_info *xai)
+static int xac_do_recheck_xanode(const struct silofs_xattr_ctx *xa_ctx,
+                                 const struct silofs_xanode_info *xai)
 {
-	const ino_t owner_ino = xa_ctx->ii->i_ino;
-	ino_t xanode_ino;
+	const ino_t owner_ino  = xa_ctx->ii->i_ino;
+	const ino_t xanode_ino = xan_ino(xai->xan);
 
-	if (!silofs_lni_need_recheck(&xai->xan_lni)) {
-		return 0;
-	}
-	xanode_ino = xan_ino(xai->xan);
 	if (owner_ino != xanode_ino) {
 		log_err("bad xanode ino: owner_ino=%lu xanode_ino=%lu",
 		        owner_ino, xanode_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	silofs_lni_set_rechecked(&xai->xan_lni);
 	return 0;
 }
+
+static int xac_recheck_xanode(const struct silofs_xattr_ctx *xa_ctx,
+                              struct silofs_xanode_info *xai)
+{
+	int err;
+
+	if (silofs_lni_need_recheck(&xai->xan_lni)) {
+		err = xac_do_recheck_xanode(xa_ctx, xai);
+		return_if_err(err);
+
+		silofs_lni_set_rechecked(&xai->xan_lni);
+	}
+	return 0;
+}
+
 static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
                                const struct silofs_laddr *laddr,
                                struct silofs_xanode_info **out_xai)
@@ -590,7 +600,7 @@ static int xac_do_stage_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	                          xa_ctx->stg_mode, out_xai);
 	return_if_err(err);
 
-	err = xac_recheck_node(xa_ctx, *out_xai);
+	err = xac_recheck_xanode(xa_ctx, *out_xai);
 	return_if_err(err);
 
 	return 0;
@@ -724,10 +734,10 @@ static int xac_lookup_entry_at_node(const struct silofs_xattr_ctx *xa_ctx,
 	if (silofs_laddr_isnull(laddr)) {
 		return -SILOFS_ENOENT;
 	}
+
 	err = xac_stage_xanode(xa_ctx, laddr, &xai);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	xe = xan_search(xai->xan, &xa_ctx->name->sv);
 	if (xe == nullptr) {
 		return -SILOFS_ENOENT;

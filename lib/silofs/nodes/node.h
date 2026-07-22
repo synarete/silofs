@@ -29,12 +29,20 @@ union silofs_view {
 	void                *opaque_view;
 };
 
+/* nodes' control state-flags */
+enum silofs_ni_flags {
+	SILOFS_NIF_RECHECKED = SILOFS_BIT(0),
+	SILOFS_NIF_PINNED    = SILOFS_BIT(1),
+	SILOFS_NIF_LOOSE     = SILOFS_BIT(2),
+};
+
 /* base of all in-memory node representations */
 struct silofs_node_info {
 	struct silofs_hmapq_elem hmqe;
 	struct silofs_dq_elem    dqe;
 	union silofs_view        view;
 	union silofs_view        viewx;
+	int                      flags;
 };
 
 void silofs_ni_init(struct silofs_node_info *ni, size_t view_size);
@@ -47,7 +55,14 @@ void silofs_ni_decref(struct silofs_node_info *ni);
 
 size_t silofs_ni_refcnt(const struct silofs_node_info *ni);
 
-bool silofs_ni_ispinned(const struct silofs_node_info *ni);
+void silofs_ni_setf(struct silofs_node_info *ni, enum silofs_ni_flags f);
+
+void silofs_ni_clearf(struct silofs_node_info *ni, enum silofs_ni_flags f);
+
+bool silofs_ni_testf(const struct silofs_node_info *ni,
+                     enum silofs_ni_flags           f);
+
+bool silofs_ni_isevictable(const struct silofs_node_info *ni);
 
 size_t silofs_ni_view_size(const struct silofs_node_info *ni);
 

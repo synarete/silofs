@@ -27,12 +27,29 @@ void silofs_ni_init(struct silofs_node_info *ni, size_t sz)
 	silofs_dqe_init(&ni->dqe, sz);
 	ni->view.opaque_view  = nullptr;
 	ni->viewx.opaque_view = nullptr;
+	ni->flags             = 0;
 }
 
 void silofs_ni_fini(struct silofs_node_info *ni)
 {
 	silofs_hmqe_fini(&ni->hmqe);
 	silofs_dqe_fini(&ni->dqe);
+	ni->flags = -1;
+}
+
+void silofs_ni_setf(struct silofs_node_info *ni, enum silofs_ni_flags f)
+{
+	ni->flags |= f;
+}
+
+void silofs_ni_clearf(struct silofs_node_info *ni, enum silofs_ni_flags f)
+{
+	ni->flags &= ~((int)f);
+}
+
+bool silofs_ni_testf(const struct silofs_node_info *ni, enum silofs_ni_flags f)
+{
+	return ((ni->flags & f) == f);
 }
 
 void silofs_ni_incref(struct silofs_node_info *ni)
@@ -55,9 +72,18 @@ size_t silofs_ni_refcnt(const struct silofs_node_info *ni)
 	return (size_t)refcnt;
 }
 
-bool silofs_ni_ispinned(const struct silofs_node_info *ni)
+bool silofs_ni_isevictable(const struct silofs_node_info *ni)
 {
-	return silofs_dqe_isinq(&ni->dqe) || (silofs_ni_refcnt(ni) > 0);
+	if (silofs_ni_testf(ni, SILOFS_NIF_PINNED)) {
+		return false;
+	}
+	if (silofs_dqe_isinq(&ni->dqe)) {
+		return false;
+	}
+	if (silofs_ni_refcnt(ni) > 0) {
+		return false;
+	}
+	return true;
 }
 
 const struct silofs_node_info *

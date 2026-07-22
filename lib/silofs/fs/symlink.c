@@ -251,9 +251,8 @@ static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 
 	err = silofs_stage_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii,
 	                          sl_ctx->stg_mode, out_svi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = svi_recheck_symval(*out_svi);
 	if (err) {
 		return err;
@@ -309,17 +308,14 @@ static int slc_extern_symval(const struct silofs_symlnk_ctx *sl_ctx,
 
 	len = lnk_value_length(sl_ctx->lnk_ii);
 	err = symval_desc_setup(&sv_dsc, nullptr, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_extern_symval_head(sl_ctx, &sv_dsc, bbuf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_extern_symval_parts(sl_ctx, &sv_dsc, bbuf);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -472,13 +468,11 @@ static int slc_do_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	int err;
 
 	err = slc_check_symlnk(sl_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = slc_assign_symval(sl_ctx);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	slc_update_post_symlink(sl_ctx);
 	return 0;
 }
@@ -518,9 +512,7 @@ static int slc_drop_symval(const struct silofs_symlnk_ctx *sl_ctx)
 			break;
 		}
 		err = slc_remove_symval_at(sl_ctx, &laddr);
-		if (err) {
-			return err;
-		}
+		return_if_err(err);
 	}
 	return 0;
 }

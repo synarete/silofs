@@ -1479,22 +1479,31 @@ static int search_dnode(const struct silofs_dtnode_info *dti,
 	return 0;
 }
 
-static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
-                              struct silofs_dtnode_info *dti)
+static int dirc_do_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
+                                 const struct silofs_dtnode_info *dti)
 {
-	ino_t dnode_ino, owner_ino;
+	const ino_t dnode_ino = dtn_ino(dti->dtn);
+	const ino_t owner_ino = d_ctx->dir_ii->i_ino;
 
-	if (!silofs_lni_need_recheck(&dti->dtn_lni)) {
-		return 0;
-	}
-	dnode_ino = dtn_ino(dti->dtn);
-	owner_ino = d_ctx->dir_ii->i_ino;
 	if (dnode_ino != owner_ino) {
 		log_err("bad dnode: dnode_ino=%lu owner_ino=%lu", dnode_ino,
 		        owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	silofs_lni_set_rechecked(&dti->dtn_lni);
+	return 0;
+}
+
+static int dirc_recheck_dnode(const struct silofs_dir_ctx *d_ctx,
+                              struct silofs_dtnode_info *dti)
+{
+	int err;
+
+	if (silofs_lni_need_recheck(&dti->dtn_lni)) {
+		err = dirc_do_recheck_dnode(d_ctx, dti);
+		return_if_err(err);
+
+		silofs_lni_set_rechecked(&dti->dtn_lni);
+	}
 	return 0;
 }
 

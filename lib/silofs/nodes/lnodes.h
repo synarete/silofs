@@ -22,20 +22,12 @@
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 
-enum silofs_lni_flags {
-	SILOFS_LNF_RECHECK = SILOFS_BIT(0),
-	SILOFS_LNF_PINNED  = SILOFS_BIT(1),
-	SILOFS_LNF_ACTIVE  = SILOFS_BIT(2),
-	SILOFS_LNF_LOOSE   = SILOFS_BIT(3),
-};
-
 /* lnode */
 struct silofs_lnode_info {
 	struct silofs_node_info ln_ni;
 	struct silofs_laddr     ln_laddr;
 	struct silofs_paddr     ln_curr_paddr;
 	uint64_t                ln_magic;
-	uint32_t                ln_flags;
 	int                     ln_asyncwr;
 
 	bool (*isevictable_fn)(const struct silofs_lnode_info *lni);

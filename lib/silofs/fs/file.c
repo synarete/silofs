@@ -1442,11 +1442,11 @@ filc_update_pre_write_leaf_by(const struct silofs_file_ctx *f_ctx,
 static int filc_recheck_flnode(const struct silofs_file_ctx *f_ctx,
                                struct silofs_flnode_info *fli)
 {
-	if (!silofs_lni_need_recheck(&fli->fln_lni)) {
-		return 0;
+	if (silofs_lni_need_recheck(&fli->fln_lni)) {
+		/* no-op for file-leaf */
+		silofs_lni_set_rechecked(&fli->fln_lni);
 	}
 	silofs_unused(f_ctx);
-	silofs_lni_set_rechecked(&fli->fln_lni);
 	return 0;
 }
 
@@ -1502,29 +1502,37 @@ static int filc_zero_data_leaf_at(const struct silofs_file_ctx *f_ctx,
 	return filc_zero_flnode_range(f_ctx, laddr, 0, laddr_len(laddr));
 }
 
-static int filc_recheck_ftnode(const struct silofs_file_ctx *f_ctx,
-                               struct silofs_ftnode_info *fti)
+static int filc_do_recheck_ftnode(const struct silofs_file_ctx *f_ctx,
+                                  const struct silofs_ftnode_info *fti)
 {
-	ino_t fnode_ino, owner_ino;
-	size_t height;
+	const ino_t fnode_ino = ftn_ino(fti->ftn);
+	const ino_t owner_ino = f_ctx->ii->i_ino;
+	const size_t height   = ftn_height(fti->ftn);
 
-	if (!silofs_lni_need_recheck(&fti->ftn_lni)) {
-		return 0;
-	}
-	fnode_ino = ftn_ino(fti->ftn);
-	owner_ino = f_ctx->ii->i_ino;
 	if (fnode_ino != owner_ino) {
 		log_err("bad finode ino: fnode_ino=%lu owner_ino=%lu",
 		        fnode_ino, owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	height = ftn_height(fti->ftn);
 	if ((height < 2) || (height > 16)) {
 		log_err("illegal height: height=%lu ino=%lu", height,
 		        owner_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	silofs_lni_set_rechecked(&fti->ftn_lni);
+	return 0;
+}
+
+static int filc_recheck_ftnode(const struct silofs_file_ctx *f_ctx,
+                               struct silofs_ftnode_info *fti)
+{
+	int err;
+
+	if (silofs_lni_need_recheck(&fti->ftn_lni)) {
+		err = filc_do_recheck_ftnode(f_ctx, fti);
+		return_if_err(err);
+
+		silofs_lni_set_rechecked(&fti->ftn_lni);
+	}
 	return 0;
 }
 

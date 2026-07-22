@@ -32,22 +32,17 @@
 
 static bool ii_ispinned(const struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_lni.ln_flags);
-
-	return (flags & SILOFS_LNF_PINNED) > 0;
+	return silofs_ni_testf(&ii->i_lni.ln_ni, SILOFS_NIF_PINNED);
 }
 
-static void ii_unpin(struct silofs_inode_info *ii)
+static void ii_clear_pinned(struct silofs_inode_info *ii)
 {
-	const int flags = (int)(ii->i_lni.ln_flags);
-
-	ii->i_lni.ln_flags =
-		(enum silofs_lni_flags)(flags & ~SILOFS_LNF_PINNED);
+	silofs_ni_clearf(&ii->i_lni.ln_ni, SILOFS_NIF_PINNED);
 }
 
 static void ii_set_pinned(struct silofs_inode_info *ii)
 {
-	ii->i_lni.ln_flags |= SILOFS_LNF_PINNED;
+	silofs_ni_setf(&ii->i_lni.ln_ni, SILOFS_NIF_PINNED);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -2672,7 +2667,7 @@ static int do_forget(struct silofs_task_ctx *task,
 
 	if (ii_ispinned(ii)) {
 		/* case of prune special files created by MKNOD */
-		ii_unpin(ii);
+		ii_clear_pinned(ii);
 		ret = try_prune_inode(task, ii, false);
 	} else {
 		ret = try_forget_cached_ii(task, ii);

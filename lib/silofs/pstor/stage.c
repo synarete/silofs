@@ -85,7 +85,7 @@ static bool pni_has_pviewx(const struct silofs_pnode_info *pni)
 
 static size_t pni_pview_size(const struct silofs_pnode_info *pni)
 {
-	return silofs_ni_view_size(&pni->pn_base);
+	return silofs_ni_view_size(&pni->pn_ni);
 }
 
 static const struct silofs_pnptr * //
@@ -115,13 +115,13 @@ static void pni_apply_ctag(struct silofs_pnode_info *pni)
 static int
 pni_attach_viewx(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	return silofs_ni_attach_viewx(&pni->pn_base, alloc);
+	return silofs_ni_attach_viewx(&pni->pn_ni, alloc);
 }
 
 static void
 pni_detach_viewx(struct silofs_pnode_info *pni, struct silofs_alloc *alloc)
 {
-	silofs_ni_detach_viewx(&pni->pn_base, alloc);
+	silofs_ni_detach_viewx(&pni->pn_ni, alloc);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

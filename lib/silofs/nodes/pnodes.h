@@ -26,7 +26,7 @@ enum silofs_pnodef {
 
 /* base of all persistent nodes */
 struct silofs_pnode_info {
-	struct silofs_node_info pn_base;
+	struct silofs_node_info pn_ni;
 	struct silofs_pnptr     pn_self;
 	struct silofs_ctag      pn_ctag;
 	struct silofs_list_head pn_dsq_lh;

@@ -22,7 +22,7 @@
 const struct silofs_pnode_info *
 silofs_pni_from_ni(const struct silofs_node_info *ni)
 {
-	return container_of(ni, struct silofs_pnode_info, pn_base);
+	return container_of(ni, struct silofs_pnode_info, pn_ni);
 }
 
 static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
@@ -48,7 +48,7 @@ pni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 
 static struct silofs_hmapq_elem *pni_to_mut_hmqe(struct silofs_pnode_info *pni)
 {
-	return &pni->pn_base.hmqe;
+	return &pni->pn_ni.hmqe;
 }
 
 struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
@@ -61,12 +61,14 @@ struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
 
 struct silofs_pnode_info *silofs_pni_from_mut_ni(struct silofs_node_info *ni)
 {
-	return mut_container_of(ni, struct silofs_pnode_info, pn_base);
+	return mut_container_of(ni, struct silofs_pnode_info, pn_ni);
 }
 
 static bool pni_isevictable(const struct silofs_pnode_info *pni)
 {
-	return silofs_ni_isevictable(&pni->pn_base);
+	const struct silofs_node_info *ni = &pni->pn_ni;
+
+	return ni->isevictable_fn(ni);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -99,37 +101,14 @@ void silofs_pcache_fini(struct silofs_pcache *pcache)
 	pcache->pc_alloc = nullptr;
 }
 
-static const struct silofs_hmapq *
-pcache_hmapq_of(const struct silofs_pcache *pcache,
-                const struct silofs_paddr *paddr)
+static struct silofs_pnode_info *
+pcache_search_by(const struct silofs_pcache *pcache,
+                 const struct silofs_hkey *hkey)
 {
-	const struct silofs_hmapq *hmapq = nullptr;
+	struct silofs_hmapq_elem *hmqe;
 
-	switch (paddr->ptype) {
-	case SILOFS_PTYPE_UBER:
-	case SILOFS_PTYPE_BLDESC:
-	case SILOFS_PTYPE_BTNODE:
-		hmapq = &pcache->pc_hmapq;
-		break;
-	case SILOFS_PTYPE_NONE:
-	case SILOFS_PTYPE_MBR:
-	case SILOFS_PTYPE_LNODE:
-	case SILOFS_PTYPE_LAST:
-	default:
-		silofs_panic("bad pcache-elem: ptype=%d", (int)paddr->ptype);
-		break;
-	}
-	return hmapq;
-}
-
-static struct silofs_hmapq *
-pcache_hmapq_of2(const struct silofs_pcache *pcache,
-                 const struct silofs_pnode_info *pni)
-{
-	const struct silofs_hmapq *hmapq;
-
-	hmapq = pcache_hmapq_of(pcache, &pni->pn_self.paddr);
-	return silofs_unconst(hmapq);
+	hmqe = silofs_hmapq_lookup(&pcache->pc_hmapq, hkey);
+	return pni_from_hmqe(hmqe);
 }
 
 static struct silofs_pnode_info *
@@ -137,25 +116,15 @@ pcache_search(const struct silofs_pcache *pcache,
               const struct silofs_paddr *paddr)
 {
 	struct silofs_hkey hkey;
-	struct silofs_hmapq_elem *hmqe   = nullptr;
-	const struct silofs_hmapq *hmapq = nullptr;
 
-	hmapq = pcache_hmapq_of(pcache, paddr);
-	if (likely(hmapq != nullptr)) {
-		silofs_hkey_by_paddr(&hkey, paddr);
-		hmqe = silofs_hmapq_lookup(hmapq, &hkey);
-	}
-	return pni_from_hmqe(hmqe);
+	silofs_hkey_by_paddr(&hkey, paddr);
+	return pcache_search_by(pcache, &hkey);
 }
 
 static void pcache_promote(struct silofs_pcache *pcache,
                            struct silofs_pnode_info *pni, bool now)
 {
-	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
-
-	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_promote(hmapq, pni_to_mut_hmqe(pni), now);
-	}
+	silofs_hmapq_promote(&pcache->pc_hmapq, pni_to_mut_hmqe(pni), now);
 }
 
 static struct silofs_pnode_info *
@@ -174,21 +143,13 @@ pcache_search_and_relru(struct silofs_pcache *pcache,
 static void
 pcache_map(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
-	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
-
-	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_store(hmapq, pni_to_mut_hmqe(pni));
-	}
+	silofs_hmapq_store(&pcache->pc_hmapq, pni_to_mut_hmqe(pni));
 }
 
 static void
 pcache_unmap(struct silofs_pcache *pcache, struct silofs_pnode_info *pni)
 {
-	struct silofs_hmapq *hmapq = pcache_hmapq_of2(pcache, pni);
-
-	if (likely(hmapq != nullptr)) {
-		silofs_hmapq_remove(hmapq, pni_to_mut_hmqe(pni));
-	}
+	silofs_hmapq_remove(&pcache->pc_hmapq, pni_to_mut_hmqe(pni));
 }
 
 static void

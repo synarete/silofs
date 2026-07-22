@@ -494,10 +494,13 @@ hmapq_hlist_of(const struct silofs_hmapq *hmapq,
 void silofs_hmapq_store(struct silofs_hmapq *hmapq,
                         struct silofs_hmapq_elem *hmqe)
 {
-	struct silofs_listq *lru      = &hmapq->hmq_lru;
-	struct silofs_list_head *hlst = hmapq_hlist_of(hmapq, &hmqe->hme_key);
+	struct silofs_listq *lru;
+	struct silofs_list_head *hlst;
 
+	lru = &hmapq->hmq_lru;
 	hmqe_lru(hmqe, lru);
+
+	hlst = hmapq_hlist_of(hmapq, &hmqe->hme_key);
 	hmqe_hmap(hmqe, hlst);
 	hmapq->hmq_htbl_size += 1;
 }
@@ -507,11 +510,12 @@ hmapq_find(const struct silofs_hmapq *hmapq, const struct silofs_hkey *hkey)
 {
 	const struct silofs_list_head *hlst;
 	const struct silofs_list_head *itr;
-	const struct silofs_hmapq_elem *hmqe;
 
 	hlst = hmapq_hlist_of(hmapq, hkey);
 	itr  = hlst->next;
 	while (itr != hlst) {
+		const struct silofs_hmapq_elem *hmqe;
+
 		hmqe = hmqe_from_htb_link(itr);
 		if (hkey_isequal(&hmqe->hme_key, hkey)) {
 			return hmqe;

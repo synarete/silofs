@@ -58,7 +58,7 @@ caad_by(const struct silofs_core_refs *corefs,
 
 static size_t pni_pview_len(const struct silofs_pnode_info *pni)
 {
-	return silofs_ni_view_size(&pni->pn_base);
+	return silofs_ni_view_size(&pni->pn_ni);
 }
 
 static const struct silofs_pview * //

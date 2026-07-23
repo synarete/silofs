@@ -97,19 +97,11 @@ lni_from_hmqe(const struct silofs_hmapq_elem *hmqe)
 	return lni;
 }
 
-static struct silofs_lnode_info *lni_from_dqe(const struct silofs_dq_elem *dqe)
-{
-	struct silofs_lnode_info *lni = nullptr;
-
-	if (likely(dqe != nullptr)) {
-		lni = silofs_lni_from_ni(silofs_ni_from_dqe(dqe));
-	}
-	return lni;
-}
-
 struct silofs_lnode_info *silofs_lni_from_dqe(const struct silofs_dq_elem *dqe)
 {
-	return lni_from_dqe(dqe);
+	silofs_assume_not_null(dqe);
+
+	return silofs_lni_from_ni(silofs_ni_from_dqe(dqe));
 }
 
 struct silofs_lnode_info * //

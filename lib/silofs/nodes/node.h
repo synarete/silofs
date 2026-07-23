@@ -40,7 +40,7 @@ enum silofs_ni_flags {
 struct silofs_node_info {
 	struct silofs_hmapq_elem hmqe;
 	struct silofs_dq_elem    dqe;
-	int                      flags;
+	unsigned int             flags;
 	union silofs_view        view;
 	union silofs_view        viewx;
 

@@ -1253,6 +1253,9 @@ static int compare_paddrs(const struct silofs_paddr *paddr1,
 {
 	long cmp;
 
+	silofs_assume_not_null(paddr1);
+	silofs_assume_not_null(paddr2);
+
 	if (paddr1->ptype != paddr2->ptype) {
 		/* Invert ordering by ptype: btnode come before uber */
 		cmp = (long)paddr2->ptype - (long)paddr1->ptype;

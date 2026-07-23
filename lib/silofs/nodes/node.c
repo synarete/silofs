@@ -49,22 +49,23 @@ void silofs_ni_fini(struct silofs_node_info *ni)
 {
 	silofs_hmqe_fini(&ni->hmqe);
 	silofs_dqe_fini(&ni->dqe);
-	ni->flags = -1;
 }
 
 void silofs_ni_setf(struct silofs_node_info *ni, enum silofs_ni_flags f)
 {
-	ni->flags |= f;
+	ni->flags |= (unsigned)f;
 }
 
 void silofs_ni_clearf(struct silofs_node_info *ni, enum silofs_ni_flags f)
 {
-	ni->flags &= ~((int)f);
+	ni->flags &= ~((unsigned)f);
 }
 
 bool silofs_ni_testf(const struct silofs_node_info *ni, enum silofs_ni_flags f)
 {
-	return ((ni->flags & f) == f);
+	const unsigned v = (unsigned)f;
+
+	return ((ni->flags & v) == v);
 }
 
 void silofs_ni_incref(struct silofs_node_info *ni)

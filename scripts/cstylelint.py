@@ -33,6 +33,7 @@ LINECNT_MAX = 8000
 EMPTYLINES_MAX = 6
 C_HDR_EXT = ".h"
 C_SRC_EXT = ".c"
+
 C_HEADERS = [
     "assert.h",
     "float.h",
@@ -81,6 +82,8 @@ SYS_HEADERS = [
     "sys/wait.h",
     "sys/xattr.h",
 ]
+
+STD_HEADERS = C_HEADERS + SYS_HEADERS
 
 INSECURE_FUNCS = [
     "getdents",
@@ -216,6 +219,8 @@ SYS_PRIVATE = [
     "__rlimit_resource_t",
     "__KERNEL__",
 ]
+
+ALL_PRIVATE = COMPILER_PRIVATE + SYS_PRIVATE
 
 CSOURCE_EXCLUDE = [
     "extern",
@@ -504,10 +509,7 @@ def check_c23_keywords(env: LintEnv, sl: SourceLine) -> None:
 
 def _is_private_name(tok: str) -> bool:
     """Return True if a token is in compiler/system private names."""
-    for p in COMPILER_PRIVATE + SYS_PRIVATE:
-        if tok.startswith(p):
-            return True
-    return False
+    return any(tok.startswith(p) for p in ALL_PRIVATE)
 
 
 def _is_lib_name(tok: str) -> bool:
@@ -631,12 +633,11 @@ def check_no_static_inline(env: LintEnv, sl: SourceLine) -> None:
 
 def check_std_includes(env: LintEnv, sl: SourceLine) -> None:
     """Require standard include-headers to be with angle brackets."""
-    std_headers = C_HEADERS + SYS_HEADERS
     spln = sl.line.strip().split()
     if len(spln) == 2 and spln[0].startswith("#include"):
         inc = spln[1]
         hdr = inc.strip('"<>')
-        if hdr in std_headers and inc.startswith('"'):
+        if hdr in STD_HEADERS and inc.startswith('"'):
             env.lerror(sl, f"Malformed include: '{hdr}'")
 
 

@@ -64,6 +64,12 @@ void silofs_ni_clearf(struct silofs_node_info *ni, enum silofs_ni_flags f);
 bool silofs_ni_testf(const struct silofs_node_info *ni,
                      enum silofs_ni_flags           f);
 
+bool silofs_ni_isdirty(const struct silofs_node_info *ni);
+
+void silofs_ni_setdirty(struct silofs_node_info *ni);
+
+void silofs_ni_cleardirty(struct silofs_node_info *ni);
+
 bool silofs_ni_isevictable(const struct silofs_node_info *ni);
 
 size_t silofs_ni_view_size(const struct silofs_node_info *ni);
@@ -92,4 +98,6 @@ silofs_ni_from_dqe(const struct silofs_dq_elem *dqe);
 struct silofs_node_info *       //
 silofs_ni_from_mut_dqe(struct silofs_dq_elem *dqe);
 
-#endif                          /* SILOFS_NODE_H_ */
+void silofs_ni_set_dq(struct silofs_node_info *ni, struct silofs_dirtyq *dq);
+
+#endif /* SILOFS_NODE_H_ */

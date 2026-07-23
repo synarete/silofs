@@ -192,53 +192,16 @@ void silofs_lni_decref(struct silofs_lnode_info *lni)
 	}
 }
 
-static const struct silofs_dq_elem *
-lni_dqe(const struct silofs_lnode_info *lni)
-{
-	return &lni->ln_ni.dqe;
-}
-
-static struct silofs_dq_elem *lni_mut_dqe(struct silofs_lnode_info *lni)
-{
-	return &lni->ln_ni.dqe;
-}
-
-static bool lni_isdirty(const struct silofs_lnode_info *lni)
-{
-	return silofs_dqe_isdirty(lni_dqe(lni));
-}
-
-static void lni_setdirty(struct silofs_lnode_info *lni)
-{
-	if (!lni_isdirty(lni)) {
-		silofs_dqe_setdirty(lni_mut_dqe(lni));
-	}
-}
-
-static void lni_cleardirty(struct silofs_lnode_info *lni)
-{
-	if (lni_isdirty(lni)) {
-		silofs_dqe_cleardirty(lni_mut_dqe(lni));
-	}
-}
-
-static void lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
-{
-	struct silofs_dq_elem *dqe = lni_mut_dqe(lni);
-
-	silofs_dqe_set_dirtyq(dqe, dq);
-}
-
 void silofs_lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 {
-	lni_set_dq(lni, dq);
+	silofs_ni_set_dq(&lni->ln_ni, dq);
 }
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
 
-	return lni_isdirty(lni);
+	return silofs_ni_isdirty(&lni->ln_ni);
 }
 
 void silofs_lni_setdirty(struct silofs_lnode_info *lni,
@@ -247,14 +210,14 @@ void silofs_lni_setdirty(struct silofs_lnode_info *lni,
 	silofs_assert_not_null(lni);
 	silofs_unused(ii);
 
-	lni_setdirty(lni);
+	silofs_ni_setdirty(&lni->ln_ni);
 }
 
 void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
 
-	lni_cleardirty(lni);
+	silofs_ni_cleardirty(&lni->ln_ni);
 }
 
 static bool

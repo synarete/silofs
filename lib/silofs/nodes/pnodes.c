@@ -97,14 +97,9 @@ silofs_pni_stype(const struct silofs_pnode_info *pni)
 	return &pni->pn_self.paddr.blobid.stype;
 }
 
-static struct silofs_dq_elem *pni_dqe(struct silofs_pnode_info *pni)
-{
-	return &pni->pn_ni.dqe;
-}
-
 void silofs_pni_set_dq(struct silofs_pnode_info *pni, struct silofs_dirtyq *dq)
 {
-	silofs_dqe_set_dirtyq(pni_dqe(pni), dq);
+	silofs_ni_set_dq(&pni->pn_ni, dq);
 }
 
 const struct silofs_paddr *
@@ -143,12 +138,12 @@ silofs_pni_civkey(const struct silofs_pnode_info *pni)
 
 void silofs_pni_setdirty(struct silofs_pnode_info *pni)
 {
-	silofs_dqe_setdirty(pni_dqe(pni));
+	silofs_ni_setdirty(&pni->pn_ni);
 }
 
 void silofs_pni_cleardirty(struct silofs_pnode_info *pni)
 {
-	silofs_dqe_cleardirty(pni_dqe(pni));
+	silofs_ni_cleardirty(&pni->pn_ni);
 }
 
 void silofs_pni_incref(struct silofs_pnode_info *pni)

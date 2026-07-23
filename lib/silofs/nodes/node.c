@@ -136,6 +136,30 @@ silofs_ni_from_mut_dqe(struct silofs_dq_elem *dqe)
 	return ni;
 }
 
+void silofs_ni_set_dq(struct silofs_node_info *ni, struct silofs_dirtyq *dq)
+{
+	silofs_dqe_set_dirtyq(&ni->dqe, dq);
+}
+
+bool silofs_ni_isdirty(const struct silofs_node_info *ni)
+{
+	return silofs_dqe_isdirty(&ni->dqe);
+}
+
+void silofs_ni_setdirty(struct silofs_node_info *ni)
+{
+	if (!silofs_ni_isdirty(ni)) {
+		silofs_dqe_setdirty(&ni->dqe);
+	}
+}
+
+void silofs_ni_cleardirty(struct silofs_node_info *ni)
+{
+	if (silofs_ni_isdirty(ni)) {
+		silofs_dqe_cleardirty(&ni->dqe);
+	}
+}
+
 size_t silofs_ni_view_size(const struct silofs_node_info *ni)
 {
 	const size_t view_size = ni->dqe.sz;

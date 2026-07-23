@@ -35,9 +35,6 @@ void silofs_pcache_drop(struct silofs_pcache *pcache);
 void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
 struct silofs_pnode_info *
-silofs_pcache_dq_front(const struct silofs_pcache *pcache);
-
-struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_pnptr *pnptr);
 

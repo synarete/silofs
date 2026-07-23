@@ -195,15 +195,6 @@ static void lcache_drop_evictable_lnis(struct silofs_lcache *lcache)
 	                      try_evict_lni, lcache);
 }
 
-struct silofs_lnode_info *
-silofs_lcache_dq_front(const struct silofs_lcache *lcache)
-{
-	struct silofs_dq_elem *dqe;
-
-	dqe = silofs_dirtyq_front(&lcache->lc_dirtyq);
-	return silofs_lni_from_dqe(dqe);
-}
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static struct silofs_lnode_info *
@@ -405,24 +396,4 @@ void silofs_lcache_fini(struct silofs_lcache *lcache)
 	lcache_fini_dq(lcache);
 	lcache_fini_hmapqs(lcache);
 	lcache->lc_alloc = nullptr;
-}
-
-static size_t lcache_alloc_bytes(const struct silofs_lcache *lcache)
-{
-	struct silofs_alloc_stat as = { .nbytes_use = 0 };
-
-	silofs_memstat(lcache->lc_alloc, &as);
-	return as.nbytes_use;
-}
-
-static size_t lcache_sum_nodes(const struct silofs_lcache *lcache)
-{
-	return lcache->lc_hmapq.hmq_htbl_size;
-}
-
-void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
-                                 struct silofs_cache_stats *out_cstats)
-{
-	out_cstats->nalloc_bytes = lcache_alloc_bytes(lcache);
-	out_cstats->ncache_nodes = lcache_sum_nodes(lcache);
 }

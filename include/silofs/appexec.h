@@ -49,9 +49,6 @@ void silofs_destroy_env(struct silofs_env *env);
 
 int silofs_open_env(struct silofs_env *env, const struct silofs_spec *spec);
 
-void silofs_collect_stats(const struct silofs_env   *env,
-                          struct silofs_cache_stats *out);
-
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_format_repo(struct silofs_env *env);

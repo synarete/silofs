@@ -702,7 +702,7 @@ struct ut_dvec *ut_new_dvec(struct ut_env *ute, off_t off, size_t len)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void swap_long(long *a, long *b)
+static void lswap(long *a, long *b)
 {
 	const long c = *a;
 
@@ -710,10 +710,6 @@ static void swap_long(long *a, long *b)
 	*b = c;
 }
 
-/*
- * Pseudo-random shuffle
- * See: http://benpfaff.org/writings/clc/shuffle.html
- */
 static uint64_t ute_next_prandom(struct ut_env *ute)
 {
 	uint64_t rnd;
@@ -724,6 +720,10 @@ static uint64_t ute_next_prandom(struct ut_env *ute)
 	return rnd;
 }
 
+/*
+ * Pseudo-random shuffle
+ * See: http://benpfaff.org/writings/clc/shuffle.html
+ */
 static void ut_do_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
 {
 	size_t i = 0, j = 0;
@@ -732,7 +732,7 @@ static void ut_do_prandom_shuffle(struct ut_env *ute, long *arr, size_t len)
 	for (i = 0; i < len - 1; i++) {
 		rnd = (i % 17) ? (rnd >> 1) : ute_next_prandom(ute);
 		j   = i + (rnd / (ULONG_MAX / (len - i) + 1));
-		swap_long(arr + i, arr + j);
+		lswap(arr + i, arr + j);
 	}
 }
 
@@ -760,7 +760,7 @@ void ut_prandom_seq(struct ut_env *ute, long *arr, size_t len, long base)
 void ut_reverse_inplace(long *arr, size_t len)
 {
 	for (size_t i = 0; i < len / 2; i++) {
-		swap_long(arr + i, arr + (len - i - 1));
+		lswap(arr + i, arr + (len - i - 1));
 	}
 }
 

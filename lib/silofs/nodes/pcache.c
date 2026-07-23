@@ -344,12 +344,3 @@ void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
 		pcache_evict_some(pcache, 1);
 	}
 }
-
-struct silofs_pnode_info *
-silofs_pcache_dq_front(const struct silofs_pcache *pcache)
-{
-	struct silofs_dq_elem *dqe;
-
-	dqe = silofs_dirtyq_front(&pcache->pc_dirtyq);
-	return silofs_pni_from_dqe(dqe);
-}

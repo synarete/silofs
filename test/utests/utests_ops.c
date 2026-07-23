@@ -1859,14 +1859,25 @@ void ut_sync_drop(struct ut_env *ute)
 	ut_expect_ok(err);
 }
 
+static void ut_cache_nodes(const struct ut_env *ute, size_t *out_lnodes,
+                           size_t *out_pnodes)
+{
+	*out_lnodes = ute->env->lcache.lc_hmapq.hmq_lru.sz;
+	*out_pnodes = ute->env->pcache.pc_hmapq.hmq_lru.sz;
+}
+
 void ut_sync_drop_all(struct ut_env *ute)
 {
-	struct silofs_cache_stats cstats;
+	size_t lnodes[2], pnodes[2];
 
+	ut_cache_nodes(ute, &lnodes[0], &pnodes[0]);
 	ut_sync_drop(ute);
-	silofs_collect_stats(ute->env, &cstats);
+	ut_cache_nodes(ute, &lnodes[1], &pnodes[1]);
 
-	ut_expect_eq(cstats.ncache_nodes, 0);
+	ut_expect_le(lnodes[1], lnodes[0]);
+	ut_expect_le(pnodes[1], pnodes[0]);
+	ut_expect_eq(lnodes[1], 0);
+	ut_expect_eq(pnodes[1], 1);
 }
 
 void ut_tune_ftype2(struct ut_env *ute, ino_t ino)
@@ -2005,10 +2016,10 @@ void ut_inspect_fs(struct ut_env *ute)
 
 size_t ut_nalloc_bytes_now(const struct ut_env *ute)
 {
-	struct silofs_cache_stats st;
+	struct silofs_alloc_stat alst;
 
-	silofs_collect_stats(ute->env, &st);
-	return st.nalloc_bytes;
+	silofs_memstat(ute->env->alloc, &alst);
+	return alst.nbytes_use;
 }
 
 void ut_remove_fs(struct ut_env *ute)

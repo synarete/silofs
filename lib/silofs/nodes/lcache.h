@@ -39,9 +39,6 @@ size_t silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
 void silofs_lcache_drop(struct silofs_lcache *lcache);
 
 struct silofs_lnode_info *
-silofs_lcache_dq_front(const struct silofs_lcache *lcache);
-
-struct silofs_lnode_info *
 silofs_lcache_lookup_lnode(struct silofs_lcache      *lcache,
                            const struct silofs_laddr *laddr);
 
@@ -51,8 +48,5 @@ silofs_lcache_create_lnode(struct silofs_lcache      *lcache,
 
 void silofs_lcache_forget_lnode(struct silofs_lcache     *lcache,
                                 struct silofs_lnode_info *lni);
-
-void silofs_lcache_collect_stats(const struct silofs_lcache *lcache,
-                                 struct silofs_cache_stats  *out_cstats);
 
 #endif /* SILOFS_LCACHE_H_ */

@@ -127,7 +127,6 @@ struct ut_malloc_chunk {
 struct ut_env {
 	const struct silofs_spec   *spec;
 	struct silofs_fsrefs        fsrefs;
-	struct silofs_fsref         arfsref;
 	struct silofs_env          *env;
 	struct timespec             ts_start;
 	struct timespec             ts_finish;

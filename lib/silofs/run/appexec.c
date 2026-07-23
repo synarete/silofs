@@ -57,11 +57,10 @@ static int appexec_resync_vmeta(struct silofs_task_ctx *task, bool drop)
 
 	relax_caches(task, drop);
 	err = flush_dirty(task);
-	if (err || !drop) {
-		return err;
+	if (!err && drop) {
+		drop_caches(task);
 	}
-	drop_relax_caches(task);
-	return 0;
+	return err;
 }
 
 static int appexec_reload_fs(struct silofs_task_ctx *task,
@@ -308,17 +307,11 @@ int silofs_sync_fs(struct silofs_env *env, bool drop)
 	int err = 0;
 
 	lock_fs(env);
-	for (int i = 0; (i < 3) && !err; ++i) {
+	for (int i = 0; (i < 4) && !err; ++i) {
 		err = exec_resync_vmeta(env, drop);
 	}
 	unlock_fs(env);
 	return err;
-}
-
-void silofs_collect_stats(const struct silofs_env *env,
-                          struct silofs_cache_stats *out_cstats)
-{
-	silofs_lcache_collect_stats(&env->lcache, out_cstats);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -18,7 +18,9 @@
 #
 
 import collections
+import concurrent.futures
 import curses.ascii
+import os
 import re
 import sys
 from functools import cached_property
@@ -822,9 +824,29 @@ def _read_source_file(path: Path) -> SourceFile:
     return SourceFile(path, txt)
 
 
+def _check_cfile_worker(path: Path) -> list[str]:
+    """Check a single file in a worker process; return error strings."""
+    errors: list[str] = []
+    progname = Path(sys.argv[0]).name
+
+    class _CollectEnv(LintEnv):
+        def _error(self, meta: str, msg: str) -> None:
+            errors.append(f"{progname}: {meta}{msg}")
+            self.err_count += 1
+
+    check_source_file(_CollectEnv(), _read_source_file(path))
+    return errors
+
+
 def _check_cstyle(env: LintEnv, src_path_list: list[Path]) -> None:
-    for src_path in src_path_list:
-        check_source_file(env, _read_source_file(src_path))
+    if not src_path_list:
+        return
+    workers = min(len(src_path_list), os.cpu_count() or 1)
+    with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as pool:
+        for errors in pool.map(_check_cfile_worker, src_path_list):
+            for msg in errors:
+                print(msg)
+                env.err_count += 1
 
 
 def _resolve_cfiles(sources: list[str]) -> list[Path]:

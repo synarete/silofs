@@ -19,12 +19,6 @@
 #include <silofs/addr.h>
 #include <silofs/nodes.h>
 
-const struct silofs_pnode_info *
-silofs_pni_from_ni(const struct silofs_node_info *ni)
-{
-	return container_of(ni, struct silofs_pnode_info, pn_ni);
-}
-
 static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
 {
 	return silofs_unconst(p);
@@ -34,9 +28,8 @@ static struct silofs_pnode_info *pni_from_ni(const struct silofs_node_info *ni)
 {
 	const struct silofs_pnode_info *pni = nullptr;
 
-	if (ni != nullptr) {
-		pni = silofs_pni_from_ni(ni);
-	}
+	silofs_assume_not_null(ni);
+	pni = container_of(ni, struct silofs_pnode_info, pn_ni);
 	return pni_unconst(pni);
 }
 

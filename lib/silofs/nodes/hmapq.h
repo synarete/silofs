@@ -23,7 +23,7 @@
 enum silofs_hkey_type {
 	SILOFS_HKEY_NONE,
 	SILOFS_HKEY_PADDR,
-	SILOFS_HKEY_VADDR,
+	SILOFS_HKEY_LADDR,
 };
 
 /* addresses as mapping-key */

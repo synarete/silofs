@@ -148,7 +148,7 @@ static long hkey_compare_as(const struct silofs_hkey *hkey1,
 	case SILOFS_HKEY_PADDR:
 		cmp = hkey_compare_as_paddr(hkey1, hkey2);
 		break;
-	case SILOFS_HKEY_VADDR:
+	case SILOFS_HKEY_LADDR:
 		cmp = hkey_compare_as_laddr(hkey1, hkey2);
 		break;
 	case SILOFS_HKEY_NONE:
@@ -186,7 +186,7 @@ static uint64_t hkey_hash_of(enum silofs_hkey_type type, const void *key)
 	case SILOFS_HKEY_PADDR:
 		hash = hash_of_paddr(key);
 		break;
-	case SILOFS_HKEY_VADDR:
+	case SILOFS_HKEY_LADDR:
 		hash = hash_of_laddr(key);
 		break;
 	case SILOFS_HKEY_NONE:
@@ -212,7 +212,7 @@ void silofs_hkey_by_paddr(struct silofs_hkey *hkey,
 void silofs_hkey_by_laddr(struct silofs_hkey *hkey,
                           const struct silofs_laddr *laddr)
 {
-	hkey_setup_by(hkey, SILOFS_HKEY_VADDR, laddr);
+	hkey_setup_by(hkey, SILOFS_HKEY_LADDR, laddr);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

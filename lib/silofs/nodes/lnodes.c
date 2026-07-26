@@ -38,9 +38,11 @@ static void mfree_node_info(struct silofs_alloc *alloc, void *p, size_t n)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static size_t vsize_of(const struct silofs_laddr *laddr)
+static void
+stype_of(const struct silofs_laddr *laddr, struct silofs_stype *out_stype)
 {
-	return silofs_ltype_size(laddr->ltype);
+	out_stype->ptype = SILOFS_PTYPE_LNODE;
+	out_stype->ltype = laddr->ltype;
 }
 
 static struct silofs_lnode_info *
@@ -58,7 +60,10 @@ static void lni_debug_check(const struct silofs_lnode_info *lni)
 static void
 lni_init(struct silofs_lnode_info *lni, const struct silofs_laddr *laddr)
 {
-	silofs_ni_init(&lni->ln_ni, vsize_of(laddr));
+	struct silofs_stype stype;
+
+	stype_of(laddr, &stype);
+	silofs_ni_init(&lni->ln_ni, &stype);
 	silofs_laddr_assign(&lni->ln_laddr, laddr);
 	silofs_paddr_reset(&lni->ln_curr_paddr);
 	lni->ln_asyncwr = 0;

@@ -33,22 +33,20 @@ static void memfree_pni(struct silofs_alloc *alloc, void *p, size_t n)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static enum silofs_ptype pnptr_ptype(const struct silofs_pnptr *pnptr)
+static void
+stype_of(const struct silofs_paddr *paddr, struct silofs_stype *out_stype)
 {
-	return pnptr->paddr.ptype;
-}
-
-static size_t pnptr_size(const struct silofs_pnptr *pnptr)
-{
-	return silofs_ptype_size(pnptr_ptype(pnptr));
+	out_stype->ptype = paddr->ptype;
+	out_stype->ltype = SILOFS_LTYPE_NONE;
 }
 
 static void
 pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 {
-	const size_t psize = pnptr_size(pnptr);
+	struct silofs_stype stype;
 
-	silofs_ni_init(&pni->pn_ni, psize);
+	stype_of(&pnptr->paddr, &stype);
+	silofs_ni_init(&pni->pn_ni, &stype);
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_ctag_reset(&pni->pn_ctag);
 	silofs_list_head_init(&pni->pn_dsq_lh);
@@ -587,6 +585,11 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+static enum silofs_ptype pnptr_ptype(const struct silofs_pnptr *pnptr)
+{
+	return pnptr->paddr.ptype;
+}
 
 struct silofs_pnode_info *
 silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)

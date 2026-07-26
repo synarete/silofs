@@ -35,10 +35,14 @@ static bool ni_isevictable(const struct silofs_node_info *ni)
 	return true;
 }
 
-void silofs_ni_init(struct silofs_node_info *ni, size_t sz)
+void silofs_ni_init(struct silofs_node_info *ni,
+                    const struct silofs_stype *stype)
 {
+	const size_t sz = silofs_stype_size(stype);
+
 	silofs_hmqe_init(&ni->hmqe);
 	silofs_dqe_init(&ni->dqe, sz);
+	silofs_stype_assign(&ni->stype, stype);
 	ni->view.opaque_view  = nullptr;
 	ni->viewx.opaque_view = nullptr;
 	ni->flags             = 0;

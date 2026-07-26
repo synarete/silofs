@@ -35,6 +35,7 @@
 #include <silofs/addr/creds.h>
 #include <silofs/addr/laddr.h>
 #include <silofs/addr/uniqid.h>
+#include <silofs/addr/stype.h>
 #include <silofs/addr/blobid.h>
 #include <silofs/addr/paddr.h>
 #include <silofs/addr/pnptr.h>

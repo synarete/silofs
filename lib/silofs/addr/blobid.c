@@ -34,9 +34,8 @@ static void blobid_clear(struct silofs_blobid *blobid)
 {
 	silofs_layerid_reset(&blobid->layerid);
 	silofs_uniqid_reset(&blobid->uniqid);
-	blobid->stype.ptype = SILOFS_PTYPE_NONE;
-	blobid->stype.ltype = SILOFS_LTYPE_NONE;
-	blobid->vers        = 0;
+	silofs_stype_clear(&blobid->stype);
+	blobid->vers = 0;
 }
 
 void silofs_blobid_init(struct silofs_blobid *blobid,
@@ -46,9 +45,8 @@ void silofs_blobid_init(struct silofs_blobid *blobid,
 {
 	silofs_layerid_assignx(&blobid->layerid, layerid);
 	silofs_uniqid_assignx(&blobid->uniqid, uniqid);
-	blobid->stype.ptype = stype->ptype;
-	blobid->stype.ltype = stype->ltype;
-	blobid->vers        = SILOFS_FMT_VERSION;
+	silofs_stype_assign(&blobid->stype, stype);
+	blobid->vers = SILOFS_FMT_VERSION;
 }
 
 void silofs_blobid_fini(struct silofs_blobid *blobid)
@@ -66,6 +64,7 @@ void silofs_blobid_assign(struct silofs_blobid *blobid,
 {
 	silofs_layerid_assign(&blobid->layerid, &other->layerid);
 	silofs_uniqid_assign(&blobid->uniqid, &other->uniqid);
+	silofs_stype_assign(&blobid->stype, &other->stype);
 	blobid->stype.ptype = other->stype.ptype;
 	blobid->stype.ltype = other->stype.ltype;
 	blobid->vers        = other->vers;
@@ -76,11 +75,7 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 {
 	long cmp;
 
-	cmp = (long)blobid->stype.ptype - (long)other->stype.ptype;
-	if (cmp != 0) {
-		return cmp;
-	}
-	cmp = (long)blobid->stype.ltype - (long)other->stype.ltype;
+	cmp = silofs_stype_compare(&blobid->stype, &other->stype);
 	if (cmp != 0) {
 		return cmp;
 	}
@@ -107,14 +102,7 @@ bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
 
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)
 {
-	size_t sz;
-
-	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
-		sz = silofs_ltype_size(blobid->stype.ltype);
-	} else {
-		sz = silofs_ptype_size(blobid->stype.ptype);
-	}
-	return sz;
+	return silofs_stype_size(&blobid->stype);
 }
 
 void silofs_blobid48b_htox(struct silofs_blobid48b *blobid48,

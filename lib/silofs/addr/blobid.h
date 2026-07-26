@@ -17,11 +17,6 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
-struct silofs_stype {
-	enum silofs_ptype ptype;
-	enum silofs_ltype ltype;
-};
-
 struct silofs_blobid {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;

@@ -26,7 +26,7 @@ struct silofs_ncache {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_ncache_init(struct silofs_ncache *ncache,
-		       struct silofs_alloc  *alloc);
+                       struct silofs_alloc  *alloc);
 
 void silofs_ncache_fini(struct silofs_ncache *ncache);
 
@@ -38,28 +38,43 @@ void silofs_ncache_relax(struct silofs_ncache *ncache, int flags);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+struct silofs_node_info *
+silofs_ncache_lookup_node_by(struct silofs_ncache     *ncache,
+                             const struct silofs_hkey *hkey);
+
+void silofs_ncache_insert_node(struct silofs_ncache    *ncache,
+                               struct silofs_node_info *ni);
+
+void silofs_ncache_evict_node(struct silofs_ncache    *ncache,
+                              struct silofs_node_info *ni);
+
+void silofs_ncache_forget_node(struct silofs_ncache    *ncache,
+                               struct silofs_node_info *ni);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 struct silofs_pnode_info *
 silofs_ncache_lookup_pnode(struct silofs_ncache      *ncache,
-			   const struct silofs_paddr *paddr);
+                           const struct silofs_paddr *paddr);
 
 struct silofs_pnode_info *
 silofs_ncache_create_pnode(struct silofs_ncache      *ncache,
-			   const struct silofs_pnptr *pnptr);
+                           const struct silofs_pnptr *pnptr);
 
 void silofs_ncache_delete_pnode(struct silofs_ncache     *ncache,
-				struct silofs_pnode_info *pni);
+                                struct silofs_pnode_info *pni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_lnode_info *
 silofs_ncache_lookup_lnode(struct silofs_ncache      *ncache,
-			   const struct silofs_laddr *laddr);
+                           const struct silofs_laddr *laddr);
 
 struct silofs_lnode_info *
 silofs_ncache_create_lnode(struct silofs_ncache      *ncache,
-			   const struct silofs_laddr *laddr);
+                           const struct silofs_laddr *laddr);
 
 void silofs_ncache_forget_lnode(struct silofs_ncache     *ncache,
-				struct silofs_lnode_info *lni);
+                                struct silofs_lnode_info *lni);
 
 #endif /* SILOFS_NCACHE_H_ */

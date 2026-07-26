@@ -46,6 +46,8 @@ struct silofs_node_info {
 	union silofs_view        viewx;
 
 	bool (*isevictable_fn)(const struct silofs_node_info *ni);
+	void (*delete_fn)(struct silofs_node_info *ni,
+	                  struct silofs_alloc     *alloc);
 };
 
 void silofs_ni_init(struct silofs_node_info   *ni,

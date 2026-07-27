@@ -68,6 +68,8 @@ lni_init(struct silofs_lnode_info *lni, const struct silofs_laddr *laddr)
 	silofs_paddr_reset(&lni->ln_curr_paddr);
 	lni->ln_asyncwr = 0;
 	lni->ln_magic   = SILOFS_VI_MAGIC;
+
+	silofs_hkey_by_laddr(&lni->ln_ni.hmqe.hme_key, &lni->ln_laddr);
 }
 
 static void lni_fini(struct silofs_lnode_info *lni)

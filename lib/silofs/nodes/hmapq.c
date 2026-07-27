@@ -217,16 +217,21 @@ void silofs_hkey_by_laddr(struct silofs_hkey *hkey,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void
+hmqe_must_die(const struct silofs_hmapq_elem *hmqe, const char *prefix)
+{
+	silofs_panic("%s: hmqe=%p hme_key.type=%d hme_refcnt=%d "
+	             "hme_mapped=%d hme_forgot=%d hme_magic=0x%x",
+	             prefix, (const void *)hmqe, (int)hmqe->hme_key.type,
+	             hmqe->hme_refcnt, (int)hmqe->hme_mapped,
+	             (int)hmqe->hme_forgot, hmqe->hme_magic);
+}
+
 static void hmqe_sanitize(const struct silofs_hmapq_elem *hmqe)
 {
 	if (unlikely(hmqe->hme_magic != SILOFS_HMQE_MAGIC) ||
 	    unlikely(hmqe->hme_refcnt < 0)) {
-		silofs_panic("corrupted: hmqe=%p hme_key.type=%d "
-		             "hme_refcnt=%d hme_mapped=%d "
-		             "hme_forgot=%d hme_magic=0x%x",
-		             (const void *)hmqe, (int)hmqe->hme_key.type,
-		             hmqe->hme_refcnt, (int)hmqe->hme_mapped,
-		             (int)hmqe->hme_forgot, hmqe->hme_magic);
+		hmqe_must_die(hmqe, "corrupted");
 	}
 }
 
@@ -315,10 +320,7 @@ static void hmqe_sanitize_mapped(const struct silofs_hmapq_elem *hmqe)
 {
 	hmqe_sanitize(hmqe);
 	if (unlikely(!hmqe->hme_mapped)) {
-		silofs_panic("unexpected non-mapped state: "
-		             "hmqe=%p hme_key=%d hme_refcnt=%d",
-		             (const void *)hmqe, (int)hmqe->hme_key.type,
-		             hmqe->hme_refcnt);
+		hmqe_must_die(hmqe, "unexpected non-mapped state");
 	}
 }
 

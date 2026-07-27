@@ -24,9 +24,7 @@
 
 /* in-memory caching */
 struct silofs_lcache {
-	struct silofs_hmapq  lc_hmapq;
-	struct silofs_dirtyq lc_dirtyq;
-	struct silofs_alloc *lc_alloc;
+	struct silofs_ncache nc;
 };
 
 int silofs_lcache_init(struct silofs_lcache *lcache,
@@ -34,7 +32,7 @@ int silofs_lcache_init(struct silofs_lcache *lcache,
 
 void silofs_lcache_fini(struct silofs_lcache *lcache);
 
-size_t silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
+void silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
 
 void silofs_lcache_drop(struct silofs_lcache *lcache);
 

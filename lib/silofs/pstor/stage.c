@@ -1039,14 +1039,14 @@ static void dsc_initp(struct silofs_destage_ctx *ds_ctx,
                       const struct silofs_core_refs *corefs)
 {
 	dsc_init(ds_ctx, corefs);
-	ds_ctx->drq = &corefs->pcache->pc_dirtyq;
+	ds_ctx->drq = &corefs->pcache->nc.nc_dirtyq;
 }
 
 static void dsc_initv(struct silofs_destage_ctx *ds_ctx,
                       const struct silofs_core_refs *corefs)
 {
 	dsc_init(ds_ctx, corefs);
-	ds_ctx->drq = &corefs->lcache->lc_dirtyq;
+	ds_ctx->drq = &corefs->lcache->nc.nc_dirtyq;
 }
 
 static void dsc_fini(struct silofs_destage_ctx *ds_ctx)

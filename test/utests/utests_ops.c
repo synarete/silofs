@@ -1825,11 +1825,11 @@ void ut_copy_file_range(struct ut_env *ute, ino_t ino_in, off_t off_in,
 	while (cnt < len) {
 		const off_t pos_in  = ut_off_end(off_in, cnt);
 		const off_t pos_out = ut_off_end(off_out, cnt);
-		const size_t rem    = len - cnt;
-		size_t ncp          = 0;
+		size_t ncp;
 
+		ncp = 0;
 		ut_copy_file_range1(ute, ino_in, pos_in, //
-		                    ino_out, pos_out, rem, &ncp);
+		                    ino_out, pos_out, len - cnt, &ncp);
 		cnt += ncp;
 	}
 }
@@ -1862,8 +1862,8 @@ void ut_sync_drop(struct ut_env *ute)
 static void ut_cache_nodes(const struct ut_env *ute, size_t *out_lnodes,
                            size_t *out_pnodes)
 {
-	*out_lnodes = ute->env->lcache.lc_hmapq.hmq_lru.sz;
-	*out_pnodes = ute->env->pcache.pc_hmapq.hmq_lru.sz;
+	*out_lnodes = ute->env->lcache.nc.nc_hmapq.hmq_lru.sz;
+	*out_pnodes = ute->env->pcache.nc.nc_hmapq.hmq_lru.sz;
 }
 
 void ut_sync_drop_all(struct ut_env *ute)

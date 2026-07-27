@@ -18,9 +18,7 @@
 #define SILOFS_PCACHE_H_
 
 struct silofs_pcache {
-	struct silofs_hmapq  pc_hmapq;
-	struct silofs_dirtyq pc_dirtyq;
-	struct silofs_alloc *pc_alloc;
+	struct silofs_ncache nc;
 };
 
 int silofs_pcache_init(struct silofs_pcache *pcache,
@@ -28,19 +26,17 @@ int silofs_pcache_init(struct silofs_pcache *pcache,
 
 void silofs_pcache_fini(struct silofs_pcache *pcache);
 
-bool silofs_pcache_isempty(const struct silofs_pcache *pcache);
-
 void silofs_pcache_drop(struct silofs_pcache *pcache);
 
 void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
 struct silofs_pnode_info *
-silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
-                           const struct silofs_pnptr *pnptr);
-
-struct silofs_pnode_info *
 silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
                            const struct silofs_paddr *paddr);
+
+struct silofs_pnode_info *
+silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
+                           const struct silofs_pnptr *pnptr);
 
 void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
                                 struct silofs_pnode_info *pni);

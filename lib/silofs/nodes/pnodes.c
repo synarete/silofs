@@ -50,8 +50,9 @@ pni_init(struct silofs_pnode_info *pni, const struct silofs_pnptr *pnptr)
 	silofs_pnptr_assign(&pni->pn_self, pnptr);
 	silofs_ctag_reset(&pni->pn_ctag);
 	silofs_list_head_init(&pni->pn_dsq_lh);
-	silofs_hkey_by_paddr(&pni->pn_ni.hmqe.hme_key, &pni->pn_self.paddr);
 	pni->pn_flags = SILOFS_PNODEF_NONE;
+
+	silofs_hkey_by_paddr(&pni->pn_ni.hmqe.hme_key, &pni->pn_self.paddr);
 }
 
 static void pni_fini(struct silofs_pnode_info *pni)

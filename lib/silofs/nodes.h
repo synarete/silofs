@@ -32,8 +32,6 @@
 #include <silofs/nodes/lnodes.h>
 #include <silofs/nodes/spools.h>
 #include <silofs/nodes/ncache.h>
-#include <silofs/nodes/lcache.h>
-#include <silofs/nodes/pcache.h>
 #include <silofs/nodes/idsmap.h>
 
 #endif /* SILOFS_NODES_H_ */

@@ -17,38 +17,67 @@
 #ifndef SILOFS_NCACHE_H_
 #define SILOFS_NCACHE_H_
 
+/* common base to all nodes' caches */
 struct silofs_ncache {
-	struct silofs_hmapq  nc_hmapq;
-	struct silofs_dirtyq nc_dirtyq;
+	struct silofs_hmapq  hmapq;
+	struct silofs_dirtyq dirtyq;
 	struct silofs_alloc *nc_alloc;
+};
+
+/* pnodes cache */
+struct silofs_pcache {
+	struct silofs_ncache nc;
+};
+
+/* lnodes cache */
+struct silofs_lcache {
+	struct silofs_ncache nc;
 };
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-int silofs_ncache_init(struct silofs_ncache *ncache,
-                       struct silofs_alloc  *alloc);
+int silofs_pcache_init(struct silofs_pcache *pcache,
+		       struct silofs_alloc  *alloc);
 
-void silofs_ncache_fini(struct silofs_ncache *ncache);
+void silofs_pcache_fini(struct silofs_pcache *pcache);
 
-bool silofs_ncache_isempty(const struct silofs_ncache *ncache);
+void silofs_pcache_drop(struct silofs_pcache *pcache);
 
-void silofs_ncache_drop(struct silofs_ncache *ncache);
+void silofs_pcache_relax(struct silofs_pcache *pcache, int flags);
 
-void silofs_ncache_relax(struct silofs_ncache *ncache, int flags);
+struct silofs_pnode_info *
+silofs_pcache_lookup_pnode(struct silofs_pcache      *pcache,
+			   const struct silofs_paddr *paddr);
+
+struct silofs_pnode_info *
+silofs_pcache_create_pnode(struct silofs_pcache      *pcache,
+			   const struct silofs_pnptr *pnptr);
+
+void silofs_pcache_delete_pnode(struct silofs_pcache     *pcache,
+				struct silofs_pnode_info *pni);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_node_info *
-silofs_ncache_lookup_node_by(struct silofs_ncache     *ncache,
-                             const struct silofs_hkey *hkey);
+int silofs_lcache_init(struct silofs_lcache *lcache,
+		       struct silofs_alloc  *alloc);
 
-void silofs_ncache_insert_node(struct silofs_ncache    *ncache,
-                               struct silofs_node_info *ni);
+void silofs_lcache_fini(struct silofs_lcache *lcache);
 
-void silofs_ncache_evict_node(struct silofs_ncache    *ncache,
-                              struct silofs_node_info *ni);
+void silofs_lcache_relax(struct silofs_lcache *lcache, int flags);
 
-void silofs_ncache_forget_node(struct silofs_ncache    *ncache,
-                               struct silofs_node_info *ni);
+void silofs_lcache_drop(struct silofs_lcache *lcache);
+
+struct silofs_lnode_info *
+silofs_lcache_lookup_lnode(struct silofs_lcache      *lcache,
+			   const struct silofs_laddr *laddr);
+
+struct silofs_lnode_info *
+silofs_lcache_create_lnode(struct silofs_lcache      *lcache,
+			   const struct silofs_laddr *laddr);
+
+void silofs_lcache_forget_lnode(struct silofs_lcache     *lcache,
+				struct silofs_lnode_info *lni);
+
+size_t silofs_lcache_usage(const struct silofs_lcache *lcache);
 
 #endif /* SILOFS_NCACHE_H_ */

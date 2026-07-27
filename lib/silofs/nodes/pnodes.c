@@ -33,6 +33,29 @@ static void memfree_pni(struct silofs_alloc *alloc, void *p, size_t n)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_pnode_info *pni_unconst(const struct silofs_pnode_info *p)
+{
+	return silofs_unconst(p);
+}
+
+struct silofs_pnode_info *silofs_pni_from_ni(const struct silofs_node_info *ni)
+{
+	const struct silofs_pnode_info *pni = nullptr;
+
+	if (ni != nullptr) {
+		pni = container_of(ni, struct silofs_pnode_info, pn_ni);
+	}
+	return pni_unconst(pni);
+}
+
+struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
+{
+	const struct silofs_node_info *ni;
+
+	ni = silofs_ni_from_dqe(dqe);
+	return silofs_pni_from_ni(ni);
+}
+
 static void
 stype_of(const struct silofs_paddr *paddr, struct silofs_stype *out_stype)
 {

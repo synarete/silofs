@@ -1047,7 +1047,7 @@ static void xac_update_post_setxattr(const struct silofs_xattr_ctx *xa_ctx)
 	silofs_make_iattr_of(ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_CTIME;
 	iattr.ia_flags |= (xa_ctx->kill_sgid ? SILOFS_IATTR_KILL_SGID : 0);
-	silofs_update_iattrs_of(xa_ctx->task, ii, &iattr);
+	silofs_update_iattrs(xa_ctx->task, ii, &iattr);
 }
 
 static int xac_do_setxattr(struct silofs_xattr_ctx *xa_ctx)
@@ -1144,7 +1144,7 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	}
 	xei_discard_entry(&xei);
 	xai_setdirty(xei.xai, xa_ctx->ii);
-	silofs_update_itimes_of(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
+	silofs_update_itimes(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
 	return 0;
 }
 

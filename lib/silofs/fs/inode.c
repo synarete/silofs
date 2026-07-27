@@ -813,7 +813,7 @@ static void update_times_attr(const struct silofs_task_ctx *task,
 	silofs_make_iattr_of(ii, &iattr);
 	memcpy(&iattr.ia_t, itimes, sizeof(iattr.ia_t));
 	iattr.ia_flags = attr_flags;
-	silofs_update_iattrs_of(task, ii, &iattr);
+	silofs_update_iattrs(task, ii, &iattr);
 }
 
 /*
@@ -833,7 +833,7 @@ update_post_chmod(const struct silofs_task_ctx *task,
 	if (!silofs_gid_eq(gid, cred->gid) && !silofs_user_cap_fsetid(cred)) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SGID;
 	}
-	silofs_update_iattrs_of(task, ii, iattr);
+	silofs_update_iattrs(task, ii, iattr);
 }
 
 static int do_chmod(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
@@ -926,7 +926,7 @@ update_post_chown(const struct silofs_task_ctx *task,
 	if (mode & mask) {
 		iattr->ia_flags |= SILOFS_IATTR_KILL_SUIDGID;
 	}
-	silofs_update_iattrs_of(task, ii, iattr);
+	silofs_update_iattrs(task, ii, iattr);
 }
 
 static int do_chown(const struct silofs_task_ctx *task,
@@ -1472,29 +1472,29 @@ void silofs_ii_cleardirty_lnis(struct silofs_inode_info *ii)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_update_itimes_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info *ii,
-                             enum silofs_iattr_flags attr_flags)
+void silofs_update_itimes(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info *ii,
+                          enum silofs_iattr_flags attr_flags)
 {
 	ii_update_itimes(ii, attr_flags, ts_of(task));
 }
 
-void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
-                              struct silofs_inode_info *ii,
-                              enum silofs_ltype ltype, long dif)
+void silofs_update_iblocks(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii,
+                           enum silofs_ltype ltype, long dif)
 {
 	ii_update_iblocks(ii, ltype, dif, ts_of(task));
 }
 
-void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info *ii,
-                             const struct silofs_iattr *iattr)
+void silofs_update_iattrs(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info *ii,
+                          const struct silofs_iattr *iattr)
 {
 	ii_update_iattrs(ii, iattr, ts_of(task));
 }
 
-void silofs_update_isize_of(const struct silofs_task_ctx *task,
-                            struct silofs_inode_info *ii, ssize_t size)
+void silofs_update_isize(const struct silofs_task_ctx *task,
+                         struct silofs_inode_info *ii, ssize_t size)
 {
 	ii_update_isize(ii, size, ts_of(task));
 }

@@ -185,20 +185,20 @@ int silofs_do_utimens(const struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void silofs_update_itimes_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info     *ii,
-                             enum silofs_iattr_flags       attr_flags);
+void silofs_update_itimes(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info     *ii,
+                          enum silofs_iattr_flags       attr_flags);
 
-void silofs_update_iblocks_of(const struct silofs_task_ctx *task,
-                              struct silofs_inode_info     *ii,
-                              enum silofs_ltype ltype, long dif);
+void silofs_update_iblocks(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info     *ii,
+                           enum silofs_ltype ltype, long dif);
 
-void silofs_update_iattrs_of(const struct silofs_task_ctx *task,
-                             struct silofs_inode_info     *ii,
-                             const struct silofs_iattr    *iattr);
+void silofs_update_iattrs(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info     *ii,
+                          const struct silofs_iattr    *iattr);
 
-void silofs_update_isize_of(const struct silofs_task_ctx *task,
-                            struct silofs_inode_info *ii, ssize_t size);
+void silofs_update_isize(const struct silofs_task_ctx *task,
+                         struct silofs_inode_info *ii, ssize_t size);
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 int silofs_verify_inode(const struct silofs_inode *inode);

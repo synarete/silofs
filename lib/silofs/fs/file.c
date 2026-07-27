@@ -1348,7 +1348,7 @@ static void filc_setup_iattr(const struct silofs_file_ctx *f_ctx,
 static void filc_update_iattr(const struct silofs_file_ctx *f_ctx,
                               const struct silofs_iattr *iattr)
 {
-	silofs_update_iattrs_of(f_ctx->task, f_ctx->ii, iattr);
+	silofs_update_iattrs(f_ctx->task, f_ctx->ii, iattr);
 }
 
 static void filc_update_post_io(const struct silofs_file_ctx *f_ctx)
@@ -2337,7 +2337,7 @@ static void filc_update_tree_root(const struct silofs_file_ctx *f_ctx,
 static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
                                 const struct silofs_laddr *laddr, long dif)
 {
-	silofs_update_iblocks_of(f_ctx->task, f_ctx->ii, laddr->ltype, dif);
+	silofs_update_iblocks(f_ctx->task, f_ctx->ii, laddr->ltype, dif);
 }
 
 static int

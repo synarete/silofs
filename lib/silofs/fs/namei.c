@@ -765,7 +765,7 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return_if_err(err);
 
 	post_create_open(task, ii, kill_suidgid);
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
 	return 0;
@@ -857,7 +857,7 @@ static int do_mknod_special(struct silofs_task_ctx *task,
 	err = do_add_dentry(task, dir_ii, name, ii);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	/* can not use 'nopen' as FUSE does not sent OPEN on fifo, and
 	 * therefore no RELEASE */
@@ -1146,7 +1146,7 @@ static int try_prune_inode(struct silofs_task_ctx *task,
 	return_if_err(err);
 
 	if (update_ctime) {
-		silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
+		silofs_update_itimes(task, ii, SILOFS_IATTR_CTIME);
 	}
 	enqueue_if_loose(task, ii);
 	return 0;
@@ -1208,7 +1208,7 @@ static int remove_de_and_update(struct silofs_task_ctx *task,
 	if (err) {
 		return err;
 	}
-	silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
+	silofs_update_itimes(task, ii, SILOFS_IATTR_CTIME);
 	return 0;
 }
 
@@ -1249,7 +1249,7 @@ do_unlink(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = remove_de_and_prune(task, dir_ii, ii, nstr);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 	return 0;
 }
 
@@ -1305,8 +1305,8 @@ do_link(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = add_namehash_dentry(task, dir_ii, nstr, ii);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
-	silofs_update_itimes_of(task, ii, SILOFS_IATTR_CTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, ii, SILOFS_IATTR_CTIME);
 
 	return 0;
 }
@@ -1363,7 +1363,7 @@ do_mkdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = do_add_dentry(task, dir_ii, name, *out_ii);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 	return 0;
 }
 
@@ -1440,7 +1440,7 @@ do_rmdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = remove_de_and_prune(task, dir_ii, ii, nstr);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 	return 0;
 }
 
@@ -1524,7 +1524,7 @@ do_symlink(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = do_add_dentry(task, dir_ii, name, ii);
 	return_if_err(err);
 
-	silofs_update_itimes_of(task, dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, dir_ii, SILOFS_IATTR_MCTIME);
 
 	*out_ii = ii;
 	return 0;
@@ -2018,8 +2018,8 @@ static int rename_specific(struct silofs_task_ctx *task,
 	} else {
 		err = rename_replace(task, cur_dref, new_dref);
 	}
-	silofs_update_itimes_of(task, cur_dref->dir_ii, SILOFS_IATTR_MCTIME);
-	silofs_update_itimes_of(task, new_dref->dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, cur_dref->dir_ii, SILOFS_IATTR_MCTIME);
+	silofs_update_itimes(task, new_dref->dir_ii, SILOFS_IATTR_MCTIME);
 	return err;
 }
 

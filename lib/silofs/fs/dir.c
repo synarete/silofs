@@ -1582,13 +1582,13 @@ dirc_curr_node_index_of(const struct silofs_dir_ctx *d_ctx)
 
 static void dirc_update_isize(const struct silofs_dir_ctx *d_ctx, ssize_t sz)
 {
-	silofs_update_isize_of(d_ctx->task, d_ctx->dir_ii, sz);
+	silofs_update_isize(d_ctx->task, d_ctx->dir_ii, sz);
 }
 
 static void dirc_update_iblocks(const struct silofs_dir_ctx *d_ctx, int dif)
 {
-	silofs_update_iblocks_of(d_ctx->task, d_ctx->dir_ii,
-	                         SILOFS_LTYPE_DTNODE, dif);
+	silofs_update_iblocks(d_ctx->task, d_ctx->dir_ii, SILOFS_LTYPE_DTNODE,
+	                      dif);
 }
 
 static void dirc_update_isizeblocks(const struct silofs_dir_ctx *d_ctx,
@@ -1935,14 +1935,14 @@ static void dirc_update_nlink(const struct silofs_dir_ctx *d_ctx, long dif)
 		iattr.ia_parent = SILOFS_INO_NULL;
 		iattr.ia_flags |= SILOFS_IATTR_PARENT;
 	}
-	silofs_update_iattrs_of(d_ctx->task, child_ii, &iattr);
+	silofs_update_iattrs(d_ctx->task, child_ii, &iattr);
 
 	silofs_make_iattr_of(dir_ii, &iattr);
 	if (silofs_ii_isdir(child_ii)) {
 		iattr.ia_nlink = i_nlink_new(dir_ii, dif);
 		iattr.ia_flags |= SILOFS_IATTR_NLINK;
 	}
-	silofs_update_iattrs_of(d_ctx->task, dir_ii, &iattr);
+	silofs_update_iattrs(d_ctx->task, dir_ii, &iattr);
 }
 
 static int dirc_add_to_dnode(const struct silofs_dir_ctx *d_ctx,
@@ -2454,7 +2454,7 @@ static void dirc_post_readdir(const struct silofs_dir_ctx *d_ctx)
 
 	silofs_make_iattr_of(d_ctx->dir_ii, &iattr);
 	iattr.ia_flags |= SILOFS_IATTR_ATIME | SILOFS_IATTR_LAZY;
-	silofs_update_iattrs_of(d_ctx->task, d_ctx->dir_ii, &iattr);
+	silofs_update_iattrs(d_ctx->task, d_ctx->dir_ii, &iattr);
 }
 
 static int dirc_readdir_and_update(struct silofs_dir_ctx *d_ctx)

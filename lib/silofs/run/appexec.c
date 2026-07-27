@@ -71,7 +71,7 @@ static int appexec_reload_fs(struct silofs_task_ctx *task,
 	err = silofs_exec_reload_repo(task);
 	return_if_err(err);
 
-	err = silofs_exec_reload_meta(task, mbref);
+	err = silofs_exec_reload_fs(task, mbref);
 	return_if_err(err);
 
 	drop_caches(task);
@@ -149,7 +149,7 @@ static int appexec_remove_fs(struct silofs_task_ctx *task,
 	err = silofs_exec_reload_repo(task);
 	return_if_err(err);
 
-	err = silofs_exec_reload_meta(task, mbref);
+	err = silofs_exec_reload_fs(task, mbref);
 	return_if_err(err);
 
 	err = silofs_exec_unrefs(task);
@@ -425,7 +425,7 @@ exec_format_fs(struct silofs_env *env, struct silofs_mbref *out_mbref)
 	err = silofs_exec_reload_repo(&task);
 	goto_out_if_err(err);
 
-	err = silofs_exec_format_meta(&task, env->fscap);
+	err = silofs_exec_format_fs(&task, env->fscap);
 	goto_out_if_err(err);
 
 	err = silofs_exec_commit_mbr(&task, out_mbref);

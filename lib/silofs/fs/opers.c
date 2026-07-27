@@ -22,7 +22,6 @@
 #include <time.h>
 
 #include <silofs/fs.h>
-#include <silofs/run.h>
 
 static void op_feed_prng(const struct silofs_task_ctx *task)
 {

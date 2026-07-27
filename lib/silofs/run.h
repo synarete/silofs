@@ -17,14 +17,17 @@
 #ifndef SILOFS_RUN_H_
 #define SILOFS_RUN_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/types.h>
+
 #include <silofs/infra.h>
 #include <silofs/addr.h>
 #include <silofs/crypt.h>
 #include <silofs/nodes.h>
+#include <silofs/exec.h>
 #include <silofs/pstor.h>
 #include <silofs/fs.h>
 
-#include <silofs/run/opers.h>
 #include <silofs/run/env.h>
 #include <silofs/run/walk.h>
 

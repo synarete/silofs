@@ -36,9 +36,6 @@
 #include <silofs/exec.h>
 #include <silofs/vfs.h>
 
-/* XXX rm */
-#include <silofs/fs.h>
-
 #include "fqtypes.h"
 #include "fuseq.h"
 

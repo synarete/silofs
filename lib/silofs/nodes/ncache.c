@@ -72,7 +72,7 @@ static void ncache_fini(struct silofs_ncache *ncache)
 
 static struct silofs_node_info *
 ncache_search_by(const struct silofs_ncache *ncache,
-		 const struct silofs_hkey *hkey)
+                 const struct silofs_hkey *hkey)
 {
 	struct silofs_hmapq_elem *hmqe;
 
@@ -81,14 +81,14 @@ ncache_search_by(const struct silofs_ncache *ncache,
 }
 
 static void ncache_promote(struct silofs_ncache *ncache,
-			   struct silofs_node_info *ni, bool now)
+                           struct silofs_node_info *ni, bool now)
 {
 	silofs_hmapq_promote(&ncache->hmapq, &ni->hmqe, now);
 }
 
 static struct silofs_node_info *
 ncache_search_and_relru(struct silofs_ncache *ncache,
-			const struct silofs_hkey *hkey)
+                        const struct silofs_hkey *hkey)
 {
 	struct silofs_node_info *ni;
 
@@ -140,7 +140,7 @@ ncache_remove_node(struct silofs_ncache *ncache, struct silofs_node_info *ni)
 }
 
 static void ncache_del_node(const struct silofs_ncache *ncache,
-			    struct silofs_node_info *ni)
+                            struct silofs_node_info *ni)
 {
 	ni->delete_fn(ni, ncache->nc_alloc);
 }
@@ -201,7 +201,7 @@ struct silofs_ncache_evict_ctx {
 };
 
 static int try_evict_node(struct silofs_ncache_evict_ctx *pcec,
-			  struct silofs_node_info *ni)
+                          struct silofs_node_info *ni)
 {
 	if ((pcec->evict_cnt < pcec->evict_max) && ni_isevictable(ni)) {
 		ncache_evict_node(pcec->ncache, ni);
@@ -224,7 +224,7 @@ static void ncache_evict_many(struct silofs_ncache *ncache, size_t nevict_max)
 	};
 
 	silofs_hmapq_riterate(&ncache->hmapq, ncache_lru_size(ncache),
-			      try_evict_node_cb, &pcec);
+	                      try_evict_node_cb, &pcec);
 }
 
 static void
@@ -276,7 +276,7 @@ static void ncache_relax(struct silofs_ncache *ncache, int flags)
 
 static struct silofs_node_info *
 ncache_lookup_node_by(struct silofs_ncache *ncache,
-		      const struct silofs_hkey *hkey)
+                      const struct silofs_hkey *hkey)
 {
 	return ncache_search_and_relru(ncache, hkey);
 }
@@ -284,7 +284,7 @@ ncache_lookup_node_by(struct silofs_ncache *ncache,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_pcache_init(struct silofs_pcache *pcache,
-		       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc)
 {
 	return ncache_init(&pcache->nc, alloc);
 }
@@ -304,16 +304,26 @@ void silofs_pcache_relax(struct silofs_pcache *pcache, int flags)
 	ncache_relax(&pcache->nc, flags);
 }
 
+static struct silofs_pnode_info *pni_from_ni(struct silofs_node_info *ni)
+{
+	struct silofs_pnode_info *pni = nullptr;
+
+	if (ni != nullptr) {
+		pni = silofs_pni_from_ni(ni);
+	}
+	return pni;
+}
+
 struct silofs_pnode_info *
 silofs_pcache_lookup_pnode(struct silofs_pcache *pcache,
-			   const struct silofs_paddr *paddr)
+                           const struct silofs_paddr *paddr)
 {
 	struct silofs_hkey hkey;
 	struct silofs_node_info *ni;
 
 	silofs_hkey_by_paddr(&hkey, paddr);
 	ni = ncache_lookup_node_by(&pcache->nc, &hkey);
-	return silofs_pni_from_ni(ni);
+	return pni_from_ni(ni);
 }
 
 static void
@@ -326,7 +336,7 @@ del_pnode_as(struct silofs_node_info *ni, struct silofs_alloc *alloc)
 
 static struct silofs_pnode_info *
 pcache_new_pnode(const struct silofs_pcache *pcache,
-		 const struct silofs_pnptr *pnptr)
+                 const struct silofs_pnptr *pnptr)
 {
 	struct silofs_pnode_info *pni;
 
@@ -339,7 +349,7 @@ pcache_new_pnode(const struct silofs_pcache *pcache,
 
 struct silofs_pnode_info *
 silofs_pcache_create_pnode(struct silofs_pcache *pcache,
-			   const struct silofs_pnptr *pnptr)
+                           const struct silofs_pnptr *pnptr)
 {
 	struct silofs_pnode_info *pni = nullptr;
 
@@ -351,7 +361,7 @@ silofs_pcache_create_pnode(struct silofs_pcache *pcache,
 }
 
 void silofs_pcache_delete_pnode(struct silofs_pcache *pcache,
-				struct silofs_pnode_info *pni)
+                                struct silofs_pnode_info *pni)
 {
 	ncache_evict_node(&pcache->nc, &pni->pn_ni);
 }
@@ -359,7 +369,7 @@ void silofs_pcache_delete_pnode(struct silofs_pcache *pcache,
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 int silofs_lcache_init(struct silofs_lcache *lcache,
-		       struct silofs_alloc *alloc)
+                       struct silofs_alloc *alloc)
 {
 	return ncache_init(&lcache->nc, alloc);
 }
@@ -379,16 +389,26 @@ void silofs_lcache_drop(struct silofs_lcache *lcache)
 	ncache_drop(&lcache->nc);
 }
 
+static struct silofs_lnode_info *lni_from_ni(struct silofs_node_info *ni)
+{
+	struct silofs_lnode_info *lni = nullptr;
+
+	if (ni != nullptr) {
+		lni = silofs_lni_from_ni(ni);
+	}
+	return lni;
+}
+
 struct silofs_lnode_info *
 silofs_lcache_lookup_lnode(struct silofs_lcache *lcache,
-			   const struct silofs_laddr *laddr)
+                           const struct silofs_laddr *laddr)
 {
 	struct silofs_hkey hkey;
 	struct silofs_node_info *ni;
 
 	silofs_hkey_by_laddr(&hkey, laddr);
 	ni = ncache_lookup_node_by(&lcache->nc, &hkey);
-	return silofs_lni_from_ni(ni);
+	return lni_from_ni(ni);
 }
 
 static void
@@ -401,7 +421,7 @@ del_lnode_as(struct silofs_node_info *ni, struct silofs_alloc *alloc)
 
 static struct silofs_lnode_info *
 lcache_new_lnode(const struct silofs_lcache *lcache,
-		 const struct silofs_laddr *laddr)
+                 const struct silofs_laddr *laddr)
 {
 	struct silofs_lnode_info *lni;
 
@@ -414,7 +434,7 @@ lcache_new_lnode(const struct silofs_lcache *lcache,
 
 struct silofs_lnode_info *
 silofs_lcache_create_lnode(struct silofs_lcache *lcache,
-			   const struct silofs_laddr *laddr)
+                           const struct silofs_laddr *laddr)
 {
 	struct silofs_lnode_info *lni = nullptr;
 
@@ -426,7 +446,7 @@ silofs_lcache_create_lnode(struct silofs_lcache *lcache,
 }
 
 void silofs_lcache_forget_lnode(struct silofs_lcache *lcache,
-				struct silofs_lnode_info *lni)
+                                struct silofs_lnode_info *lni)
 {
 	ncache_forget_node(&lcache->nc, &lni->ln_ni);
 }

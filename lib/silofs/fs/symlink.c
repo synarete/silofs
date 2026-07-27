@@ -212,16 +212,6 @@ svi_setdirty(struct silofs_symval_info *svi, struct silofs_inode_info *ii)
 	silofs_lni_setdirty(&svi->svn_lni, ii);
 }
 
-static int svi_recheck_symval(struct silofs_symval_info *svi)
-{
-	if (!silofs_lni_need_recheck(&svi->svn_lni)) {
-		return 0;
-	}
-	/* TODO: recheck */
-	silofs_lni_set_rechecked(&svi->svn_lni);
-	return 0;
-}
-
 static void
 svi_setup_by(struct silofs_symval_info *svi, struct silofs_inode_info *ii,
              const struct silofs_strview *sv)
@@ -243,6 +233,41 @@ static int slc_check_symlnk(const struct silofs_symlnk_ctx *sl_ctx)
 	return 0;
 }
 
+static int slc_do_recheck_symval(const struct silofs_symlnk_ctx *sl_ctx,
+                                 const struct silofs_symval_info *svi)
+{
+	const ino_t parent_ino = svn_parent(svi->svn);
+	const ino_t owner_ino  = sl_ctx->lnk_ii->i_ino;
+	size_t len;
+
+	if (parent_ino != owner_ino) {
+		log_err("bad symval ino: owner_ino=%lu parent_ino=%lu",
+		        owner_ino, parent_ino);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	len = svn_length(svi->svn);
+	if (!len || (len > SILOFS_SYMVAL_PART_MAX)) {
+		log_err("bad symval length: owner_ino=%lu len=%zu", owner_ino,
+		        len);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	return 0;
+}
+
+static int slc_recheck_symval(const struct silofs_symlnk_ctx *sl_ctx,
+                              struct silofs_symval_info *svi)
+{
+	int err;
+
+	if (silofs_lni_need_recheck(&svi->svn_lni)) {
+		err = slc_do_recheck_symval(sl_ctx, svi);
+		return_if_err(err);
+
+		silofs_lni_set_rechecked(&svi->svn_lni);
+	}
+	return 0;
+}
+
 static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             const struct silofs_laddr *laddr,
                             struct silofs_symval_info **out_svi)
@@ -253,7 +278,7 @@ static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	                          sl_ctx->stg_mode, out_svi);
 	return_if_err(err);
 
-	err = svi_recheck_symval(*out_svi);
+	err = slc_recheck_symval(sl_ctx, *out_svi);
 	if (err) {
 		return err;
 	}

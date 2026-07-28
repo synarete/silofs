@@ -64,8 +64,9 @@ lni_init(struct silofs_lnode_info *lni, const struct silofs_laddr *laddr)
 
 	stype_of(laddr, &stype);
 	silofs_ni_init(&lni->ln_ni, &stype);
+	silofs_list_head_init(&lni->ln_predq_lh);
 	silofs_laddr_assign(&lni->ln_laddr, laddr);
-	silofs_paddr_reset(&lni->ln_curr_paddr);
+	silofs_paddr_reset(&lni->ln_paddr);
 	lni->ln_asyncwr = 0;
 	lni->ln_magic   = SILOFS_VI_MAGIC;
 
@@ -78,8 +79,9 @@ static void lni_fini(struct silofs_lnode_info *lni)
 	silofs_assert_eq(lni->ln_asyncwr, 0);
 
 	silofs_ni_fini(&lni->ln_ni);
+	silofs_list_head_fini(&lni->ln_predq_lh);
 	silofs_laddr_reset(&lni->ln_laddr);
-	silofs_paddr_reset(&lni->ln_curr_paddr);
+	silofs_paddr_reset(&lni->ln_paddr);
 	lni->ln_magic = UINT64_MAX;
 }
 
@@ -196,29 +198,6 @@ void silofs_lni_set_dq(struct silofs_lnode_info *lni, struct silofs_dirtyq *dq)
 	silofs_ni_set_dq(&lni->ln_ni, dq);
 }
 
-bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni);
-
-	return silofs_ni_isdirty(&lni->ln_ni);
-}
-
-void silofs_lni_setdirty(struct silofs_lnode_info *lni,
-                         struct silofs_inode_info *ii)
-{
-	silofs_assert_not_null(lni);
-	silofs_unused(ii);
-
-	silofs_ni_setdirty(&lni->ln_ni);
-}
-
-void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
-{
-	silofs_assert_not_null(lni);
-
-	silofs_ni_cleardirty(&lni->ln_ni);
-}
-
 static bool
 lni_has_ltype(const struct silofs_lnode_info *lni, enum silofs_ltype ltype)
 {
@@ -240,17 +219,36 @@ void silofs_lni_set_rechecked(struct silofs_lnode_info *lni)
 	silofs_ni_setf(&lni->ln_ni, SILOFS_NIF_RECHECKED);
 }
 
-void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-                            struct silofs_hmapq *hmapq)
-{
-	silofs_hmapq_remove(hmapq, &lni->ln_ni.hmqe);
-}
-
 int silofs_verify_lview_of(const struct silofs_lnode_info *lni)
 {
 	const struct silofs_lview *lview = silofs_lni_lview(lni);
 
 	return silofs_lview_verify(lview, lni_ltype(lni));
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
+{
+	silofs_assert_not_null(lni);
+
+	return silofs_ni_isdirty(&lni->ln_ni);
+}
+
+void silofs_lni_setdirty(struct silofs_lnode_info *lni,
+                         struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(lni);
+	silofs_unused(ii);
+
+	silofs_ni_setdirty(&lni->ln_ni);
+}
+
+void silofs_lni_cleardirty(struct silofs_lnode_info *lni)
+{
+	silofs_assert_not_null(lni);
+
+	silofs_ni_cleardirty(&lni->ln_ni);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -479,6 +477,7 @@ static void
 ii_init(struct silofs_inode_info *ii, const struct silofs_laddr *laddr)
 {
 	lni_init(&ii->i_lni, laddr);
+	silofs_listq_init(&ii->i_predq);
 	ii->inode         = nullptr;
 	ii->i_looseq_next = nullptr;
 	ii->i_ino         = SILOFS_INO_NULL;
@@ -491,8 +490,10 @@ static void ii_fini(struct silofs_inode_info *ii)
 {
 	silofs_assert(!ii->i_in_looseq);
 	silofs_assert_null(ii->i_looseq_next);
+	silofs_assert_eq(ii->i_predq.sz, 0);
 
 	lni_fini(&ii->i_lni);
+	silofs_listq_fini(&ii->i_predq);
 	ii->inode   = nullptr;
 	ii->i_ino   = SILOFS_INO_NULL;
 	ii->i_nopen = INT_MIN;

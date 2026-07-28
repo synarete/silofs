@@ -39,4 +39,13 @@ void silofs_enqueue_loose_inode(struct silofs_task_ctx   *task,
 
 void silofs_purge_loose_inodes(struct silofs_task_ctx *task);
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_add_to_predq(struct silofs_inode_info *ii,
+                         struct silofs_lnode_info *lni);
+
+void silofs_apply_predq(struct silofs_inode_info *ii);
+
+void silofs_clear_predq(struct silofs_inode_info *ii);
+
 #endif /* SILOFS_INOPS_H_ */

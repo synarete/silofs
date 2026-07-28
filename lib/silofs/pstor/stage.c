@@ -213,15 +213,15 @@ static size_t lni_lview_size(const struct silofs_lnode_info *lni)
 }
 
 static const struct silofs_paddr *
-lni_curr_paddr(const struct silofs_lnode_info *lni)
+lni_paddr(const struct silofs_lnode_info *lni)
 {
-	return &lni->ln_curr_paddr;
+	return &lni->ln_paddr;
 }
 
-static void lni_update_curr_paddr(struct silofs_lnode_info *lni,
-                                  const struct silofs_paddr *paddr)
+static void lni_update_paddr(struct silofs_lnode_info *lni,
+                             const struct silofs_paddr *paddr)
 {
-	silofs_paddr_assign(&lni->ln_curr_paddr, paddr);
+	silofs_paddr_assign(&lni->ln_paddr, paddr);
 }
 
 static int
@@ -1495,7 +1495,7 @@ static int dsc_prepare_lnode(const struct silofs_destage_ctx *ds_ctx,
 	err = dsc_update_lnode_parent(ds_ctx, lni, &pnptr_cur, &pnptr_alt);
 	return_if_err(err);
 
-	lni_update_curr_paddr(lni, &pnptr_alt.paddr);
+	lni_update_paddr(lni, &pnptr_alt.paddr);
 	return 0;
 }
 
@@ -1515,7 +1515,7 @@ static int compare_lnodes(const struct silofs_dq_elem *dqe1,
 	const struct silofs_lnode_info *lni1 = lni_of(dqe1);
 	const struct silofs_lnode_info *lni2 = lni_of(dqe2);
 
-	return compare_paddrs(lni_curr_paddr(lni1), lni_curr_paddr(lni2));
+	return compare_paddrs(lni_paddr(lni1), lni_paddr(lni2));
 }
 
 static void dsc_sort_lnodes(struct silofs_destage_ctx *ds_ctx)
@@ -1559,7 +1559,7 @@ static int dsc_stain_lnodes_parents(struct silofs_destage_ctx *ds_ctx)
 static int dsc_commit_lnode(const struct silofs_destage_ctx *ds_ctx,
                             const struct silofs_lnode_info *lni)
 {
-	return dsc_commit_node_at(ds_ctx, lni_curr_paddr(lni), lni_lviewx(lni),
+	return dsc_commit_node_at(ds_ctx, lni_paddr(lni), lni_lviewx(lni),
 	                          lni_lview_size(lni));
 }
 

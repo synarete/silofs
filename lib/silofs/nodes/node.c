@@ -23,7 +23,7 @@
 
 static bool ni_isevictable(const struct silofs_node_info *ni)
 {
-	if (silofs_ni_testf(ni, SILOFS_NIF_PINNED)) {
+	if (silofs_ni_testf(ni, SILOFS_NIF_PINNED | SILOFS_NIF_PREDQ)) {
 		return false;
 	}
 	if (silofs_dqe_isinq(&ni->dqe)) {
@@ -69,7 +69,7 @@ bool silofs_ni_testf(const struct silofs_node_info *ni, enum silofs_ni_flags f)
 {
 	const unsigned v = (unsigned)f;
 
-	return ((ni->flags & v) == v);
+	return ((ni->flags & v) > 0);
 }
 
 void silofs_ni_incref(struct silofs_node_info *ni)

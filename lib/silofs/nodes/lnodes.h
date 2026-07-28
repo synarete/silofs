@@ -25,8 +25,9 @@
 /* lnode */
 struct silofs_lnode_info {
 	struct silofs_node_info ln_ni;
+	struct silofs_list_head ln_predq_lh;
 	struct silofs_laddr     ln_laddr;
-	struct silofs_paddr     ln_curr_paddr;
+	struct silofs_paddr     ln_paddr;
 	uint64_t                ln_magic;
 	int                     ln_asyncwr;
 };
@@ -48,6 +49,7 @@ struct silofs_spnode_info {
 /* inode */
 struct silofs_inode_info {
 	struct silofs_lnode_info  i_lni;
+	struct silofs_listq       i_predq;
 	struct silofs_inode      *inode;
 	struct silofs_inode_info *i_looseq_next;
 	struct timespec           i_atime_lazy;
@@ -136,9 +138,6 @@ silofs_lni_from_hmqe(struct silofs_hmapq_elem *hmqe);
 
 struct silofs_lnode_info * //
 silofs_lni_from_ni(const struct silofs_node_info *ni);
-
-void silofs_lni_remove_from(struct silofs_lnode_info *lni,
-                            struct silofs_hmapq      *hmapq);
 
 int silofs_verify_lview_of(const struct silofs_lnode_info *lni);
 

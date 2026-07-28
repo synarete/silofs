@@ -34,6 +34,7 @@ enum silofs_ni_flags {
 	SILOFS_NIF_RECHECKED = SILOFS_BIT(0),
 	SILOFS_NIF_PINNED    = SILOFS_BIT(1),
 	SILOFS_NIF_LOOSE     = SILOFS_BIT(2),
+	SILOFS_NIF_PREDQ     = SILOFS_BIT(3),
 };
 
 /* base of all in-memory node representations */

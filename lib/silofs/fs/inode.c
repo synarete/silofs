@@ -238,7 +238,7 @@ inode_add_flags(struct silofs_inode *inode, enum silofs_inodef flags)
 }
 
 static bool
-inode_has_flags(struct silofs_inode *inode, enum silofs_inodef mask)
+inode_has_flags(const struct silofs_inode *inode, enum silofs_inodef mask)
 {
 	return (inode_flags(inode) & mask) == mask;
 }
@@ -508,12 +508,6 @@ void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
 		iflags &= ~iflags_dont;
 	}
 	ii_set_iflags(ii, iflags);
-}
-
-bool silofs_is_rootdir(const struct silofs_inode_info *ii)
-{
-	return silofs_ii_isdir(ii) &&
-	       inode_has_flags(ii->inode, SILOFS_INODEF_ROOTD);
 }
 
 void silofs_ii_set_loose(struct silofs_inode_info *ii)
@@ -1588,7 +1582,7 @@ static int verify_inode_flags(const struct silofs_inode *inode)
 	const enum silofs_inodef fmask = SILOFS_INODEF_ROOTD |
 	                                 SILOFS_INODEF_FTYPE2;
 
-	if ((flags & SILOFS_INODEF_ROOTD) && !S_ISDIR(mode)) {
+	if (inode_has_flags(inode, SILOFS_INODEF_ROOTD) && !S_ISDIR(mode)) {
 		log_err("bad inode: ino=%ld mode=0%lo flags=%x", ino,
 		        (long)mode, flags);
 		return -SILOFS_EFSCORRUPTED;
@@ -1606,20 +1600,16 @@ int silofs_verify_inode(const struct silofs_inode *inode)
 	int err;
 
 	err = verify_inode_head(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = verify_inode_flags(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_verify_inode_xattr(inode);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = verify_inode_specific(inode);
-	if (err) {
-		return err;
-	}
-	return err;
+	return_if_err(err);
+
+	return 0;
 }

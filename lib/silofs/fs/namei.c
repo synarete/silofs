@@ -1086,7 +1086,9 @@ static bool ii_isnlink_orphan(const struct silofs_inode_info *ii)
 
 static bool ii_isevictable(const struct silofs_inode_info *ii)
 {
-	return silofs_ii_isevictable(ii);
+	const struct silofs_node_info *ni = &ii->i_lni.ln_ni;
+
+	return ni->isevictable_fn(ni);
 }
 
 static bool ii_isdropable(const struct silofs_inode_info *ii)

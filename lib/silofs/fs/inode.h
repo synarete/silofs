@@ -118,8 +118,6 @@ bool silofs_ii_islnk(const struct silofs_inode_info *ii);
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii);
 
-bool silofs_is_rootdir(const struct silofs_inode_info *ii);
-
 bool silofs_ii_isevictable(const struct silofs_inode_info *ii);
 
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);

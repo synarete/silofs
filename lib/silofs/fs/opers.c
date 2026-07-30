@@ -36,21 +36,37 @@ static void op_feed_prng(const struct silofs_task_ctx *task)
 		(uint32_t)task->auth.creds.host_cred.uid,
 		(uint32_t)task->auth.creds.host_cred.gid,
 		(uint32_t)gettid(),
+		(uint32_t)task->start_time.tv_sec,
+		(uint32_t)task->start_time.tv_nsec,
 	};
 
 	silofs_prandgen_feed(task->corefs->prng, d, sizeof(d));
 }
 
+static void op_set_start_time(struct silofs_task_ctx *task)
+{
+	silofs_clock_gettime_mono(&task->start_time);
+}
+
+static void op_inc_count(const struct silofs_task_ctx *task)
+{
+	struct silofs_fsroot *fsroot = task->corefs->fsroot;
+
+	fsroot->opstat.op_count++;
+}
+
+static int op_start_normal(const struct silofs_task_ctx *task)
+{
+	op_inc_count(task);
+	return silofs_try_flush_dirty(task, SILOFS_CTLF_OPSTART);
+}
+
 static int op_start(struct silofs_task_ctx *task)
 {
 	silofs_lock_fs_by(task);
-
-	silofs_clock_gettime_mono(&task->start_time);
-	if (!task->internal) {
-		task->corefs->fsroot->opstat.op_count++;
-		op_feed_prng(task);
-	}
-	return 0;
+	op_set_start_time(task);
+	op_feed_prng(task);
+	return task->internal ? 0 : op_start_normal(task);
 }
 
 static int

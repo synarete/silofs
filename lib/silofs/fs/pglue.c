@@ -1068,7 +1068,6 @@ int silofs_flush_dirty_now(const struct silofs_task_ctx *task)
 static bool need_flush(const struct silofs_task_ctx *task, int flags)
 {
 	uint32_t mempress;
-	bool ret = false;
 
 	if (flags & SILOFS_CTLF_IDLE) {
 		return true;
@@ -1077,18 +1076,23 @@ static bool need_flush(const struct silofs_task_ctx *task, int flags)
 	if (mempress > 40) {
 		return true;
 	}
-	if (flags & (SILOFS_CTLF_OPSTART | SILOFS_CTLF_INTERN)) {
-		ret = (mempress > 20);
+	if (flags & SILOFS_CTLF_OPSTART) {
+		return (mempress > 20);
 	}
-	return ret;
+	return false;
 }
 
 int silofs_try_flush_dirty(const struct silofs_task_ctx *task, int flags)
 {
-	int ret = 0;
+	int err;
 
 	if (need_flush(task, flags)) {
-		ret = silofs_flush_dirty_now(task);
+		silofs_flush_iis_predq(task->corefs->iis_predq);
+
+		err = silofs_flush_dirty_now(task);
+		return_if_err(err);
+
+		silofs_relax_caches(task->corefs, flags);
 	}
-	return ret;
+	return 0;
 }

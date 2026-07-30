@@ -51,6 +51,10 @@ void silofs_ni_init(struct silofs_node_info *ni,
 
 void silofs_ni_fini(struct silofs_node_info *ni)
 {
+	constexpr unsigned not_allowed = SILOFS_NIF_PINNED | SILOFS_NIF_PREDQ;
+
+	silofs_assert_eq(ni->flags & not_allowed, 0);
+
 	silofs_hmqe_fini(&ni->hmqe);
 	silofs_dqe_fini(&ni->dqe);
 }

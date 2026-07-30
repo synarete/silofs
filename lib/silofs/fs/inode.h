@@ -82,8 +82,6 @@ bool silofs_user_cap_sys_admin(const struct silofs_cred *cred);
 struct silofs_inode_info *
 silofs_ii_unconst(const struct silofs_inode_info *ii);
 
-struct silofs_lnode_info *silofs_ii_to_lni(const struct silofs_inode_info *ii);
-
 const struct silofs_laddr *silofs_ii_laddr(const struct silofs_inode_info *ii);
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii);
@@ -118,8 +116,6 @@ bool silofs_ii_islnk(const struct silofs_inode_info *ii);
 
 bool silofs_ii_isrootd(const struct silofs_inode_info *ii);
 
-bool silofs_ii_isevictable(const struct silofs_inode_info *ii);
-
 void silofs_ii_fixup_as_rootdir(struct silofs_inode_info *ii);
 
 void silofs_ii_update_iflags(struct silofs_inode_info *ii, int iflags_want,
@@ -143,8 +139,6 @@ void silofs_ii_stat_of(const struct silofs_inode_info *ii,
 void silofs_make_iattr_of(const struct silofs_inode_info *ii,
                           struct silofs_iattr            *out_iattr);
 
-void silofs_ii_cleardirty_lnis(struct silofs_inode_info *ii);
-
 bool silofs_ii_isloose(const struct silofs_inode_info *ii);
 
 enum silofs_inodef silofs_ii_flags(const struct silofs_inode_info *ii);
@@ -155,11 +149,11 @@ void silofs_ii_incref(struct silofs_inode_info *ii);
 
 void silofs_ii_decref(struct silofs_inode_info *ii);
 
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
+
 void silofs_ii_setdirty(struct silofs_inode_info *ii);
 
 void silofs_ii_cleardirty(struct silofs_inode_info *ii);
-
-bool silofs_ii_isdirty(const struct silofs_inode_info *ii);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

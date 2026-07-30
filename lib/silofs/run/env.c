@@ -26,19 +26,20 @@
 
 /* env initialization-state flags */
 enum silofs_env_initf {
-	SILOFS_ENVF_QALLOC   = SILOFS_BIT(0),
-	SILOFS_ENVF_STDALLOC = SILOFS_BIT(1),
-	SILOFS_ENVF_NILBK    = SILOFS_BIT(2),
-	SILOFS_ENVF_PRANDGEN = SILOFS_BIT(3),
-	SILOFS_ENVF_CRYPT    = SILOFS_BIT(4),
-	SILOFS_ENVF_UCONV    = SILOFS_BIT(5),
-	SILOFS_ENVF_REPO     = SILOFS_BIT(6),
-	SILOFS_ENVF_PCACHE   = SILOFS_BIT(7),
-	SILOFS_ENVF_LCACHE   = SILOFS_BIT(8),
-	SILOFS_ENVF_FREESQS  = SILOFS_BIT(9),
-	SILOFS_ENVF_IDSMAP   = SILOFS_BIT(10),
-	SILOFS_ENVF_FSROOT   = SILOFS_BIT(11),
-	SILOFS_ENVF_FUSEQ    = SILOFS_BIT(12),
+	SILOFS_ENVF_QALLOC    = SILOFS_BIT(0),
+	SILOFS_ENVF_STDALLOC  = SILOFS_BIT(1),
+	SILOFS_ENVF_NILBK     = SILOFS_BIT(2),
+	SILOFS_ENVF_PRANDGEN  = SILOFS_BIT(3),
+	SILOFS_ENVF_CRYPT     = SILOFS_BIT(4),
+	SILOFS_ENVF_UCONV     = SILOFS_BIT(5),
+	SILOFS_ENVF_REPO      = SILOFS_BIT(6),
+	SILOFS_ENVF_PCACHE    = SILOFS_BIT(7),
+	SILOFS_ENVF_LCACHE    = SILOFS_BIT(8),
+	SILOFS_ENVF_FREESQS   = SILOFS_BIT(9),
+	SILOFS_ENVF_IDSMAP    = SILOFS_BIT(10),
+	SILOFS_ENVF_FSROOT    = SILOFS_BIT(11),
+	SILOFS_ENVF_IIS_PREDQ = SILOFS_BIT(12),
+	SILOFS_ENVF_FUSEQ     = SILOFS_BIT(13),
 };
 
 /* Local functions */
@@ -278,6 +279,21 @@ static void env_fini_fsroot(struct silofs_env *env)
 	}
 }
 
+static int env_init_iis_preqd(struct silofs_env *env)
+{
+	silofs_iis_preqd_init(&env->iis_predq);
+	env->initf |= SILOFS_ENVF_IIS_PREDQ;
+	return 0;
+}
+
+static void env_fini_iis_predq(struct silofs_env *env)
+{
+	if (env->initf & SILOFS_ENVF_IIS_PREDQ) {
+		silofs_iis_preqd_fini(&env->iis_predq);
+		env->initf &= ~SILOFS_ENVF_IIS_PREDQ;
+	}
+}
+
 static int env_init_crypt(struct silofs_env *env)
 {
 	int err;
@@ -494,6 +510,7 @@ static void env_fini_prandgen(struct silofs_env *env)
 static void env_fini(struct silofs_env *env)
 {
 	env_detach_fuseq(env);
+	env_fini_iis_predq(env);
 	env_fini_fsroot(env);
 	env_fini_idsmap(env);
 	env_fini_freesqs(env);
@@ -525,6 +542,7 @@ static void env_init_corefs(struct silofs_env *env)
 	corefs->fsroot    = &env->fsroot;
 	corefs->lcache    = &env->lcache;
 	corefs->lspools   = &env->lspools;
+	corefs->iis_predq = &env->iis_predq;
 	corefs->idsmap    = &env->idsmap;
 	corefs->uconv     = &env->uconv;
 	corefs->ubi       = nullptr;
@@ -568,6 +586,9 @@ env_init(struct silofs_env *env, size_t memwant, enum silofs_flags flags)
 	goto_out_if_err(err);
 
 	err = env_init_fsroot(env);
+	goto_out_if_err(err);
+
+	err = env_init_iis_preqd(env);
 	goto_out_if_err(err);
 
 	env_init_corefs(env);

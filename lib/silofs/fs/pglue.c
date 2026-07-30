@@ -429,12 +429,29 @@ out:
 	return err;
 }
 
+static bool try_clean_cached_lni(const struct silofs_task_ctx *task,
+                                 struct silofs_inode_info *pii,
+                                 const struct silofs_laddr *laddr)
+{
+	struct silofs_lcache *lcache  = task->corefs->lcache;
+	struct silofs_lnode_info *lni = nullptr;
+
+	if (pii == nullptr) {
+		return false;
+	}
+	lni = silofs_lcache_lookup_lnode(lcache, laddr);
+	if (lni == nullptr) {
+		return false;
+	}
+	silofs_rm_from_predq(task->corefs->iis_predq, pii, lni);
+	return true;
+}
+
 static void try_forget_cached_lni(const struct silofs_task_ctx *task,
                                   const struct silofs_laddr *laddr)
 {
 	struct silofs_lcache *lcache  = task->corefs->lcache;
 	struct silofs_lnode_info *lni = nullptr;
-	;
 
 	/*
 	 * Special case where data-node has been unmapped via forget, yet it
@@ -462,6 +479,8 @@ static int reclaim_give_lnode(const struct silofs_task_ctx *task,
 
 	if (last) {
 		give_lnode_of(sbi, laddr);
+
+		try_clean_cached_lni(task, pii, laddr);
 		try_forget_cached_lni(task, laddr);
 	}
 out:
@@ -1041,6 +1060,8 @@ int silofs_curr_sbi(const struct silofs_task_ctx *task,
 
 int silofs_flush_dirty_now(const struct silofs_task_ctx *task)
 {
+	silofs_flush_iis_predq(task->corefs->iis_predq);
+
 	return silofs_destage_dirty_nodes(task->corefs);
 }
 

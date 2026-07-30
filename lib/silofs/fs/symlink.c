@@ -207,17 +207,10 @@ svi_laddr(const struct silofs_symval_info *svi)
 }
 
 static void
-svi_setdirty(struct silofs_symval_info *svi, struct silofs_inode_info *ii)
-{
-	silofs_lni_setdirty(&svi->svn_lni, ii);
-}
-
-static void
 svi_setup_by(struct silofs_symval_info *svi, struct silofs_inode_info *ii,
              const struct silofs_strview *sv)
 {
 	svn_init(svi->svn, ii->i_ino, sv->str, sv->len);
-	svi_setdirty(svi, ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -393,6 +386,14 @@ static int slc_remove_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
 	return silofs_remove_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii);
 }
 
+static void slc_add_svi_to_predq(const struct silofs_symlnk_ctx *sl_ctx,
+                                 struct silofs_symval_info *svi)
+{
+	const struct silofs_core_refs *corefs = sl_ctx->task->corefs;
+
+	silofs_add_to_predq(corefs->iis_predq, sl_ctx->lnk_ii, &svi->svn_lni);
+}
+
 static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
                              const struct silofs_strview *sv,
                              struct silofs_symval_info **out_svi)
@@ -403,6 +404,7 @@ static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	return_if_err(err);
 
 	svi_setup_by(*out_svi, sl_ctx->lnk_ii, sv);
+	slc_add_svi_to_predq(sl_ctx, *out_svi);
 	return 0;
 }
 

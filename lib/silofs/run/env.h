@@ -45,6 +45,7 @@ struct silofs_env {
 	struct silofs_pspools          pspools;
 	struct silofs_idsmap           idsmap;
 	struct silofs_fsroot           fsroot;
+	struct silofs_iis_predq        iis_predq;
 	struct silofs_fuseq           *fuseq;
 	const struct silofs_vfs_hooks *vfs_hooks;
 	struct silofs_cipher_hd        enc_ci_hd;

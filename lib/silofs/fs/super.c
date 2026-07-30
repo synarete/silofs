@@ -347,7 +347,7 @@ void silofs_sbi_decref(struct silofs_sbnode_info *sbi)
 
 static void sbi_setdirty(struct silofs_sbnode_info *sbi)
 {
-	silofs_lni_setdirty(&sbi->sbn_lni, nullptr);
+	silofs_lni_setdirty(&sbi->sbn_lni);
 }
 
 void silofs_sbi_setdirty(struct silofs_sbnode_info *sbi)

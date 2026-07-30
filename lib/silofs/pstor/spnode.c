@@ -279,7 +279,7 @@ void silofs_spi_decref(struct silofs_spnode_info *spi)
 
 static void spi_setdirty(struct silofs_spnode_info *spi)
 {
-	silofs_lni_setdirty(&spi->spn_lni, nullptr);
+	silofs_lni_setdirty(&spi->spn_lni);
 }
 
 void silofs_spi_setup_spawned(struct silofs_spnode_info *spi,

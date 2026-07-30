@@ -237,12 +237,6 @@ static bool fl_mode_zero_range(int fl_mode)
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
-static void
-fli_setdirty(struct silofs_flnode_info *fli, struct silofs_inode_info *ii)
-{
-	silofs_lni_setdirty(&fli->fln_lni, ii);
-}
-
 static void fli_incref(struct silofs_flnode_info *fli)
 {
 	if (likely(fli != nullptr)) {
@@ -706,12 +700,6 @@ ii_filin_of(const struct silofs_inode_info *ii)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static void
-fti_setdirty(struct silofs_ftnode_info *fti, struct silofs_inode_info *ii)
-{
-	silofs_lni_setdirty(&fti->ftn_lni, ii);
-}
 
 static void fti_incref(struct silofs_ftnode_info *fti)
 {
@@ -1466,10 +1454,12 @@ static int filc_stage_flnode(const struct silofs_file_ctx *f_ctx,
 	return 0;
 }
 
-static void filc_setdirty_flnode(const struct silofs_file_ctx *f_ctx,
-                                 struct silofs_flnode_info *fli)
+static void filc_add_fli_to_predq(const struct silofs_file_ctx *f_ctx,
+                                  struct silofs_flnode_info *fli)
 {
-	fli_setdirty(fli, f_ctx->ii);
+	const struct silofs_core_refs *corefs = f_ctx->task->corefs;
+
+	silofs_add_to_predq(corefs->iis_predq, f_ctx->ii, &fli->fln_lni);
 }
 
 static void filc_zero_flnode_sub(const struct silofs_file_ctx *f_ctx,
@@ -1479,7 +1469,7 @@ static void filc_zero_flnode_sub(const struct silofs_file_ctx *f_ctx,
 	void *dat = fli_data_at(fli, off_in_dn);
 
 	silofs_memzero(dat, len);
-	filc_setdirty_flnode(f_ctx, fli);
+	filc_add_fli_to_predq(f_ctx, fli);
 }
 
 static int filc_zero_flnode_range(const struct silofs_file_ctx *f_ctx,
@@ -1868,7 +1858,7 @@ filc_import_data_by_flnode(const struct silofs_file_ctx *f_ctx,
 	err = filc_call_rw_actor(f_ctx, fli, out_sz);
 	return_if_err(err);
 
-	filc_setdirty_flnode(f_ctx, fli);
+	filc_add_fli_to_predq(f_ctx, fli);
 	return 0;
 }
 
@@ -2264,7 +2254,7 @@ static int filc_clear_unwritten_of(const struct silofs_file_ctx *f_ctx,
 		fli_incref(fli);
 		ret = filc_clear_unwritten_at(f_ctx, laddr);
 		if (ret == 0) {
-			filc_setdirty_flnode(f_ctx, fli);
+			filc_add_fli_to_predq(f_ctx, fli);
 		}
 		fli_decref(fli);
 	}
@@ -2340,6 +2330,14 @@ static void filc_update_iblocks(const struct silofs_file_ctx *f_ctx,
 	silofs_update_iblocks(f_ctx->task, f_ctx->ii, laddr->ltype, dif);
 }
 
+static void filc_add_fti_to_predq(const struct silofs_file_ctx *f_ctx,
+                                  struct silofs_ftnode_info *fti)
+{
+	const struct silofs_core_refs *corefs = f_ctx->task->corefs;
+
+	silofs_add_to_predq(corefs->iis_predq, f_ctx->ii, &fti->ftn_lni);
+}
+
 static int
 filc_spawn_setup_ftnode(const struct silofs_file_ctx *f_ctx, off_t off,
                         size_t height, struct silofs_ftnode_info **out_fti)
@@ -2350,7 +2348,8 @@ filc_spawn_setup_ftnode(const struct silofs_file_ctx *f_ctx, off_t off,
 	return_if_err(err);
 
 	fti_setup(*out_fti, f_ctx->ii, off, height);
-	fti_setdirty(*out_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, *out_fti);
 	return 0;
 }
 
@@ -2375,7 +2374,8 @@ static int filc_spawn_bind_ftnode(const struct silofs_file_ctx *f_ctx,
 	return_if_err(err);
 
 	fti_bind_finode(parent_fti, file_pos, *out_fti);
-	fti_setdirty(parent_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, parent_fti);
 	return 0;
 }
 
@@ -2431,7 +2431,8 @@ filc_do_create_tree_leaf_space(const struct silofs_file_ctx *f_ctx,
 	return_if_err(err);
 
 	fti_bind_child(parent_fti, f_ctx->off, &laddr);
-	fti_setdirty(parent_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, parent_fti);
 	return 0;
 }
 
@@ -2453,7 +2454,8 @@ static void filc_bind_sub_tree(const struct silofs_file_ctx *f_ctx,
 
 	filc_tree_root_of(f_ctx, &laddr);
 	fti_assign_child_at(fti, 0, &laddr);
-	fti_setdirty(fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, fti);
 
 	filc_update_tree_root(f_ctx, fti_laddr(fti));
 	fti_bind_finode(nullptr, 0, fti);
@@ -3148,7 +3150,8 @@ static void filc_clear_subtree_mappings_by(const struct silofs_file_ctx *f_ctx,
                                            const struct silofs_flnode_ref *fdr)
 {
 	fti_clear_subtree_mappings(fdr->parent_fti, fdr->slot_idx);
-	fti_setdirty(fdr->parent_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, fdr->parent_fti);
 }
 
 static int filc_drop_head1_leafs(struct silofs_file_ctx *f_ctx)
@@ -3713,7 +3716,8 @@ static int filc_create_bind_tree_leaf(const struct silofs_file_ctx *f_ctx,
 	return_if_err(err);
 
 	fti_bind_child(parent_fti, f_ctx->off, &fdr.laddr);
-	fti_setdirty(parent_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, parent_fti);
 	return 0;
 }
 
@@ -4255,7 +4259,7 @@ static int filc_copy_flnode_by(const struct silofs_file_ctx *f_ctx_src,
 	err = silofs_iovec_copy_mem(&iov_src, &iov_dst, len);
 	goto_out_if_err(err);
 
-	fli_setdirty(fli_dst, f_ctx_dst->ii);
+	filc_add_fli_to_predq(f_ctx_dst, fli_dst);
 
 	err = filc_clear_unwritten_by(f_ctx_dst, fdr_dst, fli_dst);
 	goto_out_if_err(err);
@@ -4274,17 +4278,14 @@ static int filc_copy_leaf_by(const struct silofs_file_ctx *f_ctx_src,
 	int err;
 
 	err = filc_pre_write_leaf(f_ctx_dst, fdr_dst, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_pre_write_leaf(f_ctx_src, fdr_src, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = filc_copy_flnode_by(f_ctx_src, fdr_src, f_ctx_dst, fdr_dst, len);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -4293,7 +4294,9 @@ static void filc_rebind_child_by(const struct silofs_file_ctx *f_ctx,
                                  const struct silofs_laddr *laddr)
 {
 	fti_bind_child(fdr->parent_fti, f_ctx->off, laddr);
-	fti_setdirty(fdr->parent_fti, f_ctx->ii);
+
+	filc_add_fti_to_predq(f_ctx, fdr->parent_fti);
+
 	silofs_laddr_assign(&fdr->laddr, laddr);
 }
 

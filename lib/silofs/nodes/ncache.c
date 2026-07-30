@@ -230,12 +230,11 @@ static void ncache_evict_many(struct silofs_ncache *ncache, size_t nevict_max)
 static void
 ncache_forget_node(struct silofs_ncache *ncache, struct silofs_node_info *ni)
 {
-	silofs_ni_cleardirty(ni);
-	if (silofs_ni_refcnt(ni) > 0) {
+	if (ni_isevictable(ni)) {
+		ncache_evict_node(ncache, ni);
+	} else {
 		ncache_unmap_node(ncache, ni);
 		ni->hmqe.hme_forgot = true;
-	} else {
-		ncache_evict_node(ncache, ni);
 	}
 }
 
@@ -448,6 +447,7 @@ silofs_lcache_create_lnode(struct silofs_lcache *lcache,
 void silofs_lcache_forget_lnode(struct silofs_lcache *lcache,
                                 struct silofs_lnode_info *lni)
 {
+	silofs_lni_cleardirty(lni);
 	ncache_forget_node(&lcache->nc, &lni->ln_ni);
 }
 

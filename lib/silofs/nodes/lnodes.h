@@ -111,8 +111,7 @@ void silofs_lni_decref(struct silofs_lnode_info *lni);
 
 bool silofs_lni_isdirty(const struct silofs_lnode_info *lni);
 
-void silofs_lni_setdirty(struct silofs_lnode_info *lni,
-                         struct silofs_inode_info *ii);
+void silofs_lni_setdirty(struct silofs_lnode_info *lni);
 
 void silofs_lni_cleardirty(struct silofs_lnode_info *lni);
 

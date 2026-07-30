@@ -83,15 +83,27 @@ laddr_of(const struct silofs_inode_info *ii, struct silofs_laddr *out_laddr)
 	silofs_laddr_assign(out_laddr, silofs_ii_laddr(ii));
 }
 
-int silofs_remove_inode_by(struct silofs_task_ctx *task,
-                           struct silofs_inode_info *ii)
+static int
+do_remove_inode_by(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	struct silofs_laddr laddr;
 
 	laddr_of(ii, &laddr);
-	silofs_ii_cleardirty(ii);
-
 	return silofs_remove_inode(task, &laddr);
+}
+
+int silofs_remove_inode_by(struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii)
+{
+	silofs_clear_dirty_ii(task, ii);
+	return do_remove_inode_by(task, ii);
+}
+
+void silofs_clear_dirty_ii(struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii)
+{
+	silofs_clear_predq_of(task->corefs->iis_predq, ii);
+	silofs_ii_cleardirty(ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -200,40 +212,46 @@ int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool need_flush_by_alloc(const struct silofs_alloc *alloc)
+static bool need_flush_by_alloc(const struct silofs_task_ctx *task)
 {
-	return (silofs_mempress(alloc) > 50);
+	return (silofs_mempress(task->corefs->alloc) > 50);
+}
+
+static bool has_dirty(const struct silofs_inode_info *ii)
+{
+	bool ret = false;
+
+	if (ii != nullptr) {
+		ret = silofs_ii_isdirty(ii) || (ii->i_predq.sz > 0);
+	}
+	return ret;
 }
 
 static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
 {
-	if (flags & (SILOFS_CTLF_NOW | SILOFS_CTLF_FSYNC)) {
-		return true;
-	}
-	silofs_unused(ii); /* XXX TODO : use me */
-	return false;
+	constexpr int mask = (SILOFS_CTLF_NOW | SILOFS_CTLF_FSYNC);
+
+	return ((flags & mask) > 0) || has_dirty(ii);
 }
 
-static bool need_flush(const struct silofs_core_refs *corefs,
-                       const struct silofs_inode_info *ii, int flags)
+static void apply_predq_of(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii)
 {
-	return (need_flush_by_ii(ii, flags) ||
-	        need_flush_by_alloc(corefs->alloc));
+	if (ii != nullptr) {
+		silofs_apply_predq_of(task->corefs->iis_predq, ii);
+	}
 }
 
 int silofs_flush_dirty_of(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii, int flags)
 {
-	if (unlikely(ii == nullptr)) {
-		return 0;
+	int ret = 0;
+
+	if (need_flush_by_alloc(task) || need_flush_by_ii(ii, flags)) {
+		apply_predq_of(task, ii);
+		ret = silofs_destage_dirty_nodes(task->corefs);
 	}
-	if (!silofs_ii_isdirty(ii)) {
-		return 0;
-	}
-	if (!need_flush(task->corefs, ii, flags)) {
-		return 0;
-	}
-	return silofs_destage_dirty_nodes(task->corefs);
+	return ret;
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -287,82 +305,5 @@ void silofs_enqueue_loose_inode(struct silofs_task_ctx *task,
 
 	if (!ii->i_in_looseq) {
 		enq_loose_inode(task, ii);
-	}
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static bool lni_test_predq_flag(const struct silofs_lnode_info *lni)
-{
-	return silofs_ni_testf(&lni->ln_ni, SILOFS_NIF_PREDQ);
-}
-
-static void lni_set_predq_flag(struct silofs_lnode_info *lni)
-{
-	silofs_ni_setf(&lni->ln_ni, SILOFS_NIF_PREDQ);
-}
-
-static void lni_clear_predq_flag(struct silofs_lnode_info *lni)
-{
-	silofs_ni_clearf(&lni->ln_ni, SILOFS_NIF_PREDQ);
-}
-
-void silofs_add_to_predq(struct silofs_inode_info *ii,
-                         struct silofs_lnode_info *lni)
-{
-	if (!lni_test_predq_flag(lni)) {
-		silofs_listq_push_back(&ii->i_predq, &lni->ln_predq_lh);
-		lni_set_predq_flag(lni);
-	}
-}
-
-static void
-rm_from_predq(struct silofs_inode_info *ii, struct silofs_lnode_info *lni)
-{
-	if (lni_test_predq_flag(lni)) {
-		silofs_listq_remove(&ii->i_predq, &lni->ln_predq_lh);
-		lni_clear_predq_flag(lni);
-	}
-}
-
-static struct silofs_lnode_info *lni_from_predq_lh(struct silofs_list_head *lh)
-{
-	struct silofs_lnode_info *lni = nullptr;
-
-	if (lh != nullptr) {
-		lni = mut_container_of(lh, struct silofs_lnode_info,
-		                       ln_predq_lh);
-	}
-	return lni;
-}
-
-static struct silofs_lnode_info *predq_front(struct silofs_inode_info *ii)
-{
-	struct silofs_list_head *lh;
-
-	lh = silofs_listq_front(&ii->i_predq);
-	return lni_from_predq_lh(lh);
-}
-
-void silofs_apply_predq(struct silofs_inode_info *ii)
-{
-	struct silofs_lnode_info *lni;
-
-	lni = predq_front(ii);
-	while (lni != nullptr) {
-		rm_from_predq(ii, lni);
-		silofs_lni_setdirty(lni, nullptr);
-		lni = predq_front(ii);
-	}
-}
-
-void silofs_clear_predq(struct silofs_inode_info *ii)
-{
-	struct silofs_lnode_info *lni;
-
-	lni = predq_front(ii);
-	while (lni != nullptr) {
-		rm_from_predq(ii, lni);
-		lni = predq_front(ii);
 	}
 }

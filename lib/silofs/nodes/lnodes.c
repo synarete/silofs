@@ -235,11 +235,9 @@ bool silofs_lni_isdirty(const struct silofs_lnode_info *lni)
 	return silofs_ni_isdirty(&lni->ln_ni);
 }
 
-void silofs_lni_setdirty(struct silofs_lnode_info *lni,
-                         struct silofs_inode_info *ii)
+void silofs_lni_setdirty(struct silofs_lnode_info *lni)
 {
 	silofs_assert_not_null(lni);
-	silofs_unused(ii);
 
 	silofs_ni_setdirty(&lni->ln_ni);
 }

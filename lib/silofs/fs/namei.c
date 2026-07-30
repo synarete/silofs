@@ -1016,12 +1016,6 @@ int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	return err;
 }
 
-static void ii_cleardirty_all(struct silofs_inode_info *ii)
-{
-	silofs_ii_cleardirty_lnis(ii);
-	silofs_ii_cleardirty(ii);
-}
-
 static int
 drop_ispecific(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
@@ -1035,7 +1029,7 @@ drop_ispecific(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 		err = silofs_drop_symlink(task, ii);
 	}
 	if (!err) {
-		ii_cleardirty_all(ii);
+		silofs_clear_dirty_ii(task, ii);
 	}
 	return err;
 }
@@ -1137,7 +1131,7 @@ static int try_prune_inode(struct silofs_task_ctx *task,
 	int err;
 
 	if (ii_is_orphan(ii)) {
-		ii_cleardirty_all(ii);
+		silofs_clear_dirty_ii(task, ii);
 		silofs_ii_set_loose(ii);
 	}
 	if (ii_isdropable(ii)) {
@@ -2653,9 +2647,7 @@ static int try_forget_cached_ii(const struct silofs_task_ctx *task,
                                 struct silofs_inode_info *ii)
 {
 	if ((ii->i_nlookup <= 0) && ii_isevictable(ii)) {
-		struct silofs_lnode_info *lni = silofs_ii_to_lni(ii);
-
-		silofs_lcache_forget_lnode(task->corefs->lcache, lni);
+		silofs_lcache_forget_lnode(task->corefs->lcache, &ii->i_lni);
 	}
 	return 0;
 }

@@ -518,14 +518,6 @@ xai_laddr(const struct silofs_xanode_info *xai)
 	return silofs_lni_laddr(&xai->xan_lni);
 }
 
-static void
-xai_setdirty(struct silofs_xanode_info *xai, struct silofs_inode_info *ii)
-{
-	if (xai != nullptr) {
-		silofs_lni_setdirty(&xai->xan_lni, ii);
-	}
-}
-
 static void xai_incref(struct silofs_xanode_info *xai)
 {
 	if (likely(xai != nullptr)) {
@@ -846,6 +838,15 @@ int silofs_do_getxattr(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void xac_add_xai_to_predq(const struct silofs_xattr_ctx *xa_ctx,
+                                 struct silofs_xanode_info *xai)
+{
+	const struct silofs_core_refs *corefs = xa_ctx->task->corefs;
+
+	silofs_assert_not_null(xai);
+	silofs_add_to_predq(corefs->iis_predq, xa_ctx->ii, &xai->xan_lni);
+}
+
 static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
                             struct silofs_xanode_info **out_xai)
 {
@@ -854,7 +855,7 @@ static int xac_spawn_xanode(const struct silofs_xattr_ctx *xa_ctx,
 	err = silofs_spawn_xanode(xa_ctx->task, xa_ctx->ii, out_xai);
 	return_if_err(err);
 
-	xai_setdirty(*out_xai, xa_ctx->ii);
+	xac_add_xai_to_predq(xa_ctx, *out_xai);
 	return 0;
 }
 
@@ -912,7 +913,8 @@ static int xac_try_insert_at(const struct silofs_xattr_ctx *xa_ctx,
 	}
 	xei->xai = xai;
 	xei->xe  = xe;
-	xai_setdirty(xai, xa_ctx->ii);
+
+	xac_add_xai_to_predq(xa_ctx, xai);
 	return 0;
 }
 
@@ -990,9 +992,10 @@ static int xac_setxattr_replace(struct silofs_xattr_ctx *xa_ctx,
 
 	if (xei_cur.xe != nullptr) {
 		xei_discard_entry(&xei_cur);
-		xai_setdirty(xei_cur.xai, xa_ctx->ii);
+		xac_add_xai_to_predq(xa_ctx, xei_cur.xai);
 	}
-	xai_setdirty(xei->xai, xa_ctx->ii);
+
+	xac_add_xai_to_predq(xa_ctx, xei->xai);
 	return 0;
 }
 
@@ -1143,7 +1146,9 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 		return xac_removexattr_retval(xa_ctx, err);
 	}
 	xei_discard_entry(&xei);
-	xai_setdirty(xei.xai, xa_ctx->ii);
+
+	xac_add_xai_to_predq(xa_ctx, xei.xai);
+
 	silofs_update_itimes(xa_ctx->task, xa_ctx->ii, SILOFS_IATTR_CTIME);
 	return 0;
 }

@@ -35,6 +35,7 @@ struct silofs_core_refs {
 	struct silofs_pspools      *pspools;
 	struct silofs_lcache       *lcache;
 	struct silofs_lspools      *lspools;
+	struct silofs_iis_predq    *iis_predq;
 	struct silofs_uber_info    *ubi;
 	const struct silofs_idsmap *idsmap;
 	const struct silofs_uconv  *uconv;

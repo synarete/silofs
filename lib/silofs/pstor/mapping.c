@@ -57,7 +57,7 @@ int silofs_stage_lnode_by_mapping(const struct silofs_core_refs *corefs,
 
 static void lni_setdirty(struct silofs_lnode_info *lni)
 {
-	silofs_lni_setdirty(lni, nullptr);
+	silofs_lni_setdirty(lni);
 }
 
 int silofs_spawn_lnode_by_mapping(const struct silofs_core_refs *corefs,

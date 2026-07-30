@@ -374,11 +374,21 @@ ii_from_ni(const struct silofs_node_info *ni)
 	return ii_from_lni2(silofs_lni_from_ni(ni));
 }
 
+static bool ii_isevictable(const struct silofs_inode_info *ii)
+{
+	bool ret = false;
+
+	if ((ii->i_nopen == 0) && (ii->i_predq.sz == 0)) {
+		ret = silofs_ni_isevictable(&ii->i_lni.ln_ni);
+	}
+	return ret;
+}
+
 static bool ii_isevictable_as(const struct silofs_node_info *ni)
 {
 	const struct silofs_inode_info *ii = ii_from_ni(ni);
 
-	return silofs_ii_isevictable(ii);
+	return ii_isevictable(ii);
 }
 
 ino_t silofs_ii_parent(const struct silofs_inode_info *ii)
@@ -536,19 +546,16 @@ ii_times(const struct silofs_inode_info *ii, struct silofs_itimes *tms)
 	inode_ctime(inode, &tms->ctime);
 }
 
-bool silofs_ii_isevictable(const struct silofs_inode_info *ii)
-{
-	bool ret = false;
-
-	if (ii->i_nopen == 0) {
-		ret = silofs_ni_isevictable(&ii->i_lni.ln_ni);
-	}
-	return ret;
-}
-
 static void ii_setdirty(struct silofs_inode_info *ii)
 {
-	silofs_lni_setdirty(silofs_ii_to_lni(ii), nullptr);
+	silofs_lni_setdirty(&ii->i_lni);
+}
+
+bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
+{
+	silofs_assert_not_null(ii);
+
+	return silofs_lni_isdirty(&ii->i_lni);
 }
 
 void silofs_ii_setdirty(struct silofs_inode_info *ii)
@@ -564,27 +571,20 @@ void silofs_ii_cleardirty(struct silofs_inode_info *ii)
 {
 	silofs_assert_not_null(ii);
 
-	silofs_lni_cleardirty(silofs_ii_to_lni(ii));
-}
-
-bool silofs_ii_isdirty(const struct silofs_inode_info *ii)
-{
-	silofs_assert_not_null(ii);
-
-	return silofs_lni_isdirty(&ii->i_lni);
+	silofs_lni_cleardirty(&ii->i_lni);
 }
 
 void silofs_ii_incref(struct silofs_inode_info *ii)
 {
 	if (ii != nullptr) {
-		silofs_lni_incref(silofs_ii_to_lni(ii));
+		silofs_lni_incref(&ii->i_lni);
 	}
 }
 
 void silofs_ii_decref(struct silofs_inode_info *ii)
 {
 	if (ii != nullptr) {
-		silofs_lni_decref(silofs_ii_to_lni(ii));
+		silofs_lni_decref(&ii->i_lni);
 	}
 }
 
@@ -593,14 +593,9 @@ struct silofs_inode_info *silofs_ii_unconst(const struct silofs_inode_info *ii)
 	return silofs_unconst(ii);
 }
 
-struct silofs_lnode_info *silofs_ii_to_lni(const struct silofs_inode_info *ii)
-{
-	return silofs_unconst(&ii->i_lni);
-}
-
 const struct silofs_laddr *silofs_ii_laddr(const struct silofs_inode_info *ii)
 {
-	return silofs_lni_laddr(silofs_ii_to_lni(ii));
+	return silofs_lni_laddr(&ii->i_lni);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -1456,12 +1451,6 @@ static void ii_update_isize(struct silofs_inode_info *ii, ssize_t size,
 	iattr.ia_flags = SILOFS_IATTR_SIZE;
 
 	ii_update_iattrs(ii, &iattr, ts);
-}
-
-void silofs_ii_cleardirty_lnis(struct silofs_inode_info *ii)
-{
-	/* TODO: re-consider */
-	silofs_unused(ii);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

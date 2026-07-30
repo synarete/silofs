@@ -103,7 +103,7 @@ void silofs_rwlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (!task->rw_locked) {
 		silofs_fsroot_rwlock(task->corefs->fsroot, task->exclusive);
-		task->fs_locked = 1;
+		task->rw_locked = 1;
 	}
 }
 
@@ -111,6 +111,6 @@ void silofs_rwunlock_fs_by(struct silofs_task_ctx *task)
 {
 	if (task->rw_locked) {
 		silofs_fsroot_rwunlock(task->corefs->fsroot);
-		task->fs_locked = 0;
+		task->rw_locked = 0;
 	}
 }

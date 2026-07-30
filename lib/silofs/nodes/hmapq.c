@@ -217,7 +217,7 @@ void silofs_hkey_by_laddr(struct silofs_hkey *hkey,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void
+silofs_attr_noreturn static void
 hmqe_must_die(const struct silofs_hmapq_elem *hmqe, const char *prefix)
 {
 	silofs_panic("%s: hmqe=%p hme_key.type=%d hme_refcnt=%d "

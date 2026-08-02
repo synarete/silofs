@@ -40,24 +40,24 @@ enum silofs_file_leaf_size {
 };
 
 struct silofs_file_ctx {
-	enum silofs_file_op       op;
-	enum silofs_stg_mode      stg_mode;
-	struct silofs_task_ctx   *task;
-	struct silofs_inode_info *ii;
-	struct silofs_rwiter_ctx *rwi_ctx;
-	struct fiemap            *fm;
-	size_t                    len;
-	off_t                     beg;
-	off_t                     off;
-	off_t                     end;
-	int                       fl_mode;
-	int                       fm_flags;
-	int                       fm_stop;
-	int                       cp_flags;
-	int                       whence;
-	int                       with_backref;
-	int                       o_flags;
-	bool                      kill_suidgid;
+	enum silofs_file_op           op;
+	enum silofs_stg_mode          stg_mode;
+	const struct silofs_task_ctx *task;
+	struct silofs_inode_info     *ii;
+	struct silofs_rwiter_ctx     *rwi_ctx;
+	struct fiemap                *fm;
+	size_t                        len;
+	off_t                         beg;
+	off_t                         off;
+	off_t                         end;
+	int                           fl_mode;
+	int                           fm_flags;
+	int                           fm_stop;
+	int                           cp_flags;
+	int                           whence;
+	int                           with_backref;
+	int                           o_flags;
+	bool                          kill_suidgid;
 };
 
 struct silofs_flnode_ref {

@@ -61,7 +61,7 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 	return ret;
 }
 
-int silofs_spawn_inode_by(struct silofs_task_ctx *task,
+int silofs_spawn_inode_by(const struct silofs_task_ctx *task,
                           const struct silofs_inew_params *inp,
                           struct silofs_inode_info **out_ii)
 {
@@ -83,8 +83,8 @@ laddr_of(const struct silofs_inode_info *ii, struct silofs_laddr *out_laddr)
 	silofs_laddr_assign(out_laddr, silofs_ii_laddr(ii));
 }
 
-static int
-do_remove_inode_by(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+static int do_remove_inode_by(const struct silofs_task_ctx *task,
+                              struct silofs_inode_info *ii)
 {
 	struct silofs_laddr laddr;
 
@@ -92,14 +92,14 @@ do_remove_inode_by(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 	return silofs_remove_inode(task, &laddr);
 }
 
-int silofs_remove_inode_by(struct silofs_task_ctx *task,
+int silofs_remove_inode_by(const struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_clear_dirty_ii(task, ii);
 	return do_remove_inode_by(task, ii);
 }
 
-void silofs_clear_dirty_ii(struct silofs_task_ctx *task,
+void silofs_clear_dirty_ii(const struct silofs_task_ctx *task,
                            struct silofs_inode_info *ii)
 {
 	silofs_clear_predq_of(task->corefs->iis_predq, ii);
@@ -114,7 +114,7 @@ static int resolve_inode_laddr(ino_t ino, struct silofs_laddr *out_laddr)
 	return !silofs_laddr_isnull(out_laddr) ? 0 : -SILOFS_EINVAL;
 }
 
-static int stage_update_inode_at(struct silofs_task_ctx *task,
+static int stage_update_inode_at(const struct silofs_task_ctx *task,
                                  const struct silofs_laddr *laddr,
                                  enum silofs_stg_mode stg_mode,
                                  struct silofs_inode_info **out_ii)
@@ -151,7 +151,7 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 	return 0;
 }
 
-int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
+int silofs_stage_inode_by(const struct silofs_task_ctx *task, ino_t ino,
                           enum silofs_stg_mode stg_mode,
                           struct silofs_inode_info **out_ii)
 {

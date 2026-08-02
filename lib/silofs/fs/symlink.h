@@ -19,16 +19,16 @@
 
 void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
-int silofs_drop_symlink(struct silofs_task_ctx   *task,
-                        struct silofs_inode_info *lnk_ii);
+int silofs_drop_symlink(const struct silofs_task_ctx *task,
+                        struct silofs_inode_info     *lnk_ii);
 
-int silofs_do_readlink(struct silofs_task_ctx   *task,
+int silofs_do_readlink(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii, void *ptr, size_t lim,
                        size_t *out_len);
 
-int silofs_bind_symval(struct silofs_task_ctx      *task,
-                       struct silofs_inode_info    *lnk_ii,
-                       const struct silofs_strview *symval);
+int silofs_bind_symval(const struct silofs_task_ctx *task,
+                       struct silofs_inode_info     *lnk_ii,
+                       const struct silofs_strview  *symval);
 
 int silofs_verify_symval_node(const struct silofs_symval_node *svn);
 

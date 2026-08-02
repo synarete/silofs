@@ -119,9 +119,9 @@ int silofs_spawn_ftnode(const struct silofs_task_ctx *task,
                         struct silofs_inode_info     *pii,
                         struct silofs_ftnode_info   **out_fti);
 
-int silofs_remove_ftnode(struct silofs_task_ctx    *task,
-                         const struct silofs_laddr *laddr,
-                         struct silofs_inode_info  *pii);
+int silofs_remove_ftnode(const struct silofs_task_ctx *task,
+                         const struct silofs_laddr    *laddr,
+                         struct silofs_inode_info     *pii);
 
 int silofs_claim_flnode(const struct silofs_task_ctx *task,
                         enum silofs_ltype ltype, struct silofs_inode_info *pii,

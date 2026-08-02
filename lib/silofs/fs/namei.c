@@ -519,10 +519,10 @@ static int assign_namehash(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int
-lookup_by_name(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-               const struct silofs_namestr *nstr,
-               struct silofs_ino_dt *out_ino_dt)
+static int lookup_by_name(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info *dir_ii,
+                          const struct silofs_namestr *nstr,
+                          struct silofs_ino_dt *out_ino_dt)
 {
 	struct silofs_namestr name;
 	int err;
@@ -598,9 +598,9 @@ static int check_create_mode(mode_t mode)
 	return 0;
 }
 
-static int
-check_nodent(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-             const struct silofs_namestr *name)
+static int check_nodent(const struct silofs_task_ctx *task,
+                        struct silofs_inode_info *dir_ii,
+                        const struct silofs_namestr *name)
 {
 	struct silofs_ino_dt ino_dt = {};
 	int err, ret;
@@ -659,7 +659,7 @@ static int check_add_dentry(const struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int check_dir_can_add(struct silofs_task_ctx *task,
+static int check_dir_can_add(const struct silofs_task_ctx *task,
                              struct silofs_inode_info *dir_ii,
                              const struct silofs_namestr *name)
 {
@@ -677,9 +677,9 @@ static int check_dir_can_add(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int
-check_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-             const struct silofs_namestr *name, mode_t mode)
+static int check_create(const struct silofs_task_ctx *task,
+                        struct silofs_inode_info *dir_ii,
+                        const struct silofs_namestr *name, mode_t mode)
 {
 	int err;
 
@@ -698,7 +698,7 @@ check_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	return 0;
 }
 
-static int add_namehash_dentry(struct silofs_task_ctx *task,
+static int add_namehash_dentry(const struct silofs_task_ctx *task,
                                struct silofs_inode_info *dir_ii,
                                const struct silofs_namestr *nstr,
                                struct silofs_inode_info *ii)
@@ -715,14 +715,15 @@ static int add_namehash_dentry(struct silofs_task_ctx *task,
 	return 0;
 }
 
-static int
-do_remove_inode(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+static int do_remove_inode(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info *ii)
 {
 	return silofs_remove_inode_by(task, ii);
 }
 
 static int
-do_add_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
+do_add_dentry(const struct silofs_task_ctx *task,
+              struct silofs_inode_info *dir_ii,
               const struct silofs_namestr *nstr, struct silofs_inode_info *ii)
 {
 	int err;
@@ -1016,8 +1017,8 @@ int silofs_do_open(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	return err;
 }
 
-static int
-drop_ispecific(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+static int drop_ispecific(const struct silofs_task_ctx *task,
+                          struct silofs_inode_info *ii)
 {
 	int err = 0;
 
@@ -1035,7 +1036,7 @@ drop_ispecific(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 }
 
 static int
-drop_unlinked(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+drop_unlinked(const struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 {
 	int err;
 
@@ -1149,8 +1150,9 @@ static int try_prune_inode(struct silofs_task_ctx *task,
 }
 
 static int
-remove_dentry(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
-              struct silofs_inode_info *ii, const struct silofs_namestr *name)
+remove_dentry(const struct silofs_task_ctx *task,
+              struct silofs_inode_info *dir_ii, struct silofs_inode_info *ii,
+              const struct silofs_namestr *name)
 {
 	int err;
 

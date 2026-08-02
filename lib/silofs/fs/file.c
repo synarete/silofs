@@ -3208,7 +3208,8 @@ static int filc_drop_data_and_meta(struct silofs_file_ctx *f_ctx)
 	return 0;
 }
 
-int silofs_drop_reg(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
+int silofs_drop_reg(const struct silofs_task_ctx *task,
+                    struct silofs_inode_info *ii)
 {
 	struct silofs_file_ctx f_ctx = {
 		.op       = SILOFS_FILE_OP_DROP,

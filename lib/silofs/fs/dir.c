@@ -50,7 +50,7 @@ struct silofs_dir_entry_info {
 };
 
 struct silofs_dir_ctx {
-	struct silofs_task_ctx *task;
+	const struct silofs_task_ctx *task;
 	struct silofs_inode_info *dir_ii;
 	struct silofs_inode_info *parent_ii;
 	struct silofs_inode_info *child_ii;
@@ -1796,7 +1796,7 @@ static int dirc_lookup_dentry(const struct silofs_dir_ctx *d_ctx,
 	return ret;
 }
 
-int silofs_lookup_dentry(struct silofs_task_ctx *task,
+int silofs_lookup_dentry(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name,
                          struct silofs_ino_dt *out_idt)
@@ -2034,7 +2034,7 @@ static int dirc_add_dentry(struct silofs_dir_ctx *d_ctx)
 	return ret;
 }
 
-int silofs_add_dentry(struct silofs_task_ctx *task,
+int silofs_add_dentry(const struct silofs_task_ctx *task,
                       struct silofs_inode_info *dir_ii,
                       const struct silofs_namestr *name,
                       struct silofs_inode_info *ii)
@@ -2515,7 +2515,7 @@ static int dirc_readdir(struct silofs_dir_ctx *d_ctx)
 	return ret;
 }
 
-int silofs_readdir_normal(struct silofs_task_ctx *task,
+int silofs_readdir_normal(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *dir_ii,
                           struct silofs_readdir_ctx *rd_ctx)
 {
@@ -2531,7 +2531,7 @@ int silofs_readdir_normal(struct silofs_task_ctx *task,
 	return dirc_readdir(&d_ctx);
 }
 
-int silofs_readdir_plus(struct silofs_task_ctx *task,
+int silofs_readdir_plus(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *dir_ii,
                         struct silofs_readdir_ctx *rd_ctx)
 {
@@ -2638,7 +2638,7 @@ static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
 	return 0;
 }
 
-int silofs_drop_dir(struct silofs_task_ctx *task,
+int silofs_drop_dir(const struct silofs_task_ctx *task,
                     struct silofs_inode_info *dir_ii)
 {
 	struct silofs_dir_ctx d_ctx = {
@@ -2732,7 +2732,7 @@ static int dirc_remove_dentry(struct silofs_dir_ctx *d_ctx)
 	return ret;
 }
 
-int silofs_remove_dentry(struct silofs_task_ctx *task,
+int silofs_remove_dentry(const struct silofs_task_ctx *task,
                          struct silofs_inode_info *dir_ii,
                          const struct silofs_namestr *name)
 {

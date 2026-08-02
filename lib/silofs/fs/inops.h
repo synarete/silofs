@@ -17,19 +17,19 @@
 #ifndef SILOFS_INOPS_H_
 #define SILOFS_INOPS_H_
 
-int silofs_spawn_inode_by(struct silofs_task_ctx          *task,
+int silofs_spawn_inode_by(const struct silofs_task_ctx    *task,
                           const struct silofs_inew_params *inp,
                           struct silofs_inode_info       **out_ii);
 
-int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
+int silofs_stage_inode_by(const struct silofs_task_ctx *task, ino_t ino,
                           enum silofs_stg_mode       stg_mode,
                           struct silofs_inode_info **out_ii);
 
-int silofs_remove_inode_by(struct silofs_task_ctx   *task,
-                           struct silofs_inode_info *ii);
+int silofs_remove_inode_by(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info     *ii);
 
-void silofs_clear_dirty_ii(struct silofs_task_ctx   *task,
-                           struct silofs_inode_info *ii);
+void silofs_clear_dirty_ii(const struct silofs_task_ctx *task,
+                           struct silofs_inode_info     *ii);
 
 int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
                                struct silofs_inode_info **out_ii);

@@ -59,7 +59,7 @@ struct silofs_xentry_info {
 };
 
 struct silofs_xattr_ctx {
-	struct silofs_task_ctx *task;
+	const struct silofs_task_ctx *task;
 	struct silofs_listxattr_ctx *lxa_ctx;
 	struct silofs_inode_info *ii;
 	const struct silofs_namestr *name;
@@ -818,7 +818,7 @@ static int xac_getxattr(struct silofs_xattr_ctx *xa_ctx, size_t *out_size)
 	return ret;
 }
 
-int silofs_do_getxattr(struct silofs_task_ctx *task,
+int silofs_do_getxattr(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name, void *buf,
                        size_t size, size_t *out_size)
@@ -1077,7 +1077,7 @@ static int xac_setxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_setxattr(struct silofs_task_ctx *task,
+int silofs_do_setxattr(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *ii,
                        const struct silofs_namestr *name, const void *value,
                        size_t size, int flags, bool kill_sgid)
@@ -1138,13 +1138,13 @@ static int xac_do_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	err = xac_check_op(xa_ctx, W_OK);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = xac_lookup_entry(xa_ctx, &xei);
 	if (err) {
 		return xac_removexattr_retval(xa_ctx, err);
 	}
+
 	xei_discard_entry(&xei);
 
 	xac_add_xai_to_predq(xa_ctx, xei.xai);
@@ -1163,7 +1163,7 @@ static int xac_removexattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_removexattr(struct silofs_task_ctx *task,
+int silofs_do_removexattr(const struct silofs_task_ctx *task,
                           struct silofs_inode_info *ii,
                           const struct silofs_namestr *name)
 {
@@ -1223,16 +1223,13 @@ static int xac_emit_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 	int err;
 
 	ii_xa_get_at(xa_ctx->ii, sloti, &laddr);
-	if (silofs_laddr_isnull(&laddr)) {
-		return 0;
+	if (!silofs_laddr_isnull(&laddr)) {
+		err = xac_stage_xanode(xa_ctx, &laddr, &xai);
+		return_if_err(err);
+
+		err = xac_emit_node(xa_ctx, xai);
+		return_if_err(err);
 	}
-
-	err = xac_stage_xanode(xa_ctx, &laddr, &xai);
-	return_if_err(err);
-
-	err = xac_emit_node(xa_ctx, xai);
-	return_if_err(err);
-
 	return 0;
 }
 
@@ -1289,7 +1286,7 @@ static int xac_listxattr(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_do_listxattr(struct silofs_task_ctx *task,
+int silofs_do_listxattr(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *ii,
                         struct silofs_listxattr_ctx *lxa_ctx)
 {
@@ -1305,20 +1302,18 @@ int silofs_do_listxattr(struct silofs_task_ctx *task,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static int xac_drop_node_at(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
+static int xac_drop_node_at_slot(struct silofs_xattr_ctx *xa_ctx, size_t sloti)
 {
-	int err;
 	struct silofs_laddr laddr;
+	int err;
 
 	ii_xa_get_at(xa_ctx->ii, sloti, &laddr);
-	if (silofs_laddr_isnull(&laddr)) {
-		return 0;
+	if (!silofs_laddr_isnull(&laddr)) {
+		err = xac_remove_xanode_at(xa_ctx, &laddr);
+		return_if_err(err);
+
+		ii_xa_unset_at(xa_ctx->ii, sloti);
 	}
-
-	err = xac_remove_xanode_at(xa_ctx, &laddr);
-	return_if_err(err);
-
-	ii_xa_unset_at(xa_ctx->ii, sloti);
 	return 0;
 }
 
@@ -1328,7 +1323,7 @@ static int xac_do_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 	int err;
 
 	for (size_t i = 0; i < nslots_max; ++i) {
-		err = xac_drop_node_at(xa_ctx, i);
+		err = xac_drop_node_at_slot(xa_ctx, i);
 		return_if_err(err);
 	}
 	return 0;
@@ -1344,7 +1339,7 @@ static int xac_drop_slots(struct silofs_xattr_ctx *xa_ctx)
 	return ret;
 }
 
-int silofs_drop_xattr(struct silofs_task_ctx *task,
+int silofs_drop_xattr(const struct silofs_task_ctx *task,
                       struct silofs_inode_info *ii)
 {
 	struct silofs_xattr_ctx xa_ctx = {

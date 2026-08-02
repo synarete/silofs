@@ -26,7 +26,7 @@ struct silofs_symval_desc {
 };
 
 struct silofs_symlnk_ctx {
-	struct silofs_task_ctx *task;
+	const struct silofs_task_ctx *task;
 	struct silofs_inode_info *lnk_ii;
 	const struct silofs_strview *symval;
 	enum silofs_stg_mode stg_mode;
@@ -351,7 +351,7 @@ static int slc_readlink_of(const struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
-int silofs_do_readlink(struct silofs_task_ctx *task,
+int silofs_do_readlink(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii, void *ptr, size_t lim,
                        size_t *out_len)
 {
@@ -514,7 +514,7 @@ static int slc_symlink(const struct silofs_symlnk_ctx *sl_ctx)
 	return ret;
 }
 
-int silofs_bind_symval(struct silofs_task_ctx *task,
+int silofs_bind_symval(const struct silofs_task_ctx *task,
                        struct silofs_inode_info *lnk_ii,
                        const struct silofs_strview *symval)
 {
@@ -544,7 +544,7 @@ static int slc_drop_symval(const struct silofs_symlnk_ctx *sl_ctx)
 	return 0;
 }
 
-int silofs_drop_symlink(struct silofs_task_ctx *task,
+int silofs_drop_symlink(const struct silofs_task_ctx *task,
                         struct silofs_inode_info *lnk_ii)
 {
 	struct silofs_symlnk_ctx sl_ctx = {

@@ -26,8 +26,8 @@ enum silofs_file_type {
 
 void silofs_ii_setup_reg(struct silofs_inode_info *ii);
 
-int silofs_drop_reg(struct silofs_task_ctx   *task,
-                    struct silofs_inode_info *ii);
+int silofs_drop_reg(const struct silofs_task_ctx *task,
+                    struct silofs_inode_info     *ii);
 
 int silofs_do_write(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
                     const void *buf, size_t len, off_t off, int o_flags,

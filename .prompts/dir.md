@@ -4,19 +4,21 @@
 
 Silofs directories use a **hash-tree** stored as a forest of
 `silofs_dtree_node` objects (`SILOFS_DTREE_NODE_SIZE` = 8192 bytes).
-Each node is identified by a 1-based integer index. The tree has a
+Each node is identified by a 0-based integer index. The tree has a
 fixed fanout of 64 (`SILOFS_DTREE_NODE_NCHILDS`) and a maximum depth
 of 4 (`SILOFS_DIR_TREE_DEPTH_MAX`), giving a maximum node index of
-`1 << (6*4)` = 16 777 216.
+17 043 520 (`SILOFS_DIR_TREE_INDEX_MAX`).
 
 ### Index Arithmetic
 
-Node indices are 1-based. Index 0 is the null sentinel; index 1 is
-the root. The parent/child relationships are:
+Node indices are 0-based. Index `UINT32_MAX` is the null sentinel
+(`SILOFS_DIR_TREE_INDEX_NULL`); index 0 is the root
+(`SILOFS_DIR_TREE_INDEX_ROOT`). The parent/child relationships are:
 
 ```
-parent(idx) = ((idx - 2) / FANOUT) + 1      [root has no parent]
-child(parent, ord) = (parent - 1) * FANOUT + ord + 2
+parent(idx) = (idx - 1) / FANOUT          [root has no parent]
+child(parent, ord) = parent * FANOUT + ord + 1
+child_ord(idx)     = (idx - 1) % FANOUT
 ```
 
 The depth of a node is computed by walking up to the root via
@@ -123,7 +125,9 @@ tree traversal, and readdir cookie stability.
 
 - Confirm `dtn_index_depth` has an early-exit guard at `DEPTH_MAX`.
 - Re-verify `dtn_index_to_parent` and `child_dtn_index_of` round-trip
-  for root, depth-1, and depth-4 nodes.
+  for root (0), first child (1), last depth-1 child (64), first
+  depth-2 child (65), and `INDEX_MAX` (17 043 520).
+- Confirm `dtn_index_isvalid` accepts 0 and rejects `UINT32_MAX`.
 - Check `hash_to_child_ord`: depth argument must be `parent_depth+1`,
   ranging 1..4; verify no off-by-one.
 

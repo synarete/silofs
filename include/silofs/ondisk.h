@@ -157,15 +157,16 @@
 /* maximum depth of directory tree-mapping */
 #define SILOFS_DIR_TREE_DEPTH_MAX (4L)
 
-/* max dir-node index of tree-mapping nodes (1-based) */
+/* max dir-node index of tree-mapping nodes (0-based) */
 #define SILOFS_DIR_TREE_INDEX_MAX \
-	((1L << (SILOFS_DTREE_NODE_SHIFT * SILOFS_DIR_TREE_DEPTH_MAX)))
+	(((1L << (SILOFS_DTREE_NODE_SHIFT * (SILOFS_DIR_TREE_DEPTH_MAX + 1))) \
+	  - 1L) / (SILOFS_DTREE_NODE_NCHILDS - 1) - 1)
 
-/* non-valid dir's tree-mapping node-index */
-#define SILOFS_DIR_TREE_INDEX_NULL (0)
+/* non-valid dir's tree-mapping node-index (out-of-band sentinel) */
+#define SILOFS_DIR_TREE_INDEX_NULL (UINT32_MAX)
 
 /* node-index of dir's tree-mapping root */
-#define SILOFS_DIR_TREE_INDEX_ROOT (1)
+#define SILOFS_DIR_TREE_INDEX_ROOT (0)
 
 /* max entries in directory */
 #define SILOFS_DIR_ENTRIES_MAX \

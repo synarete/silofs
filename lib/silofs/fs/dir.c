@@ -120,8 +120,7 @@ static bool dtn_index_isroot(silofs_dtn_index_t dtn_index)
 
 static bool dtn_index_isvalid(silofs_dtn_index_t dtn_index)
 {
-	return (dtn_index >= DTREE_INDEX_ROOT) &&
-	       (dtn_index <= DTREE_INDEX_MAX);
+	return (dtn_index <= DTREE_INDEX_MAX);
 }
 
 static silofs_dtn_index_t dtn_index_to_parent(silofs_dtn_index_t dtn_index)
@@ -129,24 +128,21 @@ static silofs_dtn_index_t dtn_index_to_parent(silofs_dtn_index_t dtn_index)
 	silofs_dtn_index_t parent_index = DTREE_INDEX_NULL;
 
 	if (!dtn_index_isroot(dtn_index)) {
-		parent_index = ((dtn_index - 2) / DTREE_FANOUT) + 1;
+		parent_index = (dtn_index - 1) / DTREE_FANOUT;
 	}
 	return parent_index;
 }
 
 static silofs_dtn_ord_t dtn_index_to_child_ord(silofs_dtn_index_t dtn_index)
 {
-	const silofs_dtn_index_t parent_dtn_index =
-		dtn_index_to_parent(dtn_index);
-
-	return (dtn_index - ((parent_dtn_index - 1) * DTREE_FANOUT) - 2);
+	return (dtn_index - 1) % DTREE_FANOUT;
 }
 
 static silofs_dtn_index_t
 child_dtn_index_of(silofs_dtn_index_t parent_dtn_index,
                    silofs_dtn_ord_t child_ord)
 {
-	return ((parent_dtn_index - 1) * DTREE_FANOUT) + child_ord + 2;
+	return parent_dtn_index * DTREE_FANOUT + child_ord + 1;
 }
 
 static silofs_dtn_depth_t dtn_index_depth(silofs_dtn_index_t dtn_index)

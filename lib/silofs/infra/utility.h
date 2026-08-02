@@ -92,7 +92,7 @@ static inline uint32_t silofs_clz_u32(uint32_t n)
 
 static inline uint32_t silofs_clz_u64(uint64_t n)
 {
-	return n ? (uint32_t)__builtin_clzl(n) : 64;
+	return n ? (uint32_t)__builtin_clzll(n) : 64;
 }
 
 static inline uint32_t silofs_popcount_u32(uint32_t n)

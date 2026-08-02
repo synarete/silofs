@@ -153,9 +153,10 @@ static silofs_dtn_depth_t dtn_index_depth(silofs_dtn_index_t dtn_index)
 {
 	silofs_dtn_depth_t depth = 0;
 
-	/* TODO: Use shift operations. */
 	while (dtn_index > DTREE_INDEX_ROOT) {
-		depth++;
+		if (++depth > DTREE_DEPTH_MAX) {
+			break; /* corrupted index; caller rejects */
+		}
 		dtn_index = dtn_index_to_parent(dtn_index);
 	}
 	return depth;
@@ -836,7 +837,7 @@ dtn_remove_de_name(struct silofs_dtree_node *dtn, struct silofs_dir_entry *de)
 }
 
 static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
-                             size_t name_pos_ref, size_t nb_moved)
+                             size_t name_pos_ref, size_t name_len)
 {
 	struct silofs_dir_entry *de_beg       = dtn_de_begin(dtn);
 	const struct silofs_dir_entry *de_end = dtn_de_end(dtn);
@@ -851,7 +852,7 @@ static void dtn_remove_fixup(struct silofs_dtree_node *dtn,
 		if (name_pos >= name_pos_ref) {
 			continue;
 		}
-		de_set_name_pos(de, name_pos + nb_moved);
+		de_set_name_pos(de, name_pos + name_len);
 	}
 }
 

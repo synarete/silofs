@@ -62,8 +62,8 @@ static int check_itype(const struct silofs_task_ctx *task, mode_t mode)
 }
 
 int silofs_spawn_inode_by(struct silofs_task_ctx *task,
-                          const struct silofs_inew_params *inp,
-                          struct silofs_inode_info **out_ii)
+			  const struct silofs_inew_params *inp,
+			  struct silofs_inode_info **out_ii)
 {
 	int err;
 
@@ -93,14 +93,14 @@ do_remove_inode_by(struct silofs_task_ctx *task, struct silofs_inode_info *ii)
 }
 
 int silofs_remove_inode_by(struct silofs_task_ctx *task,
-                           struct silofs_inode_info *ii)
+			   struct silofs_inode_info *ii)
 {
 	silofs_clear_dirty_ii(task, ii);
 	return do_remove_inode_by(task, ii);
 }
 
 void silofs_clear_dirty_ii(struct silofs_task_ctx *task,
-                           struct silofs_inode_info *ii)
+			   struct silofs_inode_info *ii)
 {
 	silofs_clear_predq_of(task->corefs->iis_predq, ii);
 	silofs_ii_cleardirty(ii);
@@ -115,9 +115,9 @@ static int resolve_inode_laddr(ino_t ino, struct silofs_laddr *out_laddr)
 }
 
 static int stage_update_inode_at(struct silofs_task_ctx *task,
-                                 const struct silofs_laddr *laddr,
-                                 enum silofs_stg_mode stg_mode,
-                                 struct silofs_inode_info **out_ii)
+				 const struct silofs_laddr *laddr,
+				 enum silofs_stg_mode stg_mode,
+				 struct silofs_inode_info **out_ii)
 {
 	int err;
 
@@ -140,7 +140,7 @@ static bool ii_isimmutable(const struct silofs_inode_info *ii)
 }
 
 static int ii_check_post_stage(const struct silofs_inode_info *ii,
-                               enum silofs_stg_mode stg_mode)
+			       enum silofs_stg_mode stg_mode)
 {
 	if ((stg_mode & SILOFS_STG_COW) == 0) {
 		return 0;
@@ -152,8 +152,8 @@ static int ii_check_post_stage(const struct silofs_inode_info *ii,
 }
 
 int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
-                          enum silofs_stg_mode stg_mode,
-                          struct silofs_inode_info **out_ii)
+			  enum silofs_stg_mode stg_mode,
+			  struct silofs_inode_info **out_ii)
 {
 	struct silofs_laddr laddr;
 	int err;
@@ -174,16 +174,16 @@ int silofs_stage_inode_by(struct silofs_task_ctx *task, ino_t ino,
 }
 
 static int fetch_cached_lni(const struct silofs_task_ctx *task,
-                            const struct silofs_laddr *laddr,
-                            struct silofs_lnode_info **out_lni)
+			    const struct silofs_laddr *laddr,
+			    struct silofs_lnode_info **out_lni)
 {
 	*out_lni = silofs_lcache_lookup_lnode(task->corefs->lcache, laddr);
 	return (*out_lni == nullptr) ? -SILOFS_ENOENT : 0;
 }
 
 static int fetch_cached_ii(const struct silofs_task_ctx *task,
-                           const struct silofs_laddr *laddr,
-                           struct silofs_inode_info **out_ii)
+			   const struct silofs_laddr *laddr,
+			   struct silofs_inode_info **out_ii)
 {
 	struct silofs_lnode_info *lni = nullptr;
 	int err;
@@ -196,7 +196,7 @@ static int fetch_cached_ii(const struct silofs_task_ctx *task,
 }
 
 int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
-                               struct silofs_inode_info **out_ii)
+			       struct silofs_inode_info **out_ii)
 {
 	struct silofs_laddr laddr = { .off = -1 };
 	int err;
@@ -212,44 +212,70 @@ int silofs_lookup_cached_inode(const struct silofs_task_ctx *task, ino_t ino,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static bool need_flush_by_alloc(const struct silofs_task_ctx *task)
+static bool has_high_mempress(const struct silofs_task_ctx *task)
 {
 	return (silofs_mempress(task->corefs->alloc) > 50);
 }
 
-static bool has_dirty(const struct silofs_inode_info *ii)
+static bool has_high_dirtyq(const struct silofs_task_ctx *task)
 {
-	bool ret = false;
+	const struct silofs_lcache *lcache = task->corefs->lcache;
+	const struct silofs_pcache *pcache = task->corefs->pcache;
+	constexpr size_t dirtyq_threshold  = (2 * SILOFS_MEGA);
+	size_t nldq, npdq;
 
-	if (ii != nullptr) {
-		ret = silofs_ii_isdirty(ii) || (ii->i_predq.sz > 0);
-	}
-	return ret;
+	nldq = lcache->nc.dirtyq.drq_accum;
+	npdq = pcache->nc.dirtyq.drq_accum;
+
+	return (nldq + npdq) > dirtyq_threshold;
 }
 
-static bool need_flush_by_ii(const struct silofs_inode_info *ii, int flags)
+static bool has_high_predq(const struct silofs_inode_info *ii, size_t n)
+{
+	return (ii->i_predq.sz > n);
+}
+
+static bool has_now_or_fsync(int flags)
 {
 	constexpr int mask = (SILOFS_CTLF_NOW | SILOFS_CTLF_FSYNC);
 
-	return ((flags & mask) > 0) || has_dirty(ii);
-}
-
-static void apply_predq_of(const struct silofs_task_ctx *task,
-                           struct silofs_inode_info *ii)
-{
-	if (ii != nullptr) {
-		silofs_apply_predq_of(task->corefs->iis_predq, ii);
-	}
+	return ((flags & mask) > 0);
 }
 
 int silofs_flush_dirty_of(const struct silofs_task_ctx *task,
-                          struct silofs_inode_info *ii, int flags)
+			  struct silofs_inode_info *ii, int flags)
 {
-	int ret = 0;
+	bool need_flush = false;
 
-	if (need_flush_by_alloc(task) || need_flush_by_ii(ii, flags)) {
-		apply_predq_of(task, ii);
-		ret = silofs_destage_dirty_nodes(task->corefs);
+	if (ii != nullptr) {
+		/* Flush due to pressure of in-memory ii's predq */
+		need_flush = silofs_submit_predq_of(task, ii, flags);
+	}
+	if (!need_flush) {
+		/* Flush due to explicit flags */
+		need_flush = has_now_or_fsync(flags);
+	}
+	if (!need_flush) {
+		/* Flush due to high level of dirtyq */
+		need_flush = has_high_dirtyq(task);
+	}
+	if (!need_flush) {
+		/* Flush due to overall high memory pressure */
+		need_flush = has_high_mempress(task);
+	}
+	return need_flush ? silofs_destage_dirty_nodes(task->corefs) : 0;
+}
+
+bool silofs_submit_predq_of(const struct silofs_task_ctx *task,
+			    struct silofs_inode_info *ii, int flags)
+{
+	size_t thresh;
+	bool ret = false;
+
+	thresh = has_now_or_fsync(flags) ? 0 : 64;
+	if (has_high_predq(ii, thresh)) {
+		silofs_apply_predq_of(task->corefs->iis_predq, ii);
+		ret = true;
 	}
 	return ret;
 }
@@ -292,14 +318,14 @@ void silofs_purge_loose_inodes(struct silofs_task_ctx *task)
 		if (err) {
 			/* TODO: maybe have retry loop ? */
 			silofs_panic("no forget loose inode: ino=%ld err=%d",
-			             ii->i_ino, err);
+				     ii->i_ino, err);
 		}
 		ii = deq_loose_inode(task);
 	}
 }
 
 void silofs_enqueue_loose_inode(struct silofs_task_ctx *task,
-                                struct silofs_inode_info *ii)
+				struct silofs_inode_info *ii)
 {
 	silofs_assert_null(ii->i_looseq_next);
 

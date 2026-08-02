@@ -1066,6 +1066,9 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	an = avl_begin(avl);
 	while (an != avl_end(avl)) {
 		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
+		if (idx >= UT_ARRAY_SIZE(keys_sorted)) {
+			break; /* make clang-scan happy */
+		}
 		check_node(an, keys_sorted[idx]);
 		an = avl_next(avl, an);
 		idx++;
@@ -1076,6 +1079,9 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	an = avl_end(avl);
 	while (an != avl_begin(avl)) {
 		ut_expect_gt(idx, 0);
+		if (idx == 0) {
+			break; /* make clang-scan happy */
+		}
 		idx--;
 		an = avl_prev(avl, an);
 		check_node(an, keys_sorted[idx]);
@@ -1087,6 +1093,9 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	an  = avl_begin(avl);
 	for (size_t i = 0; i < 5 && an != avl_end(avl); ++i) {
 		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
+		if (idx >= UT_ARRAY_SIZE(keys_sorted)) {
+			break; /* make clang-scan happy */
+		}
 		check_node(an, keys_sorted[idx]);
 		an = avl_next(avl, an);
 		idx++;

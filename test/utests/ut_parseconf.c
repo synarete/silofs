@@ -21,7 +21,7 @@ static const char ut_mountd_conf[] = //
 	"/mnt/foo/bar uid=1000          \n"
 	"/mnt/foo/baz uid=1001          \n"
 	"# Comment                      \n"
-	"/mnt/qux                       \n";
+	"/mnt/longer_path_name uid=12345678 ro=1\n";
 
 static struct silofs_mntrules *ut_new_mrules(struct ut_env *ute)
 {
@@ -42,6 +42,7 @@ static void ut_parseconf_mntrules(struct ut_env *ute)
 	ut_expect_eq(mrules->nrules, 3);
 	ut_expect_eq(mrules->rules[0].uid, 1000);
 	ut_expect_eq(mrules->rules[1].uid, 1001);
+	ut_expect_eq(mrules->rules[2].uid, 12345678);
 	silofs_release_mntrules(mrules, nullptr);
 }
 

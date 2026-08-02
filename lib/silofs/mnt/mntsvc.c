@@ -535,13 +535,11 @@ do_sendmsg(const struct silofs_socket *sock, const struct msghdr *mh)
 	int err;
 
 	err = try_sendmsg(sock, mh, &nbytes);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_post_sendmsg(mh, nbytes);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -787,14 +785,13 @@ mntsvc_recv_request(struct silofs_mntsvc *msvc, struct silofs_mntmsg *mmsg)
 	int err;
 
 	mntmsg_reset(mmsg);
+
 	err = mntmsg_recv2(mmsg, &msvc->ms_asock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_check(mmsg);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -804,8 +801,7 @@ static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc *msvc,
 	struct stat st                       = { .st_size = -1 };
 	const struct silofs_mntrule *mrule   = nullptr;
 	const struct silofs_mntrules *mrules = nullptr;
-	const uid_t uid_none                 = (uid_t)(-1);
-	const uid_t uid_peer                 = msvc->ms_peer_ucred.uid;
+	uid_t uid_peer;
 	int err;
 
 	mrules = msvc->ms_srv->ms_rules;
@@ -832,15 +828,16 @@ static int mntsvc_check_mount_mntrule(const struct silofs_mntsvc *msvc,
 		         msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
 	}
-	if ((mrule->uid != uid_none) && (mrule->uid != uid_peer)) {
+	uid_peer = msvc->ms_peer_ucred.uid;
+	if (mrule->uid != uid_peer) {
 		log_info("not allowed to mount: uid=%ld '%s' peer=%s",
 		         (long)uid_peer, mntp->path, msvc->ms_peer_ids);
 		return -SILOFS_EMOUNT;
 	}
 	/*
-	 * TODO-0048: Support 'recursive' mount option.
+	 * TODO-0048: Support 'ro' mount option.
 	 *
-	 * Use path as prefix and allow mount for any of its sub-directories.
+	 * Force read-only mode if 'ro=true' is set.
 	 */
 	return 0;
 }
@@ -850,7 +847,7 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 {
 	const struct silofs_mntrule *mrule   = nullptr;
 	const struct silofs_mntrules *mrules = nullptr;
-	uid_t uid_peer, uid_none = (uid_t)(-1);
+	uid_t uid_peer;
 
 	mrules = msvc->ms_srv->ms_rules;
 	if (!mrules || !mrules->nrules) {
@@ -869,7 +866,7 @@ static int mntsvc_check_umount_mntrule(const struct silofs_mntsvc *msvc,
 		return -SILOFS_EUMOUNT;
 	}
 	uid_peer = msvc->ms_peer_ucred.uid;
-	if ((mrule->uid != uid_none) && (mrule->uid != uid_peer)) {
+	if (mrule->uid != uid_peer) {
 		log_info("not allowed to umount: uid=%ld '%s'", //
 		         (long)uid_peer, mntp->path);
 		return -SILOFS_EUMOUNT;
@@ -966,14 +963,10 @@ static int mntsvc_do_mount(struct silofs_mntsvc *msvc,
 	int err;
 
 	err = mntvc_pre_mount(msvc, mntp, &proc_path);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 
 	err = do_mount_fuse_fs(mntp, proc_path.str, &msvc->ms_fuse_fd);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
 
 	log_info("mount ok: '%s' flags=0x%lx uid=%d gid=%d rootmode=0%o "
 	         "max_read=%zu fuse_fd=%d peer=%s",
@@ -989,16 +982,13 @@ static int mntsvc_exec_mount(struct silofs_mntsvc *msvc,
 	int err;
 
 	err = mntsvc_check_mount(msvc, mntp);
-	if (err) {
-		return err;
+	return_if_err(err);
+
+	if (!mntp->checkonly) {
+		err = mntsvc_do_mount(msvc, mntp);
+		return_if_err(err);
 	}
-	if (mntp->checkonly) {
-		return 0;
-	}
-	err = mntsvc_do_mount(msvc, mntp);
-	if (err) {
-		return err;
-	}
+
 	return 0;
 }
 
@@ -1021,15 +1011,14 @@ static int mntsvc_check_umount(const struct silofs_mntsvc *msvc,
 	if ((mntp->flags | mnt_allow) != mnt_allow) {
 		return -SILOFS_EINVAL;
 	}
+
 	force = (mntp->flags & MNT_FORCE) > 0;
 	err   = check_umount_path(path, peer_cred->uid, force);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntsvc_check_umount_mntrule(msvc, mntp);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1253,17 +1242,14 @@ static int mntsrv_bind_unix(struct silofs_mntsrv *msrv)
 	int err;
 
 	err = mntsrv_make_unixaddr(msrv, unix_addr, sizeof(unix_addr));
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_sockaddr_unix(&saddr, unix_addr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = silofs_socket_bind(sock, &saddr);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	log_info("bind-socket: %s", unix_addr);
 	return 0;
 }
@@ -1311,9 +1297,8 @@ static int mntsrv_accept_conn(struct silofs_mntsrv *msrv)
 	int err;
 
 	err = mntsvc_accept_from(msvc, &msrv->ms_lsock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	msvc->ms_srv = msrv;
 	return 0;
 }
@@ -1342,13 +1327,11 @@ static int mntsrv_wait_and_serve_conn(struct silofs_mntsrv *msrv)
 	int err;
 
 	err = mntsrv_wait_conn(msrv, 5);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntsrv_serve_conn(msrv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1378,9 +1361,8 @@ int silofs_mse_new(const struct silofs_ms_args *ms_args,
 	int err;
 
 	err = silofs_zmalloc(sizeof(*mse_obj), &mem);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	mse_obj     = mem;
 	mse         = &mse_obj->ms_env;
 	mse->ms_srv = &mse_obj->ms_srv;
@@ -1459,17 +1441,14 @@ static int mse_exec_some(struct silofs_ms_env *mse)
 	int err;
 
 	err = mntsrv_wait_incoming(msrv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntsrv_listen(msrv);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mse_exec_serve_loop(mse);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1504,7 +1483,7 @@ static void silofs_mse_close(struct silofs_ms_env *mse)
 int silofs_mse_serve(struct silofs_ms_env *mse,
                      const struct silofs_mntrules *mrules)
 {
-	int err = 0;
+	int err;
 
 	err = silofs_mse_open(mse, mrules);
 	if (!err) {
@@ -1573,21 +1552,17 @@ mntclnt_handshake(const struct silofs_mntclnt *mclnt,
 	*out_status = -SILOFS_ECOMM;
 
 	err = mntmsg_handshake(&mmsg, mntp);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_send(&mmsg, sock, -1);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_recv2(&mmsg, sock);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_check(&mmsg);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_status = mntmsg_status(&mmsg);
 	return 0;
 }
@@ -1604,21 +1579,17 @@ static int mntclnt_mount(const struct silofs_mntclnt *mclnt,
 	*out_fd     = -1;
 
 	err = mntmsg_mount(&mmsg, mntp);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_send(&mmsg, sock, -1);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_recv(&mmsg, sock, out_fd);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = mntmsg_check(&mmsg);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_status = mntmsg_status(&mmsg);
 	return 0;
 }

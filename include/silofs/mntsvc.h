@@ -39,7 +39,7 @@ struct silofs_fsinfo {
 struct silofs_mntrule {
 	char *path;
 	uid_t uid;
-	bool  recursive;
+	bool  ro;
 };
 
 struct silofs_mntrules {

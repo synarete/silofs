@@ -105,7 +105,7 @@ struct silofs_mntrules *mountd_parse_mntrules(const char *path)
 {
 	struct silofs_alloc *alloc       = silofs_default_alloc;
 	struct silofs_mntrules *mntrules = new_mntrules();
-	char *conf                       = nullptr;
+	char *conf;
 	int err;
 
 	conf = read_mntconf_file(path);

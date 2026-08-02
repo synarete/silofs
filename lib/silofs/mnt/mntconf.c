@@ -145,9 +145,8 @@ static int cpr_strdup(const struct silofs_conf_parser *cpr,
 	int err;
 
 	err = cpr_zalloc(cpr, n, &p);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	*out_str = (char *)p;
 	strview_copyto(sv, *out_str, n);
 	return 0;
@@ -232,9 +231,8 @@ static int cpr_parse_int(const struct silofs_conf_parser *cpr,
 	int err;
 
 	err = cpr_parse_long(cpr, sv, &num);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if ((num > INT_MAX) || (num < INT_MIN)) {
 		return cpr_bad_val(cpr, sv, "int");
 	}
@@ -245,13 +243,11 @@ static int cpr_parse_int(const struct silofs_conf_parser *cpr,
 static int cpr_parse_uid(const struct silofs_conf_parser *cpr,
                          const struct silofs_strview *sv, uid_t *out_uid)
 {
-	int val = -1;
-	int err;
+	int err, val = -1;
 
 	err = cpr_parse_int(cpr, sv, &val);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	if ((val < 0) || (val > (INT_MAX / 2))) {
 		return cpr_bad_val(cpr, sv, "uid");
 	}
@@ -284,44 +280,59 @@ static int mcp_require_ascii(const struct silofs_mntconf_parser *mcp)
 	return cpr_require_ascii(&mcp->cpr);
 }
 
+static int mcp_parse_rule_args_by(const struct silofs_mntconf_parser *mcp,
+                                  const struct silofs_strview *key,
+                                  const struct silofs_strview *val,
+                                  struct silofs_mntrule *mntrule)
+{
+	int err;
+
+	if (strview_isempty(key) || strview_isempty(val)) {
+		err = cpr_bad_conf(&mcp->cpr, key, "illegal key-value");
+	} else if (strview_isequal(key, "uid")) {
+		err = cpr_parse_uid(&mcp->cpr, val, &mntrule->uid);
+	} else if (strview_isequal(key, "ro")) {
+		err = cpr_parse_bool(&mcp->cpr, val, &mntrule->ro);
+	} else {
+		err = cpr_bad_conf(&mcp->cpr, key, "unknown key");
+	}
+	return err;
+}
+
 static int mcp_parse_rule_args(const struct silofs_mntconf_parser *mcp,
                                const struct silofs_strview *args,
                                struct silofs_mntrule *mntrule)
 {
 	struct silofs_strview_pair key_val;
 	struct silofs_strview_pair ss_pair;
-	struct silofs_strview *key  = &key_val.first;
-	struct silofs_strview *val  = &key_val.second;
 	struct silofs_strview *carg = &ss_pair.first;
 	struct silofs_strview *tail = &ss_pair.second;
 	const char *seps            = " \t";
-	int err                     = 0;
+	int err;
 
-	mntrule->uid       = (uid_t)(-1);
-	mntrule->recursive = false;
+	mntrule->uid = (uid_t)(-1);
+	mntrule->ro  = false;
 
 	strview_split(args, seps, &ss_pair);
 	while (!strview_isempty(carg) || !strview_isempty(tail)) {
+		const struct silofs_strview *key = &key_val.first;
+		const struct silofs_strview *val = &key_val.second;
+
 		strview_split_chr(carg, '=', &key_val);
-		if (strview_isempty(key) || strview_isempty(val)) {
-			return cpr_bad_conf(&mcp->cpr, carg,
-			                    "illegal key-value");
-		}
-		if (strview_isequal(key, "recursive")) {
-			err = cpr_parse_bool(&mcp->cpr, val,
-			                     &mntrule->recursive);
-			if (err) {
-				return err;
-			}
-		} else if (strview_isequal(key, "uid")) {
-			err = cpr_parse_uid(&mcp->cpr, val, &mntrule->uid);
-			if (err) {
-				return err;
-			}
-		} else {
-			return cpr_bad_conf(&mcp->cpr, key, "unknown key");
-		}
+
+		err = mcp_parse_rule_args_by(mcp, key, val, mntrule);
+		return_if_err(err);
+
 		strview_split(tail, seps, &ss_pair);
+	}
+	return 0;
+}
+
+static int mcp_check_parsed_rule(const struct silofs_mntconf_parser *mcp,
+                                 const struct silofs_mntrule *mntrule)
+{
+	if (mntrule->uid == (uid_t)(-1)) {
+		return cpr_bad_conf(&mcp->cpr, nullptr, "missing uid");
 	}
 	return 0;
 }
@@ -350,13 +361,11 @@ mcp_parse_rule_path(const struct silofs_mntconf_parser *mcp,
 	int err;
 
 	err = mcp_check_rule_path(mcp, path);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = cpr_strdup(&mcp->cpr, path, out_rpath);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -370,32 +379,38 @@ static void mcp_release_rule(const struct silofs_mntconf_parser *mcp,
 static int mcp_parse_rule(const struct silofs_mntconf_parser *mcp,
                           const struct silofs_strview *path,
                           const struct silofs_strview *args,
-                          struct silofs_mntrules *mrules)
+                          struct silofs_mntrules *mntrules)
 {
-	constexpr size_t max_rules     = ARRAY_SIZE(mrules->rules);
-	struct silofs_mntrule *mntrule = nullptr;
+	constexpr size_t max_rules = ARRAY_SIZE(mntrules->rules);
+	struct silofs_mntrule *mntrule;
 	int err;
 
-	if (mrules->nrules >= max_rules) {
+	if (mntrules->nrules >= max_rules) {
 		return cpr_bad_conf(&mcp->cpr, nullptr,
 		                    "too many mount-rules");
 	}
-	mntrule = &mrules->rules[mrules->nrules];
-	err     = mcp_parse_rule_path(mcp, path, &mntrule->path);
-	if (err) {
-		return err;
-	}
+
+	mntrule       = &mntrules->rules[mntrules->nrules];
+	mntrule->path = nullptr;
+
+	err = mcp_parse_rule_path(mcp, path, &mntrule->path);
+	goto_if_err(err, out_err);
+
 	err = mcp_parse_rule_args(mcp, args, mntrule);
-	if (err) {
-		mcp_release_rule(mcp, mntrule);
-		return err;
-	}
-	mrules->nrules++;
+	goto_if_err(err, out_err);
+
+	err = mcp_check_parsed_rule(mcp, mntrule);
+	goto_if_err(err, out_err);
+
+	mntrules->nrules++;
 	return 0;
+out_err:
+	mcp_release_rule(mcp, mntrule);
+	return err;
 }
 
 static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
-                          struct silofs_mntrules *mrules)
+                          struct silofs_mntrules *mntrules)
 {
 	struct silofs_strview sline;
 	struct silofs_strview_pair svp;
@@ -406,11 +421,11 @@ static int mcp_parse_line(const struct silofs_mntconf_parser *mcp,
 		return 0;
 	}
 	strview_split(&sline, " \t", &svp);
-	return mcp_parse_rule(mcp, &svp.first, &svp.second, mrules);
+	return mcp_parse_rule(mcp, &svp.first, &svp.second, mntrules);
 }
 
 static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
-                           struct silofs_mntrules *mrules)
+                           struct silofs_mntrules *mntrules)
 {
 	struct silofs_strview_pair svp;
 	const struct silofs_strview *line = &svp.first;
@@ -421,10 +436,10 @@ static int mcp_parse_rules(struct silofs_mntconf_parser *mcp,
 	strview_split_chr(&mcp->cpr.conf, '\n', &svp);
 	while (!strview_isempty(line) || !strview_isempty(tail)) {
 		cpr_update_next_line(&mcp->cpr, line);
-		err = mcp_parse_line(mcp, mrules);
-		if (err) {
-			return err;
-		}
+
+		err = mcp_parse_line(mcp, mntrules);
+		return_if_err(err);
+
 		strview_split_chr(&svp.second, '\n', &svp);
 	}
 	return 0;
@@ -447,16 +462,15 @@ int silofs_parse_mntrules(struct silofs_mntrules *mrules,
 
 	mcp_setup(&mcp, alloc, conf);
 	err = mcp_require_ascii(&mcp);
-	if (err) {
-		mcp_release_rules(&mcp, mrules);
-		return err;
-	}
+	goto_if_err(err, out_err);
+
 	err = mcp_parse_rules(&mcp, mrules);
-	if (err) {
-		mcp_release_rules(&mcp, mrules);
-		return err;
-	}
+	goto_if_err(err, out_err);
+
 	return 0;
+out_err:
+	mcp_release_rules(&mcp, mrules);
+	return err;
 }
 
 void silofs_release_mntrules(struct silofs_mntrules *mrules,

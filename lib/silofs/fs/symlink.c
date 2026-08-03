@@ -306,16 +306,25 @@ static bool slc_has_symval_tail(const struct silofs_symlnk_ctx *sl_ctx)
 	return (len > SILOFS_SYMVAL_HEAD_MAX);
 }
 
+static int slc_resolve_symval_tail(const struct silofs_symlnk_ctx *sl_ctx,
+                                   struct silofs_laddr *out_laddr)
+{
+	int err;
+
+	err = lnk_get_symval_tail(sl_ctx->lnk_ii, out_laddr);
+	return (err == -SILOFS_ENOENT) ? -SILOFS_EFSCORRUPTED : 0;
+}
+
 static int slc_extern_symval_tail(const struct silofs_symlnk_ctx *sl_ctx,
                                   struct silofs_bytebuf *bbuf)
 {
-	struct silofs_laddr laddr      = { .off = -1 };
+	struct silofs_laddr laddr;
 	struct silofs_symval_info *svi = nullptr;
 	size_t len;
 	int err;
 
 	if (slc_has_symval_tail(sl_ctx)) {
-		err = lnk_get_symval_tail(sl_ctx->lnk_ii, &laddr);
+		err = slc_resolve_symval_tail(sl_ctx, &laddr);
 		return_if_err(err);
 
 		err = slc_stage_symval(sl_ctx, &laddr, &svi);
@@ -536,8 +545,10 @@ static int slc_drop_symval_tail(const struct silofs_symlnk_ctx *sl_ctx)
 	struct silofs_laddr laddr;
 	int err;
 
-	err = lnk_get_symval_tail(sl_ctx->lnk_ii, &laddr);
-	if (err != -SILOFS_ENOENT) {
+	if (slc_has_symval_tail(sl_ctx)) {
+		err = slc_resolve_symval_tail(sl_ctx, &laddr);
+		return_if_err(err);
+
 		err = slc_remove_symval_at(sl_ctx, &laddr);
 		return_if_err(err);
 	}

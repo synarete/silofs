@@ -560,13 +560,11 @@ do_lookup(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	int err;
 
 	err = check_lookup(task, dir_ii, name);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = stage_by_name(task, dir_ii, name, SILOFS_STG_CUR, out_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -616,7 +614,7 @@ static int check_nodent(const struct silofs_task_ctx *task,
 	return ret;
 }
 
-static int check_spawn_inode(const struct silofs_task_ctx *task)
+static int check_cap_spawn_inode(const struct silofs_task_ctx *task)
 {
 	struct silofs_sbnode_info *sbi = nullptr;
 	int err;
@@ -756,7 +754,7 @@ do_create(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = check_create(task, dir_ii, name, mode);
 	return_if_err(err);
 
-	err = check_spawn_inode(task);
+	err = check_cap_spawn_inode(task);
 	return_if_err(err);
 
 	err = spawn_inode_by_mode(task, dir_ii, mode, 0, &ii);
@@ -849,7 +847,7 @@ static int do_mknod_special(struct silofs_task_ctx *task,
 	err = check_mknod(task, dir_ii, name, mode, rdev);
 	return_if_err(err);
 
-	err = check_spawn_inode(task);
+	err = check_cap_spawn_inode(task);
 	return_if_err(err);
 
 	err = spawn_special_inode(task, dir_ii, mode, rdev, &ii);
@@ -1350,7 +1348,7 @@ do_mkdir(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = check_mkdir(task, dir_ii, name);
 	return_if_err(err);
 
-	err = check_spawn_inode(task);
+	err = check_cap_spawn_inode(task);
 	return_if_err(err);
 
 	err = spawn_dir_inode(task, dir_ii, mode, out_ii);
@@ -1379,6 +1377,17 @@ int silofs_do_mkdir(struct silofs_task_ctx *task,
 	return err;
 }
 
+static int check_removable_dir(const struct silofs_inode_info *dir_ii)
+{
+	if (!silofs_dir_isempty(dir_ii)) {
+		return -SILOFS_ENOTEMPTY;
+	}
+	if (silofs_ii_isrootd(dir_ii)) {
+		return -SILOFS_EBUSY;
+	}
+	return 0;
+}
+
 static int check_rmdir_child(const struct silofs_task_ctx *task,
                              const struct silofs_inode_info *parent_ii,
                              const struct silofs_inode_info *dir_ii)
@@ -1386,23 +1395,17 @@ static int check_rmdir_child(const struct silofs_task_ctx *task,
 	int err;
 
 	err = check_on_writable_fs(task);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = check_isdir(dir_ii);
-	if (err) {
-		return err;
-	}
-	if (!silofs_dir_isempty(dir_ii)) {
-		return -SILOFS_ENOTEMPTY;
-	}
-	if (silofs_ii_isrootd(dir_ii)) {
-		return -SILOFS_EBUSY;
-	}
+	return_if_err(err);
+
+	err = check_removable_dir(dir_ii);
+	return_if_err(err);
+
 	err = check_sticky(task, parent_ii, dir_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
@@ -1513,7 +1516,7 @@ do_symlink(struct silofs_task_ctx *task, struct silofs_inode_info *dir_ii,
 	err = check_symlink(task, dir_ii, name, symval);
 	return_if_err(err);
 
-	err = check_spawn_inode(task);
+	err = check_cap_spawn_inode(task);
 	return_if_err(err);
 
 	err = create_lnk_inode(task, dir_ii, symval, &ii);
@@ -2088,18 +2091,17 @@ static int check_stage_rename_at(struct silofs_task_ctx *task,
 	int err;
 
 	err = check_dir_waccess(task, dref->dir_ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	err = stage_by_name(task, dref->dir_ii, dref->name, SILOFS_STG_COW,
 	                    &dref->ii);
 	if (err) {
 		return ((err == -SILOFS_ENOENT) && new_de) ? 0 : err;
 	}
+
 	err = check_sticky(task, dref->dir_ii, dref->ii);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 

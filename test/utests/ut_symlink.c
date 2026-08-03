@@ -284,7 +284,7 @@ static void ut_symlink_with_io2(struct ut_env *ute)
 static blkcnt_t symval_length_to_blocks(size_t len)
 {
 	constexpr size_t val_size = SILOFS_SYMVAL_NODE_SIZE;
-	constexpr size_t head_len = SILOFS_SYMLNK_HEAD_MAX;
+	constexpr size_t head_len = SILOFS_SYMVAL_HEAD_MAX;
 	constexpr size_t factor   = val_size / 512;
 	size_t nparts             = 0;
 	blkcnt_t blkcnt           = 0;
@@ -318,9 +318,9 @@ static void ut_symlink_stat_(struct ut_env *ute, size_t valsize)
 static void ut_symlink_stat(struct ut_env *ute)
 {
 	ut_symlink_stat_(ute, 1);
-	ut_symlink_stat_(ute, SILOFS_SYMLNK_HEAD_MAX);
-	ut_symlink_stat_(ute, SILOFS_SYMLNK_HEAD_MAX + 1);
-	ut_symlink_stat_(ute, SILOFS_SYMLNK_HEAD_MAX + 1111);
+	ut_symlink_stat_(ute, SILOFS_SYMVAL_HEAD_MAX);
+	ut_symlink_stat_(ute, SILOFS_SYMVAL_HEAD_MAX + 1);
+	ut_symlink_stat_(ute, SILOFS_SYMVAL_HEAD_MAX + 1111);
 	ut_symlink_stat_(ute, SILOFS_SYMLNK_MAX / 2);
 	ut_symlink_stat_(ute, SILOFS_SYMLNK_MAX - 1111);
 	ut_symlink_stat_(ute, SILOFS_SYMLNK_MAX - 1);

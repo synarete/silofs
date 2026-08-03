@@ -1251,12 +1251,13 @@ void ut_symlink(struct ut_env *ute, ino_t parent, const char *name,
 
 void ut_readlink_expect(struct ut_env *ute, ino_t ino, const char *value)
 {
-	int err;
+	constexpr size_t lsz = SILOFS_PATH_MAX;
 	char *lnk;
-	size_t nrd       = 0;
-	const size_t lsz = SILOFS_PATH_MAX;
+	size_t nrd;
+	int err;
 
 	lnk = ut_zalloc(ute, lsz);
+	nrd = 0;
 	err = ut_do_readlink(ute, ino, lnk, lsz, &nrd);
 	ut_expect_ok(err);
 	ut_expect_eq(strlen(value), nrd);

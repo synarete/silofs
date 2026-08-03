@@ -19,12 +19,6 @@
 #include <silofs/vfs.h>
 #include <silofs/fs.h>
 
-struct silofs_symval_desc {
-	struct silofs_strview head;
-	struct silofs_strview parts[SILOFS_SYMLNK_NPARTS];
-	size_t nparts;
-};
-
 struct silofs_symlnk_ctx {
 	const struct silofs_task_ctx *task;
 	struct silofs_inode_info *lnk_ii;
@@ -42,43 +36,28 @@ static const char *next_part(const char *val, size_t len)
 
 static size_t head_size(size_t len)
 {
-	return silofs_min(len, SILOFS_SYMLNK_HEAD_MAX);
+	return silofs_min(len, SILOFS_SYMVAL_HEAD_MAX);
 }
 
-static size_t part_size(size_t len)
+static size_t tail_size(size_t len)
 {
-	return silofs_min(len, SILOFS_SYMVAL_PART_MAX);
+	return silofs_min(len, SILOFS_SYMVAL_TAIL_MAX);
 }
 
-static int symval_desc_setup(struct silofs_symval_desc *sv_dsc,
-                             const char *val, size_t len)
+static void
+split_symval(const struct silofs_strview *symval,
+             struct silofs_strview *out_head, struct silofs_strview *out_tail)
 {
-	struct silofs_strview *sv;
+	const char *val  = symval->str;
+	const size_t len = symval->len;
 	size_t rem;
 
-	silofs_memzero(sv_dsc, sizeof(*sv_dsc));
-	sv_dsc->nparts = 0;
+	silofs_strview_initn(out_head, val, head_size(len));
 
-	sv = &sv_dsc->head;
-	silofs_strview_initn(sv, val, head_size(len));
+	val = next_part(val, out_head->len);
+	rem = len - out_head->len;
 
-	if (val != nullptr) {
-		val = next_part(val, sv->len);
-	}
-	rem = len - sv->len;
-	while (rem > 0) {
-		if (sv_dsc->nparts == ARRAY_SIZE(sv_dsc->parts)) {
-			return -SILOFS_ENAMETOOLONG;
-		}
-		sv = &sv_dsc->parts[sv_dsc->nparts++];
-		silofs_strview_initn(sv, val, part_size(rem));
-
-		if (val != nullptr) {
-			val = next_part(val, sv->len);
-		}
-		rem -= sv->len;
-	}
-	return 0;
+	silofs_strview_initn(out_tail, val, tail_size(rem));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -135,29 +114,27 @@ static void lnkin_set_head_value(struct silofs_inode_lnk *lnkin,
 	memcpy(lnkin->l_head, value, length);
 }
 
-static void lnkin_tail_part(const struct silofs_inode_lnk *lnkin, size_t slot,
-                            struct silofs_laddr *out_laddr)
+static void lnkin_tail_laddr(const struct silofs_inode_lnk *lnkin,
+                             struct silofs_laddr *out_laddr)
 {
-	silofs_laddr64_xtoh(&lnkin->l_tail[slot], out_laddr);
+	silofs_laddr64_xtoh(&lnkin->l_tail, out_laddr);
 }
 
-static void lnkin_set_tail_part(struct silofs_inode_lnk *lnkin, size_t slot,
-                                const struct silofs_laddr *laddr)
+static void lnkin_set_tail_laddr(struct silofs_inode_lnk *lnkin,
+                                 const struct silofs_laddr *laddr)
 {
-	silofs_laddr64_htox(&lnkin->l_tail[slot], laddr);
+	silofs_laddr64_htox(&lnkin->l_tail, laddr);
 }
 
-static void lnkin_reset_tail_part(struct silofs_inode_lnk *lnkin, size_t slot)
+static void lnkin_reset_tail_laddr(struct silofs_inode_lnk *lnkin)
 {
-	lnkin_set_tail_part(lnkin, slot, silofs_laddr_none());
+	lnkin_set_tail_laddr(lnkin, silofs_laddr_none());
 }
 
 static void lnkin_setup(struct silofs_inode_lnk *lnkin)
 {
-	memset(lnkin->l_head, 0, sizeof(lnkin->l_head));
-	for (size_t slot = 0; slot < ARRAY_SIZE(lnkin->l_tail); ++slot) {
-		lnkin_reset_tail_part(lnkin, slot);
-	}
+	silofs_memzero(lnkin->l_head, sizeof(lnkin->l_head));
+	lnkin_reset_tail_laddr(lnkin);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -174,28 +151,33 @@ static size_t lnk_value_length(const struct silofs_inode_info *lnk_ii)
 	return (size_t)silofs_ii_size(lnk_ii);
 }
 
-static const void *lnk_value_head(const struct silofs_inode_info *lnk_ii)
+static const void *lnk_symval_head(const struct silofs_inode_info *lnk_ii)
 {
 	return lnkin_head_value(lnkin_of(lnk_ii));
 }
 
-static void lnk_assign_value_head(const struct silofs_inode_info *lnk_ii,
-                                  const void *val, size_t len)
+static void lnk_assign_symval_head(const struct silofs_inode_info *lnk_ii,
+                                   const void *val, size_t len)
 {
 	lnkin_set_head_value(lnkin_of(lnk_ii), val, len);
 }
 
-static int lnk_get_value_part(const struct silofs_inode_info *lnk_ii,
-                              size_t slot, struct silofs_laddr *out_laddr)
+static int lnk_get_symval_tail(const struct silofs_inode_info *lnk_ii,
+                               struct silofs_laddr *out_laddr)
 {
-	lnkin_tail_part(lnkin_of(lnk_ii), slot, out_laddr);
+	lnkin_tail_laddr(lnkin_of(lnk_ii), out_laddr);
 	return !silofs_laddr_isnull(out_laddr) ? 0 : -SILOFS_ENOENT;
 }
 
-static void lnk_set_value_part(struct silofs_inode_info *lnk_ii, size_t slot,
-                               const struct silofs_laddr *laddr)
+static void lnk_set_symval_tail(struct silofs_inode_info *lnk_ii,
+                                const struct silofs_laddr *laddr)
 {
-	lnkin_set_tail_part(lnkin_of(lnk_ii), slot, laddr);
+	lnkin_set_tail_laddr(lnkin_of(lnk_ii), laddr);
+}
+
+static void lnk_reset_symval_tail(struct silofs_inode_info *lnk_ii)
+{
+	lnk_set_symval_tail(lnk_ii, silofs_laddr_none());
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -229,19 +211,28 @@ static int slc_check_symlnk(const struct silofs_symlnk_ctx *sl_ctx)
 static int slc_do_recheck_symval(const struct silofs_symlnk_ctx *sl_ctx,
                                  const struct silofs_symval_info *svi)
 {
-	const ino_t parent_ino = svn_parent(svi->svn);
-	const ino_t owner_ino  = sl_ctx->lnk_ii->i_ino;
-	size_t len;
+	constexpr size_t head_max = SILOFS_SYMVAL_HEAD_MAX;
+	constexpr size_t tail_max = SILOFS_SYMVAL_TAIL_MAX;
+	const ino_t parent_ino    = svn_parent(svi->svn);
+	const ino_t owner_ino     = sl_ctx->lnk_ii->i_ino;
+	size_t tail_len, value_len;
 
 	if (parent_ino != owner_ino) {
 		log_err("bad symval ino: owner_ino=%lu parent_ino=%lu",
 		        owner_ino, parent_ino);
 		return -SILOFS_EFSCORRUPTED;
 	}
-	len = svn_length(svi->svn);
-	if (!len || (len > SILOFS_SYMVAL_PART_MAX)) {
-		log_err("bad symval length: owner_ino=%lu len=%zu", owner_ino,
-		        len);
+	tail_len = svn_length(svi->svn);
+	if (!tail_len || (tail_len > tail_max)) {
+		log_err("bad symval length: owner_ino=%lu symval_len=%zu",
+		        owner_ino, tail_len);
+		return -SILOFS_EFSCORRUPTED;
+	}
+	value_len = lnk_value_length(sl_ctx->lnk_ii);
+	if ((value_len <= head_max) || ((head_max + tail_len) != value_len)) {
+		log_err("symval length mismatch: owner_ino=%lu value_len=%zu "
+		        "tail_len=%zu head_max=%zu",
+		        owner_ino, value_len, tail_len, head_max);
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;
@@ -261,58 +252,78 @@ static int slc_recheck_symval(const struct silofs_symlnk_ctx *sl_ctx,
 	return 0;
 }
 
+static int slc_stage_symval_at(const struct silofs_symlnk_ctx *sl_ctx,
+                               const struct silofs_laddr *laddr,
+                               struct silofs_symval_info **out_svi)
+{
+	return silofs_stage_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii,
+	                           sl_ctx->stg_mode, out_svi);
+}
+
 static int slc_stage_symval(const struct silofs_symlnk_ctx *sl_ctx,
                             const struct silofs_laddr *laddr,
                             struct silofs_symval_info **out_svi)
 {
 	int err;
 
-	err = silofs_stage_symval(sl_ctx->task, laddr, sl_ctx->lnk_ii,
-	                          sl_ctx->stg_mode, out_svi);
+	err = slc_stage_symval_at(sl_ctx, laddr, out_svi);
 	return_if_err(err);
 
 	err = slc_recheck_symval(sl_ctx, *out_svi);
-	if (err) {
-		return err;
-	}
+	return_if_err(err);
+
 	return 0;
 }
 
-static int slc_extern_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
-                                  const struct silofs_symval_desc *sv_dsc,
-                                  struct silofs_bytebuf *buf)
+static int
+append_symval(struct silofs_bytebuf *bbuf, const void *val, size_t len)
 {
-	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
-	size_t len, ncp;
+	const size_t ncp = silofs_bytebuf_append(bbuf, val, len);
 
-	len = sv_dsc->head.len;
-	ncp = silofs_bytebuf_append(buf, lnk_value_head(lnk_ii), len);
 	return (ncp != len) ? -SILOFS_ERANGE : 0;
 }
 
-static int slc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
-                                   const struct silofs_symval_desc *sv_dsc,
-                                   struct silofs_bytebuf *bbuf)
+static size_t slc_symval_head_length(const struct silofs_symlnk_ctx *sl_ctx)
 {
-	const struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
+	const size_t symval_len = lnk_value_length(sl_ctx->lnk_ii);
+
+	return silofs_min(symval_len, SILOFS_SYMVAL_HEAD_MAX);
+}
+
+static int slc_extern_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
+                                  struct silofs_bytebuf *bbuf)
+{
+	const void *val  = lnk_symval_head(sl_ctx->lnk_ii);
+	const size_t len = slc_symval_head_length(sl_ctx);
+
+	return append_symval(bbuf, val, len);
+}
+
+static bool slc_has_symval_tail(const struct silofs_symlnk_ctx *sl_ctx)
+{
+	const size_t len = lnk_value_length(sl_ctx->lnk_ii);
+
+	return (len > SILOFS_SYMVAL_HEAD_MAX);
+}
+
+static int slc_extern_symval_tail(const struct silofs_symlnk_ctx *sl_ctx,
+                                  struct silofs_bytebuf *bbuf)
+{
+	struct silofs_laddr laddr      = { .off = -1 };
+	struct silofs_symval_info *svi = nullptr;
+	size_t len;
 	int err;
 
-	for (size_t i = 0; i < sv_dsc->nparts; ++i) {
-		struct silofs_laddr laddr      = { .off = -1 };
-		struct silofs_symval_info *svi = nullptr;
-		size_t len, ncp;
-
-		err = lnk_get_value_part(lnk_ii, i, &laddr);
+	if (slc_has_symval_tail(sl_ctx)) {
+		err = lnk_get_symval_tail(sl_ctx->lnk_ii, &laddr);
 		return_if_err(err);
 
 		err = slc_stage_symval(sl_ctx, &laddr, &svi);
 		return_if_err(err);
 
-		len = sv_dsc->parts[i].len;
-		ncp = silofs_bytebuf_append(bbuf, svn_value(svi->svn), len);
-		if (ncp != len) {
-			return -SILOFS_ERANGE;
-		}
+		len = svn_length(svi->svn);
+		err = append_symval(bbuf, svn_value(svi->svn), len);
+		return_if_err(err);
 	}
 	return 0;
 }
@@ -320,18 +331,12 @@ static int slc_extern_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
 static int slc_extern_symval(const struct silofs_symlnk_ctx *sl_ctx,
                              struct silofs_bytebuf *bbuf)
 {
-	struct silofs_symval_desc sv_dsc;
-	size_t len;
 	int err;
 
-	len = lnk_value_length(sl_ctx->lnk_ii);
-	err = symval_desc_setup(&sv_dsc, nullptr, len);
+	err = slc_extern_symval_head(sl_ctx, bbuf);
 	return_if_err(err);
 
-	err = slc_extern_symval_head(sl_ctx, &sv_dsc, bbuf);
-	return_if_err(err);
-
-	err = slc_extern_symval_parts(sl_ctx, &sv_dsc, bbuf);
+	err = slc_extern_symval_tail(sl_ctx, bbuf);
 	return_if_err(err);
 
 	return 0;
@@ -409,11 +414,11 @@ static int slc_create_symval(const struct silofs_symlnk_ctx *sl_ctx,
 }
 
 static int slc_assign_symval_head(const struct silofs_symlnk_ctx *sl_ctx,
-                                  const struct silofs_symval_desc *sv_dsc)
+                                  const struct silofs_strview *sv_head)
 {
 	struct silofs_inode_info *lnk_ii = sl_ctx->lnk_ii;
 
-	lnk_assign_value_head(lnk_ii, sv_dsc->head.str, sv_dsc->head.len);
+	lnk_assign_symval_head(lnk_ii, sv_head->str, sv_head->len);
 	silofs_ii_setdirty(lnk_ii);
 	return 0;
 }
@@ -425,47 +430,45 @@ static void slc_update_iblocks_by(const struct silofs_symlnk_ctx *sl_ctx,
 	silofs_update_iblocks(sl_ctx->task, sl_ctx->lnk_ii, laddr->ltype, 1);
 }
 
-static void
-slc_bind_symval_part(const struct silofs_symlnk_ctx *sl_ctx, size_t slot,
-                     const struct silofs_symval_info *syi)
+static void slc_bind_tail_symval(const struct silofs_symlnk_ctx *sl_ctx,
+                                 const struct silofs_symval_info *svi)
 {
-	const struct silofs_laddr *laddr = svi_laddr(syi);
+	if (svi != nullptr) {
+		const struct silofs_laddr *laddr = svi_laddr(svi);
 
-	lnk_set_value_part(sl_ctx->lnk_ii, slot, laddr);
-	slc_update_iblocks_by(sl_ctx, laddr);
+		lnk_set_symval_tail(sl_ctx->lnk_ii, laddr);
+		slc_update_iblocks_by(sl_ctx, laddr);
+	} else {
+		lnk_reset_symval_tail(sl_ctx->lnk_ii);
+	}
 }
 
-static int slc_assign_symval_parts(const struct silofs_symlnk_ctx *sl_ctx,
-                                   const struct silofs_symval_desc *sv_dsc)
+static int slc_assign_symval_tail(const struct silofs_symlnk_ctx *sl_ctx,
+                                  const struct silofs_strview *sv_tail)
 {
+	struct silofs_symval_info *svi = nullptr;
 	int err;
 
-	for (size_t slot = 0; slot < sv_dsc->nparts; ++slot) {
-		struct silofs_symval_info *syi = nullptr;
-
-		err = slc_create_symval(sl_ctx, &sv_dsc->parts[slot], &syi);
+	if (sv_tail->len > 0) {
+		err = slc_create_symval(sl_ctx, sv_tail, &svi);
 		return_if_err(err);
-
-		slc_bind_symval_part(sl_ctx, slot, syi);
 	}
+
+	slc_bind_tail_symval(sl_ctx, svi);
 	return 0;
 }
 
 static int slc_assign_symval(const struct silofs_symlnk_ctx *sl_ctx)
 {
-	const struct silofs_strview *symval = sl_ctx->symval;
-	struct silofs_symval_desc sv_dsc    = {
-		.nparts = 0,
-	};
+	struct silofs_strview head, tail;
 	int err;
 
-	err = symval_desc_setup(&sv_dsc, symval->str, symval->len);
+	split_symval(sl_ctx->symval, &head, &tail);
+
+	err = slc_assign_symval_head(sl_ctx, &head);
 	return_if_err(err);
 
-	err = slc_assign_symval_head(sl_ctx, &sv_dsc);
-	return_if_err(err);
-
-	err = slc_assign_symval_parts(sl_ctx, &sv_dsc);
+	err = slc_assign_symval_tail(sl_ctx, &tail);
 	return_if_err(err);
 
 	return 0;
@@ -528,16 +531,13 @@ int silofs_bind_symval(const struct silofs_task_ctx *task,
 	return slc_symlink(&sl_ctx);
 }
 
-static int slc_drop_symval(const struct silofs_symlnk_ctx *sl_ctx)
+static int slc_drop_symval_tail(const struct silofs_symlnk_ctx *sl_ctx)
 {
 	struct silofs_laddr laddr;
 	int err;
 
-	for (size_t i = 0; i < SILOFS_SYMLNK_NPARTS; ++i) {
-		err = lnk_get_value_part(sl_ctx->lnk_ii, i, &laddr);
-		if (err == -SILOFS_ENOENT) {
-			break;
-		}
+	err = lnk_get_symval_tail(sl_ctx->lnk_ii, &laddr);
+	if (err != -SILOFS_ENOENT) {
 		err = slc_remove_symval_at(sl_ctx, &laddr);
 		return_if_err(err);
 	}
@@ -555,7 +555,7 @@ int silofs_drop_symlink(const struct silofs_task_ctx *task,
 	int err;
 
 	silofs_ii_incref(lnk_ii);
-	err = slc_drop_symval(&sl_ctx);
+	err = slc_drop_symval_tail(&sl_ctx);
 	silofs_ii_decref(lnk_ii);
 	return err;
 }
@@ -576,9 +576,9 @@ static int svn_verify_parent(const struct silofs_symval_node *svn)
 
 static int svn_verify_length(const struct silofs_symval_node *svn)
 {
-	const size_t len = svn_length(svn);
+	const size_t symval_len = svn_length(svn);
 
-	if ((len == 0) || (len > SILOFS_SYMVAL_PART_MAX)) {
+	if ((symval_len == 0) || (symval_len > SILOFS_SYMVAL_TAIL_MAX)) {
 		return -SILOFS_EFSCORRUPTED;
 	}
 	return 0;

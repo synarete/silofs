@@ -393,6 +393,9 @@ static void validate_ondisk_symval_node(void)
 	REQUIRE_OFFSET64(struct silofs_symval_node, svn_value, 96);
 	REQUIRE_SIZEOF(struct silofs_symval_node, SILOFS_SYMVAL_NODE_SIZE);
 	REQUIRE_SIZEOF_4K(struct silofs_symval_node);
+
+	REQUIRE_GT(SILOFS_SYMVAL_HEAD_MAX + SILOFS_SYMVAL_TAIL_MAX,
+	           SILOFS_SYMLNK_MAX);
 }
 
 static void validate_ondisk_xattr_node(void)

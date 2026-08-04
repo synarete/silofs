@@ -826,6 +826,9 @@ static int qpool_do_free_multi_pg(struct silofs_qpool *qpool, void *ptr,
 	}
 	npgs = nbytes_to_npgs(nbytes);
 	qpgi = qpool_page_info_of(qpool, ptr);
+	if (silofs_unlikely(qpgi == nullptr)) {
+		return -SILOFS_EQALLOC;
+	}
 	qpool_do_free_npgs(qpool, qpgi, npgs, flags);
 	qpool->npgs_use -= npgs;
 	return 0;
@@ -1143,6 +1146,10 @@ static int slab_check_seg(const struct silofs_slab *slab,
 		return -SILOFS_EQALLOC;
 	}
 	qpgi = qpool_page_info_of(slab->qpool, seg);
+	if (silofs_unlikely(qpgi == nullptr)) {
+		slab_error(slab, "out-of-range: seg=%p", (const void *)seg);
+		return -SILOFS_EQALLOC;
+	}
 	if (qpgi->qpg_slab_index != slab->sindex) {
 		slab_error(slab, "qpg_slab_index=%d", qpgi->qpg_slab_index);
 		return -SILOFS_EQALLOC;

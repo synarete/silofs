@@ -129,21 +129,21 @@ static void cmd_check_ascii_fsname(const char *s, size_t n)
 	}
 }
 
-void cmd_check_fsname(const char *s)
+void cmd_check_fsname(const char *fsname)
 {
 	size_t n;
 
-	n = cmd_safe_strlen(s);
+	n = cmd_safe_strlen(fsname);
 	if (!n) {
 		cmd_die(-SILOFS_EILLSTR, "fs-name must not be empty");
 	}
 	if (n > SILOFS_FSNAME_MAX) {
-		cmd_die(-ENAMETOOLONG, "fs-name too long: '%s'", s);
+		cmd_die(-ENAMETOOLONG, "fs-name too long: '%s'", fsname);
 	}
-	if (s[0] == '.') {
+	if (fsname[0] == '.') {
 		cmd_diez("fs-name must not start with dot");
 	}
-	cmd_check_ascii_fsname(s, n);
+	cmd_check_ascii_fsname(fsname, n);
 }
 
 void cmd_check_repopath(const char *arg_val)
@@ -321,8 +321,7 @@ void cmd_check_mntsrv_perm(const char *path)
 	const uid_t uid   = getuid();
 	const gid_t gid   = getgid();
 	const size_t rdsz = SILOFS_MEGA;
-	int fd            = -1;
-	int err;
+	int err, fd = -1;
 
 	err = silofs_mntrpc_mount(path, uid, gid, rdsz, 0, false, true, &fd);
 	if (err == -SILOFS_EMOUNT) {
@@ -338,8 +337,7 @@ void cmd_check_nonemptydir(const char *path, bool w_ok)
 	struct dirent64 de[8];
 	const size_t nde = SILOFS_ARRAY_SIZE(de);
 	size_t ndes      = 0;
-	int dfd          = -1;
-	int err;
+	int err, dfd;
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -365,8 +363,7 @@ void cmd_check_emptydir(const char *path, bool w_ok)
 	char buf[1024]   = "";
 	const size_t nde = SILOFS_ARRAY_SIZE(de);
 	size_t ndes      = 0;
-	int dfd;
-	int err;
+	int err, dfd;
 
 	cmd_check_isdir(path, w_ok);
 	err = silofs_sys_open(path, O_DIRECTORY | O_RDONLY, 0, &dfd);
@@ -394,6 +391,16 @@ void cmd_mkdir(const char *path, mode_t mode)
 
 	err = silofs_sys_mkdir(path, mode);
 	if (err) {
+		cmd_die(err, "mkdir failed: %s", path);
+	}
+}
+
+void cmd_mkdirp(const char *path, mode_t mode)
+{
+	int err;
+
+	err = silofs_sys_mkdir(path, mode);
+	if (err && (err != -EEXIST)) {
 		cmd_die(err, "mkdir failed: %s", path);
 	}
 }

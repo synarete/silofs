@@ -727,25 +727,28 @@ static int pre_reload_repo(struct silofs_task_ctx *task)
 	return require_nonempty_repodir(task);
 }
 
-static int open_repo(struct silofs_task_ctx *task)
+static int open_repo(const struct silofs_task_ctx *task)
 {
 	return silofs_repo_open(task->corefs->repo, repodir_of(task),
 	                        task->corefs->fsroot->ctl_flags);
+}
+
+static bool has_open_repo(const struct silofs_task_ctx *task)
+{
+	return task->corefs->repo->re_opened;
 }
 
 int silofs_exec_reload_repo(struct silofs_task_ctx *task)
 {
 	int err;
 
-	if (task->corefs->repo->re_opened) {
-		return 0; /* no-op */
+	if (!has_open_repo(task)) {
+		err = pre_reload_repo(task);
+		return_if_err(err);
+
+		err = open_repo(task);
+		return_if_err(err);
 	}
-
-	err = pre_reload_repo(task);
-	return_if_err(err);
-
-	err = open_repo(task);
-	return_if_err(err);
 
 	return 0;
 }

@@ -174,7 +174,7 @@ silofs_attr_dief(1, 2) void cmd_diez(const char *restrict, ...);
 /* checkers */
 void cmd_check_repopath(const char *arg_val);
 
-void cmd_check_fsname(const char *arg_val);
+void cmd_check_fsname(const char *fsname);
 
 void cmd_check_repodir(const char *path);
 
@@ -211,6 +211,8 @@ void cmd_check_mntsrv_conn(void);
 void cmd_check_mntsrv_perm(const char *path);
 
 void cmd_mkdir(const char *path, mode_t mode);
+
+void cmd_mkdirp(const char *path, mode_t mode);
 
 void cmd_chdir(const char *path);
 

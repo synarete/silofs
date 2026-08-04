@@ -64,7 +64,7 @@ _silofs_mkfs() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_dir -d
+		_silofs_complete_dir
 	fi
 }
 
@@ -87,7 +87,13 @@ _silofs_mount() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		_silofs_complete_filedir
+		# count non-option args already provided
+		local nargs=0
+		local i
+		for (( i=2; i < cword; i++ )); do
+			[[ ${words[i]} != -* ]] && (( nargs++ ))
+		done
+		_silofs_complete_dir
 	fi
 }
 
@@ -263,6 +269,6 @@ _silofs_completions() {
 	_silofs_main
 }
 
-complete -o filenames -o bashdefault -o default -F _silofs_completions silofs
+complete -o filenames -F _silofs_completions silofs
 
 # vim: filetype=sh

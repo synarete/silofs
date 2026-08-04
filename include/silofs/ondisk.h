@@ -118,18 +118,6 @@
 /* on-disk size of super-block */
 #define SILOFS_SB_SIZE (8192)
 
-/* bits-shift for space-mapping children fan-out */
-#define SILOFS_SPMAP_SHIFT (6)
-
-/* number of children per space-mapping node/leaf */
-#define SILOFS_SPMAP_NCHILDS (1L << SILOFS_SPMAP_SHIFT)
-
-/* on-disk size of space-node/leaf mapping */
-#define SILOFS_SPMAP_SIZE (16384)
-
-/* number of space-maps per logical-block */
-#define SILOFS_NSPMAP_IN_LBK (SILOFS_LBK_SIZE / SILOFS_SPMAP_SIZE)
-
 /* on-disk size-shift of inode */
 #define SILOFS_INODE_SHIFT (10)
 
@@ -138,42 +126,6 @@
 
 /* base size of empty directory */
 #define SILOFS_DIR_EMPTY_SIZE SILOFS_INODE_SIZE
-
-/* on-disk size of directory tree-node */
-#define SILOFS_DTREE_NODE_SIZE (8192)
-
-/* number of directory-entries in dir's hash-tree node */
-#define SILOFS_DTREE_NODE_NENTS (476)
-
-/* max size of names-buffer in dir's tree-mapping node */
-#define SILOFS_DTREE_NODE_NBSIZE (7616)
-
-/* bits-shift of children per dir tree-mapping node */
-#define SILOFS_DTREE_NODE_SHIFT (6)
-
-/* number of children per dir tree-mapping node */
-#define SILOFS_DTREE_NODE_NCHILDS (1 << SILOFS_DTREE_NODE_SHIFT)
-
-/* maximum depth of directory tree-mapping */
-#define SILOFS_DIR_TREE_DEPTH_MAX (4L)
-
-/* max dir-node index of tree-mapping nodes (0-based) */
-#define SILOFS_DIR_TREE_INDEX_MAX \
-	(((1L << (SILOFS_DTREE_NODE_SHIFT * (SILOFS_DIR_TREE_DEPTH_MAX + 1))) \
-	  - 1L) / (SILOFS_DTREE_NODE_NCHILDS - 1) - 1)
-
-/* non-valid dir's tree-mapping node-index (out-of-band sentinel) */
-#define SILOFS_DIR_TREE_INDEX_NULL (UINT32_MAX)
-
-/* node-index of dir's tree-mapping root */
-#define SILOFS_DIR_TREE_INDEX_ROOT (0)
-
-/* max entries in directory */
-#define SILOFS_DIR_ENTRIES_MAX \
-	(SILOFS_DTREE_NODE_NENTS * SILOFS_DIR_TREE_INDEX_MAX)
-
-/* max value of directory offset */
-#define SILOFS_DIR_OFFSET_MAX (SILOFS_DIR_ENTRIES_MAX + 1)
 
 /* height-limit of file-mapping radix-tree */
 #define SILOFS_FILE_HEIGHT_MAX (5)
@@ -647,6 +599,21 @@ struct silofs_xattr_node {
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* bits-shift of children per dir tree-mapping node */
+#define SILOFS_DTREE_NODE_SHIFT (6)
+
+/* number of children per dir tree-mapping node */
+#define SILOFS_DTREE_NODE_NCHILDS (1 << SILOFS_DTREE_NODE_SHIFT)
+
+/* number of directory-entries in dir's hash-tree node */
+#define SILOFS_DTREE_NODE_NENTS (476)
+
+/* max size of names-buffer in dir's tree-mapping node */
+#define SILOFS_DTREE_NODE_NBSIZE (7616)
+
+/* on-disk size of directory tree-node */
+#define SILOFS_DTREE_NODE_SIZE (8192)
 
 struct silofs_dir_entry {
 	uint64_t de_ino;

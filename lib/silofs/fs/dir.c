@@ -22,48 +22,17 @@
 #include <silofs/vfs.h>
 #include <silofs/fs.h>
 
-enum silofs_dtree_consts {
-	DTREE_SHIFT      = SILOFS_DTREE_NODE_SHIFT,
-	DTREE_FANOUT     = SILOFS_DTREE_NODE_NCHILDS,
-	DTREE_DEPTH_MAX  = SILOFS_DIR_TREE_DEPTH_MAX,
-	DTREE_INDEX_MAX  = SILOFS_DIR_TREE_INDEX_MAX,
-	DTREE_INDEX_NULL = SILOFS_DIR_TREE_INDEX_NULL,
-	DTREE_INDEX_ROOT = SILOFS_DIR_TREE_INDEX_ROOT,
-	DTREE_OFF_SHIFT  = 13,
-};
+#define SILOFS_USE_DIR_PRIVATE 1
+#include "dirp.h"
 
-enum silofs_de_consts {
-	DE_NAME_HASH_SHIFT = 24,
-	DE_NAME_HASH_MASK  = (1U << DE_NAME_HASH_SHIFT) - 1
-};
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/*
- * TODO-0006: Support SILOFS_NAME_MAX=1023
- *
- * While 255 is de-facto standard for modern file-systems, long term vision
- * should allow more (think non-ascii with long UTF8 encoding).
- */
-struct silofs_dir_entry_info {
-	struct silofs_dtnode_info *dti;
-	struct silofs_dir_entry *de;
-	struct silofs_ino_dt ino_dt;
-};
-
-struct silofs_dir_ctx {
-	const struct silofs_task_ctx *task;
-	struct silofs_inode_info *dir_ii;
-	struct silofs_inode_info *parent_ii;
-	struct silofs_inode_info *child_ii;
-	struct silofs_readdir_ctx *rd_ctx;
-	const struct silofs_namestr *name;
-	enum silofs_stg_mode stg_mode;
-	int keep_iter;
-	int readdir_plus;
-};
-
-typedef uint64_t silofs_dtn_index_t;
-typedef uint64_t silofs_dtn_ord_t;
-typedef uint32_t silofs_dtn_depth_t;
+silofs_attr_used static void validate_dir_defs(void)
+{
+	STATICASSERT_LT(DTREE_INDEX_MAX, INT32_MAX);
+	STATICASSERT_LT(DTREE_DEPTH_MAX, SILOFS_HASH256_LEN / DTREE_SHIFT);
+	STATICASSERT_GT(SILOFS_DIR_ENTRIES_MAX, SILOFS_LINK_MAX);
+}
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -120,6 +89,8 @@ static bool dtn_index_isroot(silofs_dtn_index_t dtn_index)
 
 static bool dtn_index_isvalid(silofs_dtn_index_t dtn_index)
 {
+	STATICASSERT_LT(DTREE_INDEX_MAX, INT32_MAX);
+
 	return (dtn_index <= DTREE_INDEX_MAX);
 }
 
@@ -1355,6 +1326,15 @@ void silofs_dir_inherit_parent(struct silofs_inode_info *dir_ii,
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+/*
+ * TODO-0006: Support SILOFS_NAME_MAX=1023
+ *
+ * While 255 is de-facto standard for modern file-systems, long term vision
+ * should allow more (think non-ascii with long UTF8 encoding).
+ *
+ * Note: currently, SILOFS_NAME_MAX=511
+ */
+
 union silofs_utf32_name_buf {
 	char dat[4 * (SILOFS_NAME_MAX + 1)];
 	uint32_t utf32[SILOFS_NAME_MAX + 1];
@@ -2082,21 +2062,31 @@ static int dirc_check_stage_parent(struct silofs_dir_ctx *d_ctx)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static bool
-dirc_isindex_inrange(const struct silofs_dir_ctx *d_ctx, size_t index)
+dirc_isindex_inrange(const struct silofs_dir_ctx *d_ctx, size_t dtn_index)
 {
-	const size_t dtn_index      = dirc_last_node_index_of(d_ctx);
+	const size_t dtn_index_last = dirc_last_node_index_of(d_ctx);
 	const size_t dtn_index_null = DTREE_INDEX_NULL;
+	bool ret;
 
-	return (dtn_index != dtn_index_null) ? (index <= dtn_index) : false;
+	if (dtn_index_last != dtn_index_null) {
+		ret = (dtn_index <= dtn_index_last);
+	} else {
+		ret = false;
+	}
+	return ret;
 }
 
 static bool dirc_inrange(const struct silofs_dir_ctx *d_ctx)
 {
 	const off_t doff = d_ctx->rd_ctx->pos;
-	bool ret         = false;
+	size_t dtn_index;
+	bool ret;
 
 	if (doff >= 0) {
-		ret = dirc_isindex_inrange(d_ctx, doff_to_dtn_index(doff));
+		dtn_index = doff_to_dtn_index(doff);
+		ret       = dirc_isindex_inrange(d_ctx, dtn_index);
+	} else {
+		ret = false;
 	}
 	return ret;
 }
@@ -2624,17 +2614,15 @@ static int dirc_drop_tree(const struct silofs_dir_ctx *d_ctx)
 	struct silofs_dtnode_info *dti = nullptr;
 	int err;
 
-	if (!dirc_has_tree(d_ctx)) {
-		return 0;
+	if (dirc_has_tree(d_ctx)) {
+		err = dirc_stage_tree_root(d_ctx, &dti);
+		return_if_err(err);
+
+		err = dirc_discard_tree_at(d_ctx, dti);
+		return_if_err(err);
+
+		dirc_resetup_empty_dir(d_ctx);
 	}
-
-	err = dirc_stage_tree_root(d_ctx, &dti);
-	return_if_err(err);
-
-	err = dirc_discard_tree_at(d_ctx, dti);
-	return_if_err(err);
-
-	dirc_resetup_empty_dir(d_ctx);
 	return 0;
 }
 

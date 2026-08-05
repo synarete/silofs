@@ -1,12 +1,12 @@
 dnl SPDX-License-Identifier: GPL-3.0-or-later
 m4_define([SILOFS_VERSION], m4_chomp(m4_esyscmd([./version.sh --version])))
 AC_PREREQ([2.69])
-AC_INIT([silofs],[SILOFS_VERSION],[synarete@xxxxxxxx])
+AC_INIT([silofs], [SILOFS_VERSION], [synarete@xxxxxxxx])
 AC_COPYRIGHT([Copyright (C) 2020-2026, Shachar Sharon])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([lib/silofs/version.c])
-AX_SILOFS_GLOBALS(silofs)
+AX_SILOFS_GLOBALS([silofs])
 AX_CHECK_ENABLE_DEBUG(no, DEBUG)
 
 AC_CANONICAL_BUILD

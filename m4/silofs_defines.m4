@@ -5,20 +5,20 @@ AC_DEFUN([AX_SILOFS_NEED_DEFINES],
 
 AC_DEFUN([AX_SILOFS_NEED_POSIX_ACL_DEFINES],
 [AC_CACHE_CHECK([for posix ACL xattr defines], [ac_cv_ax_posix_acl_defines],
-[AC_RUN_IFELSE(
+[AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[
         #include <linux/xattr.h>
-        #include <string.h>
+        #ifndef XATTR_NAME_POSIX_ACL_ACCESS
+        #error missing XATTR_NAME_POSIX_ACL_ACCESS
+        #endif
+        #ifndef XATTR_NAME_POSIX_ACL_DEFAULT
+        #error missing XATTR_NAME_POSIX_ACL_DEFAULT
+        #endif
     ]],
-    [[
-        size_t acl_access_len = strlen(XATTR_NAME_POSIX_ACL_ACCESS);
-        size_t acl_default_len = strlen(XATTR_NAME_POSIX_ACL_DEFAULT);
-        return ((acl_access_len > 0) && (acl_default_len > 0)) ? 0 : 1;
-    ]])
+    [[]])
   ],
   [ac_cv_ax_posix_acl_defines=yes],
-  [ac_cv_ax_posix_acl_defines=no],
   [ac_cv_ax_posix_acl_defines=no])
 ])
   if test $ac_cv_ax_posix_acl_defines != yes; then

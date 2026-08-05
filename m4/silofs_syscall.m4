@@ -8,22 +8,18 @@ AC_DEFUN([AX_SILOFS_NEED_SYSDEFS],
 
 AC_DEFUN([AX_SILOFS_NEED_SYSDEF],
 [AC_CACHE_CHECK([for $1], [ax_cv_sysdef_$1_defined],
-[AC_RUN_IFELSE(
+[AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[
         #include <sys/types.h>
         #include <sys/syscall.h>
-        #include <unistd.h>
-        #include <stdlib.h>
+        #ifndef $1
+        #error missing $1
+        #endif
     ]],
-    [[
-        int sysdef = $1;
-
-        return (sysdef > 0) ? 0 : 1;
-    ]])
+    [[]])
   ],
   [ax_cv_sysdef_$1_defined=yes],
-  [ax_cv_sysdef_$1_defined=no],
   [ax_cv_sysdef_$1_defined=no])
 ])
   if test $ax_cv_sysdef_$1_defined != yes; then

@@ -17,6 +17,10 @@
 #ifndef SILOFS_BTREE_H_
 #define SILOFS_BTREE_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 struct silofs_btree_path {
 	struct silofs_btnode_info *bti[SILOFS_BTREE_HEIGHT_MAX];
 	unsigned int               cnt;

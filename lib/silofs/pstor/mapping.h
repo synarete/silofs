@@ -17,6 +17,10 @@
 #ifndef SILOFS_MAPPING_H_
 #define SILOFS_MAPPING_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 int silofs_stage_lnode_by_mapping(const struct silofs_core_refs *corefs,
                                   const struct silofs_laddr     *laddr,
                                   enum silofs_lspacef            lspf,

@@ -17,6 +17,8 @@
 #ifndef SILOFS_PNPTR_H_
 #define SILOFS_PNPTR_H_
 
+#include <silofs/crypt.h>
+
 /* nodes meta crypto settings */
 struct silofs_nmeta {
 	struct silofs_civkey civkey;

@@ -17,6 +17,8 @@
 #ifndef SILOFS_IVKEY_H_
 #define SILOFS_IVKEY_H_
 
+#include <silofs/ondisk.h>
+
 /* encryption IV-key pair */
 struct silofs_civkey {
 	struct silofs_ckey key;

@@ -19,6 +19,7 @@
 
 #include <silofs/ondisk.h>
 #include <silofs/types.h>
+#include <silofs/addr/blobid.h>
 
 /* persistent address with blob */
 struct silofs_paddr {

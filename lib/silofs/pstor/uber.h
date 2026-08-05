@@ -20,6 +20,7 @@
 #include <silofs/infra.h>
 #include <silofs/crypt.h>
 #include <silofs/addr.h>
+#include <silofs/nodes.h>
 
 /* uber stat per sub-type */
 struct silofs_uber_stat {

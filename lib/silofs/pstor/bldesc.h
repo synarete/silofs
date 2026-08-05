@@ -17,6 +17,8 @@
 #ifndef SILOFS_BLDESC_H_
 #define SILOFS_BLDESC_H_
 
+#include <silofs/nodes.h>
+
 void silofs_bdi_setdirty(struct silofs_bldesc_info *bdi);
 
 void silofs_bdi_cleardirty(struct silofs_bldesc_info *bdi);

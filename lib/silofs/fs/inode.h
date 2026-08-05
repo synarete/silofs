@@ -17,6 +17,10 @@
 #ifndef SILOFS_INODE_H_
 #define SILOFS_INODE_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 /* inode's attributes masks */
 enum silofs_iattr_flags {
 	SILOFS_IATTR_NONE         = 0,

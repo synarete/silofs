@@ -17,6 +17,8 @@
 #ifndef SILOFS_PGLUE_H_
 #define SILOFS_PGLUE_H_
 
+#include <silofs/infra.h>
+
 /* stage operation control flags */
 enum silofs_stg_mode {
 	SILOFS_STG_NONE = 0,

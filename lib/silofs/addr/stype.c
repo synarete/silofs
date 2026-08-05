@@ -33,13 +33,16 @@ void silofs_stype_assign(struct silofs_stype *stype,
 long silofs_stype_compare(const struct silofs_stype *stype,
                           const struct silofs_stype *other)
 {
+	long cmp;
+
 	if (stype->ptype != other->ptype) {
-		return (long)stype->ptype - (long)stype->ptype;
+		cmp = (long)stype->ptype - (long)other->ptype;
+	} else if (stype->ltype != other->ltype) {
+		cmp = (long)stype->ltype - (long)other->ltype;
+	} else {
+		cmp = 0;
 	}
-	if (stype->ltype != other->ltype) {
-		return (long)stype->ltype - (long)stype->ltype;
-	}
-	return 0;
+	return cmp;
 }
 
 size_t silofs_stype_size(const struct silofs_stype *stype)

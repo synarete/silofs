@@ -17,6 +17,10 @@
 #ifndef SILOFS_HTOX_H_
 #define SILOFS_HTOX_H_
 
+#include <stdint.h>
+#include <unistd.h>
+#include <silofs/ondisk.h>
+
 uint64_t silofs_u8b_as_u64(const uint8_t p[8]);
 
 void silofs_u8b_from_u64(uint8_t p[8], uint64_t u);

@@ -17,6 +17,10 @@
 #ifndef SILOFS_CIPHER_H_
 #define SILOFS_CIPHER_H_
 
+#include <stdlib.h>
+#include <gcrypt.h>
+#include <silofs/ondisk.h>
+
 /* cipher's operation arguments */
 struct silofs_ciargs {
 	enum silofs_cipher_algo algo;

@@ -17,6 +17,10 @@
 #ifndef SILOFS_ENCDEC_H_
 #define SILOFS_ENCDEC_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 int silofs_encrypt_pnode(const struct silofs_core_refs  *corefs,
                          const struct silofs_pnode_info *pni,
                          struct silofs_ctag             *out_ctag);

@@ -17,6 +17,9 @@
 #ifndef SILOFS_MDIGEST_H_
 #define SILOFS_MDIGEST_H_
 
+#include <stdint.h>
+#include <gcrypt.h>
+
 struct silofs_mdigest_hd {
 	gcry_md_hd_t md_hd;
 	int16_t      md_algos[7];

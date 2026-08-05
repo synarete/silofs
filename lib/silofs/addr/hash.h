@@ -17,6 +17,9 @@
 #ifndef SILOFS_HASH_H_
 #define SILOFS_HASH_H_
 
+#include <stdint.h>
+#include <silofs/ondisk.h>
+
 bool silofs_hash256_isequal(const struct silofs_hash256 *hash,
                             const struct silofs_hash256 *other);
 

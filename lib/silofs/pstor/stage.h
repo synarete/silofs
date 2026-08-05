@@ -17,6 +17,10 @@
 #ifndef SILOFS_STAGE_H_
 #define SILOFS_STAGE_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 int silofs_spawn_uber(const struct silofs_core_refs *corefs,
                       const struct silofs_pnptr     *pnptr,
                       struct silofs_uber_info      **out_ubi);

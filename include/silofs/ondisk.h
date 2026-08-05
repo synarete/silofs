@@ -18,6 +18,7 @@
 #define SILOFS_ONDISK_H_
 
 #include <silofs/ccattr.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -244,6 +245,7 @@ enum silofs_superf {
 
 /* inode control flags */
 enum silofs_inodef {
+	SILOFS_INODEF_NONE   = 0x00,
 	SILOFS_INODEF_ROOTD  = 0x01,
 	SILOFS_INODEF_FTYPE2 = 0x02,
 };
@@ -770,8 +772,8 @@ union silofs_lblock_u {
 	struct silofs_dtree_node  dtn[SILOFS_LBK_N_(SILOFS_DTREE_NODE_SIZE)];
 	struct silofs_ftree_node  ftn[SILOFS_LBK_N_(SILOFS_FTREE_NODE_SIZE)];
 	struct silofs_data_node1  dn1[SILOFS_NKB_IN_LBK];
-	struct silofs_data_node4  dn4[4 * SILOFS_NKB_IN_LBK];
-	struct silofs_data_node64 dn64[64 * SILOFS_NKB_IN_LBK];
+	struct silofs_data_node4  dn4[16];
+	struct silofs_data_node64 dn64;
 #undef SILOFS_LBK_N_
 };
 

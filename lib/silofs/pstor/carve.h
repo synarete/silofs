@@ -17,6 +17,10 @@
 #ifndef SILOFS_CARVE_H_
 #define SILOFS_CARVE_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 int silofs_carve_base_ubspace(const struct silofs_core_refs *corefs,
                               struct silofs_pnptr           *out_pnptr);
 

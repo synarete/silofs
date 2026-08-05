@@ -17,6 +17,8 @@
 #ifndef SILOFS_UNIQID_H_
 #define SILOFS_UNIQID_H_
 
+#include <silofs/ondisk.h>
+
 const struct silofs_layerid *silofs_layerid_none(void);
 
 void silofs_layerid_reset(struct silofs_layerid *layerid);

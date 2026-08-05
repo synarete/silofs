@@ -17,6 +17,8 @@
 #ifndef SILOFS_STYPE_H_
 #define SILOFS_STYPE_H_
 
+#include <silofs/ondisk.h>
+
 struct silofs_stype {
 	enum silofs_ptype ptype;
 	enum silofs_ltype ltype;

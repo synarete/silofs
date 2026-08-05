@@ -17,6 +17,8 @@
 #ifndef SILOFS_BTNODE_H_
 #define SILOFS_BTNODE_H_
 
+#include <silofs/nodes.h>
+
 #define SILOFS_BTREE_KEY_NULL UINT64_MAX
 
 const struct silofs_pnptr *

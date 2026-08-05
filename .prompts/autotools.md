@@ -2,86 +2,166 @@
 
 ## Overview
 
-This document defines the audit procedure for the GNU Autotools build
-system configuration in `silofs`. The build uses a standard Autoconf,
-Automake, and Libtool stack. A custom `bootstrap` script manages the
-generation of the `configure` script. Custom M4 macros
-(`m4/silofs_*.m4`) handle specialized dependency checks and compiler
-configuration. The build uses `sedsub.mk.in` for variable expansion.
+Silofs uses a standard Autoconf / Automake / Libtool stack. A custom
+`bootstrap` script drives `autoreconf`. Version metadata is extracted
+at configure-time by `version.sh` (reads `VERSION`, `RELEASE`, and
+`REVISION` files, or falls back to `git describe`). Custom M4 macros
+live in `m4/silofs_*.m4` and use the `AX_SILOFS_` prefix. Two
+generated include files, `common.mk` and `sedsub.mk`, are produced by
+`configure` from `common.mk.in` / `sedsub.mk.in` and pulled into
+sub-directory `Makefile.am` files via `-include`.
+
+Both `silofs` (bin) and `silofs-mountd` (sbin) are linked statically
+against `libsilofs.la`. Test binaries (`silofs-utests`,
+`silofs-ftests`) follow the same pattern. The `mntd/systemd/`
+sub-directory installs a systemd unit file; `mntd/` installs
+`mountd.conf`. Both are generated from `.in` templates using the
+`silofs_sedsub` make macro defined in `sedsub.mk`.
+
+### systemd Unit Directory
+
+`silofsmountdunitdir` in `mntd/systemd/Makefile.am` is intentionally
+set to `$(prefix)/lib/systemd/system` rather than the absolute path
+returned by `pkg-config`. Automake only prepends `DESTDIR` to custom
+`*dir` variables that are expressed relative to `$(prefix)` or
+another standard directory variable. An absolute path from
+`pkg-config` bypasses `DESTDIR` entirely, breaking both staged
+installs and `make distcheck`. The `HAVE_SYSTEMD` conditional (set
+by `AX_SILOFS_WANT_SYSTEMD` in `configure.ac`) controls whether the
+sub-directory is entered at all.
 
 ## Objective
 
 Ensure the build system is robust, portable, and follows GNU best
 practices. Identify inconsistencies in macro usage, incorrect quoting
-in M4, and inefficiencies in the recursive build structure or Makefile
-templates.
+in M4, cross-compilation hazards, and inefficiencies in the recursive
+build structure or Makefile templates.
 
 ## Review Checklist
 
-### 1. Configure and M4 Macros
+### 1. M4 Macros
 
-- **Quoting**: Verify that all macro arguments in `configure.ac` and
-  `m4/silofs_*.m4` files use proper M4 quoting (e.g., `[arg]`).
-- **Feature Detection**: Ensure macros check for features (headers,
-  functions, types) rather than hardcoding platform assumptions.
-- **Version Logic**: Review `SILOFS_VERSION` extraction and `AC_INIT`.
+- **m4_chomp**: Every `m4_esyscmd` call must be wrapped with
+  `m4_chomp` to strip the trailing newline from shell output.
+  Without it, version variables contain an embedded newline that
+  corrupts `AC_SUBST` expansions and the `AC_INIT` version string.
+- **Quoting**: All macro arguments in `configure.ac` and
+  `m4/silofs_*.m4` should use `[...]` quoting. Pay particular
+  attention to `m4_define`, `AC_INIT`, `AC_ARG_ENABLE`,
+  `AC_ARG_WITH`, and `AS_HELP_STRING` call sites.
+- **AC_DEFINE vs AC_DEFINE_UNQUOTED**: Use `AC_DEFINE([NAME], [1],
+  [desc])` for feature-presence macros. Using
+  `AC_DEFINE_UNQUOTED([NAME], ["1"])` produces a string literal
+  `"1"` in `config.h` instead of an integer, breaking `#ifdef`
+  and integer comparisons in C code.
+- **AH_TEMPLATE ordering**: `AH_TEMPLATE` must precede its
+  corresponding `AC_DEFINE` / `AC_DEFINE_UNQUOTED` call.
+- **Cross-compilation safety**: `AC_RUN_IFELSE` requires executing
+  a binary on the build host and fails during cross-compilation.
+  Any check that tests a compile-time constant (header macros,
+  syscall numbers) must use `AC_COMPILE_IFELSE` with
+  `#ifndef`/`#error` in the program body instead.
 
-### 2. Makefile.am and Templates
+### 2. configure.ac
 
-- **Variable Usage**: Ensure `AM_CPPFLAGS`, `AM_CFLAGS`, and
-  `AM_LDFLAGS` are used for project-wide flags, leaving user variables
-  untouched.
-- **Sed Substitutions**: Audit `sedsub.mk.in`. Verify that
-  substitutions for `@PACKAGE_VERSION@`, `@PREFIX@`, etc., are correct
-  and that `DESTDIR` is properly prepended to installation paths to
-  support staged builds.
-- **Clean/Dist**: Verify that `CLEANFILES`, `DISTCLEANFILES`, and
-  `EXTRA_DIST` correctly account for generated files like `sedsub.mk`
-  and `common.mk`.
+- **Version extraction**: All `m4_esyscmd([./version.sh ...])`
+  calls in `configure.ac` and `m4/silofs_globals.m4` must be
+  wrapped with `m4_chomp(...)`.
+- **Redundant AM_SILENT_RULES**: `silent-rules` is already listed
+  as an option inside `AM_INIT_AUTOMAKE([...])`. A standalone
+  `AM_SILENT_RULES` call on the following line is redundant and
+  should be removed.
+- **Macro call order**: `LT_PREREQ` / `LT_INIT` must appear after
+  all `AC_PROG_*` calls.
+- **AX_CHECK_ENABLE_DEBUG**: The call `AX_CHECK_ENABLE_DEBUG(no,
+  DEBUG)` has unquoted arguments. Verify whether this macro
+  requires quoted or unquoted arguments and fix accordingly.
+- **AM_PATH_LIBGCRYPT**: In `m4/silofs_libs.m4`, the call
+  `AM_PATH_LIBGCRYPT(1.10.0, :, ...)` has an unquoted version
+  argument. Confirm whether quoting is required.
+- **systemd wiring**: Confirm `AX_SILOFS_WANT_SYSTEMD` is called.
+  `mntd/systemd/Makefile` must remain in `AC_CONFIG_FILES`
+  unconditionally; the conditional belongs in `Makefile.am`.
 
-### 3. Bootstrap Script
+### 3. Makefile.am Files
 
-- **Robustness**: Check for `set -o errexit` and `set -o nounset`.
-- **Cleanup Logic**: Verify `do_autoclean` removes all artifacts
-  produced by `autoreconf` and `configure` without deleting
-  version-controlled files.
+- **sedsub.mk.in paths**: `DESTDIR` must never appear in sed
+  substitution values. It belongs only in install-target recipes.
+  Substitution values must use bare `$(prefix)`, `$(sysconfdir)`,
+  etc., so that generated files contain real runtime paths.
+- **systemd unit dir**: `silofsmountdunitdir` must remain
+  `$(prefix)/lib/systemd/system`. Do not replace it with the
+  absolute path from `pkg-config`. See the overview for rationale.
+- **HAVE_SYSTEMD guard**: `mntd/Makefile.am` must guard
+  `SUBDIRS = systemd` with `if HAVE_SYSTEMD / endif`.
+- **Silent-rules variables**: Custom recipe verbosity must use
+  `$(AM_V_GEN)` (file generation) or `$(AM_V_at)` (suppression).
+  `$(AM_V)` is not a standard Automake variable and expands to
+  empty silently.
+- **DISTCLEANFILES**: Every file listed in `BUILT_SOURCES` or
+  generated by a make rule must appear in both `CLEANFILES` and
+  `DISTCLEANFILES`. Check `REVISION` in the top-level
+  `Makefile.am` and `silofs-mountd.service` in
+  `mntd/systemd/Makefile.am`.
+- **include/Makefile.am**: `silofs/config-am.h` is generated by
+  `silofs_sedsub` but may be missing from `BUILT_SOURCES` and
+  `CLEANFILES`. Verify and fix.
 
-### 4. Consistency and Portability
+### 4. bootstrap Script
 
-- **Naming**: Ensure `AC_ARG_ENABLE` and `AC_ARG_WITH` follow
-  consistent naming conventions (e.g., `--enable-debug`).
-- **Prefixes**: Check that custom macros in `m4/` use a consistent
-  prefix (like `AX_SILOFS_`) to avoid namespace collisions.
+- **Prerequisite check**: `do_prerequisite` must check for all
+  tools required before `autoreconf`: `make`, `autoheader`,
+  `autoconf`, `automake`, `libtoolize`, `pkg-config`.
+- **autoclean completeness**: `do_autoclean` must remove all
+  `Makefile` and `Makefile.in` files generated by `autoreconf`,
+  including those in any sub-directories added since the last
+  review.
+- **Error handling**: Confirm `set -o errexit`, `set -o nounset`,
+  and `set -o pipefail` are all present at the top of the script.
+
+### 5. version.sh
+
+- **Whitespace stripping**: The `print()` helper pipes through
+  `tr -d ' \t\v\n'`. Confirm the `+` dirty marker appended by
+  `git describe --dirty=+` is not stripped by this filter.
+- **Consistency**: `version.sh --revision` is called both at
+  configure-time (via `m4_esyscmd`) and at build-time (via the
+  `REVISION` make target). Confirm both calls produce consistent
+  output when the git state changes between configure and build,
+  and consider whether the `REVISION` file should be the single
+  source of truth for both.
 
 ## Input Files
 
 - `configure.ac`
 - `bootstrap`
-- `Makefile.am` (and sub-directory `Makefile.am` files)
+- `version.sh`
+- `Makefile.am` (top-level and all sub-directories)
 - `m4/silofs_*.m4`
 - `common.mk.in`
 - `sedsub.mk.in`
 
 ## Required Output
 
-Provide findings grouped by category:
+Group findings by category:
 
-- **Build Correctness**: Issues preventing successful compilation or
-  linking.
+- **Build Correctness**: Issues preventing successful compilation,
+  linking, or installation.
 - **Standard Violations**: Deviations from GNU/Autotools best
   practices.
-- **Maintenance**: Suggestions to simplify `configure.ac` or reduce
-  duplication in `Makefile.am`.
-- **Code Fixes**: Provide specific diffs for configuration files or
-  scripts.
+- **Cross-Compilation**: Checks that require execution on the build
+  host.
+- **Maintenance**: Simplifications or deduplication opportunities.
+- **Code Fixes**: Provide specific diffs.
 
 ### Report Format
 
 ```
-Category: M4 Quoting
-Location: configure.ac
-Description: AC_OUTPUT arguments are unquoted.
+Category: <category>
+Severity: High | Medium | Low
+Location: <file>:<line>
+Description: <what is wrong and why>
 Fix:
-  -AC_CONFIG_FILES(Makefile lib/Makefile)
-  +AC_CONFIG_FILES([Makefile lib/Makefile])
+  -<old line>
+  +<new line>
 ```

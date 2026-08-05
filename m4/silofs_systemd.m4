@@ -5,12 +5,15 @@ AC_DEFUN([AX_SILOFS_WANT_SYSTEMD],
   AC_ARG_WITH([systemdsystemunitdir],
     [AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
       [Directory for systemd service files])],,
-      [with_systemdsystemunitdir=yes])
+      [with_systemdsystemunitdir=auto])
 
   AS_IF([test "x$with_systemdsystemunitdir" = "xauto"], [
-    pkg_config_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
-
-    AC_SUBST([systemdsystemunitdir], [$pkg_config_systemdsystemunitdir])
+    AS_IF([test -n "$PKG_CONFIG"], [
+      with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd 2>/dev/null)
+    ])
+    AS_IF([test -z "$with_systemdsystemunitdir"], [
+      with_systemdsystemunitdir=no
+    ])
   ])
 
   AS_IF([test "x$with_systemdsystemunitdir" != "xno"],

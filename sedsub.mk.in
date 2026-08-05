@@ -5,10 +5,10 @@ _silofs_sedsub = @SED@ \
   -e "s,[@]PACKAGE_VERSION[@],$(version),g" \
   -e "s,[@]PACKAGE_RELEASE[@],$(release),g" \
   -e "s,[@]PACKAGE_REVISION[@],$(revision),g" \
-  -e "s,[@]PREFIX[@],$(DESTDIR)$(prefix),g" \
-  -e "s,[@]SYSCONFDIR[@],$(DESTDIR)$(sysconfdir),g" \
-  -e "s,[@]DATAROOTDIR[@],$(DESTDIR)$(datarootdir),g" \
-  -e "s,[@]RUNSTATEDIR[@],$(DESTDIR)$(runstatedir),g"
+  -e "s,[@]PREFIX[@],$(prefix),g" \
+  -e "s,[@]SYSCONFDIR[@],$(sysconfdir),g" \
+  -e "s,[@]DATAROOTDIR[@],$(datarootdir),g" \
+  -e "s,[@]RUNSTATEDIR[@],$(runstatedir),g"
 
 _silofs_sedsub_verbose = $(_silofs_sedsub_verbose_@AM_V@)
 _silofs_sedsub_verbose_ = $(_silofs_sedsub_verbose_@AM_DEFAULT_V@)

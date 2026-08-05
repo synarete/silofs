@@ -164,7 +164,6 @@ static void cmd_clean_postexec(void)
 	}
 
 static const struct cmd_info g_cmd_info[] = {
-	DEFCMD(init),   //
 	DEFCMD(mkfs),   //
 	DEFCMD(mount),  //
 	DEFCMD(umount), //

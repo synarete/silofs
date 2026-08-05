@@ -24,7 +24,6 @@ silofs_SOURCES += cmd_clone.c
 silofs_SOURCES += cmd_exec.c
 silofs_SOURCES += cmd_fsck.c
 silofs_SOURCES += cmd_getpass.c
-silofs_SOURCES += cmd_init.c
 silofs_SOURCES += cmd_jconf.c
 silofs_SOURCES += cmd_jconf.h
 silofs_SOURCES += cmd_lock.c

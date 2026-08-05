@@ -104,8 +104,6 @@ extern struct cmd_globals cmd_global_params;
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* execution hooks */
-void cmd_execute_init(void);
-
 void cmd_execute_mkfs(void);
 
 void cmd_execute_mount(void);

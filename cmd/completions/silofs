@@ -38,19 +38,6 @@ _silofs_complete_dir() {
 	_silofs_complete_filedir -d
 }
 
-_silofs_init() {
-	local options=""
-
-	if [[ "$cur" == -* ]]; then
-		options+="-u --user= "
-		options+="-L --loglevel= "
-		options+="-h --help "
-		_silofs_complete_options "$options"
-	else
-		_silofs_complete_dir
-	fi
-}
-
 _silofs_mkfs() {
 	local options=""
 
@@ -211,7 +198,6 @@ _silofs_view() {
 
 _silofs_subcmd() {
 	case "${words[1]}" in
-		"init")    _silofs_init    ;;
 		"mkfs")    _silofs_mkfs    ;;
 		"mount")   _silofs_mount   ;;
 		"umount")  _silofs_umount  ;;
@@ -236,7 +222,7 @@ _silofs_main() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		subcmds+="init mkfs mount umount lsmnt show sync clone "
+		subcmds+="mkfs mount umount lsmnt show sync clone "
 		subcmds+="tune rmfs prune fsck view preserve "
 		_silofs_complete_subcmds "$subcmds"
 	fi

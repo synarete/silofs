@@ -34,7 +34,7 @@ mountd.conf: mountd.conf.in
 	$(silofs_sedsub) $< > $@ ;
 
 install-data-local:
-	$(AM_V)$(INSTALL) -d $(DESTDIR)$(localstatedir)/run/silofs
+	$(AM_V_GEN)$(INSTALL) -d $(DESTDIR)$(localstatedir)/run/silofs
 
 install-data-hook:
-	$(AM_V)chmod 400 $(DESTDIR)$(sysconfdir)/silofs/mountd.conf
+	$(AM_V_GEN)chmod 400 $(DESTDIR)$(sysconfdir)/silofs/mountd.conf

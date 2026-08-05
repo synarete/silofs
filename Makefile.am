@@ -21,6 +21,7 @@ EXTRA_DIST += .clang-tidy.yaml
 
 BUILT_SOURCES = REVISION
 CLEANFILES = REVISION
+DISTCLEANFILES = REVISION
 
 REVISION:
 	@$(top_srcdir)/version.sh --revision > $@

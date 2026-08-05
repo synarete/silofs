@@ -52,7 +52,7 @@ static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 	struct cmd_optargs opa;
 	int opt_chr = 1;
 
-	cmd_optargs_init(&opa, ods);
+	cmd_optargs_setup(&opa, ods);
 	while (!opa.opa_done && (opt_chr > 0)) {
 		opt_chr = cmd_optargs_parse(&opa);
 		switch (opt_chr) {
@@ -73,8 +73,8 @@ static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 	}
 
 	ctx->in_args.dirpath = cmd_optargs_getarg(&opa, "dirpath");
-	cmd_optargs_endargs(&opa);
-	cmd_optargs_fini(&opa);
+
+	cmd_optargs_cleanup(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

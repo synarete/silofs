@@ -116,7 +116,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 	int opt_chr   = 1;
 	bool opa_done = false;
 
-	cmd_optargs_init(&opa, ods);
+	cmd_optargs_setup(&opa, ods);
 	while (!opa.opa_done && !opa_done) {
 		opt_chr  = cmd_optargs_parse(&opa);
 		opa_done = cmd_mkfs_parse_optarg_by(ctx, &opa, opt_chr);
@@ -124,8 +124,7 @@ static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 	cmd_require_arg_size("size", ctx->in_args.fs_size);
 
 	ctx->in_args.repodir = cmd_optargs_getarg(&opa, "repodir");
-	cmd_optargs_endargs(&opa);
-	cmd_optargs_fini(&opa);
+	cmd_optargs_cleanup(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

@@ -104,20 +104,29 @@ static void getopti_del(struct cmd_getopt_info *goi)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
+static void
+cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
 {
 	memset(opa, 0, sizeof(*opa));
 	opa->opa_goi      = getopti_new(ods);
 	opa->opa_cmd_argc = cmd_global_params.argc - 1;
 	opa->opa_cmd_argv = cmd_global_params.argv + 1;
-	opa->opa_optind = optind = 1;
-	opa->opa_opterr = opterr = 0;
-	opa->opa_optarg = optarg = nullptr;
-	opa->opa_optidx          = 0;
-	opa->opa_done            = false;
+	opa->opa_optind   = 1;
+	opa->opa_opterr   = 0;
+	opa->opa_optarg   = nullptr;
+	opa->opa_optidx   = 0;
+	opa->opa_done     = false;
 }
 
-void cmd_optargs_fini(struct cmd_optargs *opa)
+void cmd_optargs_setup(struct cmd_optargs *opa, const struct cmd_optdesc *ods)
+{
+	cmd_optargs_init(opa, ods);
+	optind = opa->opa_optind;
+	opterr = opa->opa_opterr;
+	optarg = opa->opa_optarg;
+}
+
+static void cmd_optargs_fini(struct cmd_optargs *opa)
 {
 	getopti_del(opa->opa_goi);
 	memset(opa, 0xFF, sizeof(*opa));
@@ -241,11 +250,17 @@ char *cmd_optargs_getarg2(struct cmd_optargs *opa, const char *arg_name,
 	return cmd_strdup(arg);
 }
 
-void cmd_optargs_endargs(const struct cmd_optargs *opa)
+static void cmd_optargs_endargs(const struct cmd_optargs *opa)
 {
 	if (opa->opa_optind < opa->opa_cmd_argc) {
 		cmd_fatal_redundant_arg(cmd_optargs_curr(opa));
 	}
+}
+
+void cmd_optargs_cleanup(struct cmd_optargs *opa)
+{
+	cmd_optargs_endargs(opa);
+	cmd_optargs_fini(opa);
 }
 
 void cmd_optargs_set_loglevel(const struct cmd_optargs *opa)

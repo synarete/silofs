@@ -129,9 +129,9 @@ void cmd_execute_fsck(void);
 void cmd_execute_view(void);
 
 /* options-arguments parsing via getopt */
-void cmd_optargs_init(struct cmd_optargs *opa, const struct cmd_optdesc *ods);
+void cmd_optargs_setup(struct cmd_optargs *opa, const struct cmd_optdesc *ods);
 
-void cmd_optargs_fini(struct cmd_optargs *opa);
+void cmd_optargs_cleanup(struct cmd_optargs *opa);
 
 int cmd_optargs_parse(struct cmd_optargs *opa);
 
@@ -150,10 +150,8 @@ bool cmd_optargs_curr_as_bool(const struct cmd_optargs *opa);
 
 size_t cmd_optargs_curr_as_size(const struct cmd_optargs *opa);
 
-uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, uint32_t vmin,
-                                  uint32_t vmax);
-
-void cmd_optargs_endargs(const struct cmd_optargs *opa);
+uint32_t cmd_optargs_curr_as_u32v(const struct cmd_optargs *opa, //
+                                  uint32_t vmin, uint32_t vmax);
 
 void cmd_optargs_set_loglevel(const struct cmd_optargs *opa);
 

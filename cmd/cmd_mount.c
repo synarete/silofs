@@ -276,7 +276,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 	int opt_chr   = 1;
 	bool opa_done = false;
 
-	cmd_optargs_init(&opa, ods);
+	cmd_optargs_setup(&opa, ods);
 	while (!opa.opa_done && !opa_done) {
 		opt_chr  = cmd_optargs_parse(&opa);
 		opa_done = cmd_mount_parse_optarg_by(ctx, &opa, opt_chr);
@@ -285,8 +285,7 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 	ctx->in_args.repodir  = cmd_optargs_getarg(&opa, "repodir");
 	ctx->in_args.mntpoint = cmd_optargs_getarg(&opa, "mountpoint");
 
-	cmd_optargs_endargs(&opa);
-	cmd_optargs_fini(&opa);
+	cmd_optargs_cleanup(&opa);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

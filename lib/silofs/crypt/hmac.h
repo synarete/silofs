@@ -17,6 +17,9 @@
 #ifndef SILOFS_HMAC_H_
 #define SILOFS_HMAC_H_
 
+#include <stdlib.h>
+#include <gcrypt.h>
+
 /* wrapper over libgcrypt mac handle */
 struct silofs_hmac_hd {
 	gcry_mac_hd_t hm_hd;

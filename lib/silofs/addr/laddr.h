@@ -17,6 +17,7 @@
 #ifndef SILOFS_LADDR_H_
 #define SILOFS_LADDR_H_
 
+#include <sys/types.h>
 #include <silofs/ondisk.h>
 
 bool silofs_ltype_isnone(enum silofs_ltype ltype);

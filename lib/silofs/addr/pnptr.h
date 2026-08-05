@@ -18,6 +18,7 @@
 #define SILOFS_PNPTR_H_
 
 #include <silofs/crypt.h>
+#include <silofs/addr/paddr.h>
 
 /* nodes meta crypto settings */
 struct silofs_nmeta {

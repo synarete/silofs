@@ -17,6 +17,10 @@
 #ifndef SILOFS_VIEW_H_
 #define SILOFS_VIEW_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 void silofs_hdr_setup(struct silofs_header      *hdr,
                       const struct silofs_stype *stype,
                       enum silofs_hdrf           flags);

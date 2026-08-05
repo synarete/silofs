@@ -17,6 +17,9 @@
 #ifndef SILOFS_NAMEI_H_
 #define SILOFS_NAMEI_H_
 
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
+
 int silofs_make_xattrname(const struct silofs_task_ctx   *task,
                           const struct silofs_inode_info *ii, const char *s,
                           struct silofs_namestr *out_nstr);

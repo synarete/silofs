@@ -4559,25 +4559,28 @@ static int filc_check_copy_range_same(const struct silofs_file_ctx *f_ctx_src,
                                       const struct silofs_file_ctx *f_ctx_dst)
 {
 	const off_t src_off = f_ctx_src->off;
-	const off_t src_end = silofs_off_end(src_off, f_ctx_src->len);
 	const off_t dst_off = f_ctx_dst->off;
-	const off_t dst_end = silofs_off_end(dst_off, f_ctx_dst->len);
-	int ret;
+	off_t src_end, dst_end;
 
 	if (f_ctx_src->ii != f_ctx_dst->ii) {
 		/* OK: not copy-range within same file */
-		ret = 0;
-	} else if (dst_end <= src_off) {
-		/* OK: no overlap (pre) */
-		ret = 0;
-	} else if (src_end <= dst_off) {
-		/* OK: no overlap (post) */
-		ret = 0;
-	} else {
-		/* Don't allow overlapped copying within the same file. */
-		ret = -SILOFS_EINVAL;
+		return 0;
 	}
-	return ret;
+
+	dst_end = silofs_off_end(dst_off, f_ctx_dst->len);
+	if (dst_end <= src_off) {
+		/* OK: no overlap (pre) */
+		return 0;
+	}
+
+	src_end = silofs_off_end(src_off, f_ctx_src->len);
+	if (src_end <= dst_off) {
+		/* OK: no overlap (post) */
+		return 0;
+	}
+
+	/* Don't allow overlapped copying within the same file. */
+	return -SILOFS_EINVAL;
 }
 
 static int filc_check_copy_range(const struct silofs_file_ctx *f_ctx_src,

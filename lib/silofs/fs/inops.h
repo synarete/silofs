@@ -17,6 +17,9 @@
 #ifndef SILOFS_INOPS_H_
 #define SILOFS_INOPS_H_
 
+#include <unistd.h>
+#include <silofs/exec.h>
+
 int silofs_spawn_inode_by(const struct silofs_task_ctx    *task,
                           const struct silofs_inew_params *inp,
                           struct silofs_inode_info       **out_ii);

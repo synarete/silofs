@@ -17,6 +17,10 @@
 #ifndef SILOFS_PRAND_H_
 #define SILOFS_PRAND_H_
 
+#include <stdlib.h>
+#include <stdint.h>
+#include <silofs/crypt/mdigest.h>
+
 /* prng state input */
 struct silofs_prndstate {
 	uint8_t s[32];

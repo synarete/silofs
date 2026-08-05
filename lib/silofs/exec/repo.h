@@ -18,6 +18,7 @@
 #define SILOFS_REPO_H_
 
 #include <silofs/infra.h>
+#include <silofs/exec/dstor.h>
 
 /* repository */
 struct silofs_repo {

@@ -17,6 +17,8 @@
 #ifndef SILOFS_IDSMAP_H_
 #define SILOFS_IDSMAP_H_
 
+#include <silofs/infra.h>
+
 /* bi-directional id-mapping hash-table (external-internal) */
 struct silofs_idsmap {
 	struct silofs_alloc     *idm_alloc;

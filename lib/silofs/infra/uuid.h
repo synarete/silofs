@@ -17,9 +17,9 @@
 #ifndef SILOFS_UUID_H_
 #define SILOFS_UUID_H_
 
+#include <stddef.h>
 #include <stdint.h>
-
-struct silofs_uuid;
+#include <silofs/ondisk.h>
 
 void silofs_uuid_generate(struct silofs_uuid *uu);
 

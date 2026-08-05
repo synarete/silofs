@@ -17,6 +17,11 @@
 #ifndef SILOFS_PNODES_H_
 #define SILOFS_PNODES_H_
 
+#include <silofs/infra.h>
+#include <silofs/crypt.h>
+#include <silofs/addr.h>
+#include <silofs/nodes/node.h>
+
 enum silofs_pnodef {
 	SILOFS_PNODEF_NONE      = 0x00,
 	SILOFS_PNODEF_STAGED_OK = 0x01,

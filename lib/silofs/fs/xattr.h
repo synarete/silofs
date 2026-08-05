@@ -17,6 +17,9 @@
 #ifndef SILOFS_XATTR_H_
 #define SILOFS_XATTR_H_
 
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
+
 void silofs_ii_setup_xattr(struct silofs_inode_info *ii);
 
 int silofs_do_getxattr(const struct silofs_task_ctx *task,

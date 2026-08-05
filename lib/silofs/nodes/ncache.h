@@ -17,6 +17,10 @@
 #ifndef SILOFS_NCACHE_H_
 #define SILOFS_NCACHE_H_
 
+#include <silofs/infra.h>
+#include <silofs/nodes/dirtyq.h>
+#include <silofs/nodes/hmapq.h>
+
 /* common base to all nodes' caches */
 struct silofs_ncache {
 	struct silofs_hmapq  hmapq;

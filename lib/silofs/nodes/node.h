@@ -17,6 +17,11 @@
 #ifndef SILOFS_NODE_H_
 #define SILOFS_NODE_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/nodes/dirtyq.h>
+#include <silofs/nodes/hmapq.h>
+
 /* de-stage queue */
 struct silofs_dstgq {
 	struct silofs_listq dq;

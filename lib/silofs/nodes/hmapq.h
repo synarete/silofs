@@ -17,6 +17,9 @@
 #ifndef SILOFS_HMAPQ_H_
 #define SILOFS_HMAPQ_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 #define SILOFS_HMAPQ_ITERALL (0xffffffffU)
 
 /* elements' mapping hash-key types */

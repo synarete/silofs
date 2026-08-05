@@ -17,6 +17,11 @@
 #ifndef SILOFS_TASK_H_
 #define SILOFS_TASK_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+#include <silofs/exec/corefs.h>
+
 /* execution-context authentication parameters */
 struct silofs_task_auth {
 	struct silofs_creds creds;

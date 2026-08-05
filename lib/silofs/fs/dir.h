@@ -17,6 +17,9 @@
 #ifndef SILOFS_DIR_H_
 #define SILOFS_DIR_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/nodes.h>
+
 /* pair of ino and dir-type */
 struct silofs_ino_dt {
 	ino_t  ino;

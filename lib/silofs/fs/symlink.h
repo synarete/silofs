@@ -17,6 +17,9 @@
 #ifndef SILOFS_SYMLINK_H_
 #define SILOFS_SYMLINK_H_
 
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
+
 void silofs_ii_setup_symlnk(struct silofs_inode_info *lnk_ii);
 
 int silofs_drop_symlink(const struct silofs_task_ctx *task,

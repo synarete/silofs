@@ -70,8 +70,8 @@
 #define REQUIRE_NELEMS(type, f, nelems) \
 	REQUIRE_EQ(MEMBER_NELEMS(type, f), nelems)
 
-#define REQUIRE_SIZEOF_NBITS(type, nbits) \
-	REQUIRE_EQ(BITS_SIZE(sizeof(type)), nbits)
+#define REQUIRE_TYPE_NBITS(type_, nbits_) \
+	REQUIRE_EQ(BITS_SIZE(type_), nbits_)
 
 #define ISALIGNED32(off) (((off) % 4) == 0)
 
@@ -105,7 +105,10 @@ static void validate_fundamental_types(void)
 	REQUIRE_SIZEOF(off_t, 8);
 	REQUIRE_SIZEOF(ino_t, 8);
 
-	REQUIRE_SIZEOF_NBITS(uint64_t, 64);
+	REQUIRE_TYPE_NBITS(uint8_t, 8);
+	REQUIRE_TYPE_NBITS(uint16_t, 16);
+	REQUIRE_TYPE_NBITS(uint32_t, 32);
+	REQUIRE_TYPE_NBITS(uint64_t, 64);
 }
 
 static void validate_external_constants(void)

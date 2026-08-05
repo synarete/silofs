@@ -17,6 +17,9 @@
 #ifndef SILOFS_FILE_H_
 #define SILOFS_FILE_H_
 
+#include <silofs/nodes.h>
+#include <silofs/exec.h>
+
 /* regual-file sub-types */
 enum silofs_file_type {
 	SILOFS_FILE_TYPE_NONE = 0,

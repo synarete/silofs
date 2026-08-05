@@ -17,6 +17,8 @@
 #ifndef SILOFS_PREDQ_H_
 #define SILOFS_PREDQ_H_
 
+#include <silofs/nodes.h>
+
 struct silofs_iis_predq {
 	struct silofs_listq lsq;
 };

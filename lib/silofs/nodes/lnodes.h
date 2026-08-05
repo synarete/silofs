@@ -21,6 +21,7 @@
 #include <silofs/types.h>
 #include <silofs/infra.h>
 #include <silofs/addr.h>
+#include <silofs/nodes/node.h>
 
 /* lnode */
 struct silofs_lnode_info {

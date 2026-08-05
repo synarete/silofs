@@ -17,6 +17,9 @@
 #ifndef SILOFS_SPOOLS_H_
 #define SILOFS_SPOOLS_H_
 
+#include <silofs/infra.h>
+#include <silofs/addr.h>
+
 /* logical address span */
 struct silofs_lspan {
 	off_t  off;

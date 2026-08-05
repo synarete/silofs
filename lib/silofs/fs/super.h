@@ -17,6 +17,9 @@
 #ifndef SILOFS_SUPER_H_
 #define SILOFS_SUPER_H_
 
+#include <silofs/addr.h>
+#include <silofs/nodes.h>
+
 int silofs_verify_superb_node(const struct silofs_superb_node *sbn);
 
 void silofs_sbi_incref(struct silofs_sbnode_info *sbi);

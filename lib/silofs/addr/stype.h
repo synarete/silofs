@@ -34,6 +34,4 @@ long silofs_stype_compare(const struct silofs_stype *stype,
 
 size_t silofs_stype_size(const struct silofs_stype *stype);
 
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 #endif /* SILOFS_STYPE_H_ */

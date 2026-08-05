@@ -17,6 +17,8 @@
 #ifndef SILOFS_CREDS_H_
 #define SILOFS_CREDS_H_
 
+#include <silofs/types.h>
+
 uid_t silofs_uid_null(void);
 
 uid_t silofs_uid_nobody(void);
@@ -46,8 +48,8 @@ void silofs_cred_fini(struct silofs_cred *cred);
 void silofs_cred_assign(struct silofs_cred       *cred,
                         const struct silofs_cred *other);
 
-void silofs_cred_setup(struct silofs_cred *cred, uid_t uid, gid_t gid,
-                       mode_t umsk);
+void silofs_cred_setup(struct silofs_cred *cred, //
+                       uid_t uid, gid_t gid, mode_t umsk);
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 

@@ -56,6 +56,7 @@ _silofs_mkfs() {
 
 	if [[ "$cur" == -* ]]; then
 		options+="-s --size= "
+		options+="-n --name= "
 		options+="-u --user= "
 		options+="-G --sup-groups "
 		options+="-R --allow-root "
@@ -73,6 +74,7 @@ _silofs_mount() {
 
 	if [[ "$cur" == -* ]]; then
 		options+="-o --opts= "
+		options+="-n --name= "
 		options+="-r --rdonly "
 		options+="-x --allow-exec "
 		options+="-s --allow-suid "
@@ -87,12 +89,6 @@ _silofs_mount() {
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else
-		# count non-option args already provided
-		local nargs=0
-		local i
-		for (( i=2; i < cword; i++ )); do
-			[[ ${words[i]} != -* ]] && (( nargs++ ))
-		done
 		_silofs_complete_dir
 	fi
 }

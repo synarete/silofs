@@ -762,7 +762,7 @@ struct silofs_data_node64 {
 
 /* single logical node unit */
 union silofs_lblock_u {
-#define SILOFS_LBK_N_(n_) (SILOFS_LBK_SIZE / n_)
+#define SILOFS_LBK_N_(n_) (SILOFS_LBK_SIZE / (n_))
 	uint8_t                   bk[SILOFS_LBK_SIZE];
 	struct silofs_inode       in[SILOFS_LBK_N_(SILOFS_INODE_SIZE)];
 	struct silofs_xattr_node  xan[SILOFS_LBK_N_(SILOFS_XATTR_NODE_SIZE)];
@@ -770,8 +770,8 @@ union silofs_lblock_u {
 	struct silofs_dtree_node  dtn[SILOFS_LBK_N_(SILOFS_DTREE_NODE_SIZE)];
 	struct silofs_ftree_node  ftn[SILOFS_LBK_N_(SILOFS_FTREE_NODE_SIZE)];
 	struct silofs_data_node1  dn1[SILOFS_NKB_IN_LBK];
-	struct silofs_data_node4  dn4[SILOFS_NKB_IN_LBK / 4];
-	struct silofs_data_node64 dn64[SILOFS_NKB_IN_LBK / 64];
+	struct silofs_data_node4  dn4[4 * SILOFS_NKB_IN_LBK];
+	struct silofs_data_node64 dn64[64 * SILOFS_NKB_IN_LBK];
 #undef SILOFS_LBK_N_
 };
 

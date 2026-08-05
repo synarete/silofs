@@ -100,17 +100,17 @@ cmd_mkfs_parse_optarg_by(struct cmd_mkfs_ctx *ctx,
 static void cmd_mkfs_parse_optargs(struct cmd_mkfs_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "size", 's', 1 },           //
-		{ "name", 'n', 1 },           //
-		{ "user", 'u', 1 },           //
-		{ "sup-groups", 'G', 0 },     //
-		{ "allow-root", 'R', 0 },     //
-		{ "password", 'p', 1 },       //
-		{ "no-utf8-names", 'N', 0 },  //
-		{ "developer-mode", 'X', 0 }, //
-		{ "loglevel", 'L', 1 },       //
-		{ "help", 'h', 0 },           //
-		{ nullptr, 0, 0 },            //
+		CMD_OPTDESC("size", 's', 1),
+		CMD_OPTDESC("name", 'n', 1),
+		CMD_OPTDESC("user", 'u', 1),
+		CMD_OPTDESC("sup-groups", 'G', 0),
+		CMD_OPTDESC("allow-root", 'R', 0),
+		CMD_OPTDESC("password", 'p', 1),
+		CMD_OPTDESC("no-utf8-names", 'N', 0),
+		CMD_OPTDESC("developer-mode", 'X', 0),
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr   = 1;
@@ -179,10 +179,7 @@ static void cmd_mkfs_start(struct cmd_mkfs_ctx *ctx)
 
 static void cmd_mkfs_require_fsname(struct cmd_mkfs_ctx *ctx)
 {
-	if (ctx->in_args.fsname == nullptr) {
-		ctx->in_args.fsname = cmd_strdup("main"); /* default name */
-	}
-	cmd_check_fsname(ctx->in_args.fsname);
+	cmd_require_fsname(&ctx->in_args.fsname);
 }
 
 static void cmk_mkfs_sense_dotsdir(struct cmd_mkfs_ctx *ctx)
@@ -222,16 +219,16 @@ static void cmk_mkfs_sense_repodir(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_format_repodir(struct cmd_mkfs_ctx *ctx)
 {
 	cmd_mkdirp(ctx->in_args.repodir, 0700);
-	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_emptydir(ctx->in_args.repodir_real, false);
+	cmd_resolve_repodir(ctx->in_args.repodir, true,
+	                    &ctx->in_args.repodir_real);
+	cmd_check_emptydir(ctx->in_args.repodir_real, true);
 }
 
 static void cmd_mkfs_reload_repodir(struct cmd_mkfs_ctx *ctx)
 {
-	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repopath(ctx->in_args.repodir_real);
-	cmd_check_nonemptydir(ctx->in_args.repodir_real, false);
+	cmd_resolve_repodir(ctx->in_args.repodir, true,
+	                    &ctx->in_args.repodir_real);
+	cmd_check_nonemptydir(ctx->in_args.repodir_real, true);
 }
 
 static void cmd_mkfs_require_repodir(struct cmd_mkfs_ctx *ctx)
@@ -247,13 +244,6 @@ static void cmd_mkfs_require_repodir(struct cmd_mkfs_ctx *ctx)
 static void cmd_mkfs_require_unique(const struct cmd_mkfs_ctx *ctx)
 {
 	cmd_check_notexists2(ctx->in_args.repodir_real, ctx->in_args.fsname);
-}
-
-static void cmd_mkfs_prepare(struct cmd_mkfs_ctx *ctx)
-{
-	cmd_mkfs_require_fsname(ctx);
-	cmd_mkfs_require_repodir(ctx);
-	cmd_mkfs_require_unique(ctx);
 }
 
 static void cmd_mkfs_restrict_process(const struct cmd_mkfs_ctx *ctx)
@@ -335,8 +325,14 @@ void cmd_execute_mkfs(void)
 	/* Parse command's arguments */
 	cmd_mkfs_parse_optargs(&ctx);
 
-	/* Prepare by user's arguments */
-	cmd_mkfs_prepare(&ctx);
+	/* Require valid file-system name */
+	cmd_mkfs_require_fsname(&ctx);
+
+	/* Require or create valid repo-dir */
+	cmd_mkfs_require_repodir(&ctx);
+
+	/* Require unique fsname within repo-dir */
+	cmd_mkfs_require_unique(&ctx);
 
 	/* Restrict process access */
 	cmd_mkfs_restrict_process(&ctx);

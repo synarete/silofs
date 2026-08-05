@@ -26,10 +26,11 @@
 #include <time.h>
 
 static const char *const cmd_mount_help_desc =
-	"mount [options] <repodir/fsname> <mountpoint>                     \n"
+	"mount [options] <repodir> <mountpoint>                            \n"
 	"                                                                  \n"
 	"options:                                                          \n"
 	"  -o, --opts=subopts           Comma-separated sub-options        \n"
+	"  -n, --name=fsname            File-system's name (default: main) \n"
 	"  -r, --rdonly                 Mount in read-only mode            \n"
 	"  -x, --allow-exec             Allow programs execution           \n"
 	"  -s, --allow-suid             Honor special mode bits            \n"
@@ -45,7 +46,6 @@ static const char *const cmd_mount_help_desc =
 	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
 
 struct cmd_mount_in_args {
-	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
 	char *fsname;
@@ -176,6 +176,9 @@ cmd_mount_parse_optarg_by(struct cmd_mount_ctx *ctx,
 	case 'o':
 		cmd_mount_getsubopts(ctx);
 		break;
+	case 'n':
+		ctx->in_args.fsname = cmd_optarg_getcurr2(opa, "name");
+		break;
 	case 'x':
 		ctx->in_args.flags |= SILOFS_F_ALLOW_EXEC;
 		break;
@@ -247,26 +250,27 @@ cmd_mount_parse_optarg_by(struct cmd_mount_ctx *ctx,
 static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "opts", 'o', 1 },
-		{ "allow-exec", 'x', 0 },
-		{ "allow-suid", 's', 0 },
-		{ "allow-hostids", 'i', 0 },
-		{ "allow-xattr-acl", 'e', 0 },
-		{ "allow-ispecial", 'z', 0 },
-		{ "no-allow-other", 'A', 0 },
-		{ "no-writeback-cache", 'W', 0 },
-		{ "buffer-copy-mode", 'B', 0 },
-		{ "nodaemon", 'D', 0 },
-		{ "coredump", 'C', 0 },
-		{ "developer-mode", 'X', 0 },
-		{ "asyncwr", 'a', 1 },
-		{ "stdalloc", 'M', 0 },
-		{ "no-prompt", 'P', 0 },
-		{ "password", 'p', 1 },
-		{ "loglevel", 'L', 1 },
-		{ "systemd-run", 'R', 0 },
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("opts", 'o', 1),
+		CMD_OPTDESC("name", 'n', 1),
+		CMD_OPTDESC("allow-exec", 'x', 0),
+		CMD_OPTDESC("allow-suid", 's', 0),
+		CMD_OPTDESC("allow-hostids", 'i', 0),
+		CMD_OPTDESC("allow-xattr-acl", 'e', 0),
+		CMD_OPTDESC("allow-ispecial", 'z', 0),
+		CMD_OPTDESC("no-allow-other", 'A', 0),
+		CMD_OPTDESC("no-writeback-cache", 'W', 0),
+		CMD_OPTDESC("buffer-copy-mode", 'B', 0),
+		CMD_OPTDESC("nodaemon", 'D', 0),
+		CMD_OPTDESC("coredump", 'C', 0),
+		CMD_OPTDESC("developer-mode", 'X', 0),
+		CMD_OPTDESC("asyncwr", 'a', 1),
+		CMD_OPTDESC("stdalloc", 'M', 0),
+		CMD_OPTDESC("no-prompt", 'P', 0),
+		CMD_OPTDESC("password", 'p', 1),
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("systemd-run", 'R', 0),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr   = 1;
@@ -278,9 +282,9 @@ static void cmd_mount_parse_optargs(struct cmd_mount_ctx *ctx)
 		opa_done = cmd_mount_parse_optarg_by(ctx, &opa, opt_chr);
 	}
 
-	ctx->in_args.repodir_fsname =
-		cmd_optargs_getarg(&opa, "repodir/fsname");
+	ctx->in_args.repodir  = cmd_optargs_getarg(&opa, "repodir");
 	ctx->in_args.mntpoint = cmd_optargs_getarg(&opa, "mountpoint");
+
 	cmd_optargs_endargs(&opa);
 	cmd_optargs_fini(&opa);
 }
@@ -345,7 +349,6 @@ static void cmd_mount_finalize(struct cmd_mount_ctx *ctx)
 {
 	cmd_mount_destroy_env(ctx);
 	cmd_mount_release_fslock(ctx);
-	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.mntpoint);
@@ -385,22 +388,24 @@ static void cmd_mount_mkdefaults(struct cmd_mount_ctx *ctx)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static void cmd_mount_require_fsname(struct cmd_mount_ctx *ctx)
+{
+	cmd_require_fsname(&ctx->in_args.fsname);
+}
+
 static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 {
-	cmd_realpath_rdir(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
-	cmd_check_mntdir(ctx->in_args.mntpoint_real, true);
+	cmd_resolve_mntpoint(ctx->in_args.mntpoint, true,
+	                     &ctx->in_args.mntpoint_real);
 	cmd_check_mntsrv_conn();
 	cmd_check_mntsrv_perm(ctx->in_args.mntpoint_real);
 }
 
-static void cmd_mount_prepare_repo(struct cmd_mount_ctx *ctx)
+static void cmd_mount_prepare_repodir(struct cmd_mount_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
-	               &ctx->in_args.fsname);
-	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
-	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
-	                         ctx->in_args.fsname);
+	cmd_resolve_repodir(ctx->in_args.repodir, false,
+	                    &ctx->in_args.repodir_real);
+	cmd_check_isreg2(ctx->in_args.repodir_real, ctx->in_args.fsname);
 }
 
 static void cmd_mount_restrict_process(struct cmd_mount_ctx *ctx)
@@ -705,11 +710,14 @@ void cmd_execute_mount(void)
 	/* Parse command's arguments */
 	cmd_mount_parse_optargs(&ctx);
 
+	/* Require valid file-system name */
+	cmd_mount_require_fsname(&ctx);
+
 	/* Require valid mount-point */
 	cmd_mount_prepare_mntpoint(&ctx);
 
 	/* Require minimal repository validity */
-	cmd_mount_prepare_repo(&ctx);
+	cmd_mount_prepare_repodir(&ctx);
 
 	/* Restrict process access */
 	cmd_mount_restrict_process(&ctx);

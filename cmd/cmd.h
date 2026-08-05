@@ -44,6 +44,11 @@ struct cmd_optdesc {
 	int         has_arg;
 };
 
+#define CMD_OPTDESC(lopt_, sopt_, has_arg_) \
+	{ .lopt = (lopt_), .sopt = (sopt_), .has_arg = (has_arg_) }
+
+#define CMD_OPTDESC_LAST CMD_OPTDESC(nullptr, 0, 0)
+
 /* internal getopt state */
 struct cmd_getopt_info;
 
@@ -273,6 +278,13 @@ uid_t cmd_parse_str_as_uid(const char *str);
 gid_t cmd_parse_str_as_gid(const char *str);
 
 bool cmd_parse_str_as_bool(const char *str);
+
+/* repo-dir & fsname */
+void cmd_require_fsname(char **pfsname);
+
+void cmd_resolve_repodir(const char *path, bool w_ok, char **out_real);
+
+void cmd_resolve_mntpoint(const char *path, bool mnt, char **out_real);
 
 /* locking facilities */
 void cmd_fslock_acquirex(const char *repodir, const char *fsname, int *out_fd);

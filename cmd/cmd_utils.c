@@ -524,6 +524,29 @@ static char *cmd_getcwd(void)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+void cmd_require_fsname(char **pfsname)
+{
+	if (*pfsname == nullptr) {
+		*pfsname = cmd_strdup("main"); /* default name */
+	}
+	cmd_check_fsname(*pfsname);
+}
+
+void cmd_resolve_repodir(const char *path, bool w_ok, char **out_real)
+{
+	cmd_realpath(path, out_real);
+	cmd_check_repopath(*out_real);
+	cmd_check_isdir(*out_real, w_ok);
+}
+
+void cmd_resolve_mntpoint(const char *path, bool mnt, char **out_real)
+{
+	cmd_realpath_rdir(path, out_real);
+	cmd_check_mntdir(*out_real, mnt);
+}
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
 static bool equal_ci(char c1, char c2)
 {
 	const int uc1 = toupper((unsigned char)c1);

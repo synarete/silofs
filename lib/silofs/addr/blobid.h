@@ -17,6 +17,10 @@
 #ifndef SILOFS_BLOBID_H_
 #define SILOFS_BLOBID_H_
 
+#include <silofs/ondisk.h>
+#include <silofs/addr/stype.h>
+#include <silofs/addr/uniqid.h>
+
 struct silofs_blobid {
 	struct silofs_layerid layerid;
 	struct silofs_uniqid  uniqid;

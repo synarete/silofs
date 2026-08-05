@@ -17,6 +17,9 @@
 #ifndef SILOFS_OFFLEN_H_
 #define SILOFS_OFFLEN_H_
 
+#include <sys/types.h>
+#include <stdbool.h>
+
 bool silofs_off_isnull(off_t off);
 
 off_t silofs_off_min(off_t off1, off_t off2);

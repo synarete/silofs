@@ -116,8 +116,9 @@ AC_DEFUN([AX_SILOFS_WANT_LIBS],
     AX_SILOFS_NEED_HEADER([dlfcn.h])
     AX_SILOFS_CHECK_FUNCS([dladdr])
 
-    AC_DEFINE_UNQUOTED([SILOFS_WITH_LIBUNWIND], ["1"])
     AH_TEMPLATE([SILOFS_WITH_LIBUNWIND],
+      [Use libunwind for call-stack unwinding])
+    AC_DEFINE([SILOFS_WITH_LIBUNWIND], [1],
       [Use libunwind for call-stack unwinding])
   ])
 
@@ -129,8 +130,9 @@ AC_DEFUN([AX_SILOFS_WANT_LIBS],
   AS_IF([test "x$with_tcmalloc" = "xyes"], [
     AC_SEARCH_LIBS([tc_malloc], [tcmalloc], :,
       AC_MSG_ERROR([Unable to find libtcmalloc]))
-    AC_DEFINE_UNQUOTED([SILOFS_WITH_TCMALLOC], ["1"])
     AH_TEMPLATE([SILOFS_WITH_TCMALLOC],
+      [Use libtcmalloc for heap memory leak detection])
+    AC_DEFINE([SILOFS_WITH_TCMALLOC], [1],
       [Use libtcmalloc for heap memory leak detection])
   ])
 ])

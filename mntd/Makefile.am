@@ -1,5 +1,7 @@
 -include $(top_builddir)/sedsub.mk
+if HAVE_SYSTEMD
 SUBDIRS = systemd
+endif
 
 AM_CFLAGS = $(WARN_CFLAGS)
 

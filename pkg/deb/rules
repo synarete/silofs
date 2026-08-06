@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
+export DEB_BUILD_MAINT_OPTIONS = optimize=-lto
+
 py3sitedir := $(shell python3 -c \
 	"import site; print(site.getsitepackages()[-1])")
 

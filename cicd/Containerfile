@@ -8,4 +8,4 @@ COPY $BUILDDIR/install-deb-deps.sh .
 RUN ./install-deb-deps.sh --base
 COPY $BUILDDIR/$DISTNAME.tar.gz .
 RUN tar xvfz $DISTNAME.tar.gz
-RUN make -f $DISTNAME/devel.mk O=2 V=1
+RUN make -f $DISTNAME/devel.mk deb

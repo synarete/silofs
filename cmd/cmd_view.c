@@ -146,7 +146,7 @@ static void cmd_view_require_fsname(struct cmd_view_ctx *ctx)
 	cmd_require_fsname(&ctx->in_args.fsname);
 }
 
-static void cmd_view_prepare(struct cmd_view_ctx *ctx)
+static silofs_noinline void cmd_view_prepare(struct cmd_view_ctx *ctx)
 {
 	cmd_resolve_repodir(ctx->in_args.repodir, false,
 	                    &ctx->in_args.repodir_real);

@@ -401,7 +401,8 @@ static void cmd_mount_prepare_mntpoint(struct cmd_mount_ctx *ctx)
 	cmd_check_mntsrv_perm(ctx->in_args.mntpoint_real);
 }
 
-static void cmd_mount_prepare_repodir(struct cmd_mount_ctx *ctx)
+static silofs_noinline void
+cmd_mount_prepare_repodir(struct cmd_mount_ctx *ctx)
 {
 	cmd_resolve_repodir(ctx->in_args.repodir, false,
 	                    &ctx->in_args.repodir_real);

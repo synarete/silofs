@@ -11,7 +11,7 @@ version_sh=${rootdir}/version.sh
 source "${rootdir}/bash_functions"
 commandv podman
 version=$(run "${version_sh}" --version)
-tagname="silofs-build:${version}"
+tagname="silofs-ubuntu:${version}"
 
 cdx "${rootdir}"
 run cp "${rootdir}/pkg/deb/install-deb-deps.sh" "${builddir}"

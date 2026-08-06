@@ -1,4 +1,4 @@
 usr/bin/silofs-utests
 usr/bin/silofs-ftests
 usr/bin/silofs-qatests
-usr/lib/python3/dist-packages/silofs/qatests/*
+usr/lib/python3*/dist-packages/silofs/qatests/*

@@ -3,7 +3,6 @@ EXTRA_DIST += packagize.sh
 EXTRA_DIST += deb/install-deb-deps.sh
 EXTRA_DIST += deb/packagize-deb.sh
 EXTRA_DIST += deb/changelog.in
-EXTRA_DIST += deb/compat
 EXTRA_DIST += deb/control
 EXTRA_DIST += deb/copyright
 EXTRA_DIST += deb/docs

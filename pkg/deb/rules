@@ -10,5 +10,7 @@ py3sitedir := $(shell python3 -c \
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- --sysconfdir=/etc \
+	dh_auto_configure -- \
+		--sysconfdir=/etc \
+		--with-systemdsystemunitdir=/lib/systemd/system \
 		--with-python-site-packages=$(py3sitedir)

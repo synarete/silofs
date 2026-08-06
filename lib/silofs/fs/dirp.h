@@ -39,6 +39,9 @@
 #define SILOFS_DIR_ENTRIES_MAX \
 	(SILOFS_DTREE_NODE_NENTS * SILOFS_DTREE_INDEX_MAX)
 
+/* number of low bits used upon dir offset-to-slot conversion */
+#define SILOFS_DTREE_OFF_SHIFT (13)
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 typedef uint64_t silofs_dtn_index_t;
@@ -52,7 +55,7 @@ enum silofs_dtree_consts {
 	DTREE_INDEX_NULL = SILOFS_DTREE_INDEX_NULL,
 	DTREE_INDEX_ROOT = SILOFS_DTREE_INDEX_ROOT,
 	DTREE_INDEX_MAX  = SILOFS_DTREE_INDEX_MAX,
-	DTREE_OFF_SHIFT  = 13,
+	DTREE_OFF_SHIFT  = SILOFS_DTREE_OFF_SHIFT,
 };
 
 enum silofs_de_consts {

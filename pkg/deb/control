@@ -1,7 +1,7 @@
 Source: silofs
 Section: utils
 Priority: optional
-Maintainer: Shachar Sharon <synarete@xxxxxxxx>
+Maintainer: Shachar Sharon <synarete@gmail.com>
 Build-Depends: debhelper-compat (= 13),
                autoconf (>= 2.62),
                automake (>= 1.11),
@@ -27,17 +27,13 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
          libgcrypt20,
          libunwind8
 Description: The Silo File-System
- Silofs is a user-space file-system for storing large volumes of data
- as encrypted blobs. It allows normal users to create an isolated
- storage area, with its own private key, and mount it on local host.
- When mounted, users may manipulate their data as they would do with any
- other file-system, while the actual data is transparently encrypted and
- stored within a local repository as opaque blobs. Other processes,
- which have the appropriate UNIX credentials may access those blobs as
- regular files, but they can not view their content. This model allows
- common Linux utilities to backup or archive the content of the
- repository into remote location without compromising the integrity of
- the underlying data.
+ Silofs is a private, encrypted user-space file-system -- your personal data
+ silo. Just as a physical silo keeps its contents sealed and inaccessible to the
+ outside world, silofs lets any ordinary user create an isolated storage area
+ protected by their own private key, and mount it on a local host. Once mounted,
+ files can be read and written like any other file-system, while all data and
+ metadata are transparently encrypted and stored in a local repository as
+ opaque blobs.
 
 Package: silofs-tests
 Architecture: any

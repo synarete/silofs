@@ -1,6 +1,7 @@
 FROM docker.io/library/ubuntu:latest
 ARG DISTNAME="silofs-0.0.0"
 ARG BUILDDIR="build"
+
 WORKDIR /scratch
 RUN apt-get update -y
 RUN apt-get upgrade -y
@@ -9,3 +10,6 @@ RUN ./install-deb-deps.sh --base
 COPY $BUILDDIR/$DISTNAME.tar.gz .
 RUN tar xvfz $DISTNAME.tar.gz
 RUN make -f $DISTNAME/devel.mk deb
+RUN mv ./$DISTNAME/build/pkg/silofs_*.deb ./
+RUN apt-get install -y ./silofs_*.deb
+RUN silofs --version

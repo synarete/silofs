@@ -15,6 +15,7 @@ version_sh=${rootdir}/version.sh
 version=$(run "${version_sh}" --version)
 release=$(run "${version_sh}" --release)
 revision=$(run "${version_sh}" --revision)
+changelog_date=$(date -R)
 archive_tgz=${name}-${version}.tar.gz
 
 builddir=${rootdir}/build
@@ -79,23 +80,26 @@ run cp "${debsourcedir}"/copyright "${debbuild_debiandir}"
 run cp "${debsourcedir}"/docs "${debbuild_debiandir}"
 run cp "${debsourcedir}"/README.Debian "${debbuild_debiandir}"
 run cp "${debsourcedir}"/rules "${debbuild_debiandir}"
+run chmod 0755 "${debbuild_debiandir}"/rules
 run cp "${debsourcedir}"/silofs.install "${debbuild_debiandir}"
 run cp "${debsourcedir}"/not-installed "${debbuild_debiandir}"
-run sed -e "s|usr/lib/python3/dist-packages|${py3sitedir#/}|" \
-    "${debsourcedir}"/silofs-tests.install \
-    > "${debbuild_debiandir}"/silofs-tests.install
+run cp "${debsourcedir}"/silofs-tests.install "${debbuild_debiandir}"
 run cp "${debsourcedir}"/silofs.postinst "${debbuild_debiandir}"
+run chmod 0755 "${debbuild_debiandir}"/silofs.postinst
 run cp "${debsourcedir}"/silofs.prerm "${debbuild_debiandir}"
+run chmod 0755 "${debbuild_debiandir}"/silofs.prerm
 run cp "${debsourcedir}"/silofs.postrm "${debbuild_debiandir}"
-
+run chmod 0755 "${debbuild_debiandir}"/silofs.postrm
 
 # Generate changelog
 run sed \
-    -e "s,[@]PACKAGE_NAME[@],${name},g" \
-    -e "s,[@]PACKAGE_VERSION[@],${version},g" \
-    -e "s,[@]PACKAGE_RELEASE[@],${release},g" \
-    -e "s,[@]PACKAGE_REVISION[@],${revision},g" \
-    "${debsourcedir}"/changelog.in > "${debbuild_debiandir}"/changelog
+    -e "s|[@]PACKAGE_NAME[@]|${name}|g" \
+    -e "s|[@]PACKAGE_VERSION[@]|${version}|g" \
+    -e "s|[@]PACKAGE_RELEASE[@]|${release}|g" \
+    -e "s|[@]PACKAGE_REVISION[@]|${revision}|g" \
+    -e "s|[@]CHANGELOG_DATE[@]|${changelog_date}|g" \
+    "${debsourcedir}"/changelog.in > \
+      "${debbuild_debiandir}"/changelog
 
 # Build deb package
 cd "${debbuild_distdir}"

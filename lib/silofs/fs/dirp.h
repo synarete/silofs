@@ -48,19 +48,9 @@ typedef uint64_t silofs_dtn_index_t;
 typedef uint64_t silofs_dtn_ord_t;
 typedef uint32_t silofs_dtn_depth_t;
 
-enum silofs_dtree_consts {
-	DTREE_SHIFT      = SILOFS_DTREE_NODE_SHIFT,
-	DTREE_FANOUT     = SILOFS_DTREE_NODE_NCHILDS,
-	DTREE_DEPTH_MAX  = SILOFS_DTREE_DEPTH_MAX,
-	DTREE_INDEX_NULL = SILOFS_DTREE_INDEX_NULL,
-	DTREE_INDEX_ROOT = SILOFS_DTREE_INDEX_ROOT,
-	DTREE_INDEX_MAX  = SILOFS_DTREE_INDEX_MAX,
-	DTREE_OFF_SHIFT  = SILOFS_DTREE_OFF_SHIFT,
-};
-
 enum silofs_de_consts {
-	DE_NAME_HASH_SHIFT = 24,
-	DE_NAME_HASH_MASK  = (1U << DE_NAME_HASH_SHIFT) - 1
+	SILOFS_DE_NAME_HASH_SHIFT = 24,
+	SILOFS_DE_NAME_HASH_MASK  = (1U << SILOFS_DE_NAME_HASH_SHIFT) - 1
 };
 
 struct silofs_dir_entry_info {

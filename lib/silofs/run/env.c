@@ -44,6 +44,7 @@ enum silofs_env_initf {
 
 /* Local functions */
 static void env_detach_fuseq(struct silofs_env *env);
+static int env_update_repodir(struct silofs_env *env, const char *repodir);
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
@@ -510,6 +511,7 @@ static void env_fini_prandgen(struct silofs_env *env)
 static void env_fini(struct silofs_env *env)
 {
 	env_detach_fuseq(env);
+	env_update_repodir(env, nullptr);
 	env_fini_iis_predq(env);
 	env_fini_fsroot(env);
 	env_fini_idsmap(env);

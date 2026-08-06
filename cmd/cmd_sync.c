@@ -17,11 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_sync_help_desc =
+static const char *const cmd_sync_help_desc = {
 	"sync [<pathname>]                                               \n"
 	"                                                                \n"
 	"options:                                                        \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
+};
 
 struct cmd_sync_in_args {
 	char *pathname;
@@ -40,9 +41,9 @@ static struct cmd_sync_ctx *cmd_sync_ctx_p;
 static void cmd_sync_parse_optargs(struct cmd_sync_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

@@ -17,11 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_lsmnt_help_desc =
+static const char *const cmd_lsmnt_help_desc = {
 	"lsmnt [options]                                                 \n"
 	"                                                                \n"
 	"options:                                                        \n"
-	"  -l, --long                   Long listing format              \n";
+	"  -l, --long                   Long listing format              \n"
+};
 
 struct cmd_lsmnt_in_args {
 	char *mntpoint;
@@ -42,9 +43,9 @@ static struct cmd_lsmnt_ctx *cmd_lsmnt_ctx_p;
 static void cmd_lsmnt_parse_optargs(struct cmd_lsmnt_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "long", 'l', 0 },
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("long", 'l', 0),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

@@ -17,12 +17,13 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_tune_help_desc =
+static const char *const cmd_tune_help_desc = {
 	"tune --ftype=1|2 <dirpath>                                      \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -t, --ftype=1|2              Sub-type to assign to child files\n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
+};
 
 struct cmd_tune_in_args {
 	char *dirpath;
@@ -44,10 +45,10 @@ static struct cmd_tune_ctx *cmd_tune_ctx_p;
 static void cmd_tune_parse_optargs(struct cmd_tune_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "ftype", 't', 1 },
-		{ "loglevel", 'L', 1 },
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("ftype", 't', 1),
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

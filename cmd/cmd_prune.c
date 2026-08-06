@@ -17,9 +17,10 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_prune_help_desc =
+static const char *const cmd_prune_help_desc = {
 	"prune [options] <repodir>                                       \n"
-	"                                                                \n";
+	"                                                                \n"
+};
 
 struct cmd_prune_in_args {
 	char *repodir;
@@ -38,8 +39,8 @@ static struct cmd_prune_ctx *cmd_prune_ctx_p;
 static void cmd_prune_parse_optargs(struct cmd_prune_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

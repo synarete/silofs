@@ -161,10 +161,11 @@ void cmd_check_repodir(const char *path)
 	cmd_check_nonemptydir(path, false);
 }
 
-void cmd_check_repodir_fsname(const char *basedir, const char *fsname)
+void cmd_check_repodir_fsname(const char *repodir, const char *fsname)
 {
-	cmd_check_repodir(basedir);
+	cmd_check_repodir(repodir);
 	cmd_check_fsname(fsname);
+	cmd_check_isreg2(repodir, fsname);
 }
 
 static void cmd_stat_ok(const char *path, struct stat *st)

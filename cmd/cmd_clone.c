@@ -21,14 +21,15 @@
 #include <sys/socket.h>
 #include "cmd.h"
 
-static const char *const cmd_clone_help_desc =
+static const char *const cmd_clone_help_desc = {
 	"clone -n <forkname> [<pathname>]                                \n"
 	"clone -n <forkname> --offline <repodir/fsname>                  \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -n, --name=forkname          Result fork name                 \n"
 	"  -X, --offline                Operate on non-mounted fs        \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
+};
 
 struct cmd_clone_in_args {
 	char *repodir_fsname;
@@ -282,8 +283,7 @@ static void cmd_clone_do_ioctl_forkfs(struct cmd_clone_ctx *ctx)
 static void cmd_clone_do_ioctl_syncfs(struct cmd_clone_ctx *ctx)
 {
 	const char *dirpath = ctx->in_args.dirpath_real;
-	int dfd;
-	int err;
+	int err, dfd = -1;
 
 	cmd_reset_ioc(ctx->ioc);
 	err = silofs_sys_open(dirpath, O_DIRECTORY | O_RDONLY, 0, &dfd);

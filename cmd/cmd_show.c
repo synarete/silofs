@@ -18,7 +18,7 @@
 #include "cmd.h"
 #include <sys/mount.h>
 
-static const char *const cmd_show_help_desc =
+static const char *const cmd_show_help_desc = {
 	"show <subcmd> <pathname>                                        \n"
 	"                                                                \n"
 	"sub commands:                                                   \n"
@@ -27,7 +27,8 @@ static const char *const cmd_show_help_desc =
 	"  boot         Show file-system name and id                     \n"
 	"  proc         Show state of active mount daemon                \n"
 	"  spstats      Show space-allocations stats                     \n"
-	"  statx        Show extended file stats                         \n";
+	"  statx        Show extended file stats                         \n"
+};
 
 struct cmd_show_in_args {
 	char *pathname;
@@ -49,8 +50,8 @@ static struct cmd_show_ctx *cmd_show_ctx_p;
 static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;

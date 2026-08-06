@@ -20,12 +20,13 @@
 #include <sys/statvfs.h>
 #include <sys/mount.h>
 
-static const char *const cmd_umount_help_desc =
+static const char *const cmd_umount_help_desc = {
 	"umount [options] <mountpoint>                                   \n"
 	"                                                                \n"
 	"options:                                                        \n"
 	"  -l, --lazy                   Detach mode                      \n"
-	"  -f, --force                  Forced mode                      \n";
+	"  -f, --force                  Forced mode                      \n"
+};
 
 struct cmd_umount_in_args {
 	char *mntpoint;
@@ -48,10 +49,10 @@ static struct cmd_umount_ctx *cmd_umount_ctx_p;
 static void cmd_umount_parse_optargs(struct cmd_umount_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "lazy", 'l', 0 },
-		{ "force", 'f', 0 },
-		{ "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("lazy", 'l', 0),
+		CMD_OPTDESC("force", 'f', 0),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -122,23 +123,38 @@ static void cmd_umount_probe_proc(struct cmd_umount_ctx *ctx)
 	ctx->server_pid = (pid_t)(ctx->query.u.proc.pid);
 }
 
-static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
+static void cmd_umount_statfs_mntpoint(struct cmd_umount_ctx *ctx)
 {
 	struct statfs stfs;
+	const char *mntpoint = ctx->in_args.mntpoint;
 	int err;
 
-	cmd_check_mntsrv_conn();
 	err = silofs_sys_statfs(ctx->in_args.mntpoint, &stfs);
-	if ((err == -ENOTCONN) && ctx->in_args.force) {
-		silofs_log_debug("transport endpoint not connected: %s",
-		                 ctx->in_args.mntpoint);
-		ctx->notconn = true;
-		return;
+	if (err) {
+		if (err == -ENOTCONN) {
+			silofs_log_debug("transport endpoint not connected: "
+			                 "mountpoint='%s'",
+			                 mntpoint);
+			if (ctx->in_args.force) {
+				ctx->notconn = true;
+			}
+		} else {
+			silofs_log_debug("statfs error: mountpoint='%s' "
+			                 "err=%d",
+			                 mntpoint, err);
+		}
 	}
-	cmd_realpath(ctx->in_args.mntpoint, &ctx->in_args.mntpoint_real);
-	cmd_check_fusefs(ctx->in_args.mntpoint_real);
-	cmd_check_mntdir(ctx->in_args.mntpoint_real, false);
-	cmd_umount_probe_proc(ctx);
+}
+
+static void cmd_umount_prepare(struct cmd_umount_ctx *ctx)
+{
+	cmd_check_mntsrv_conn();
+	if (!ctx->notconn) {
+		cmd_resolve_mntpoint(ctx->in_args.mntpoint, false,
+		                     &ctx->in_args.mntpoint_real);
+		cmd_check_fusefs(ctx->in_args.mntpoint_real);
+		cmd_umount_probe_proc(ctx);
+	}
 }
 
 static const char *cmd_umount_dirpath(const struct cmd_umount_ctx *ctx)
@@ -235,6 +251,9 @@ void cmd_execute_umount(void)
 
 	/* Parse command's arguments */
 	cmd_umount_parse_optargs(&ctx);
+
+	/* Early-on stat mount-point */
+	cmd_umount_statfs_mntpoint(&ctx);
 
 	/* Verify user's arguments */
 	cmd_umount_prepare(&ctx);

@@ -17,11 +17,12 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_fsck_help_desc =
+static const char *const cmd_fsck_help_desc = {
 	"fsck <repodir/name>                                             \n"
 	"                                                                \n"
 	"options:                                                        \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
+};
 
 struct cmd_fsck_in_args {
 	char *repodir_name;

@@ -18,14 +18,14 @@
 #include "cmd.h"
 
 static const char *const cmd_rmfs_help_desc = {
-	"rmfs <repodir/fsname>                                           \n"
-	"                                                                \n"
-	"options:                                                        \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n"
+	"rmfs --name=fsname <repodir>                                      \n"
+	"                                                                  \n"
+	"                                                                  \n"
+	"options:                                                          \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n"
 };
 
 struct cmd_rmfs_in_args {
-	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
 	char *fsname;
@@ -48,11 +48,12 @@ static struct cmd_rmfs_ctx *cmd_rmfs_ctx_p;
 static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "password", 'p', 1 },  //
-		{ "no-prompt", 'P', 0 }, //
-		{ "loglevel", 'L', 1 },  //
-		{ "help", 'h', 0 },      //
-		{ nullptr, 0, 0 },       //
+		CMD_OPTDESC("name", 'n', 1),
+		CMD_OPTDESC("password", 'p', 1),
+		CMD_OPTDESC("no-prompt", 'P', 0),
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -61,6 +62,10 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 	while (!opa.opa_done && (opt_chr > 0)) {
 		opt_chr = cmd_optargs_parse(&opa);
 		switch (opt_chr) {
+		case 'n':
+			ctx->in_args.fsname =
+				cmd_optarg_getcurr2(&opa, "name");
+			break;
 		case 'P':
 			ctx->in_args.no_prompt = true;
 			break;
@@ -79,20 +84,24 @@ static void cmd_rmfs_parse_optargs(struct cmd_rmfs_ctx *ctx)
 		}
 	}
 
-	ctx->in_args.repodir_fsname =
-		cmd_optargs_getarg(&opa, "repodir/fsname");
+	ctx->in_args.repodir = cmd_optargs_getarg(&opa, "repodir");
 
 	cmd_optargs_cleanup(&opa);
 }
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
+static void cmd_rmfs_require_fsname(const struct cmd_rmfs_ctx *ctx)
+{
+	if (ctx->in_args.fsname == nullptr) {
+		cmd_diez("missing fs name (use 'main' for default)");
+	}
+}
+
 static void cmd_rmfs_prepare(struct cmd_rmfs_ctx *ctx)
 {
-	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
-	               &ctx->in_args.fsname);
-	cmd_realpath_dir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_resolve_repodir(ctx->in_args.repodir, false,
+	                    &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
 	                         ctx->in_args.fsname);
 }
@@ -235,7 +244,6 @@ static void cmd_rmfs_finalize(struct cmd_rmfs_ctx *ctx)
 	cmd_rmfs_destroy_env(ctx);
 	cmd_rmfs_release_fslock(ctx);
 	cmd_delpass(&ctx->in_args.password);
-	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.fsname);
@@ -276,6 +284,9 @@ void cmd_execute_rmfs(void)
 
 	/* Parse command's arguments */
 	cmd_rmfs_parse_optargs(&ctx);
+
+	/* Require explicit file-system name */
+	cmd_rmfs_require_fsname(&ctx);
 
 	/* Verify user's arguments */
 	cmd_rmfs_prepare(&ctx);

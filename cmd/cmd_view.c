@@ -17,14 +17,14 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_view_help_desc =
-	"view <repodir/fsname>                                           \n"
-	"                                                                \n"
-	"options:                                                        \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)          \n";
+static const char *const cmd_view_help_desc = {
+	"view [--name=fsname] <repodir>                                    \n"
+	"                                                                  \n"
+	"options:                                                          \n"
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n"
+};
 
 struct cmd_view_in_args {
-	char *repodir_fsname;
 	char *repodir;
 	char *repodir_real;
 	char *fsname;
@@ -48,9 +48,12 @@ static struct cmd_view_ctx *cmd_view_ctx_p;
 static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 {
 	const struct cmd_optdesc ods[] = {
-		{ "password", 'p', 1 }, { "no-prompt", 'P', 0 },
-		{ "loglevel", 'L', 1 }, { "help", 'h', 0 },
-		{ nullptr, 0, 0 },
+		CMD_OPTDESC("name", 'n', 1),
+		CMD_OPTDESC("password", 'p', 1),
+		CMD_OPTDESC("no-prompt", 'P', 0),
+		CMD_OPTDESC("loglevel", 'L', 1),
+		CMD_OPTDESC("help", 'h', 0),
+		CMD_OPTDESC_LAST,
 	};
 	struct cmd_optargs opa;
 	int opt_chr = 1;
@@ -59,6 +62,10 @@ static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 	while (!opa.opa_done && (opt_chr > 0)) {
 		opt_chr = cmd_optargs_parse(&opa);
 		switch (opt_chr) {
+		case 'n':
+			ctx->in_args.fsname =
+				cmd_optarg_getcurr2(&opa, "name");
+			break;
 		case 'P':
 			ctx->in_args.no_prompt = true;
 			break;
@@ -77,8 +84,7 @@ static void cmd_view_parse_optargs(struct cmd_view_ctx *ctx)
 		}
 	}
 
-	ctx->in_args.repodir_fsname =
-		cmd_optargs_getarg(&opa, "repodir/fsname");
+	ctx->in_args.repodir = cmd_optargs_getarg(&opa, "repodir");
 
 	cmd_optargs_cleanup(&opa);
 }
@@ -106,7 +112,6 @@ static void cmd_view_finalize(struct cmd_view_ctx *ctx)
 {
 	cmd_view_destroy_env(ctx);
 	cmd_view_release_fslock(ctx);
-	cmd_pstrfree(&ctx->in_args.repodir_fsname);
 	cmd_pstrfree(&ctx->in_args.repodir);
 	cmd_pstrfree(&ctx->in_args.repodir_real);
 	cmd_pstrfree(&ctx->in_args.fsname);
@@ -136,13 +141,15 @@ static void cmd_view_enable_signals(void)
 	cmd_register_sigactions(nullptr);
 }
 
+static void cmd_view_require_fsname(struct cmd_view_ctx *ctx)
+{
+	cmd_require_fsname(&ctx->in_args.fsname);
+}
+
 static void cmd_view_prepare(struct cmd_view_ctx *ctx)
 {
-	cmd_check_exists(ctx->in_args.repodir_fsname);
-	cmd_check_isreg(ctx->in_args.repodir_fsname);
-	cmd_path_split(ctx->in_args.repodir_fsname, &ctx->in_args.repodir,
-	               &ctx->in_args.fsname);
-	cmd_realpath_rdir(ctx->in_args.repodir, &ctx->in_args.repodir_real);
+	cmd_resolve_repodir(ctx->in_args.repodir, false,
+	                    &ctx->in_args.repodir_real);
 	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
 	                         ctx->in_args.fsname);
 }
@@ -214,6 +221,9 @@ void cmd_execute_view(void)
 
 	/* Parse command's arguments */
 	cmd_view_parse_optargs(&ctx);
+
+	/* Require valid file-system name (or default) */
+	cmd_view_require_fsname(&ctx);
 
 	/* Verify user's arguments */
 	cmd_view_prepare(&ctx);

@@ -25,7 +25,7 @@
 #include <sys/mount.h>
 #include <time.h>
 
-static const char *const cmd_mount_help_desc =
+static const char *const cmd_mount_help_desc = {
 	"mount [options] <repodir> <mountpoint>                            \n"
 	"                                                                  \n"
 	"options:                                                          \n"
@@ -43,7 +43,8 @@ static const char *const cmd_mount_help_desc =
 	"  -D, --nodaemon               Do not run as daemon process       \n"
 	"  -C, --coredump               Allow core-dumps upon fatal errors \n"
 	"  -M, --stdalloc               Use standard C malloc/free         \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n"
+};
 
 struct cmd_mount_in_args {
 	char *repodir;
@@ -404,7 +405,8 @@ static void cmd_mount_prepare_repodir(struct cmd_mount_ctx *ctx)
 {
 	cmd_resolve_repodir(ctx->in_args.repodir, false,
 	                    &ctx->in_args.repodir_real);
-	cmd_check_isreg2(ctx->in_args.repodir_real, ctx->in_args.fsname);
+	cmd_check_repodir_fsname(ctx->in_args.repodir_real,
+	                         ctx->in_args.fsname);
 }
 
 static void cmd_mount_restrict_process(struct cmd_mount_ctx *ctx)
@@ -709,7 +711,7 @@ void cmd_execute_mount(void)
 	/* Parse command's arguments */
 	cmd_mount_parse_optargs(&ctx);
 
-	/* Require valid file-system name */
+	/* Require valid file-system name (or default) */
 	cmd_mount_require_fsname(&ctx);
 
 	/* Require valid mount-point */

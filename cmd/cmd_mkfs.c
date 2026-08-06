@@ -17,8 +17,8 @@
 #define _GNU_SOURCE 1
 #include "cmd.h"
 
-static const char *const cmd_mkfs_help_desc =
-	"mkfs --size=nbytes [options] <repodir>                            \n"
+static const char *const cmd_mkfs_help_desc = {
+	"mkfs --size=fssize [--name=fsname] [options...] <repodir>         \n"
 	"                                                                  \n"
 	"options:                                                          \n"
 	"  -s, --size=nbytes            Capacity size limit                \n"
@@ -27,7 +27,8 @@ static const char *const cmd_mkfs_help_desc =
 	"  -G, --sup-groups             Allow owner's supplementary groups \n"
 	"  -R, --allow-root             Allow root user and group          \n"
 	"  -N, --no-utf8-names          Do not force UTF8 file names       \n"
-	"  -L, --loglevel=level         Logging level (rfc5424)            \n";
+	"  -L, --loglevel=level         Logging level (rfc5424)            \n"
+};
 
 struct cmd_mkfs_in_args {
 	char *repodir;

@@ -189,6 +189,7 @@ _silofs_view() {
 	local options=""
 
 	if [[ "$cur" == -* ]]; then
+		options+="-n --name= "
 		options+="-h --help "
 		_silofs_complete_options "$options"
 	else

@@ -332,8 +332,8 @@ static void validate_ondisk_inode(void)
 static void validate_ondisk_dtree_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_dir_entry, de_ino, 0);
-	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash_dt, 8);
-	REQUIRE_OFFSET32(struct silofs_dir_entry, de_name_len, 12);
+	REQUIRE_OFFSET64(struct silofs_dir_entry, de_name_hash, 8);
+	REQUIRE_OFFSET32(struct silofs_dir_entry, de_name_len_dt, 12);
 	REQUIRE_OFFSETXX(struct silofs_dir_entry, de_name_pos, 14);
 	REQUIRE_SIZEOF(struct silofs_dir_entry, 16);
 

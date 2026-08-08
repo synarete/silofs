@@ -619,8 +619,8 @@ struct silofs_xattr_node {
 
 struct silofs_dir_entry {
 	uint64_t de_ino;
-	uint32_t de_name_hash_dt;
-	uint16_t de_name_len;
+	uint32_t de_name_hash;
+	uint16_t de_name_len_dt;
 	uint16_t de_name_pos;
 } silofs_attr_aligned16;
 

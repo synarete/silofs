@@ -48,11 +48,6 @@ typedef uint64_t silofs_dtn_index_t;
 typedef uint64_t silofs_dtn_ord_t;
 typedef uint32_t silofs_dtn_depth_t;
 
-enum silofs_de_consts {
-	SILOFS_DE_NAME_HASH_SHIFT = 24,
-	SILOFS_DE_NAME_HASH_MASK  = (1U << SILOFS_DE_NAME_HASH_SHIFT) - 1
-};
-
 struct silofs_dir_entry_info {
 	struct silofs_dtnode_info *dti;
 	struct silofs_dir_entry   *de;

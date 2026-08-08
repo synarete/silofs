@@ -154,7 +154,7 @@ hash_to_child_ord(uint64_t hash, silofs_dtn_depth_t depth)
 {
 	constexpr uint64_t dtn_shift   = SILOFS_DTREE_NODE_SHIFT;
 	constexpr uint64_t dtn_nchilds = SILOFS_DTREE_NODE_NCHILDS;
-	silofs_dtn_ord_t ord           = 0;
+	silofs_dtn_ord_t ord;
 
 	silofs_expect_gt(depth, 0);
 	silofs_expect_lt(depth, sizeof(hash));
@@ -163,6 +163,8 @@ hash_to_child_ord(uint64_t hash, silofs_dtn_depth_t depth)
 	if (likely((depth > 0) && (depth <= SILOFS_DTREE_DEPTH_MAX))) {
 		/* make clang-scan happy */
 		ord = (hash >> (dtn_shift * (depth - 1))) % dtn_nchilds;
+	} else {
+		ord = 0;
 	}
 	return ord;
 }
@@ -257,38 +259,38 @@ static void de_set_ino(struct silofs_dir_entry *de, ino_t ino)
 
 static uint32_t de_name_hash(const struct silofs_dir_entry *de)
 {
-	const uint32_t name_hash_dt = silofs_le32_to_cpu(de->de_name_hash_dt);
+	return silofs_le32_to_cpu(de->de_name_hash);
+}
 
-	return name_hash_dt & SILOFS_DE_NAME_HASH_MASK;
+static void de_set_name_hash(struct silofs_dir_entry *de, uint32_t hash)
+{
+	de->de_name_hash = silofs_cpu_to_le32(hash);
 }
 
 static mode_t de_dt(const struct silofs_dir_entry *de)
 {
-	const uint32_t name_hash_dt = silofs_le32_to_cpu(de->de_name_hash_dt);
+	const uint16_t name_len_dt = silofs_le16_to_cpu(de->de_name_len_dt);
 
-	return (mode_t)(name_hash_dt >> SILOFS_DE_NAME_HASH_SHIFT);
-}
-
-static void
-de_set_name_hash_dt(struct silofs_dir_entry *de, uint32_t hash, mode_t dt)
-{
-	const uint32_t dt_shifted  = (uint32_t)dt << SILOFS_DE_NAME_HASH_SHIFT;
-	const uint32_t hash_masked = (hash & SILOFS_DE_NAME_HASH_MASK);
-	const uint32_t name_hash_dt = dt_shifted | hash_masked;
-
-	de->de_name_hash_dt = silofs_cpu_to_le32(name_hash_dt);
+	return (mode_t)(name_len_dt & 0xF);
 }
 
 static size_t de_name_len(const struct silofs_dir_entry *de)
 {
-	return silofs_le16_to_cpu(de->de_name_len);
+	const uint16_t name_len_dt = silofs_le16_to_cpu(de->de_name_len_dt);
+
+	return (name_len_dt) >> 4;
 }
 
-static void de_set_name_len(struct silofs_dir_entry *de, size_t name_len)
+static void
+de_set_name_len_dt(struct silofs_dir_entry *de, size_t name_len, mode_t dt)
 {
-	silofs_assert_le(name_len, SILOFS_NAME_MAX);
+	const uint16_t name_len_dt = (uint16_t)(name_len << 4) |
+	                             (uint16_t)(dt & 0xF);
 
-	de->de_name_len = silofs_cpu_to_le16((uint16_t)name_len);
+	silofs_assert_le(name_len, SILOFS_NAME_MAX);
+	silofs_assert_lt(dt, 16);
+
+	de->de_name_len_dt = silofs_cpu_to_le16(name_len_dt);
 }
 
 static size_t de_name_pos(const struct silofs_dir_entry *de)
@@ -309,11 +311,7 @@ static bool de_has_name_len(const struct silofs_dir_entry *de, size_t nlen)
 static bool
 de_has_name_hash_lo(const struct silofs_dir_entry *de, uint64_t name_hash)
 {
-	const uint32_t nhash    = de_name_hash(de);
-	const uint32_t nhash_lo = (uint32_t)name_hash &
-	                          SILOFS_DE_NAME_HASH_MASK;
-
-	return (nhash == nhash_lo);
+	return (de_name_hash(de) == (uint32_t)name_hash);
 }
 
 static size_t de_data_size_of(const struct silofs_dir_entry *de, size_t nlen)
@@ -325,8 +323,8 @@ static void de_assign_meta(struct silofs_dir_entry *de, ino_t ino, mode_t dt,
                            uint64_t hash, size_t name_len, size_t name_pos)
 {
 	de_set_ino(de, ino);
-	de_set_name_hash_dt(de, (uint32_t)hash, dt);
-	de_set_name_len(de, name_len);
+	de_set_name_hash(de, (uint32_t)hash);
+	de_set_name_len_dt(de, name_len, dt);
 	de_set_name_pos(de, name_pos);
 }
 
@@ -338,8 +336,8 @@ static bool de_isactive(const struct silofs_dir_entry *de)
 static void de_deactivate(struct silofs_dir_entry *de)
 {
 	de_set_ino(de, SILOFS_INO_NULL);
-	de_set_name_hash_dt(de, 0, 0);
-	de_set_name_len(de, 0);
+	de_set_name_hash(de, 0);
+	de_set_name_len_dt(de, 0, 0);
 	de_set_name_pos(de, 0);
 }
 
@@ -1789,7 +1787,7 @@ int silofs_lookup_dentry(const struct silofs_task_ctx *task,
                          const struct silofs_namestr *name,
                          struct silofs_ino_dt *out_idt)
 {
-	struct silofs_dir_ctx d_ctx = {
+	const struct silofs_dir_ctx d_ctx = {
 		.task     = task,
 		.dir_ii   = dir_ii,
 		.name     = name,
@@ -1809,6 +1807,16 @@ static void dirc_add_dti_to_predq(const struct silofs_dir_ctx *d_ctx,
 	silofs_add_to_predq(corefs->iis_predq, d_ctx->dir_ii, &dti->dtn_lni);
 }
 
+static int dirc_check_cap_spawn_child(const struct silofs_dir_ctx *d_ctx,
+                                      silofs_dtn_index_t dtn_idx)
+{
+	if (!dtn_index_valid_depth(dtn_idx)) {
+		return -SILOFS_ENOSPC;
+	}
+	silofs_unused(d_ctx);
+	return 0;
+}
+
 static int
 dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
                  const struct silofs_laddr *parent, silofs_dtn_index_t dtn_idx,
@@ -1816,9 +1824,8 @@ dirc_spawn_child(const struct silofs_dir_ctx *d_ctx,
 {
 	int err;
 
-	if (!dtn_index_valid_depth(dtn_idx)) {
-		return -SILOFS_ENOSPC;
-	}
+	err = dirc_check_cap_spawn_child(d_ctx, dtn_idx);
+	return_if_err(err);
 
 	err = dirc_spawn_setup_dnode(d_ctx, parent, dtn_idx, out_dti);
 	return_if_err(err);

@@ -283,8 +283,8 @@ static long avl_min_key(const struct silofs_avl *avl)
 
 static void
 avl_iterate_range(const struct silofs_avl *avl, struct silofs_avl_node *beg,
-                  const struct silofs_avl_node *end, size_t expected_cnt,
-                  long key_beg, long step)
+		  const struct silofs_avl_node *end, size_t expected_cnt,
+		  long key_beg, long step)
 {
 	size_t cnt;
 	long key                    = key_beg;
@@ -313,7 +313,7 @@ static void
 avl_iterate_all(const struct silofs_avl *avl, long key_beg, long step)
 {
 	avl_iterate_range(avl, avl_begin(avl), avl_end(avl), avl_size(avl),
-	                  key_beg, step);
+			  key_beg, step);
 }
 
 static void avl_iterate_seq(const struct silofs_avl *avl)
@@ -1058,11 +1058,12 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	};
 	const struct silofs_avl_node *an;
 	struct silofs_avl *avl;
-	size_t idx = 0;
+	size_t idx;
 
 	avl = avl_new(ute);
 	avl_populate_keys(avl, keys, UT_ARRAY_SIZE(keys));
 
+	idx = 0;
 	an = avl_begin(avl);
 	while (an != avl_end(avl)) {
 		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
@@ -1091,7 +1092,7 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	/* partial forward iteration */
 	idx = 0;
 	an  = avl_begin(avl);
-	for (size_t i = 0; i < 5 && an != avl_end(avl); ++i) {
+	for (size_t i = 0; i < 7 && an != avl_end(avl); ++i) {
 		ut_expect_lt(idx, UT_ARRAY_SIZE(keys_sorted));
 		if (idx >= UT_ARRAY_SIZE(keys_sorted)) {
 			break; /* make clang-scan happy */
@@ -1102,11 +1103,14 @@ static void ut_avl_iteration_forward_backward(struct ut_env *ute)
 	}
 
 	/* partial backward iteration */
-	for (size_t i = 0; i < 5 && an != avl_begin(avl); ++i) {
+	for (size_t i = 0; i < 7 && an != avl_begin(avl); ++i) {
 		ut_expect_gt(idx, 0);
-		idx--;
-		an = avl_prev(avl, an);
-		check_node(an, keys_sorted[idx]);
+		idx -= 1;
+		an   = avl_prev(avl, an);
+		if (idx < UT_ARRAY_SIZE(keys_sorted)) {
+			/* make clang-scan happy */
+			check_node(an, keys_sorted[idx]);
+		}
 	}
 
 	/* cleanup */

@@ -412,12 +412,6 @@ struct silofs_paddr64b {
 	uint8_t                 reserved[8];
 } silofs_attr_aligned64;
 
-/* space descriptor  */
-struct silofs_spdesc128b {
-	struct silofs_paddr64b spd_beg;
-	struct silofs_paddr64b spd_end;
-} silofs_attr_aligned64;
-
 /* virtual address (compact) */
 struct silofs_laddr56 {
 	uint8_t b[7];

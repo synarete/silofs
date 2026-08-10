@@ -61,27 +61,4 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
 
 size_t silofs_ptype_size(enum silofs_ptype ptype);
 
-/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
-
-/* space descriptor as p-addresses range */
-struct silofs_spdesc {
-	struct silofs_paddr beg;
-	struct silofs_paddr end;
-};
-
-const struct silofs_spdesc *silofs_spdesc_none(void);
-
-void silofs_spdesc_setup(struct silofs_spdesc      *spdesc,
-                         const struct silofs_paddr *beg,
-                         const struct silofs_paddr *end);
-
-void silofs_spdesc_setup1(struct silofs_spdesc      *spdesc,
-                          const struct silofs_paddr *beg);
-
-void silofs_spdesc_htox(struct silofs_spdesc128b   *spdesc128,
-                        const struct silofs_spdesc *spdesc);
-
-void silofs_spdesc_xtoh(const struct silofs_spdesc128b *spdesc128,
-                        struct silofs_spdesc           *spdesc);
-
 #endif /* SILOFS_PADDR_H_ */

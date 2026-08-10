@@ -171,7 +171,6 @@ static void validate_ondisk_addrs(void)
 	REQUIRE_SIZEOF(struct silofs_laddr64, 8);
 	REQUIRE_SIZEOF(struct silofs_paddr64b, 64);
 	REQUIRE_SIZEOF(struct silofs_pnptr256b, 256);
-	REQUIRE_SIZEOF(struct silofs_spdesc128b, 128);
 }
 
 static void validate_ondisk_pnptr(void)
@@ -184,13 +183,6 @@ static void validate_ondisk_pnptr(void)
 	REQUIRE_OFFSET64(struct silofs_pnptr256b, pp_nmeta, 0);
 	REQUIRE_OFFSET64(struct silofs_pnptr256b, pp_paddr, 128);
 	REQUIRE_SIZEOF(struct silofs_pnptr256b, 256);
-}
-
-static void validate_ondisk_spdesc(void)
-{
-	REQUIRE_OFFSET64(struct silofs_spdesc128b, spd_beg, 0);
-	REQUIRE_OFFSET64(struct silofs_spdesc128b, spd_end, 64);
-	REQUIRE_SIZEOF(struct silofs_spdesc128b, 128);
 }
 
 static void validate_ondisk_headers(void)
@@ -423,7 +415,6 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_addrs();
 	validate_ondisk_pnptr();
 	validate_ondisk_pnptr();
-	validate_ondisk_spdesc();
 	validate_ondisk_headers();
 	validate_ondisk_mbr();
 	validate_ondisk_uber_node();

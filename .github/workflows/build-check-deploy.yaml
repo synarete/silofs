@@ -148,7 +148,7 @@ jobs:
           sudo mkdir -p /mnt/test
           sudo chmod 700 /mnt/test
           sudo chown $(id -u):$(id -g) /mnt/test
-          sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
+          sudo sh -c "echo /mnt/test uid=$(id -u) >> /etc/silofs/mountd.conf"
           sudo systemctl restart silofs-mountd.service
           sudo systemctl status silofs-mountd.service
           sleep 10
@@ -193,7 +193,7 @@ jobs:
           sudo mkdir -p /mnt/test
           sudo chmod 700 /mnt/test
           sudo chown $(id -u):$(id -g) /mnt/test
-          sudo sh -c "echo /mnt/test >> /etc/silofs/mountd.conf"
+          sudo sh -c "echo /mnt/test uid=$(id -u) >> /etc/silofs/mountd.conf"
           sudo systemctl restart silofs-mountd.service
           sudo systemctl status silofs-mountd.service
           sleep 10

@@ -30,28 +30,28 @@ ubs_set_btroot(struct silofs_uber_sub *ubs, const struct silofs_pnptr *pnptr)
 	silofs_pnptr256b_htox(&ubs->ubs_btroot, pnptr);
 }
 
-static void ubs_bn_spdesc(const struct silofs_uber_sub *ubs,
-                          struct silofs_spdesc *out_spdesc)
+static void ubs_bn_nextfree(const struct silofs_uber_sub *ubs,
+                            struct silofs_paddr *out_paddr)
 {
-	silofs_spdesc_xtoh(&ubs->ubs_bn_spdesc, out_spdesc);
+	silofs_paddr64b_xtoh(&ubs->ubs_bn_nextfree, out_paddr);
 }
 
-static void ubs_set_bn_spdesc(struct silofs_uber_sub *ubs,
-                              const struct silofs_spdesc *spdesc)
+static void ubs_set_bn_nextfree(struct silofs_uber_sub *ubs,
+                                const struct silofs_paddr *paddr)
 {
-	silofs_spdesc_htox(&ubs->ubs_bn_spdesc, spdesc);
+	silofs_paddr64b_htox(&ubs->ubs_bn_nextfree, paddr);
 }
 
-static void ubs_vn_spdesc(const struct silofs_uber_sub *ubs,
-                          struct silofs_spdesc *out_spdesc)
+static void ubs_vn_nextfree(const struct silofs_uber_sub *ubs,
+                            struct silofs_paddr *out_paddr)
 {
-	silofs_spdesc_xtoh(&ubs->ubs_vn_spdesc, out_spdesc);
+	silofs_paddr64b_xtoh(&ubs->ubs_vn_nextfree, out_paddr);
 }
 
-static void ubs_set_vn_spdesc(struct silofs_uber_sub *ubs,
-                              const struct silofs_spdesc *spdesc)
+static void ubs_set_vn_nextfree(struct silofs_uber_sub *ubs,
+                                const struct silofs_paddr *paddr)
 {
-	silofs_spdesc_htox(&ubs->ubs_vn_spdesc, spdesc);
+	silofs_paddr64b_htox(&ubs->ubs_vn_nextfree, paddr);
 }
 
 static uint64_t ubs_bn_count(const struct silofs_uber_sub *ubs)
@@ -77,8 +77,8 @@ static void ubs_set_vn_count(struct silofs_uber_sub *ubs, uint64_t n)
 static void ubs_reset(struct silofs_uber_sub *ubs)
 {
 	ubs_set_btroot(ubs, silofs_pnptr_none());
-	ubs_set_bn_spdesc(ubs, silofs_spdesc_none());
-	ubs_set_vn_spdesc(ubs, silofs_spdesc_none());
+	ubs_set_bn_nextfree(ubs, silofs_paddr_none());
+	ubs_set_vn_nextfree(ubs, silofs_paddr_none());
 	ubs_set_bn_count(ubs, 0);
 	ubs_set_vn_count(ubs, 0);
 }
@@ -221,58 +221,58 @@ ubn_set_btroot_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
 	ubn_set_btroot(ubn, ubn_slot_of(ubn, ltype), pnptr);
 }
 
-static void ubn_bn_spdesc(const struct silofs_uber_node *ubn, size_t slot,
-                          struct silofs_spdesc *out_spdesc)
+static void ubn_bn_nextfree(const struct silofs_uber_node *ubn, size_t slot,
+                            struct silofs_paddr *out_paddr)
 {
-	ubs_bn_spdesc(ubn_sub_at(ubn, slot), out_spdesc);
+	ubs_bn_nextfree(ubn_sub_at(ubn, slot), out_paddr);
 }
 
 static void
-ubn_bn_spdesc_of(const struct silofs_uber_node *ubn, enum silofs_ltype ltype,
-                 struct silofs_spdesc *out_spdesc)
+ubn_bn_nextfree_of(const struct silofs_uber_node *ubn, enum silofs_ltype ltype,
+                   struct silofs_paddr *out_paddr)
 {
-	ubn_bn_spdesc(ubn, ubn_slot_of(ubn, ltype), out_spdesc);
+	ubn_bn_nextfree(ubn, ubn_slot_of(ubn, ltype), out_paddr);
 }
 
-static void ubn_set_bn_spdesc(struct silofs_uber_node *ubn, size_t slot,
-                              const struct silofs_spdesc *spdesc)
+static void ubn_set_bn_nextfree(struct silofs_uber_node *ubn, size_t slot,
+                                const struct silofs_paddr *paddr)
 {
-	ubs_set_bn_spdesc(ubn_mut_sub_at(ubn, slot), spdesc);
+	ubs_set_bn_nextfree(ubn_mut_sub_at(ubn, slot), paddr);
 }
 
 static void
-ubn_set_bn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
-                     const struct silofs_spdesc *spdesc)
+ubn_set_bn_nextfree_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
+                       const struct silofs_paddr *paddr)
 {
 	const size_t slot = ubn_slot_of(ubn, ltype);
 
-	ubn_set_bn_spdesc(ubn, slot, spdesc);
+	ubn_set_bn_nextfree(ubn, slot, paddr);
 }
 
-static void ubn_vn_spdesc(const struct silofs_uber_node *ubn, size_t slot,
-                          struct silofs_spdesc *out_spdesc)
+static void ubn_vn_nextfree(const struct silofs_uber_node *ubn, size_t slot,
+                            struct silofs_paddr *out_paddr)
 {
-	ubs_vn_spdesc(ubn_sub_at(ubn, slot), out_spdesc);
-}
-
-static void
-ubn_vn_spdesc_of(const struct silofs_uber_node *ubn, enum silofs_ltype ltype,
-                 struct silofs_spdesc *out_spdesc)
-{
-	ubn_vn_spdesc(ubn, ubn_slot_of(ubn, ltype), out_spdesc);
-}
-
-static void ubn_set_vn_spdesc(struct silofs_uber_node *ubn, size_t slot,
-                              const struct silofs_spdesc *spdesc)
-{
-	ubs_set_vn_spdesc(ubn_mut_sub_at(ubn, slot), spdesc);
+	ubs_vn_nextfree(ubn_sub_at(ubn, slot), out_paddr);
 }
 
 static void
-ubn_set_vn_spdesc_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
-                     const struct silofs_spdesc *spdesc)
+ubn_vn_nextfree_of(const struct silofs_uber_node *ubn, enum silofs_ltype ltype,
+                   struct silofs_paddr *out_paddr)
 {
-	ubn_set_vn_spdesc(ubn, ubn_slot_of(ubn, ltype), spdesc);
+	ubn_vn_nextfree(ubn, ubn_slot_of(ubn, ltype), out_paddr);
+}
+
+static void ubn_set_vn_nextfree(struct silofs_uber_node *ubn, size_t slot,
+                                const struct silofs_paddr *paddr)
+{
+	ubs_set_vn_nextfree(ubn_mut_sub_at(ubn, slot), paddr);
+}
+
+static void
+ubn_set_vn_nextfree_of(struct silofs_uber_node *ubn, enum silofs_ltype ltype,
+                       const struct silofs_paddr *paddr)
+{
+	ubn_set_vn_nextfree(ubn, ubn_slot_of(ubn, ltype), paddr);
 }
 
 static uint64_t
@@ -436,40 +436,49 @@ void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
 	silofs_ubi_set_btroot(ubi, silofs_bti_self(bti));
 }
 
-void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
-                          const struct silofs_stype *stype,
-                          struct silofs_spdesc *out_spdesc)
+void silofs_ubi_nextfree_of(const struct silofs_uber_info *ubi,
+                            const struct silofs_stype *stype,
+                            struct silofs_paddr *out_paddr)
 {
 	if (stype->ptype == SILOFS_PTYPE_LNODE) {
-		ubn_vn_spdesc_of(ubi->ubn, stype->ltype, out_spdesc);
+		ubn_vn_nextfree_of(ubi->ubn, stype->ltype, out_paddr);
 	} else {
 		silofs_assert_eq(stype->ptype, SILOFS_PTYPE_BTNODE);
-		ubn_bn_spdesc_of(ubi->ubn, stype->ltype, out_spdesc);
+		ubn_bn_nextfree_of(ubi->ubn, stype->ltype, out_paddr);
 	}
 }
 
-void silofs_ubi_start_spdesc(struct silofs_uber_info *ubi,
+static void ubi_set_nextfree(struct silofs_uber_info *ubi,
                              const struct silofs_paddr *paddr)
 {
-	struct silofs_spdesc spdesc = {};
-
-	silofs_spdesc_setup1(&spdesc, paddr);
-	silofs_ubi_update_spdesc(ubi, &spdesc);
-}
-
-void silofs_ubi_update_spdesc(struct silofs_uber_info *ubi,
-                              const struct silofs_spdesc *spdesc)
-{
-	const struct silofs_blobid *blobid = &spdesc->beg.blobid;
+	const struct silofs_blobid *blobid = &paddr->blobid;
 	const enum silofs_ltype ltype      = blobid->stype.ltype;
 
 	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
-		ubn_set_vn_spdesc_of(ubi->ubn, ltype, spdesc);
+		ubn_set_vn_nextfree_of(ubi->ubn, ltype, paddr);
 	} else {
-		silofs_assert_eq(blobid->stype.ptype, SILOFS_PTYPE_BTNODE);
-		ubn_set_bn_spdesc_of(ubi->ubn, ltype, spdesc);
+		silofs_assert((blobid->stype.ptype == SILOFS_PTYPE_UBER) ||
+		              (blobid->stype.ptype == SILOFS_PTYPE_BTNODE));
+		ubn_set_bn_nextfree_of(ubi->ubn, ltype, paddr);
 	}
 	ubi_inc_generation(ubi);
+}
+
+void silofs_ubi_set_nextfree(struct silofs_uber_info *ubi,
+                             const struct silofs_paddr *paddr)
+{
+	ubi_set_nextfree(ubi, paddr);
+}
+
+void silofs_ubi_consume_nextfree(struct silofs_uber_info *ubi,
+                                 const struct silofs_stype *stype,
+                                 struct silofs_paddr *out_paddr)
+{
+	struct silofs_paddr paddr_nxt;
+
+	silofs_ubi_nextfree_of(ubi, stype, out_paddr);
+	silofs_paddr_next(out_paddr, &paddr_nxt);
+	ubi_set_nextfree(ubi, &paddr_nxt);
 }
 
 void silofs_ubi_inc_count_by(struct silofs_uber_info *ubi,

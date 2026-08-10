@@ -120,10 +120,12 @@ bti_paddr(const struct silofs_btnode_info *bti)
 static void update_formatted_btroot(const struct silofs_task_ctx *task,
                                     const struct silofs_btnode_info *bti)
 {
-	struct silofs_uber_info *ubi = task->corefs->fsroot->ubi;
+	struct silofs_uber_info *ubi     = task->corefs->fsroot->ubi;
+	const struct silofs_paddr *paddr = bti_paddr(bti);
+	struct silofs_paddr tmp;
 
 	silofs_ubi_set_btroot_by(ubi, bti);
-	silofs_ubi_start_spdesc(ubi, bti_paddr(bti));
+	silofs_ubi_consume_nextfree(ubi, &paddr->blobid.stype, &tmp);
 }
 
 static int format_btree_root_of(const struct silofs_task_ctx *task,
@@ -148,7 +150,7 @@ static int format_lspace_root_of(const struct silofs_task_ctx *task,
 	err = silofs_carve_base_lspace(task->corefs, ltype, &paddr);
 	return_if_err(err);
 
-	silofs_ubi_start_spdesc(task->corefs->fsroot->ubi, &paddr);
+	silofs_ubi_set_nextfree(task->corefs->fsroot->ubi, &paddr);
 
 	err = flush_and_drop(task);
 	return_if_err(err);

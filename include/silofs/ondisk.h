@@ -405,11 +405,17 @@ struct silofs_blobidx {
 	struct silofs_hash256 idx;
 } silofs_attr_aligned16;
 
-/* persistent blob addressing */
+/* persistent addressing within blob */
 struct silofs_paddr64b {
 	struct silofs_blobid48b blobid48b;
 	int64_t                 pos;
 	uint8_t                 reserved[8];
+} silofs_attr_aligned64;
+
+/* space descriptor  */
+struct silofs_spdesc128b {
+	struct silofs_paddr64b spd_beg;
+	struct silofs_paddr64b spd_end;
 } silofs_attr_aligned64;
 
 /* virtual address (compact) */
@@ -438,12 +444,6 @@ struct silofs_pnptr256b {
 	struct silofs_nmeta128b pp_nmeta;
 	struct silofs_paddr64b  pp_paddr;
 	uint8_t                 pp_reserved[64];
-} silofs_attr_aligned64;
-
-/* space descriptor  */
-struct silofs_spdesc128b {
-	struct silofs_paddr64b spd_beg;
-	struct silofs_paddr64b spd_end;
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -501,12 +501,13 @@ struct silofs_header {
 
 /* uber-node sub-child by vspace */
 struct silofs_uber_sub {
-	struct silofs_pnptr256b  ubs_btroot;
-	struct silofs_spdesc128b ubs_bn_spdesc;
-	struct silofs_spdesc128b ubs_vn_spdesc;
-	uint64_t                 ubs_bn_count;
-	uint64_t                 ubs_vn_count;
-	uint8_t                  ubs_reserved[496];
+	struct silofs_pnptr256b ubs_btroot;
+	struct silofs_paddr64b  ubs_bn_nextfree;
+	struct silofs_paddr64b  ubs_vn_nextfree;
+	uint8_t                 ubs_reserved1[128];
+	uint64_t                ubs_bn_count;
+	uint64_t                ubs_vn_count;
+	uint8_t                 ubs_reserved2[496];
 } silofs_attr_aligned64;
 
 /* uber-node */

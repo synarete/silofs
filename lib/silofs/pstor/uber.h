@@ -60,15 +60,16 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
                           enum silofs_ltype              ltype,
                           struct silofs_pnptr           *out_pnptr);
 
-void silofs_ubi_spdesc_of(const struct silofs_uber_info *ubi,
-                          const struct silofs_stype     *stype,
-                          struct silofs_spdesc          *out_spdesc);
-
-void silofs_ubi_start_spdesc(struct silofs_uber_info   *ubi,
+void silofs_ubi_set_nextfree(struct silofs_uber_info   *ubi,
                              const struct silofs_paddr *paddr);
 
-void silofs_ubi_update_spdesc(struct silofs_uber_info    *ubi,
-                              const struct silofs_spdesc *spdesc);
+void silofs_ubi_nextfree_of(const struct silofs_uber_info *ubi,
+                            const struct silofs_stype     *stype,
+                            struct silofs_paddr           *out_paddr);
+
+void silofs_ubi_consume_nextfree(struct silofs_uber_info   *ubi,
+                                 const struct silofs_stype *stype,
+                                 struct silofs_paddr       *out_paddr);
 
 void silofs_ubi_inc_count_by(struct silofs_uber_info    *ubi,
                              const struct silofs_blobid *blobid);

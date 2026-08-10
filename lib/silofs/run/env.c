@@ -547,7 +547,6 @@ static void env_init_corefs(struct silofs_env *env)
 	corefs->iis_predq = &env->iis_predq;
 	corefs->idsmap    = &env->idsmap;
 	corefs->uconv     = &env->uconv;
-	corefs->ubi       = nullptr;
 }
 
 static int

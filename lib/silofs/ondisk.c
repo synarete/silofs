@@ -222,8 +222,8 @@ static void validate_ondisk_mbr(void)
 static void validate_ondisk_uber_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_btroot, 0);
-	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_bn_spdesc, 256);
-	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_vn_spdesc, 384);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_bn_nextfree, 256);
+	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_vn_nextfree, 320);
 	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_bn_count, 512);
 	REQUIRE_OFFSET64(struct silofs_uber_sub, ubs_vn_count, 520);
 	REQUIRE_SIZEOF(struct silofs_uber_sub, 1024);

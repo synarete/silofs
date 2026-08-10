@@ -123,6 +123,7 @@ int silofs_carve_base_ubspace(const struct silofs_core_refs *corefs,
 	gen_uniqid(corefs, &blobid.uniqid);
 
 	silofs_paddr_init(&paddr, &blobid, 0);
+
 	return gen_pnptr_at(corefs, &paddr, out_pnptr);
 }
 
@@ -139,7 +140,9 @@ int silofs_carve_base_btspace(const struct silofs_core_refs *corefs,
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(corefs), nullptr);
 	gen_uniqid(corefs, &blobid.uniqid);
+
 	silofs_paddr_init(&paddr, &blobid, 0);
+	silofs_ubi_set_nextfree(corefs->fsroot->ubi, &paddr);
 
 	return gen_pnptr_at(corefs, &paddr, out_pnptr);
 }
@@ -156,7 +159,9 @@ int silofs_carve_base_lspace(const struct silofs_core_refs *corefs,
 
 	silofs_blobid_init(&blobid, &stype, top_layerid(corefs), nullptr);
 	gen_uniqid(corefs, &blobid.uniqid);
+
 	silofs_paddr_init(out_paddr, &blobid, 0);
+	silofs_ubi_set_nextfree(corefs->fsroot->ubi, out_paddr);
 
 	return 0;
 }
@@ -165,16 +170,7 @@ static void carve_next_space_of(const struct silofs_core_refs *corefs,
                                 const struct silofs_stype *stype,
                                 struct silofs_paddr *out_paddr)
 {
-	struct silofs_spdesc spdesc_cur, spdesc_nxt;
-	struct silofs_paddr paddr_nxt;
-
-	silofs_ubi_spdesc_of(corefs->fsroot->ubi, stype, &spdesc_cur);
-
-	silofs_paddr_assign(out_paddr, &spdesc_cur.end);
-	silofs_paddr_next(&spdesc_cur.end, &paddr_nxt);
-
-	silofs_spdesc_setup(&spdesc_nxt, &spdesc_cur.beg, &paddr_nxt);
-	silofs_ubi_update_spdesc(corefs->fsroot->ubi, &spdesc_nxt);
+	silofs_ubi_consume_nextfree(corefs->fsroot->ubi, stype, out_paddr);
 }
 
 static bool try_carve_free_space_of(const struct silofs_core_refs *corefs,

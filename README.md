@@ -9,28 +9,23 @@
 
 
 ## Overview
+Silofs (Stored In Large Objects File-System) is an open-source, encrypted FUSE
+file-system built for secure, private data archiving. It transparently converts
+files and metadata into opaque, encrypted blobs, allowing users and operators
+to mount a standard Linux file system locally while ensuring the underlying
+storage remains completely unreadable to host processes or external cloud
+providers.
 
-Silofs is a private, encrypted user-space file-system -- your personal data
-silo. Just as a physical silo keeps its contents sealed and inaccessible to the
-outside world, silofs lets any ordinary user create an isolated storage area
-protected by their own private key, and mount it on a local host. Once mounted,
-files can be read and written like any other file-system, while all data and
-metadata are transparently encrypted and stored in a local repository as
-opaque blobs. Other processes -- even those with valid UNIX credentials -- can
-see those blobs, but cannot read their content. Without the correct key, the
-data cannot be decrypted, tampered with, or compromised in any way. This design
-allows common Linux tools like [rsync](https://rsync.samba.org/) and
-[rclone](https://rclone.org/) to back up or archive the repository to a remote
-location, without ever exposing or endangering the underlying private data.
+With full file-system snapshot capabilities and native cryptographic objects,
+Silofs enables standard Linux tools like [rsync](https://rsync.samba.org/) and
+[rclone](https://rclone.org/) to sync or mirror datasets off-site without
+exposing private data or needing to repack large archives.
 
-Silofs is implemented using Linux's FUSE bridge, and as such it trades
-performance with functionality and ease of use. It is designed to serve
-those who wish to easily ship media content into external cloud storage
-for long-term archiving, but without revealing information on their
-private data, and without paying high costs and extra resources due to
-re-packing. See [Why Silofs?](#why-silofs) for more details.
+In other words, Silofs is your personal data silo. Just as a physical silo
+keeps its contents sealed and inaccessible to the outside world, Silofs lets
+any user create a fully isolated storage area protected entirely by their own
+password.
 
-The name silofs stands for "stored in large objects file-system".
 
 ## Build and Install
 
@@ -317,6 +312,13 @@ more sophisticated modern backup applications, which typically use
 content addressable mechanism to cope with this problem, fail to
 produce optimal results beyond a certain volume size and namespace
 complexity.
+
+Silofs is implemented using Linux's FUSE bridge, and as such it trades
+performance with functionality and ease of use. It is designed to serve
+those who wish to easily ship media content into external cloud storage
+for long-term archiving, but without revealing information on their
+private data, and without paying high costs and extra resources due to
+re-packing.
 
 ## License
 

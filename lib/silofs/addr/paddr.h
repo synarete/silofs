@@ -25,7 +25,6 @@
 struct silofs_paddr {
 	struct silofs_blobid blobid;
 	off_t                pos;
-	enum silofs_ptype    ptype;
 };
 
 const struct silofs_paddr *silofs_paddr_none(void);
@@ -50,6 +49,8 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr1,
 
 void silofs_paddr_next(const struct silofs_paddr *paddr,
                        struct silofs_paddr       *out_next);
+
+enum silofs_ptype silofs_paddr_ptype(const struct silofs_paddr *paddr);
 
 void silofs_paddr64b_htox(struct silofs_paddr64b    *paddr64,
                           const struct silofs_paddr *paddr);

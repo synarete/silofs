@@ -97,7 +97,6 @@ static const struct silofs_pnptr s_pnptr_none = {
 	.nmeta.ciargs.algo = SILOFS_CIPHER_NONE,
 	.nmeta.ciargs.mode = SILOFS_CIPHER_MODE_NONE,
 	.paddr.pos         = SILOFS_OFF_NULL,
-	.paddr.ptype       = SILOFS_PTYPE_NONE,
 };
 
 const struct silofs_pnptr *silofs_pnptr_none(void)

@@ -59,7 +59,7 @@ struct silofs_pnode_info *silofs_pni_from_dqe(const struct silofs_dq_elem *dqe)
 static void
 stype_of(const struct silofs_paddr *paddr, struct silofs_stype *out_stype)
 {
-	out_stype->ptype = paddr->ptype;
+	out_stype->ptype = silofs_paddr_ptype(paddr);
 	out_stype->ltype = SILOFS_LTYPE_NONE;
 }
 
@@ -105,7 +105,7 @@ struct silofs_pview *silofs_pni_pviewx(const struct silofs_pnode_info *pni)
 
 static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)
 {
-	return pni->pn_self.paddr.ptype;
+	return silofs_paddr_ptype(&pni->pn_self.paddr);
 }
 
 enum silofs_ptype silofs_pni_ptype(const struct silofs_pnode_info *pni)
@@ -612,7 +612,7 @@ silofs_bti_from_pni(const struct silofs_pnode_info *pni)
 
 static enum silofs_ptype pnptr_ptype(const struct silofs_pnptr *pnptr)
 {
-	return pnptr->paddr.ptype;
+	return silofs_paddr_ptype(&pnptr->paddr);
 }
 
 struct silofs_pnode_info *

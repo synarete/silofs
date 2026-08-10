@@ -52,18 +52,19 @@ pni_paddr(const struct silofs_pnode_info *pni)
 	return silofs_pni_paddr(pni);
 }
 
+static enum silofs_ptype pni_ptype(const struct silofs_pnode_info *pni)
+{
+	return silofs_paddr_ptype(pni_paddr(pni));
+}
+
 static bool pni_isuber(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_paddr *paddr = pni_paddr(pni);
-
-	return ptype_isuber(paddr->ptype);
+	return ptype_isuber(pni_ptype(pni));
 }
 
 static bool pni_isbtnode(const struct silofs_pnode_info *pni)
 {
-	const struct silofs_paddr *paddr = pni_paddr(pni);
-
-	return ptype_isbtnode(paddr->ptype);
+	return ptype_isbtnode(pni_ptype(pni));
 }
 
 static const struct silofs_pview * //
@@ -130,7 +131,8 @@ static const struct silofs_btnode_info * //
 bti_of(const struct silofs_pnode_info *pni)
 {
 	silofs_assert_not_null(pni);
-	silofs_assert_eq(pni->pn_self.paddr.ptype, SILOFS_PTYPE_BTNODE);
+	silofs_assert_eq(pni->pn_self.paddr.blobid.stype.ptype,
+	                 SILOFS_PTYPE_BTNODE);
 
 	return silofs_bti_from_pni(pni);
 }
@@ -542,7 +544,6 @@ static int stc_stage_uber(struct silofs_stage_ctx *st_ctx,
 	struct silofs_pnode_info *pni = nullptr;
 	int err;
 
-	silofs_assert_eq(pnptr->paddr.ptype, SILOFS_PTYPE_UBER);
 	err = stc_stage_pnode(st_ctx, pnptr, &pni);
 	return_if_err(err);
 
@@ -629,7 +630,6 @@ static int stc_stage_bldesc(struct silofs_stage_ctx *st_ctx,
 	struct silofs_pnode_info *pni = nullptr;
 	int err;
 
-	silofs_assert_eq(pnptr->paddr.ptype, SILOFS_PTYPE_BLDESC);
 	err = stc_stage_pnode(st_ctx, pnptr, &pni);
 	return_if_err(err);
 
@@ -1065,7 +1065,6 @@ static int dsc_stage_btnode(const struct silofs_destage_ctx *ds_ctx,
                             const struct silofs_pnptr *pnptr,
                             struct silofs_btnode_info **out_bti)
 {
-	silofs_assert_eq(pnptr->paddr.ptype, SILOFS_PTYPE_BTNODE);
 	return silofs_stage_btnode(ds_ctx->corefs, pnptr, out_bti);
 }
 
@@ -1251,14 +1250,17 @@ static int dsc_secure_pnodes(struct silofs_destage_ctx *ds_ctx)
 static int compare_paddrs(const struct silofs_paddr *paddr1,
                           const struct silofs_paddr *paddr2)
 {
+	enum silofs_ptype ptype1, ptype2;
 	long cmp;
 
 	silofs_assume_not_null(paddr1);
 	silofs_assume_not_null(paddr2);
 
-	if (paddr1->ptype != paddr2->ptype) {
+	ptype1 = silofs_paddr_ptype(paddr1);
+	ptype2 = silofs_paddr_ptype(paddr2);
+	if (ptype1 != ptype2) {
 		/* Invert ordering by ptype: btnode come before uber */
-		cmp = (long)paddr2->ptype - (long)paddr1->ptype;
+		cmp = (long)ptype2 - (long)ptype1;
 	} else {
 		cmp = silofs_paddr_compare(paddr1, paddr2);
 	}

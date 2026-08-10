@@ -42,7 +42,7 @@ void silofs_mbref_derive(struct silofs_mbref *mbref,
 {
 	struct silofs_blobidx blobidx;
 
-	silofs_assert_eq(paddr->ptype, SILOFS_PTYPE_MBR);
+	silofs_assert_eq(paddr->blobid.stype.ptype, SILOFS_PTYPE_MBR);
 	silofs_assert_eq(paddr->pos, 0);
 
 	silofs_blobidx_derive(&blobidx, md_hd, &paddr->blobid);

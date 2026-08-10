@@ -51,8 +51,7 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 static const struct silofs_paddr s_paddr_none = {
-	.ptype = SILOFS_PTYPE_NONE,
-	.pos   = SILOFS_OFF_NULL,
+	.pos = SILOFS_OFF_NULL,
 };
 
 const struct silofs_paddr *silofs_paddr_none(void)
@@ -64,8 +63,7 @@ void silofs_paddr_init(struct silofs_paddr *paddr,
                        const struct silofs_blobid *blobid, off_t pos)
 {
 	silofs_blobid_assign(&paddr->blobid, blobid);
-	paddr->pos   = pos;
-	paddr->ptype = blobid->stype.ptype;
+	paddr->pos = pos;
 }
 
 void silofs_paddr_fini(struct silofs_paddr *paddr)
@@ -76,16 +74,14 @@ void silofs_paddr_fini(struct silofs_paddr *paddr)
 void silofs_paddr_reset(struct silofs_paddr *paddr)
 {
 	silofs_blobid_reset(&paddr->blobid);
-	paddr->pos   = SILOFS_OFF_NULL;
-	paddr->ptype = SILOFS_PTYPE_NONE;
+	paddr->pos = SILOFS_OFF_NULL;
 }
 
 void silofs_paddr_assign(struct silofs_paddr *paddr,
                          const struct silofs_paddr *other)
 {
 	silofs_blobid_assign(&paddr->blobid, &other->blobid);
-	paddr->pos   = other->pos;
-	paddr->ptype = other->ptype;
+	paddr->pos = other->pos;
 }
 
 bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
@@ -93,7 +89,7 @@ bool silofs_paddr_isequal(const struct silofs_paddr *paddr,
 {
 	bool ret = false;
 
-	if ((paddr->ptype == other->ptype) && (paddr->pos == other->pos)) {
+	if (paddr->pos == other->pos) {
 		ret = silofs_blobid_isequal(&paddr->blobid, &other->blobid);
 	}
 	return ret;
@@ -109,10 +105,6 @@ long silofs_paddr_compare(const struct silofs_paddr *paddr,
 {
 	long cmp;
 
-	cmp = (long)(paddr->ptype - other->ptype);
-	if (cmp) {
-		return cmp;
-	}
 	cmp = silofs_blobid_compare(&paddr->blobid, &other->blobid);
 	if (cmp) {
 		return cmp;
@@ -142,6 +134,11 @@ void silofs_paddr_next(const struct silofs_paddr *paddr,
 	silofs_paddr_init(out_next, &paddr->blobid, off);
 }
 
+enum silofs_ptype silofs_paddr_ptype(const struct silofs_paddr *paddr)
+{
+	return paddr->blobid.stype.ptype;
+}
+
 void silofs_paddr64b_htox(struct silofs_paddr64b *paddr64,
                           const struct silofs_paddr *paddr)
 {
@@ -154,6 +151,5 @@ void silofs_paddr64b_xtoh(const struct silofs_paddr64b *paddr64,
                           struct silofs_paddr *paddr)
 {
 	silofs_blobid48b_xtoh(&paddr64->blobid48b, &paddr->blobid);
-	paddr->pos   = silofs_off_to_cpu(paddr64->pos);
-	paddr->ptype = paddr->blobid.stype.ptype;
+	paddr->pos = silofs_off_to_cpu(paddr64->pos);
 }

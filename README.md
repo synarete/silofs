@@ -1,6 +1,6 @@
-# Silofs -- Private encrypted file-system for GNU/Linux
+# Silofs -- Private encrypted file-system
 
-1. [Overview](#overview)
+1. [Silofs](#silofs)
 2. [Build and Install](#build-and-install)
 3. [Preparation](#preparation)
 4. [Usage](#usage)
@@ -8,24 +8,18 @@
 6. [License](#license)
 
 
-## Overview
-Silofs (Stored In Large Objects File-System) is an open-source, encrypted FUSE
-file-system built for secure, private data archiving. It transparently converts
-files and metadata into opaque, encrypted blobs, allowing users and operators
-to mount a standard Linux file system locally while ensuring the underlying
-storage remains completely unreadable to host processes or external cloud
-providers.
+## Silofs
 
-With full file-system snapshot capabilities and native cryptographic objects,
-Silofs enables standard Linux tools like [rsync](https://rsync.samba.org/) and
-[rclone](https://rclone.org/) to sync or mirror datasets off-site without
-exposing private data or needing to repack large archives.
-
-In other words, Silofs is your personal data silo. Just as a physical silo
-keeps its contents sealed and inaccessible to the outside world, Silofs lets
-any user create a fully isolated storage area protected entirely by their own
-password.
-
+Silofs (Stored In Large Objects File-System) is an open-source,
+encrypted FUSE file system built for transparent data privacy. It
+converts files and metadata into opaque, encrypted blobs—allowing you
+to mount a standard Linux file system while keeping the raw storage
+completely unreadable to unauthorized local processes or external
+backends. Password-protected and built for GNU/Linux workflows, Silofs
+features built-in snapshot support that lets standard tools like
+[rsync](https://rsync.samba.org/) and [rclone](https://rclone.org/)
+sync, mirror, or back up datasets off-site without repacking archives
+or exposing private data.
 
 ## Build and Install
 

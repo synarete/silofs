@@ -154,11 +154,10 @@ jobs:
           sleep 10
       - name: Make file-system
         run: |
-          silofs init ./build/repo
-          silofs mkfs -s 8G -p 12345678 ./build/repo/test
+          silofs mkfs -s 8G -p 12345678 ./build/myfs
       - name: Mount file-system
         run: |
-          silofs mount -p 12345678 ./build/repo/test /mnt/test
+          silofs mount -p 12345678 ./build/myfs /mnt/test
           mkdir /mnt/test/A
           echo "hello, world" > /mnt/test/A/hello
           cat /mnt/test/A/hello
@@ -166,7 +165,7 @@ jobs:
       - name: Umount file-system
         run: silofs umount /mnt/test
       - name: Cleanups
-        run: rm -rf ./build/repo
+        run: rm -rf ./build/myfs
   build-install-by-autotools:
     name: Build and install by autotools
     runs-on: ubuntu-24.04
@@ -199,11 +198,10 @@ jobs:
           sleep 10
       - name: Make file-system
         run: |
-          silofs init ./build/repo
-          silofs mkfs -s 8G -p 12345678 ./build/repo/test
+          silofs mkfs -s 8G -p 12345678 ./build/myfs
       - name: Mount file-system
         run: |
-          silofs mount -p 12345678 ./build/repo/test /mnt/test
+          silofs mount -p 12345678 ./build/myfs /mnt/test
           silofs lsmnt
       - name: I/O operations
         run: |
@@ -219,7 +217,7 @@ jobs:
       - name: Umount file-system
         run: silofs umount /mnt/test
       - name: Cleanups
-        run: rm -rf ./build/repo
+        run: rm -rf ./build/myfs
       - name: Remove installation
         run: |
           sudo systemctl stop silofs-mountd.service

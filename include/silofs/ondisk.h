@@ -41,23 +41,11 @@
 #define SILOFS_PASSWORD_MIN (8)
 #define SILOFS_PASSWORD_MAX (127)
 
-/* max size for names (not including null terminator) */
-#define SILOFS_NAME_MAX (511)
-
 /* max size for file-system names (not including null terminator) */
 #define SILOFS_FSNAME_MAX (127)
 
 /* max number of uid/gid mapping */
 #define SILOFS_NIDS_MAX (1024)
-
-/* max size of path (symbolic link value, including null) */
-#define SILOFS_PATH_MAX (4096)
-
-/* max size of mount-path (including null) */
-#define SILOFS_MNTPATH_MAX (1920)
-
-/* max path-length of repository-path (including null) */
-#define SILOFS_REPOPATH_MAX (1536)
 
 /* size of repository meta-files  */
 #define SILOFS_REPO_METAFILE_SIZE (1024)
@@ -89,23 +77,8 @@
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE (1024)
 
-/* bits-shift of logical block */
-#define SILOFS_LBK_SHIFT (16)
-
-/* logical block size (64K) */
-#define SILOFS_LBK_SIZE (1L << SILOFS_LBK_SHIFT)
-
-/* number of 1K blocks in logical block */
-#define SILOFS_NKB_IN_LBK (SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
-
 /* non-valid ("NIL") logical byte address */
 #define SILOFS_OFF_NULL (-1)
-
-/* max bit-shift of LBA value */
-#define SILOFS_LBA_SHIFT_MAX (56)
-
-/* non-valid ("NIL") logical block address */
-#define SILOFS_LBA_NULL ((1L << SILOFS_LBA_SHIFT_MAX) - 1)
 
 /* "nil" inode number */
 #define SILOFS_INO_NULL (0)
@@ -153,36 +126,36 @@
 /* maximum size in bytes of regular file */
 #define SILOFS_FILE_SIZE_MAX ((SILOFS_LBK_SIZE * SILOFS_FILE_LEAVES_MAX) - 1)
 
-/* max number of callbacks for read-write iter operations */
-#define SILOFS_FILE_NITER_MAX                                \
-	(SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF + \
-	 (SILOFS_IO_SIZE_MAX / SILOFS_LBK_SIZE))
+/* max size of single I/O operation (2M - 64K) */
+#define SILOFS_IO_SIZE_MAX ((1UL << 21) - (1UL << 16))
 
 /* user data node sizes via regular file mapping */
 #define SILOFS_FILE_DATA_NODE1_SIZE  (1024U)
 #define SILOFS_FILE_DATA_NODE4_SIZE  (4096U)
 #define SILOFS_FILE_DATA_NODE64_SIZE (65536U)
 
-/* max size of single I/O operation (2M - 64K) */
-#define SILOFS_IO_SIZE_MAX ((1UL << 21) - SILOFS_LBK_SIZE)
+/* max number of callbacks for read-write iter operations */
+#define SILOFS_FILE_NITER_MAX (48)
 
-/* cryptographic hash-128-bits bytes-size */
-#define SILOFS_HASH128_LEN (16)
-
-/* cryptographic hash-256-bits bytes-size */
-#define SILOFS_HASH256_LEN (32)
-
-/* cryptographic hash-512-bits bytes-size */
-#define SILOFS_HASH512_LEN (64)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 /* unix-domain socket for mount daemon */
 #define SILOFS_MNTSOCK_NAME "silofs-mount"
 
 /* max number of mount-rules */
-#define SILOFS_MNTRULE_MAX 1024
+#define SILOFS_MNTRULE_MAX (1024)
 
 /* system-wide limit on number for fuse.silofs mounts */
-#define SILOFS_FUSEMNT_MAX 1024
+#define SILOFS_FUSEMNT_MAX (1024)
+
+/* max size of path (symbolic link value, including null) */
+#define SILOFS_PATH_MAX (4096)
+
+/* max size of mount-path (including null) */
+#define SILOFS_MNTPATH_MAX (1920)
+
+/* max path-length of repository-path (including null) */
+#define SILOFS_REPOPATH_MAX (1536)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
@@ -312,6 +285,24 @@ struct silofs_timespec {
 	uint64_t t_nsec;
 } silofs_attr_aligned16;
 
+/* max size for names (not including null terminator) */
+#define SILOFS_NAME_MAX (511)
+
+struct silofs_name {
+	uint8_t name[SILOFS_NAME_MAX + 1];
+} silofs_attr_aligned64;
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* cryptographic hash-128-bits bytes-size */
+#define SILOFS_HASH128_LEN (16)
+
+/* cryptographic hash-256-bits bytes-size */
+#define SILOFS_HASH256_LEN (32)
+
+/* cryptographic hash-512-bits bytes-size */
+#define SILOFS_HASH512_LEN (64)
+
 struct silofs_hash128 {
 	uint8_t hash[SILOFS_HASH128_LEN];
 } silofs_attr_aligned16;
@@ -322,10 +313,6 @@ struct silofs_hash256 {
 
 struct silofs_hash512 {
 	uint8_t hash[SILOFS_HASH512_LEN];
-} silofs_attr_aligned64;
-
-struct silofs_name {
-	uint8_t name[SILOFS_NAME_MAX + 1];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -757,7 +744,12 @@ struct silofs_data_node64 {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* single logical node unit */
+/* logical block size (64K) */
+#define SILOFS_LBK_SIZE (1L << 16)
+
+/* number of 1K blocks in l-block */
+#define SILOFS_NKB_IN_LBK (SILOFS_LBK_SIZE / SILOFS_KB_SIZE)
+
 union silofs_lblock_u {
 #define SILOFS_LBK_N_(n_) (SILOFS_LBK_SIZE / (n_))
 	uint8_t                   bk[SILOFS_LBK_SIZE];
@@ -774,18 +766,6 @@ union silofs_lblock_u {
 
 struct silofs_lblock {
 	union silofs_lblock_u u;
-} silofs_attr_aligned64;
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-/* repo meta record */
-struct silofs_repo_meta {
-	uint64_t rm_magic;
-	uint32_t rm_version;
-	uint32_t rm_mode;
-	uint8_t  rm_reserved1[240];
-	uint8_t  rm_reserved2[256];
-	uint8_t  rm_reserved3[512];
 } silofs_attr_aligned64;
 
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
@@ -846,6 +826,26 @@ struct silofs_btree_node {
 	struct silofs_pnptr256b btn_child[SILOFS_BTREE_NODE_NCHILDS];
 } silofs_attr_aligned64;
 
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+/* persistent block size (64K) */
+#define SILOFS_PBK_SIZE (1L << 16)
+
+/* number of 1K blocks in p-block */
+#define SILOFS_NKB_IN_PBK (SILOFS_PBK_SIZE / SILOFS_KB_SIZE)
+
+union silofs_pblock_u {
+#define SILOFS_PBK_N_(n_) (SILOFS_PBK_SIZE / (n_))
+	uint8_t                  bk[SILOFS_PBK_SIZE];
+	struct silofs_uber_node  ubn;
+	struct silofs_btree_node btn[SILOFS_PBK_N_(SILOFS_BTREE_NODE_SIZE)];
+#undef SILOFS_PBK_N_
+};
+
+struct silofs_pblock {
+	union silofs_pblock_u u;
+} silofs_attr_aligned64;
+
 /*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
 
 /* semantic "view" into pnodes' meta-elements */
@@ -854,6 +854,7 @@ union silofs_pview_u {
 	struct silofs_uber_node  ubn;
 	struct silofs_blob_desc  bd;
 	struct silofs_btree_node btn;
+	struct silofs_pblock     pbk;
 } silofs_attr_aligned64;
 
 struct silofs_pview {
@@ -879,6 +880,18 @@ union silofs_lview_u {
 
 struct silofs_lview {
 	union silofs_lview_u u;
+} silofs_attr_aligned64;
+
+/*: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :*/
+
+/* repo meta record */
+struct silofs_repo_meta {
+	uint64_t rm_magic;
+	uint32_t rm_version;
+	uint32_t rm_mode;
+	uint8_t  rm_reserved1[240];
+	uint8_t  rm_reserved2[256];
+	uint8_t  rm_reserved3[512];
 } silofs_attr_aligned64;
 
 #endif /* SILOFS_ONDISK_H_ */

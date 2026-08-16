@@ -115,7 +115,7 @@ static void gen_base_paddr(const struct silofs_core_refs *corefs,
 	struct silofs_blobid blobid;
 
 	gen_base_blobid(corefs, stype, layerid, &blobid);
-	silofs_paddr_init(out_paddr, &blobid, 0);
+	silofs_paddr_init(out_paddr, &blobid, SILOFS_PBK_SIZE);
 }
 
 static void gen_civkey(const struct silofs_core_refs *corefs,

@@ -588,7 +588,7 @@ static struct silofs_inode_file *filin_of(const struct silofs_inode *inode)
 	return silofs_unconst(filin);
 }
 
-static void filin_validate_vslots(const struct silofs_inode_file *filin)
+static void filin_validate_slots(const struct silofs_inode_file *filin)
 {
 	/* Slot-0: root; Slots [1..4]: 1K data; Slots [5..20]: 4K. */
 	STATICASSERT_GT(ARRAY_SIZE(filin->f_slots),
@@ -596,23 +596,28 @@ static void filin_validate_vslots(const struct silofs_inode_file *filin)
 
 	STATICASSERT_EQ(SILOFS_FILE_HEAD1_LEAF_SIZE * SILOFS_FILE_HEAD1_NLEAF,
 	                SILOFS_FILE_HEAD2_LEAF_SIZE);
+
 	STATICASSERT_EQ((SILOFS_FILE_HEAD1_LEAF_SIZE *
 	                 SILOFS_FILE_HEAD1_NLEAF) +
 	                        (SILOFS_FILE_HEAD2_LEAF_SIZE *
 	                         SILOFS_FILE_HEAD2_NLEAF),
 	                SILOFS_FILE_TREE_LEAF_SIZE);
+
+	STATICASSERT_LE(SILOFS_FILE_NITER_MAX,
+	                SILOFS_FILE_HEAD1_NLEAF + SILOFS_FILE_HEAD2_NLEAF +
+	                        (SILOFS_IO_SIZE_MAX / SILOFS_LBK_SIZE));
 }
 
-static size_t filin_vslot_of_root(const struct silofs_inode_file *filin)
+static size_t filin_slot_of_root(const struct silofs_inode_file *filin)
 {
-	filin_validate_vslots(filin);
+	filin_validate_slots(filin);
 	return 0;
 }
 
 static size_t
-filin_vslot_of_head1(const struct silofs_inode_file *filin, size_t head1_slot)
+filin_slot_of_head1(const struct silofs_inode_file *filin, size_t head1_slot)
 {
-	filin_validate_vslots(filin);
+	filin_validate_slots(filin);
 	silofs_assert_lt(head1_slot, SILOFS_FILE_HEAD1_NLEAF);
 
 	/* use modulo to make clang-scan happy */
@@ -620,9 +625,9 @@ filin_vslot_of_head1(const struct silofs_inode_file *filin, size_t head1_slot)
 }
 
 static size_t
-filin_vslot_of_head2(const struct silofs_inode_file *filin, size_t head2_slot)
+filin_slot_of_head2(const struct silofs_inode_file *filin, size_t head2_slot)
 {
-	filin_validate_vslots(filin);
+	filin_validate_slots(filin);
 	silofs_assert_lt(head2_slot, SILOFS_FILE_HEAD2_NLEAF);
 
 	/* use modulo to make clang-scan happy */
@@ -633,7 +638,7 @@ filin_vslot_of_head2(const struct silofs_inode_file *filin, size_t head2_slot)
 static void filin_head1_leaf(const struct silofs_inode_file *filin,
                              size_t head1_slot, struct silofs_laddr *out_laddr)
 {
-	const size_t slot = filin_vslot_of_head1(filin, head1_slot);
+	const size_t slot = filin_slot_of_head1(filin, head1_slot);
 
 	silofs_laddr64_xtoh(&filin->f_slots[slot], out_laddr);
 }
@@ -642,7 +647,7 @@ static void
 filin_set_head1_leaf(struct silofs_inode_file *filin, size_t head1_slot,
                      const struct silofs_laddr *laddr)
 {
-	const size_t slot = filin_vslot_of_head1(filin, head1_slot);
+	const size_t slot = filin_slot_of_head1(filin, head1_slot);
 
 	silofs_laddr64_htox(&filin->f_slots[slot], laddr);
 }
@@ -650,7 +655,7 @@ filin_set_head1_leaf(struct silofs_inode_file *filin, size_t head1_slot,
 static void filin_head2_leaf(const struct silofs_inode_file *filin,
                              size_t head2_slot, struct silofs_laddr *out_laddr)
 {
-	const size_t slot = filin_vslot_of_head2(filin, head2_slot);
+	const size_t slot = filin_slot_of_head2(filin, head2_slot);
 
 	silofs_laddr64_xtoh(&filin->f_slots[slot], out_laddr);
 }
@@ -659,7 +664,7 @@ static void
 filin_set_head2_leaf(struct silofs_inode_file *filin, size_t head2_slot,
                      const struct silofs_laddr *laddr)
 {
-	const size_t slot = filin_vslot_of_head2(filin, head2_slot);
+	const size_t slot = filin_slot_of_head2(filin, head2_slot);
 
 	silofs_laddr64_htox(&filin->f_slots[slot], laddr);
 }
@@ -667,7 +672,7 @@ filin_set_head2_leaf(struct silofs_inode_file *filin, size_t head2_slot,
 static void filin_tree_root(const struct silofs_inode_file *filin,
                             struct silofs_laddr *out_laddr)
 {
-	const size_t slot = filin_vslot_of_root(filin);
+	const size_t slot = filin_slot_of_root(filin);
 
 	silofs_laddr64_xtoh(&filin->f_slots[slot], out_laddr);
 }
@@ -675,7 +680,7 @@ static void filin_tree_root(const struct silofs_inode_file *filin,
 static void filin_set_tree_root(struct silofs_inode_file *filin,
                                 const struct silofs_laddr *laddr)
 {
-	const size_t slot = filin_vslot_of_root(filin);
+	const size_t slot = filin_slot_of_root(filin);
 
 	silofs_laddr64_htox(&filin->f_slots[slot], laddr);
 }

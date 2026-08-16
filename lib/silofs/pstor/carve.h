@@ -24,13 +24,11 @@
 int silofs_carve_base_ubspace(const struct silofs_core_refs *corefs,
                               struct silofs_pnptr           *out_pnptr);
 
-int silofs_carve_base_btspace(const struct silofs_core_refs *corefs,
-                              enum silofs_ltype              ltype,
-                              struct silofs_pnptr           *out_pnptr);
+int silofs_ignite_free_btspace(const struct silofs_core_refs *corefs,
+                               enum silofs_ltype              ltype);
 
-int silofs_carve_base_lspace(const struct silofs_core_refs *corefs,
-                             enum silofs_ltype              ltype,
-                             struct silofs_paddr           *out_paddr);
+int silofs_ignote_free_lspace(const struct silofs_core_refs *corefs,
+                              enum silofs_ltype              ltype);
 
 int silofs_carve_btspace_pnptr(const struct silofs_core_refs *corefs,
                                enum silofs_ltype              ltype,

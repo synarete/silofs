@@ -1009,13 +1009,19 @@ static int dstor_require_bpos(struct silofs_dstor *dstor,
 	return 0;
 }
 
-int silofs_dstor_require_blob_at(struct silofs_dstor *dstor,
+static int dstor_require_blob_at(struct silofs_dstor *dstor,
                                  const struct silofs_blobid *blobid, off_t pos)
 {
 	struct silofs_blobidx blobidx;
 
 	dstor_blobidx_of(dstor, blobid, &blobidx);
 	return dstor_require_bpos(dstor, &blobidx, pos);
+}
+
+int silofs_dstor_require_blob_at(struct silofs_dstor *dstor,
+                                 const struct silofs_paddr *paddr)
+{
+	return dstor_require_blob_at(dstor, &paddr->blobid, paddr->pos);
 }
 
 static int dstor_access_bpos(struct silofs_dstor *dstor,

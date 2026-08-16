@@ -89,6 +89,35 @@ static void gen_uniqid(const struct silofs_core_refs *corefs,
 	generate_uniqid(corefs->prng, out_uniqid);
 }
 
+static void gen_unique_blobid(const struct silofs_core_refs *corefs,
+                              const struct silofs_stype *stype,
+                              struct silofs_blobid *out_blobid)
+{
+	silofs_blobid_init(out_blobid, stype, nullptr, nullptr);
+	gen_layerid(corefs, &out_blobid->layerid);
+	gen_uniqid(corefs, &out_blobid->uniqid);
+}
+
+static void gen_base_blobid(const struct silofs_core_refs *corefs,
+                            const struct silofs_stype *stype,
+                            const struct silofs_layerid *layerid,
+                            struct silofs_blobid *out_blobid)
+{
+	silofs_blobid_init(out_blobid, stype, layerid, nullptr);
+	gen_uniqid(corefs, &out_blobid->uniqid);
+}
+
+static void gen_base_paddr(const struct silofs_core_refs *corefs,
+                           const struct silofs_stype *stype,
+                           const struct silofs_layerid *layerid,
+                           struct silofs_paddr *out_paddr)
+{
+	struct silofs_blobid blobid;
+
+	gen_base_blobid(corefs, stype, layerid, &blobid);
+	silofs_paddr_init(out_paddr, &blobid, 0);
+}
+
 static void gen_civkey(const struct silofs_core_refs *corefs,
                        struct silofs_civkey *out_civkey)
 {
@@ -118,51 +147,47 @@ int silofs_carve_base_ubspace(const struct silofs_core_refs *corefs,
 		.ltype = SILOFS_LTYPE_NONE,
 	};
 
-	silofs_blobid_init(&blobid, &stype, nullptr, nullptr);
-	gen_layerid(corefs, &blobid.layerid);
-	gen_uniqid(corefs, &blobid.uniqid);
-
+	gen_unique_blobid(corefs, &stype, &blobid);
 	silofs_paddr_init(&paddr, &blobid, 0);
 
 	return gen_pnptr_at(corefs, &paddr, out_pnptr);
 }
 
-int silofs_carve_base_btspace(const struct silofs_core_refs *corefs,
-                              enum silofs_ltype ltype,
-                              struct silofs_pnptr *out_pnptr)
+int silofs_ignite_free_btspace(const struct silofs_core_refs *corefs,
+                               enum silofs_ltype ltype)
 {
-	struct silofs_blobid blobid;
 	struct silofs_paddr paddr;
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_BTNODE,
 		.ltype = ltype,
 	};
+	int err;
 
-	silofs_blobid_init(&blobid, &stype, top_layerid(corefs), nullptr);
-	gen_uniqid(corefs, &blobid.uniqid);
+	gen_base_paddr(corefs, &stype, top_layerid(corefs), &paddr);
 
-	silofs_paddr_init(&paddr, &blobid, 0);
-	silofs_ubi_set_nextfree(corefs->fsroot->ubi, &paddr);
+	err = silofs_dstor_require_blob_at(corefs->dstor, &paddr);
+	return_if_err(err);
 
-	return gen_pnptr_at(corefs, &paddr, out_pnptr);
+	silofs_ubi_start_free_space_at(corefs->fsroot->ubi, &paddr);
+	return 0;
 }
 
-int silofs_carve_base_lspace(const struct silofs_core_refs *corefs,
-                             enum silofs_ltype ltype,
-                             struct silofs_paddr *out_paddr)
+int silofs_ignote_free_lspace(const struct silofs_core_refs *corefs,
+                              enum silofs_ltype ltype)
 {
-	struct silofs_blobid blobid;
+	struct silofs_paddr paddr;
 	const struct silofs_stype stype = {
 		.ptype = SILOFS_PTYPE_LNODE,
 		.ltype = ltype,
 	};
+	int err;
 
-	silofs_blobid_init(&blobid, &stype, top_layerid(corefs), nullptr);
-	gen_uniqid(corefs, &blobid.uniqid);
+	gen_base_paddr(corefs, &stype, top_layerid(corefs), &paddr);
 
-	silofs_paddr_init(out_paddr, &blobid, 0);
-	silofs_ubi_set_nextfree(corefs->fsroot->ubi, out_paddr);
+	err = silofs_dstor_require_blob_at(corefs->dstor, &paddr);
+	return_if_err(err);
 
+	silofs_ubi_start_free_space_at(corefs->fsroot->ubi, &paddr);
 	return 0;
 }
 
@@ -173,9 +198,10 @@ static void carve_next_space_of(const struct silofs_core_refs *corefs,
 	silofs_ubi_consume_nextfree(corefs->fsroot->ubi, stype, out_paddr);
 }
 
-static bool try_carve_free_space_of(const struct silofs_core_refs *corefs,
-                                    const struct silofs_stype *stype,
-                                    struct silofs_paddr *out_paddr)
+static bool
+try_carve_cached_free_space_of(const struct silofs_core_refs *corefs,
+                               const struct silofs_stype *stype,
+                               struct silofs_paddr *out_paddr)
 {
 	int err;
 
@@ -189,7 +215,7 @@ static int carve_pnptr_of(const struct silofs_core_refs *corefs,
 {
 	struct silofs_paddr paddr;
 
-	if (!try_carve_free_space_of(corefs, stype, &paddr)) {
+	if (!try_carve_cached_free_space_of(corefs, stype, &paddr)) {
 		carve_next_space_of(corefs, stype, &paddr);
 	}
 	return gen_pnptr_at(corefs, &paddr, out_pnptr);

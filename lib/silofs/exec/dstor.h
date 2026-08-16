@@ -67,9 +67,8 @@ int silofs_dstor_stat_blob(struct silofs_dstor        *dstor,
 int silofs_dstor_require_blob(struct silofs_dstor        *dstor,
                               const struct silofs_blobid *blobid);
 
-int silofs_dstor_require_blob_at(struct silofs_dstor        *dstor,
-                                 const struct silofs_blobid *blobid,
-                                 off_t                       pos);
+int silofs_dstor_require_blob_at(struct silofs_dstor       *dstor,
+                                 const struct silofs_paddr *paddr);
 
 int silofs_dstor_access_blob_at(struct silofs_dstor        *dstor,
                                 const struct silofs_blobid *blobid, off_t pos);

@@ -60,12 +60,8 @@ void silofs_ubi_btroot_of(const struct silofs_uber_info *ubi,
                           enum silofs_ltype              ltype,
                           struct silofs_pnptr           *out_pnptr);
 
-void silofs_ubi_set_nextfree(struct silofs_uber_info   *ubi,
-                             const struct silofs_paddr *paddr);
-
-void silofs_ubi_nextfree_of(const struct silofs_uber_info *ubi,
-                            const struct silofs_stype     *stype,
-                            struct silofs_paddr           *out_paddr);
+void silofs_ubi_start_free_space_at(struct silofs_uber_info   *ubi,
+                                    const struct silofs_paddr *paddr);
 
 void silofs_ubi_consume_nextfree(struct silofs_uber_info   *ubi,
                                  const struct silofs_stype *stype,

@@ -101,7 +101,10 @@ spawn_btroot_of(const struct silofs_task_ctx *task, enum silofs_ltype ltype,
 	struct silofs_pnptr pnptr = {};
 	int err;
 
-	err = silofs_carve_base_btspace(task->corefs, ltype, &pnptr);
+	err = silofs_ignite_free_btspace(task->corefs, ltype);
+	return_if_err(err);
+
+	err = silofs_carve_btspace_pnptr(task->corefs, ltype, &pnptr);
 	return_if_err(err);
 
 	err = silofs_spawn_btnode(task->corefs, &pnptr, out_bti);
@@ -144,13 +147,10 @@ static int format_btree_root_of(const struct silofs_task_ctx *task,
 static int format_lspace_root_of(const struct silofs_task_ctx *task,
                                  enum silofs_ltype ltype)
 {
-	struct silofs_paddr paddr = {};
 	int err;
 
-	err = silofs_carve_base_lspace(task->corefs, ltype, &paddr);
+	err = silofs_ignote_free_lspace(task->corefs, ltype);
 	return_if_err(err);
-
-	silofs_ubi_set_nextfree(task->corefs->fsroot->ubi, &paddr);
 
 	err = flush_and_drop(task);
 	return_if_err(err);

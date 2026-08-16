@@ -436,7 +436,27 @@ void silofs_ubi_set_btroot_by(struct silofs_uber_info *ubi,
 	silofs_ubi_set_btroot(ubi, silofs_bti_self(bti));
 }
 
-void silofs_ubi_nextfree_of(const struct silofs_uber_info *ubi,
+static void ubi_set_nextfree(struct silofs_uber_info *ubi,
+                             const struct silofs_paddr *paddr)
+{
+	const struct silofs_blobid *blobid = &paddr->blobid;
+	const enum silofs_ltype ltype      = blobid->stype.ltype;
+
+	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
+		ubn_set_vn_nextfree_of(ubi->ubn, ltype, paddr);
+	} else {
+		ubn_set_bn_nextfree_of(ubi->ubn, ltype, paddr);
+	}
+	ubi_inc_generation(ubi);
+}
+
+void silofs_ubi_start_free_space_at(struct silofs_uber_info *ubi,
+                                    const struct silofs_paddr *paddr)
+{
+	ubi_set_nextfree(ubi, paddr);
+}
+
+static void ubi_nextfree_of(const struct silofs_uber_info *ubi,
                             const struct silofs_stype *stype,
                             struct silofs_paddr *out_paddr)
 {
@@ -448,35 +468,13 @@ void silofs_ubi_nextfree_of(const struct silofs_uber_info *ubi,
 	}
 }
 
-static void ubi_set_nextfree(struct silofs_uber_info *ubi,
-                             const struct silofs_paddr *paddr)
-{
-	const struct silofs_blobid *blobid = &paddr->blobid;
-	const enum silofs_ltype ltype      = blobid->stype.ltype;
-
-	if (blobid->stype.ptype == SILOFS_PTYPE_LNODE) {
-		ubn_set_vn_nextfree_of(ubi->ubn, ltype, paddr);
-	} else {
-		silofs_assert((blobid->stype.ptype == SILOFS_PTYPE_UBER) ||
-		              (blobid->stype.ptype == SILOFS_PTYPE_BTNODE));
-		ubn_set_bn_nextfree_of(ubi->ubn, ltype, paddr);
-	}
-	ubi_inc_generation(ubi);
-}
-
-void silofs_ubi_set_nextfree(struct silofs_uber_info *ubi,
-                             const struct silofs_paddr *paddr)
-{
-	ubi_set_nextfree(ubi, paddr);
-}
-
 void silofs_ubi_consume_nextfree(struct silofs_uber_info *ubi,
                                  const struct silofs_stype *stype,
                                  struct silofs_paddr *out_paddr)
 {
 	struct silofs_paddr paddr_nxt;
 
-	silofs_ubi_nextfree_of(ubi, stype, out_paddr);
+	ubi_nextfree_of(ubi, stype, out_paddr);
 	silofs_paddr_next(out_paddr, &paddr_nxt);
 	ubi_set_nextfree(ubi, &paddr_nxt);
 }

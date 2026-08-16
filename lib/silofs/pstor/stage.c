@@ -310,8 +310,7 @@ static int stc_require_paddr(const struct silofs_stage_ctx *st_ctx,
 	struct silofs_paddr next;
 
 	silofs_paddr_next(paddr, &next);
-	return silofs_dstor_require_blob_at(st_ctx->dstor, //
-	                                    &next.blobid, next.pos);
+	return silofs_dstor_require_blob_at(st_ctx->dstor, &next);
 }
 
 static int stc_require_paddr_of(const struct silofs_stage_ctx *st_ctx,

@@ -229,6 +229,15 @@ static void validate_ondisk_uber_node(void)
 	REQUIRE_SIZEOF_16K(struct silofs_uber_node);
 }
 
+static void validate_ondisk_uspace_node(void)
+{
+	REQUIRE_SIZEOF(struct silofs_uspace_desc, 64);
+	REQUIRE_SIZEOF(struct silofs_uspace_descs, 128);
+	REQUIRE_OFFSET64(struct silofs_uspace_node, us_hdr, 0);
+
+	REQUIRE_SIZEOF_8K(struct silofs_uspace_node);
+}
+
 static void validate_ondisk_btree_node(void)
 {
 	REQUIRE_OFFSET64(struct silofs_btree_node, btn_hdr, 0);
@@ -419,6 +428,7 @@ silofs_attr_used static void validate_ondisk_format(void)
 	validate_ondisk_headers();
 	validate_ondisk_mbr();
 	validate_ondisk_uber_node();
+	validate_ondisk_uspace_node();
 	validate_ondisk_btree_node();
 	validate_ondisk_blob_desc();
 	validate_ondisk_space_node();

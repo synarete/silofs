@@ -480,7 +480,7 @@ struct silofs_header {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-/* uber-node sub-child by vspace */
+/* uber-node sub-child by lspace */
 struct silofs_uber_sub {
 	struct silofs_pnptr256b ubs_btroot;
 	struct silofs_paddr64b  ubs_bn_nextfree;
@@ -491,7 +491,7 @@ struct silofs_uber_sub {
 	uint8_t                 ubs_reserved2[496];
 } silofs_attr_aligned64;
 
-/* uber-node */
+/* uber node */
 struct silofs_uber_node {
 	struct silofs_header   ub_hdr;
 	struct silofs_timespec ub_btime;
@@ -501,6 +501,26 @@ struct silofs_uber_node {
 	uint8_t                ub_reserved1[400];
 	uint8_t                ub_reserved2[512];
 	struct silofs_uber_sub ub_sub[15];
+} silofs_attr_aligned64;
+
+/* uber-space descriptor */
+struct silofs_uspace_desc {
+	struct silofs_blobid48b usd_blobid;
+	uint64_t                usd_count;
+	uint64_t                usd_usage;
+} silofs_attr_aligned64;
+
+struct silofs_uspace_descs {
+	struct silofs_uspace_desc bn;
+	struct silofs_uspace_desc ln;
+} silofs_attr_aligned64;
+
+/* uber-space node */
+struct silofs_uspace_node {
+	struct silofs_header us_hdr;
+	uint8_t              us_reserved1[192];
+	uint8_t              us_reserved2[7936];
+
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

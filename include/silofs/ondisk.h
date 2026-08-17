@@ -280,7 +280,7 @@ struct silofs_tm64b {
 	uint64_t tm_reserved;
 } silofs_attr_aligned64;
 
-struct silofs_timespec {
+struct silofs_timespec16b {
 	uint64_t t_sec;
 	uint64_t t_nsec;
 } silofs_attr_aligned16;
@@ -493,14 +493,14 @@ struct silofs_uber_sub {
 
 /* uber node */
 struct silofs_uber_node {
-	struct silofs_header   ub_hdr;
-	struct silofs_timespec ub_btime;
-	struct silofs_timespec ub_ctime;
-	uint64_t               ub_generation;
-	uint64_t               ub_capacity;
-	uint8_t                ub_reserved1[400];
-	uint8_t                ub_reserved2[512];
-	struct silofs_uber_sub ub_sub[15];
+	struct silofs_header      ub_hdr;
+	struct silofs_timespec16b ub_btime;
+	struct silofs_timespec16b ub_ctime;
+	uint64_t                  ub_generation;
+	uint64_t                  ub_capacity;
+	uint8_t                   ub_reserved1[400];
+	uint8_t                   ub_reserved2[512];
+	struct silofs_uber_sub    ub_sub[15];
 } silofs_attr_aligned64;
 
 /* uber-space descriptor */
@@ -683,10 +683,10 @@ struct silofs_symval_node {
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 struct silofs_inode_times {
-	struct silofs_timespec btime;
-	struct silofs_timespec atime;
-	struct silofs_timespec ctime;
-	struct silofs_timespec mtime;
+	struct silofs_timespec16b btime;
+	struct silofs_timespec16b atime;
+	struct silofs_timespec16b ctime;
+	struct silofs_timespec16b mtime;
 } silofs_attr_aligned64;
 
 struct silofs_inode_xattr {
@@ -798,21 +798,21 @@ enum silofs_objstatef {
 
 /* blob's meta descriptor */
 struct silofs_blob_desc {
-	struct silofs_header    bld_hdr;
-	struct silofs_timespec  bld_btime;
-	struct silofs_timespec  bld_ctime;
-	uint8_t                 bld_reserved1[32];
-	struct silofs_blobid48b bld_prev;
-	uint8_t                 bld_reserved2[16];
-	struct silofs_blobid48b bld_refblob;
-	uint8_t                 bld_reserved3[16];
-	uint64_t                bld_blobsize;
-	uint32_t                bld_objsize;
-	uint32_t                bld_nobjs_max;
-	uint32_t                bld_nobjs;
-	uint32_t                bld_flags;
-	uint8_t                 bld_reserved4[232];
-	uint8_t                 bld_obj_state[7680];
+	struct silofs_header      bld_hdr;
+	struct silofs_timespec16b bld_btime;
+	struct silofs_timespec16b bld_ctime;
+	uint8_t                   bld_reserved1[32];
+	struct silofs_blobid48b   bld_prev;
+	uint8_t                   bld_reserved2[16];
+	struct silofs_blobid48b   bld_refblob;
+	uint8_t                   bld_reserved3[16];
+	uint64_t                  bld_blobsize;
+	uint32_t                  bld_objsize;
+	uint32_t                  bld_nobjs_max;
+	uint32_t                  bld_nobjs;
+	uint32_t                  bld_flags;
+	uint8_t                   bld_reserved4[232];
+	uint8_t                   bld_obj_state[7680];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

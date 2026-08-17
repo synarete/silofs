@@ -23,35 +23,6 @@
 #include <silofs/nodes.h>
 #include <silofs/fs.h>
 
-static void tm64b_htox(struct silofs_tm64b *tm64, const struct tm *tm)
-{
-	tm64->tm_sec      = silofs_cpu_to_le16((uint16_t)tm->tm_sec);
-	tm64->tm_min      = silofs_cpu_to_le16((uint16_t)tm->tm_min);
-	tm64->tm_hour     = (uint8_t)(tm->tm_hour);
-	tm64->tm_mday     = (uint8_t)(tm->tm_mday);
-	tm64->tm_mon      = (uint8_t)(tm->tm_mon);
-	tm64->tm_wday     = (uint8_t)(tm->tm_wday);
-	tm64->tm_year     = silofs_cpu_to_le32((uint32_t)tm->tm_year);
-	tm64->tm_yday     = silofs_cpu_to_le32((uint32_t)tm->tm_yday);
-	tm64->tm_gmtoff   = silofs_cpu_to_le64((uint64_t)tm->tm_gmtoff);
-	tm64->tm_reserved = 0;
-}
-
-static void tm64b_xtoh(const struct silofs_tm64b *tm64, struct tm *tm)
-{
-	tm->tm_sec    = (int)silofs_le16_to_cpu(tm64->tm_sec);
-	tm->tm_min    = (int)silofs_le16_to_cpu(tm64->tm_min);
-	tm->tm_hour   = (int)(tm64->tm_hour);
-	tm->tm_mday   = (int)(tm64->tm_mday);
-	tm->tm_mon    = (int)(tm64->tm_mon);
-	tm->tm_wday   = (int)(tm64->tm_wday);
-	tm->tm_year   = (int)silofs_le32_to_cpu(tm64->tm_year);
-	tm->tm_yday   = (int)silofs_le32_to_cpu(tm64->tm_yday);
-	tm->tm_gmtoff = (long)silofs_le64_to_cpu(tm64->tm_gmtoff);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
 static size_t
 sbn_slot_of(const struct silofs_superb_node *sbn, enum silofs_ltype ltype)
 {
@@ -100,12 +71,12 @@ sbn_set_flags(struct silofs_superb_node *sbn, enum silofs_superf flags)
 
 static void sbn_btime(const struct silofs_superb_node *sbn, struct tm *tm)
 {
-	tm64b_xtoh(&sbn->s_btime, tm);
+	silofs_tm_to_cpu(&sbn->s_btime, tm);
 }
 
 static void sbn_set_btime(struct silofs_superb_node *sbn, const struct tm *tm)
 {
-	tm64b_htox(&sbn->s_btime, tm);
+	silofs_cpu_to_tm(tm, &sbn->s_btime);
 }
 
 static size_t sbn_fs_capacity(const struct silofs_superb_node *sbn)

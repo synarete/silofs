@@ -49,8 +49,12 @@ uint64_t silofs_cpu_to_time(time_t tm);
 
 time_t silofs_time_to_cpu(uint64_t tm);
 
-void silofs_ts_to_cpu(const struct silofs_timespec *t, struct timespec *ts);
+void silofs_ts_to_cpu(const struct silofs_timespec16b *t, struct timespec *ts);
 
-void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec *t);
+void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec16b *t);
+
+void silofs_tm_to_cpu(const struct silofs_tm64b *tm64, struct tm *tm);
+
+void silofs_cpu_to_tm(const struct tm *tm, struct silofs_tm64b *tm64);
 
 #endif /* SILOFS_HTOX_H_ */

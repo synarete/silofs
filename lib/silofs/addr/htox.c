@@ -113,14 +113,43 @@ time_t silofs_time_to_cpu(uint64_t tm)
 	return (time_t)silofs_le64_to_cpu(tm);
 }
 
-void silofs_ts_to_cpu(const struct silofs_timespec *t, struct timespec *ts)
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_ts_to_cpu(const struct silofs_timespec16b *t, struct timespec *ts)
 {
 	ts->tv_sec  = (time_t)silofs_le64_to_cpu(t->t_sec);
 	ts->tv_nsec = (long)silofs_le64_to_cpu(t->t_nsec);
 }
 
-void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec *t)
+void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec16b *t)
 {
 	t->t_sec  = silofs_cpu_to_le64((uint64_t)ts->tv_sec);
 	t->t_nsec = silofs_cpu_to_le64((uint64_t)ts->tv_nsec);
+}
+
+void silofs_cpu_to_tm(const struct tm *tm, struct silofs_tm64b *tm64)
+{
+	tm64->tm_sec      = silofs_cpu_to_le16((uint16_t)tm->tm_sec);
+	tm64->tm_min      = silofs_cpu_to_le16((uint16_t)tm->tm_min);
+	tm64->tm_hour     = (uint8_t)(tm->tm_hour);
+	tm64->tm_mday     = (uint8_t)(tm->tm_mday);
+	tm64->tm_mon      = (uint8_t)(tm->tm_mon);
+	tm64->tm_wday     = (uint8_t)(tm->tm_wday);
+	tm64->tm_year     = silofs_cpu_to_le32((uint32_t)tm->tm_year);
+	tm64->tm_yday     = silofs_cpu_to_le32((uint32_t)tm->tm_yday);
+	tm64->tm_gmtoff   = silofs_cpu_to_le64((uint64_t)tm->tm_gmtoff);
+	tm64->tm_reserved = 0;
+}
+
+void silofs_tm_to_cpu(const struct silofs_tm64b *tm64, struct tm *tm)
+{
+	tm->tm_sec    = (int)silofs_le16_to_cpu(tm64->tm_sec);
+	tm->tm_min    = (int)silofs_le16_to_cpu(tm64->tm_min);
+	tm->tm_hour   = (int)(tm64->tm_hour);
+	tm->tm_mday   = (int)(tm64->tm_mday);
+	tm->tm_mon    = (int)(tm64->tm_mon);
+	tm->tm_wday   = (int)(tm64->tm_wday);
+	tm->tm_year   = (int)silofs_le32_to_cpu(tm64->tm_year);
+	tm->tm_yday   = (int)silofs_le32_to_cpu(tm64->tm_yday);
+	tm->tm_gmtoff = (long)silofs_le64_to_cpu(tm64->tm_gmtoff);
 }

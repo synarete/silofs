@@ -2288,16 +2288,20 @@ static void fill_query_proc(const struct silofs_task_ctx *task,
 	fill_proc(task, &query->u.proc);
 }
 
-static void fill_query_spstats(const struct silofs_task_ctx *task,
-                               struct silofs_ioc_query *query)
+static int fill_query_sbst(const struct silofs_task_ctx *task,
+                           struct silofs_ioc_query *query)
 {
-	/*
-	 * TODO-0069: Export space-stats properly.
-	 */
-	struct silofs_query_spstats *spst = &query->u.spstats;
+	struct silofs_query_sbst *qsbst = &query->u.sbst;
+	struct silofs_sbnode_info *sbi  = nullptr;
+	int err;
 
-	memset(spst, 0, sizeof(*spst));
-	silofs_unused(task);
+	err = get_sbi(task, &sbi);
+	return_if_err(err);
+
+	silofs_sbi_extern_sb(sbi, &qsbst->sbst);
+
+	put_sbi(sbi);
+	return 0;
 }
 
 static int
@@ -2343,8 +2347,8 @@ do_query_subcmd(struct silofs_task_ctx *task, struct silofs_inode_info *ii,
 	case SILOFS_QUERY_PROC:
 		fill_query_proc(task, query);
 		break;
-	case SILOFS_QUERY_SPSTATS:
-		fill_query_spstats(task, query);
+	case SILOFS_QUERY_SBST:
+		err = fill_query_sbst(task, query);
 		break;
 	case SILOFS_QUERY_STATX:
 		err = do_query_statx(task, ii, query);

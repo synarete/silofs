@@ -89,9 +89,6 @@
 /* max valid ino number */
 #define SILOFS_INO_MAX ((1L << 56) - 1)
 
-/* on-disk size of super-block */
-#define SILOFS_SB_SIZE (8192)
-
 /* on-disk size-shift of inode */
 #define SILOFS_INODE_SHIFT (10)
 
@@ -282,7 +279,8 @@ struct silofs_tm64b {
 
 struct silofs_timespec16b {
 	uint64_t t_sec;
-	uint64_t t_nsec;
+	uint32_t t_nsec;
+	uint32_t t_res;
 } silofs_attr_aligned16;
 
 /* max size for names (not including null terminator) */
@@ -525,15 +523,8 @@ struct silofs_uspace_node {
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-struct silofs_space_stats1k {
-	uint64_t sp_btime;
-	uint64_t sp_ctime;
-	uint64_t sp_capacity;
-	uint64_t sp_vspacesize;
-	uint64_t sp_generation;
-	uint8_t  sp_reserved[216];
-	uint8_t  sp_reserved2[768];
-} silofs_attr_aligned64;
+/* on-disk size of super-block */
+#define SILOFS_SB_SIZE (8192)
 
 struct silofs_superb_node {
 	struct silofs_header      s_hdr;
@@ -548,9 +539,20 @@ struct silofs_superb_node {
 	uint64_t                  s_ino_generation;
 	uint8_t                   s_reserved2[104];
 	uint8_t                   s_reserved3[256];
-	uint64_t                  s_nodes_count[64];
-	int64_t                   s_apex_voff[64];
-	uint8_t                   s_reserved4[512];
+	uint64_t                  s_nodes_count[32];
+	int64_t                   s_apex_voff[32];
+} silofs_attr_aligned64;
+
+struct silofs_sb_stat {
+	struct silofs_timespec16b btime;
+	struct silofs_timespec16b ctime;
+	uint32_t                  flags;
+	uint32_t                  reserved;
+	uint64_t                  fs_capacity;
+	uint64_t                  fs_usage;
+	uint64_t                  ino_generation;
+	uint64_t                  nodes_count[32];
+	uint8_t                   reserved2[192];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

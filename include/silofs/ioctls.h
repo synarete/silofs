@@ -43,7 +43,7 @@ enum silofs_query_type {
 	SILOFS_QUERY_REPO    = 2,
 	SILOFS_QUERY_BOOT    = 3,
 	SILOFS_QUERY_PROC    = 4,
-	SILOFS_QUERY_SPSTATS = 5,
+	SILOFS_QUERY_SBST    = 5,
 	SILOFS_QUERY_STATX   = 6,
 };
 
@@ -77,8 +77,8 @@ struct silofs_query_proc {
 	uint64_t pad[23];
 };
 
-struct silofs_query_spstats {
-	struct silofs_space_stats1k spst;
+struct silofs_query_sbst {
+	struct silofs_sb_stat sbst;
 };
 
 struct silofs_query_statx {
@@ -92,7 +92,7 @@ union silofs_query_u {
 	struct silofs_query_repo    repo;
 	struct silofs_query_boot    boot;
 	struct silofs_query_proc    proc;
-	struct silofs_query_spstats spstats;
+	struct silofs_query_sbst    sbst;
 	struct silofs_query_statx   statx;
 	uint8_t                     pad[1984];
 };

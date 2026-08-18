@@ -22,8 +22,7 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 {
 	struct silofs_ioc_query query = { .reserved = 0 };
 	const char *name              = UT_NAME;
-	ino_t dino                    = 0;
-	ino_t ino                     = 0;
+	ino_t ino, dino;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_query(ute, dino, SILOFS_QUERY_VERSION, &query);
@@ -37,14 +36,14 @@ static void ut_ioctl_query_version(struct ut_env *ute)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
-static void ut_ioctl_query_statfsx(struct ut_env *ute)
+static void ut_ioctl_query_sbst(struct ut_env *ute)
 {
-	struct silofs_space_stats1k spst;
+	struct silofs_sb_stat sbst;
 	const char *name = UT_NAME;
-	ino_t dino       = 0;
+	ino_t dino;
 
 	ut_mkdir_at_root(ute, name, &dino);
-	ut_query_spst(ute, dino, &spst);
+	ut_query_sbst(ute, dino, &sbst);
 	/* TODO: check output */
 	ut_rmdir_at_root(ute, name);
 }
@@ -123,7 +122,7 @@ static void ut_ioctl_query_boot(struct ut_env *ute)
 
 static const struct ut_testdef ut_local_tests[] = {
 	UT_DEFTEST(ut_ioctl_query_version),
-	UT_DEFTEST(ut_ioctl_query_statfsx),
+	UT_DEFTEST(ut_ioctl_query_sbst),
 	UT_DEFTEST(ut_ioctl_query_proc),
 	UT_DEFTEST(ut_ioctl_query_boot),
 };

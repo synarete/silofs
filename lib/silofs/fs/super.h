@@ -53,4 +53,7 @@ uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi);
 void silofs_sbi_calc_statvfs(const struct silofs_sbnode_info *sbi,
                              struct statvfs                  *out_stv);
 
+void silofs_sbi_extern_sb(const struct silofs_sbnode_info *sbi,
+                          struct silofs_sb_stat           *out_sbst);
+
 #endif /* SILOFS_SUPER_H_ */

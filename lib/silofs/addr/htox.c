@@ -118,13 +118,14 @@ time_t silofs_time_to_cpu(uint64_t tm)
 void silofs_ts_to_cpu(const struct silofs_timespec16b *t, struct timespec *ts)
 {
 	ts->tv_sec  = (time_t)silofs_le64_to_cpu(t->t_sec);
-	ts->tv_nsec = (long)silofs_le64_to_cpu(t->t_nsec);
+	ts->tv_nsec = (long)silofs_le32_to_cpu(t->t_nsec);
 }
 
 void silofs_cpu_to_ts(const struct timespec *ts, struct silofs_timespec16b *t)
 {
 	t->t_sec  = silofs_cpu_to_le64((uint64_t)ts->tv_sec);
-	t->t_nsec = silofs_cpu_to_le64((uint64_t)ts->tv_nsec);
+	t->t_nsec = silofs_cpu_to_le32((uint32_t)ts->tv_nsec);
+	t->t_res  = 0;
 }
 
 void silofs_cpu_to_tm(const struct tm *tm, struct silofs_tm64b *tm64)

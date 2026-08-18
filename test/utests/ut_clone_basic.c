@@ -21,19 +21,19 @@
 static void ut_clone_mkdir_rmdir(struct ut_env *ute)
 {
 	struct statvfs stvfs[2];
-	struct silofs_space_stats1k spst[2];
+	struct silofs_sb_stat sbst[2];
 	const ino_t rootd_ino = SILOFS_INO_ROOT;
-	ino_t dino            = 0;
 	const char *name      = UT_NAME;
+	ino_t dino;
 
 	ut_statfs(ute, rootd_ino, &stvfs[0]);
-	ut_statsp(ute, rootd_ino, &spst[0]);
+	ut_statsb(ute, rootd_ino, &sbst[0]);
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_clone(ute, dino);
 	ut_inspect_fs(ute);
 	ut_rmdir_at_root(ute, name);
 	ut_statfs(ute, rootd_ino, &stvfs[1]);
-	ut_statsp(ute, rootd_ino, &spst[1]);
+	ut_statsb(ute, rootd_ino, &sbst[1]);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -41,8 +41,7 @@ static void ut_clone_mkdir_rmdir(struct ut_env *ute)
 static void ut_clone_create_remove(struct ut_env *ute)
 {
 	const char *name = UT_NAME;
-	ino_t dino       = 0;
-	ino_t ino        = 0;
+	ino_t ino, dino = 0;
 
 	ut_mkdir_at_root(ute, name, &dino);
 	ut_create_file(ute, dino, name, &ino);

@@ -764,15 +764,14 @@ void ut_statfs_rootd(struct ut_env *ute, struct statvfs *stv)
 	ut_statfs(ute, SILOFS_INO_ROOT, stv);
 }
 
-void ut_statsp(struct ut_env *ute, ino_t ino,
-               struct silofs_space_stats1k *spst)
+void ut_statsb(struct ut_env *ute, ino_t ino, struct silofs_sb_stat *out_sbst)
 {
-	ut_query_spst(ute, ino, spst);
+	ut_query_sbst(ute, ino, out_sbst);
 }
 
-void ut_statsp_rootd(struct ut_env *ute, struct silofs_space_stats1k *spst)
+void ut_statsb_rootd(struct ut_env *ute, struct silofs_sb_stat *out_sbst)
 {
-	ut_statsp(ute, SILOFS_INO_ROOT, spst);
+	ut_statsb(ute, SILOFS_INO_ROOT, out_sbst);
 }
 
 static void ut_expect_sane_statx(const struct statx *stx)
@@ -1750,13 +1749,13 @@ void ut_query(struct ut_env *ute, ino_t ino, enum silofs_query_type qtype,
 	ut_expect_ok(err);
 }
 
-void ut_query_spst(struct ut_env *ute, ino_t ino,
-                   struct silofs_space_stats1k *out_spst)
+void ut_query_sbst(struct ut_env *ute, ino_t ino,
+                   struct silofs_sb_stat *out_sbst)
 {
 	struct silofs_ioc_query query = { .qtype = 0 };
 
-	ut_query(ute, ino, SILOFS_QUERY_SPSTATS, &query);
-	memcpy(out_spst, &query.u.spstats.spst, sizeof(*out_spst));
+	ut_query(ute, ino, SILOFS_QUERY_SBST, &query);
+	memcpy(out_sbst, &query.u.sbst.sbst, sizeof(*out_sbst));
 }
 
 void ut_fiemap(struct ut_env *ute, ino_t ino, struct fiemap *fm)

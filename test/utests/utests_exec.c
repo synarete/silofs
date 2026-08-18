@@ -244,12 +244,14 @@ ut_check_statvfs(const struct statvfs *stv1, const struct statvfs *stv2)
 	ut_expect_statvfs(stv1, stv2);
 }
 
-static void ut_check_spacestats(const struct silofs_space_stats1k *spst1,
-                                const struct silofs_space_stats1k *spst2)
+static void ut_check_sbst(const struct silofs_sb_stat *sbst1,
+                          const struct silofs_sb_stat *sbst2)
 {
-	/* XXX FIXME */
-	(void)spst1;
-	(void)spst2;
+	ut_expect_eq(sbst1->fs_capacity, sbst2->fs_capacity);
+	ut_expect_le(sbst1->fs_usage, sbst1->fs_capacity);
+	ut_expect_le(sbst2->fs_usage, sbst2->fs_capacity);
+	ut_expect_le(sbst1->ctime.t_sec, sbst2->ctime.t_sec);
+	ut_expect_le(sbst1->ino_generation, sbst2->ino_generation);
 }
 
 static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
@@ -258,14 +260,14 @@ static void ut_probe_stats(struct ut_env *ute, bool pre_execute)
 
 	if (pre_execute) {
 		ut_statfs_rootd(ute, &ute->stvfs[0]);
-		ut_statsp_rootd(ute, &ute->spst[0]);
+		ut_statsb_rootd(ute, &ute->sbst[0]);
 		ut_sync_drop_all(ute);
 		ute->ualloc_start = ut_nalloc_bytes_now(ute);
 	} else {
 		ut_statfs_rootd(ute, &ute->stvfs[1]);
-		ut_statsp_rootd(ute, &ute->spst[1]);
+		ut_statsb_rootd(ute, &ute->sbst[1]);
 		ut_check_statvfs(&ute->stvfs[0], &ute->stvfs[1]);
-		ut_check_spacestats(&ute->spst[0], &ute->spst[1]);
+		ut_check_sbst(&ute->sbst[0], &ute->sbst[1]);
 
 		ut_sync_drop_all(ute);
 		ualloc_now = ut_nalloc_bytes_now(ute);

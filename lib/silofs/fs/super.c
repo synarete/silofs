@@ -226,6 +226,34 @@ static void sbn_init(struct silofs_superb_node *sbn)
 	sbn_reset_apex_voff(sbn);
 }
 
+static void sbn_extern(const struct silofs_superb_node *sbn,
+                       struct silofs_sb_stat *out_sbst)
+{
+	struct timespec ts;
+
+	STATICASSERT_EQ(ARRAY_SIZE(sbn->s_nodes_count),
+	                ARRAY_SIZE(out_sbst->nodes_count));
+	STATICASSERT_EQ(sizeof(sbn->s_nodes_count[0]),
+	                sizeof(out_sbst->nodes_count[0]));
+
+	sbn_btime(sbn, &ts);
+	out_sbst->btime.t_sec  = (uint64_t)ts.tv_sec;
+	out_sbst->btime.t_nsec = (uint32_t)ts.tv_nsec;
+
+	sbn_ctime(sbn, &ts);
+	out_sbst->ctime.t_sec  = (uint64_t)ts.tv_sec;
+	out_sbst->ctime.t_nsec = (uint32_t)ts.tv_nsec;
+
+	out_sbst->flags          = sbn_flags(sbn);
+	out_sbst->fs_capacity    = sbn_fs_capacity(sbn);
+	out_sbst->fs_usage       = sbn_fs_usage(sbn);
+	out_sbst->ino_generation = sbn_ino_generation(sbn);
+
+	for (size_t i = 0; i < ARRAY_SIZE(out_sbst->nodes_count); ++i) {
+		out_sbst->nodes_count[i] = sbn_nodes_count_at(sbn, i);
+	}
+}
+
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static int verify_super_magic(const struct silofs_superb_node *sbn)
@@ -527,4 +555,11 @@ void silofs_sbi_calc_statvfs(const struct silofs_sbnode_info *sbi,
 	out_stv->f_favail  = out_stv->f_ffree;
 	out_stv->f_namemax = SILOFS_NAME_MAX;
 	out_stv->f_fsid    = SILOFS_FSID_MAGIC;
+}
+
+void silofs_sbi_extern_sb(const struct silofs_sbnode_info *sbi,
+                          struct silofs_sb_stat *out_sbst)
+{
+	silofs_memzero(out_sbst, sizeof(*out_sbst));
+	sbn_extern(sbi->sbn, out_sbst);
 }

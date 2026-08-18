@@ -80,7 +80,7 @@ static void cmd_show_parse_optargs(struct cmd_show_ctx *ctx)
 static const char *cmd_show_subcommands[] = {
 	[SILOFS_QUERY_VERSION] = "version", [SILOFS_QUERY_REPO] = "repo",
 	[SILOFS_QUERY_BOOT] = "boot",       [SILOFS_QUERY_PROC] = "proc",
-	[SILOFS_QUERY_SPSTATS] = "spstats", [SILOFS_QUERY_STATX] = "statx",
+	[SILOFS_QUERY_SBST] = "spstats",    [SILOFS_QUERY_STATX] = "statx",
 };
 
 static enum silofs_query_type cmd_show_qtype_by_subcmd(const char *subcmd)
@@ -243,17 +243,6 @@ cmd_show_time(const struct cmd_show_ctx *ctx, const char *name, time_t tm)
 }
 
 static void
-cmd_show_counter(const struct cmd_show_ctx *ctx, const char *prefix,
-                 const char *name, uint64_t val)
-{
-	if (prefix && strlen(prefix)) {
-		fprintf(ctx->out_fp, "%s.%s: %zd\n", prefix, name, val);
-	} else {
-		fprintf(ctx->out_fp, "%s: %zd\n", name, val);
-	}
-}
-
-static void
 cmd_show_ucounter(const struct cmd_show_ctx *ctx, const char *name, size_t val)
 {
 	fprintf(ctx->out_fp, "%s: %lu\n", name, val);
@@ -274,24 +263,21 @@ static void cmd_show_proc(struct cmd_show_ctx *ctx)
 	cmd_show_ucounter(ctx, "iopen_cur", qpr->iopen_cur);
 }
 
-static void cmd_show_spacestats(const struct cmd_show_ctx *ctx)
+static void cmd_show_sbst(const struct cmd_show_ctx *ctx)
 {
-	const struct silofs_space_stats1k *spst =
-		&ctx->ioc->query.u.spstats.spst;
-	const char *prefix = nullptr;
+	const struct silofs_query_sbst *qsbst = &ctx->ioc->query.u.sbst;
+	const struct silofs_sb_stat *sbst     = &qsbst->sbst;
 
-	prefix = "";
-	cmd_show_time(ctx, "btime", (time_t)spst->sp_btime);
-	cmd_show_time(ctx, "ctime", (time_t)spst->sp_ctime);
-	cmd_show_counter(ctx, prefix, "capacity", spst->sp_capacity);
-	cmd_show_counter(ctx, prefix, "vspacesize", spst->sp_vspacesize);
-	/* TODO: complete */
+	cmd_show_time(ctx, "btime", (time_t)sbst->btime.t_sec);
+	cmd_show_time(ctx, "ctime", (time_t)sbst->ctime.t_sec);
+	cmd_show_ucounter(ctx, "fs-capacity", sbst->fs_capacity);
+	cmd_show_ucounter(ctx, "fs-usage", sbst->fs_usage);
 }
 
 static void cmd_show_spstats(struct cmd_show_ctx *ctx)
 {
 	cmd_show_do_ioctl_query(ctx);
-	cmd_show_spacestats(ctx);
+	cmd_show_sbst(ctx);
 }
 
 static void cmd_show_statx(struct cmd_show_ctx *ctx)
@@ -327,7 +313,7 @@ static void cmd_show_execute(struct cmd_show_ctx *ctx)
 	case SILOFS_QUERY_PROC:
 		cmd_show_proc(ctx);
 		break;
-	case SILOFS_QUERY_SPSTATS:
+	case SILOFS_QUERY_SBST:
 		cmd_show_spstats(ctx);
 		break;
 	case SILOFS_QUERY_STATX:

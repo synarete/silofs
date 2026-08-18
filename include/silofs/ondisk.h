@@ -664,7 +664,7 @@ struct silofs_ftree_node {
 #define SILOFS_SYMLNK_MAX SILOFS_PATH_MAX
 
 /* max size of symbolic-link value within inode */
-#define SILOFS_SYMVAL_HEAD_MAX (480)
+#define SILOFS_SYMVAL_HEAD_MAX (576)
 
 /* max size of symbolic-link tail  */
 #define SILOFS_SYMVAL_TAIL_MAX (4000)
@@ -691,7 +691,7 @@ struct silofs_inode_times {
 
 struct silofs_inode_xattr {
 	struct silofs_laddr64 ix_laddr[8];
-	uint8_t               ix_reserved[192];
+	uint8_t               ix_reserved[64];
 } silofs_attr_aligned64;
 
 struct silofs_inode_dir {
@@ -707,7 +707,7 @@ struct silofs_inode_dir {
 struct silofs_inode_lnk {
 	uint8_t               l_head[SILOFS_SYMVAL_HEAD_MAX];
 	struct silofs_laddr64 l_tail;
-	uint8_t               l_reserved[16];
+	uint8_t               l_reserved[56];
 } silofs_attr_aligned64;
 
 struct silofs_inode_file {
@@ -719,7 +719,7 @@ union silofs_inode_tail {
 	struct silofs_inode_dir  d;
 	struct silofs_inode_file f;
 	struct silofs_inode_lnk  l;
-	uint8_t                  b[512];
+	uint8_t                  b[640];
 } silofs_attr_aligned64;
 
 struct silofs_inode {

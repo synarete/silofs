@@ -316,17 +316,17 @@ static void validate_ondisk_inode(void)
 	REQUIRE_OFFSET64(struct silofs_inode, i_generation, 152);
 	REQUIRE_OFFSET64(struct silofs_inode, i_tm, 192);
 	REQUIRE_OFFSET64(struct silofs_inode, i_xa, 256);
-	REQUIRE_OFFSET64(struct silofs_inode, i_ta, 512);
+	REQUIRE_OFFSET64(struct silofs_inode, i_ta, 384);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_root, 0);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_seed, 8);
 	REQUIRE_OFFSET64(struct silofs_inode_dir, d_ndents, 16);
 	REQUIRE_OFFSET64(struct silofs_inode_xattr, ix_laddr, 0);
 	REQUIRE_SIZEOF(struct silofs_inode_dir, 64);
-	REQUIRE_SIZEOF(struct silofs_inode_xattr, 256);
-	REQUIRE_SIZEOF(struct silofs_inode_file, 512);
-	REQUIRE_SIZEOF(struct silofs_inode_lnk, 512);
+	REQUIRE_SIZEOF(struct silofs_inode_xattr, 128);
 	REQUIRE_SIZEOF(struct silofs_inode_times, 64);
-	REQUIRE_SIZEOF(union silofs_inode_tail, 512);
+	REQUIRE_SIZEOF(struct silofs_inode_file, 512);
+	REQUIRE_SIZEOF(struct silofs_inode_lnk, 640);
+	REQUIRE_SIZEOF(union silofs_inode_tail, 640);
 	REQUIRE_SIZEOF(struct silofs_inode, SILOFS_INODE_SIZE);
 	REQUIRE_SIZEOF_1K(struct silofs_inode);
 }

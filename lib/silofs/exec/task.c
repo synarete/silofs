@@ -67,14 +67,12 @@ void silofs_task_set_umask(struct silofs_task_ctx *task, mode_t umask)
 	creds->host_cred.umask = creds->fs_cred.umask = umask;
 }
 
-void silofs_task_set_time(struct silofs_task_ctx *task, bool rt)
+void silofs_task_set_time(struct silofs_task_ctx *task, bool real)
 {
-	struct timespec *ts = &task->auth.ts;
-
-	if (rt) {
-		silofs_clock_gettime_real(ts);
+	if (real) {
+		silofs_clock_gettime_real(&task->auth.ts);
 	} else {
-		silofs_clock_gettime_mono(ts);
+		silofs_clock_gettime_mono(&task->auth.ts);
 	}
 }
 

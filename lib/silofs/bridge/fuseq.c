@@ -3091,7 +3091,7 @@ static const struct silofs_fuseq_cmd_desc fuseq_cmd_tbl[] = {
 	FUSEQ_CMD(FUSE_WRITE, do_write, 1),
 	FUSEQ_CMD(FUSE_STATFS, do_statfs, 0),
 	FUSEQ_CMD(FUSE_RELEASE, do_release, 0),
-	FUSEQ_CMD(FUSE_FSYNC, do_fsync, 0),
+	FUSEQ_CMD(FUSE_FSYNC, do_fsync, 1),
 	FUSEQ_CMD(FUSE_SETXATTR, do_setxattr, 1),
 	FUSEQ_CMD(FUSE_GETXATTR, do_getxattr, 0),
 	FUSEQ_CMD(FUSE_LISTXATTR, do_listxattr, 0),
@@ -4257,7 +4257,7 @@ static void fqs_setup_self_task(const struct silofs_fuseq_sub *fqs,
 
 	silofs_task_init(task, fq->fq_corefs);
 	silofs_task_set_creds(task, cred->uid, cred->gid, cred->umask);
-	silofs_task_set_time(task, false);
+	silofs_task_set_time(task, true);
 	task->auth.pid = getpid();
 	task->internal = true;
 }

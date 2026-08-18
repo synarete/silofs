@@ -69,14 +69,28 @@ sbn_set_flags(struct silofs_superb_node *sbn, enum silofs_superf flags)
 	sbn->s_flags = silofs_cpu_to_le32((uint32_t)flags);
 }
 
-static void sbn_btime(const struct silofs_superb_node *sbn, struct tm *tm)
+static void
+sbn_btime(const struct silofs_superb_node *sbn, struct timespec *ts)
 {
-	silofs_tm_to_cpu(&sbn->s_btime, tm);
+	silofs_ts_to_cpu(&sbn->s_btime, ts);
 }
 
-static void sbn_set_btime(struct silofs_superb_node *sbn, const struct tm *tm)
+static void
+sbn_set_btime(struct silofs_superb_node *sbn, const struct timespec *ts)
 {
-	silofs_cpu_to_tm(tm, &sbn->s_btime);
+	silofs_cpu_to_ts(ts, &sbn->s_btime);
+}
+
+static void
+sbn_ctime(const struct silofs_superb_node *sbn, struct timespec *ts)
+{
+	silofs_ts_to_cpu(&sbn->s_ctime, ts);
+}
+
+static void
+sbn_set_ctime(struct silofs_superb_node *sbn, const struct timespec *ts)
+{
+	silofs_cpu_to_ts(ts, &sbn->s_ctime);
 }
 
 static size_t sbn_fs_capacity(const struct silofs_superb_node *sbn)
@@ -247,15 +261,23 @@ static int verify_super_flags(const struct silofs_superb_node *sbn)
 	return 0;
 }
 
-static int verify_super_btime(const struct silofs_superb_node *sbn)
+static int verify_super_times(const struct silofs_superb_node *sbn)
 {
-	struct tm tm = {};
+	struct timespec ts;
 
-	sbn_btime(sbn, &tm);
-	if (tm.tm_year <= 0) {
-		log_err("bad super: tm_year=%d", tm.tm_year);
+	sbn_btime(sbn, &ts);
+	if ((int64_t)ts.tv_sec <= 0) {
+		log_err("bad super: btime=%ld.%ld", (long)ts.tv_sec,
+		        ts.tv_nsec);
 		return -SILOFS_EFSCORRUPTED;
 	}
+	sbn_ctime(sbn, &ts);
+	if ((int64_t)ts.tv_sec <= 0) {
+		log_err("bad super: ctime=%ld.%ld", (long)ts.tv_sec,
+		        ts.tv_nsec);
+		return -SILOFS_EFSCORRUPTED;
+	}
+
 	return 0;
 }
 
@@ -290,7 +312,7 @@ int silofs_verify_superb_node(const struct silofs_superb_node *sbn)
 	err = verify_super_flags(sbn);
 	return_if_err(err);
 
-	err = verify_super_btime(sbn);
+	err = verify_super_times(sbn);
 	return_if_err(err);
 
 	err = verify_super_fs_capacity(sbn);
@@ -326,12 +348,21 @@ void silofs_sbi_setdirty(struct silofs_sbnode_info *sbi)
 	sbi_setdirty(sbi);
 }
 
-static void sbi_setup_btime_now(struct silofs_sbnode_info *sbi)
+static void sbi_setup_bctime_now(const struct silofs_sbnode_info *sbi)
 {
-	struct tm now;
+	struct timespec now;
 
-	silofs_localtime_now(&now);
+	silofs_clock_gettime_real(&now);
 	sbn_set_btime(sbi->sbn, &now);
+	sbn_set_ctime(sbi->sbn, &now);
+}
+
+static void sbi_update_ctime_now(const struct silofs_sbnode_info *sbi)
+{
+	struct timespec now;
+
+	silofs_clock_gettime_real(&now);
+	sbn_set_ctime(sbi->sbn, &now);
 }
 
 static void
@@ -347,7 +378,13 @@ void silofs_sbi_setup_spawned(struct silofs_sbnode_info *sbi, size_t fscap)
 {
 	sbn_init(sbi->sbn);
 	sbi_set_capacity(sbi, fscap);
-	sbi_setup_btime_now(sbi);
+	sbi_setup_bctime_now(sbi);
+	sbi_setdirty(sbi);
+}
+
+static void sbi_update_changed(struct silofs_sbnode_info *sbi)
+{
+	sbi_update_ctime_now(sbi);
 	sbi_setdirty(sbi);
 }
 
@@ -356,7 +393,7 @@ uint64_t silofs_sbi_next_igen(struct silofs_sbnode_info *sbi)
 	const uint64_t igen = sbn_ino_generation(sbi->sbn);
 
 	sbn_set_ino_generation(sbi->sbn, igen + 1);
-	sbi_setdirty(sbi);
+	sbi_update_changed(sbi);
 
 	return igen;
 }
@@ -377,7 +414,7 @@ void silofs_sbi_update_apex(struct silofs_sbnode_info *sbi,
 
 	if (laddr->off > off) {
 		sbn_set_apex_voff(sbi->sbn, laddr->ltype, laddr->off);
-		sbi_setdirty(sbi);
+		sbi_update_changed(sbi);
 	}
 }
 
@@ -436,7 +473,7 @@ void silofs_sbi_take_lnode(struct silofs_sbnode_info *sbi,
 
 	sbn_inc_nodes_count(sbi->sbn, ltype);
 	sbn_set_fs_usage(sbi->sbn, fs_usage + ntake);
-	sbi_setdirty(sbi);
+	sbi_update_changed(sbi);
 }
 
 void silofs_sbi_give_lnode(struct silofs_sbnode_info *sbi,
@@ -449,7 +486,7 @@ void silofs_sbi_give_lnode(struct silofs_sbnode_info *sbi,
 
 	sbn_dec_nodes_count(sbi->sbn, ltype);
 	sbn_set_fs_usage(sbi->sbn, usage - ngive);
-	sbi_setdirty(sbi);
+	sbi_update_changed(sbi);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

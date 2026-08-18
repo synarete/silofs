@@ -13,8 +13,8 @@
 Silofs (Stored In Large Objects File System) is an end-to-end encrypted
 user-space file-system (FUSE) designed for simple, secure archiving. It
 lets you use a normal Linux mount point to store files and directories
-as encrypted, self-contained blobs, keeping your data portable and
-independent of any particular storage system or cloud provider.
+as encrypted, self-contained blobs, keeping your private data portable
+and independent of any particular storage system or cloud provider.
 
 By storing data as self-contained blobs, Silofs eliminates the need for
 staging directories, proprietary back-ends, or vendor-locked tools.

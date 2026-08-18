@@ -536,20 +536,21 @@ struct silofs_space_stats1k {
 } silofs_attr_aligned64;
 
 struct silofs_superb_node {
-	struct silofs_header s_hdr;
-	uint64_t             s_magic;
-	uint64_t             s_version;
-	uint32_t             s_flags;
-	uint8_t              s_reserved1[44];
-	struct silofs_tm64b  s_btime;
-	uint8_t              s_reserved2[64];
-	uint64_t             s_fs_capacity;
-	uint64_t             s_fs_usage;
-	uint64_t             s_ino_generation;
-	uint8_t              s_reserved3[744];
-	uint64_t             s_nodes_count[128];
-	int64_t              s_apex_voff[128];
-	uint8_t              s_reserved4[1024];
+	struct silofs_header      s_hdr;
+	uint64_t                  s_magic;
+	uint64_t                  s_version;
+	struct silofs_timespec16b s_btime;
+	struct silofs_timespec16b s_ctime;
+	uint32_t                  s_flags;
+	uint8_t                   s_reserved1[12];
+	uint64_t                  s_fs_capacity;
+	uint64_t                  s_fs_usage;
+	uint64_t                  s_ino_generation;
+	uint8_t                   s_reserved2[104];
+	uint8_t                   s_reserved3[256];
+	uint64_t                  s_nodes_count[64];
+	int64_t                   s_apex_voff[64];
+	uint8_t                   s_reserved4[512];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

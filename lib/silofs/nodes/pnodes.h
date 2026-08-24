@@ -44,6 +44,12 @@ struct silofs_uber_info {
 	struct silofs_uber_node *ubn;
 };
 
+/* uber-space */
+struct silofs_uspace_info {
+	struct silofs_pnode_info   us_pni;
+	struct silofs_uspace_node *usn;
+};
+
 /* blob-descriptor node */
 struct silofs_bldesc_info {
 	struct silofs_pnode_info bld_pni;
@@ -113,6 +119,9 @@ void silofs_pni_apply_ctag(struct silofs_pnode_info *pni);
 
 struct silofs_uber_info *
 silofs_ubi_from_pni(const struct silofs_pnode_info *pni);
+
+struct silofs_uspace_info *
+silofs_usi_from_pni(const struct silofs_pnode_info *pni);
 
 struct silofs_bldesc_info *
 silofs_bdi_from_pni(const struct silofs_pnode_info *pni);

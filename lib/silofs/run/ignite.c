@@ -411,12 +411,18 @@ static int format_lspace_nodes(const struct silofs_task_ctx *task)
 	return 0;
 }
 
+static const struct silofs_pnptr *ubi_self(const struct silofs_uber_info *ubi)
+{
+	silofs_assume_not_null(ubi);
+	return silofs_pni_self(&ubi->ub_pni);
+}
+
 static void resolve_uber(const struct silofs_task_ctx *task,
                          struct silofs_pnptr *out_pnptr)
 {
 	const struct silofs_uber_info *ubi = task->corefs->fsroot->ubi;
 
-	silofs_pnptr_assign(out_pnptr, silofs_ubi_self(ubi));
+	silofs_pnptr_assign(out_pnptr, ubi_self(ubi));
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

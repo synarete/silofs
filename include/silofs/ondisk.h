@@ -167,10 +167,11 @@ enum silofs_ptype {
 	SILOFS_PTYPE_NONE   = 0,
 	SILOFS_PTYPE_MBR    = 1,
 	SILOFS_PTYPE_UBER   = 2,
-	SILOFS_PTYPE_BLDESC = 3,
-	SILOFS_PTYPE_BTNODE = 4,
-	SILOFS_PTYPE_LNODE  = 5,
-	SILOFS_PTYPE_LAST   = 6, /* keep last */
+	SILOFS_PTYPE_USPACE = 3,
+	SILOFS_PTYPE_BLDESC = 4,
+	SILOFS_PTYPE_BTNODE = 5,
+	SILOFS_PTYPE_LNODE  = 6,
+	SILOFS_PTYPE_LAST   = 7, /* keep last */
 };
 
 /* logical elements sub-types */
@@ -503,22 +504,25 @@ struct silofs_uber_node {
 
 /* uber-space descriptor */
 struct silofs_uspace_desc {
-	struct silofs_blobid48b usd_blobid;
-	uint64_t                usd_count;
-	uint64_t                usd_usage;
-} silofs_attr_aligned64;
-
-struct silofs_uspace_descs {
-	struct silofs_uspace_desc bn;
-	struct silofs_uspace_desc ln;
+	struct silofs_blobid48b   usd_blobid;
+	struct silofs_timespec16b usd_btime;
+	struct silofs_timespec16b usd_ctime;
+	int64_t                   usd_baseoff;
+	uint64_t                  usd_count;
+	uint64_t                  usd_usage;
+	uint8_t                   usd_reserved2[24];
 } silofs_attr_aligned64;
 
 /* uber-space node */
 struct silofs_uspace_node {
-	struct silofs_header us_hdr;
-	uint8_t              us_reserved1[192];
-	uint8_t              us_reserved2[7936];
-
+	struct silofs_header      us_hdr;
+	uint32_t                  us_ndesc;
+	uint8_t                   us_ref_ptype;
+	uint8_t                   us_ref_ltype;
+	uint8_t                   us_reserved1[2];
+	uint8_t                   us_reserved2[56];
+	struct silofs_pnptr256b   us_prev;
+	struct silofs_uspace_desc us_desc[61];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -873,11 +877,12 @@ struct silofs_pblock {
 
 /* semantic "view" into pnodes' meta-elements */
 union silofs_pview_u {
-	struct silofs_header     hdr[2];
-	struct silofs_uber_node  ubn;
-	struct silofs_blob_desc  bd;
-	struct silofs_btree_node btn;
-	struct silofs_pblock     pbk;
+	struct silofs_header      hdr[2];
+	struct silofs_uber_node   ubn;
+	struct silofs_uspace_node usn;
+	struct silofs_blob_desc   bd;
+	struct silofs_btree_node  btn;
+	struct silofs_pblock      pbk;
 } silofs_attr_aligned64;
 
 struct silofs_pview {

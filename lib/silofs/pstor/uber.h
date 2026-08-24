@@ -32,7 +32,29 @@ struct silofs_uber_stats {
 	struct silofs_uber_stat st[SILOFS_LTYPE_LAST];
 };
 
-const struct silofs_pnptr *silofs_ubi_self(const struct silofs_uber_info *ubi);
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
+void silofs_usi_incref(struct silofs_uspace_info *usi);
+
+void silofs_usi_decref(struct silofs_uspace_info *usi);
+
+void silofs_usi_setdirty(struct silofs_uspace_info *usi);
+
+void silofs_usi_cleardirty(struct silofs_uspace_info *usi);
+
+void silofs_usi_update_spawned(struct silofs_uspace_info *usi,
+                               const struct silofs_stype *ref_stype);
+
+int silofs_usi_spark_blob(struct silofs_uspace_info  *usi,
+                          const struct silofs_blobid *blobid);
+
+int silofs_usi_grab_space(struct silofs_uspace_info *usi,
+                          struct silofs_paddr       *out_paddr);
+
+int silofs_usi_drop_space(struct silofs_uspace_info *usi,
+                          const struct silofs_paddr *paddr);
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 const struct silofs_layerid *
 silofs_ubi_layerid(const struct silofs_uber_info *ubi);

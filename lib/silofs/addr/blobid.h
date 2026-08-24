@@ -48,6 +48,9 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other);
 
+bool silofs_blobid_has_stype(const struct silofs_blobid *blobid,
+                             const struct silofs_stype  *stype);
+
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid);
 
 void silofs_blobid48b_htox(struct silofs_blobid48b    *blobid48,

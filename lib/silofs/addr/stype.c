@@ -30,6 +30,13 @@ void silofs_stype_assign(struct silofs_stype *stype,
 	stype->ltype = other->ltype;
 }
 
+bool silofs_stype_isequal(const struct silofs_stype *stype,
+                          const struct silofs_stype *other)
+{
+	return (stype->ptype == other->ptype) &&
+	       (stype->ltype == other->ltype);
+}
+
 long silofs_stype_compare(const struct silofs_stype *stype,
                           const struct silofs_stype *other)
 {

@@ -30,6 +30,9 @@ size_t silofs_ptype_size(enum silofs_ptype ptype)
 	case SILOFS_PTYPE_UBER:
 		sz = sizeof(struct silofs_uber_node);
 		break;
+	case SILOFS_PTYPE_USPACE:
+		sz = sizeof(struct silofs_uspace_node);
+		break;
 	case SILOFS_PTYPE_BLDESC:
 		sz = sizeof(struct silofs_blob_desc);
 		break;

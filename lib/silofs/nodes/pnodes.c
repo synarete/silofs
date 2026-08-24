@@ -344,6 +344,138 @@ silofs_ubi_from_pni(const struct silofs_pnode_info *pni)
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
+static struct silofs_uspace_info *usi_malloc(struct silofs_alloc *alloc)
+{
+	struct silofs_uspace_info *usi = nullptr;
+
+	usi = memalloc_pni(alloc, sizeof(*usi));
+	return usi;
+}
+
+static void
+usi_free(struct silofs_uspace_info *usi, struct silofs_alloc *alloc)
+{
+	memfree_pni(alloc, usi, sizeof(*usi));
+}
+
+static void
+usi_init(struct silofs_uspace_info *usi, const struct silofs_pnptr *pnptr)
+{
+	pni_init(&usi->us_pni, pnptr);
+	usi->usn = nullptr;
+}
+
+static void usi_fini(struct silofs_uspace_info *usi)
+{
+	pni_fini(&usi->us_pni);
+	usi->usn = nullptr;
+}
+
+static struct silofs_uspace_info *
+usi_malloc_init(struct silofs_alloc *alloc, const struct silofs_pnptr *pnptr)
+{
+	struct silofs_uspace_info *usi;
+
+	usi = usi_malloc(alloc);
+	if (usi != nullptr) {
+		usi_init(usi, pnptr);
+	}
+	return usi;
+}
+
+static void
+usi_fini_free(struct silofs_uspace_info *usi, struct silofs_alloc *alloc)
+{
+	usi_fini(usi);
+	usi_free(usi, alloc);
+}
+
+static int
+usi_attach_pview(struct silofs_uspace_info *usi, struct silofs_alloc *alloc)
+{
+	struct silofs_pview *pview = nullptr;
+	int err;
+
+	err = pni_attach_pview(&usi->us_pni, alloc);
+	if (!err) {
+		pview    = silofs_pni_pview(&usi->us_pni);
+		usi->usn = &pview->pv.usn;
+	}
+	return err;
+}
+
+static void
+usi_detach_pview(struct silofs_uspace_info *usi, struct silofs_alloc *alloc)
+{
+	pni_detach_pview(&usi->us_pni, alloc);
+	usi->usn = nullptr;
+}
+
+static struct silofs_uspace_info *
+usi_new(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
+{
+	struct silofs_uspace_info *usi = nullptr;
+	int err;
+
+	usi = usi_malloc_init(alloc, pnptr);
+	if (usi == nullptr) {
+		return nullptr;
+	}
+	err = usi_attach_pview(usi, alloc);
+	if (err) {
+		usi_fini_free(usi, alloc);
+		return nullptr;
+	}
+	return usi;
+}
+
+static void usi_del(struct silofs_uspace_info *usi, struct silofs_alloc *alloc)
+{
+	if (usi != nullptr) {
+		usi_detach_pview(usi, alloc);
+		usi_fini_free(usi, alloc);
+	}
+}
+
+static struct silofs_pnode_info *usi_to_pni(struct silofs_uspace_info *usi)
+{
+	struct silofs_pnode_info *pni = nullptr;
+
+	if (usi != nullptr) {
+		pni = &usi->us_pni;
+	}
+	return pni;
+}
+
+static struct silofs_uspace_info *usi_from_pni(struct silofs_pnode_info *pni)
+{
+	struct silofs_uspace_info *usi = nullptr;
+
+	if (pni != nullptr) {
+		usi = mut_container_of(pni, struct silofs_uspace_info, us_pni);
+	}
+	return usi;
+}
+
+static struct silofs_uspace_info *
+usi_unconst(const struct silofs_uspace_info *usi)
+{
+	return silofs_unconst(usi);
+}
+
+struct silofs_uspace_info *
+silofs_usi_from_pni(const struct silofs_pnode_info *pni)
+{
+	const struct silofs_uspace_info *usi = nullptr;
+
+	if (pni != nullptr) {
+		usi = container_of(pni, struct silofs_uspace_info, us_pni);
+	}
+	return usi_unconst(usi);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+
 static struct silofs_bldesc_info *bdi_malloc(struct silofs_alloc *alloc)
 {
 	struct silofs_bldesc_info *bdi = nullptr;
@@ -625,6 +757,9 @@ silofs_new_pnode(const struct silofs_pnptr *pnptr, struct silofs_alloc *alloc)
 	case SILOFS_PTYPE_UBER:
 		pni = ubi_to_pni(ubi_new(pnptr, alloc));
 		break;
+	case SILOFS_PTYPE_USPACE:
+		pni = usi_to_pni(usi_new(pnptr, alloc));
+		break;
 	case SILOFS_PTYPE_BLDESC:
 		pni = bdi_to_pni(bdi_new(pnptr, alloc));
 		break;
@@ -650,6 +785,9 @@ void silofs_del_pnode(struct silofs_pnode_info *pni,
 	switch (ptype) {
 	case SILOFS_PTYPE_UBER:
 		ubi_del(ubi_from_pni(pni), alloc);
+		break;
+	case SILOFS_PTYPE_USPACE:
+		usi_del(usi_from_pni(pni), alloc);
 		break;
 	case SILOFS_PTYPE_BLDESC:
 		bdi_del(bdi_from_pni(pni), alloc);

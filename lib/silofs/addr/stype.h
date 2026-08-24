@@ -29,6 +29,9 @@ void silofs_stype_clear(struct silofs_stype *stype);
 void silofs_stype_assign(struct silofs_stype       *stype,
                          const struct silofs_stype *other);
 
+bool silofs_stype_isequal(const struct silofs_stype *stype,
+                          const struct silofs_stype *other);
+
 long silofs_stype_compare(const struct silofs_stype *stype,
                           const struct silofs_stype *other);
 

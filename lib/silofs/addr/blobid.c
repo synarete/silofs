@@ -77,27 +77,31 @@ long silofs_blobid_compare(const struct silofs_blobid *blobid,
 
 	cmp = silofs_stype_compare(&blobid->stype, &other->stype);
 	if (cmp != 0) {
-		return cmp;
+		goto out;
 	}
 	cmp = silofs_layerid_compare(&blobid->layerid, &other->layerid);
 	if (cmp != 0) {
-		return cmp;
+		goto out;
 	}
 	cmp = silofs_uniqid_compare(&blobid->uniqid, &other->uniqid);
 	if (cmp != 0) {
-		return cmp;
+		goto out;
 	}
 	cmp = (long)blobid->vers - (long)other->vers;
-	if (cmp != 0) {
-		return cmp;
-	}
-	return 0;
+out:
+	return cmp;
 }
 
 bool silofs_blobid_isequal(const struct silofs_blobid *blobid,
                            const struct silofs_blobid *other)
 {
 	return (silofs_blobid_compare(blobid, other) == 0);
+}
+
+bool silofs_blobid_has_stype(const struct silofs_blobid *blobid,
+                             const struct silofs_stype *stype)
+{
+	return silofs_stype_isequal(&blobid->stype, stype);
 }
 
 size_t silofs_blobid_slotsize(const struct silofs_blobid *blobid)

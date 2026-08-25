@@ -75,7 +75,7 @@ static void test_mmap_simple_(struct ft_env *fte, off_t off, size_t len)
 	ft_munmap(addr, len);
 	ft_close(fd);
 	ft_open(path, O_RDONLY, 0600, &fd);
-	ft_mmap_(nullptr, len, PROT_READ, MAP_SHARED, fd, off, &addr);
+	ft_mmap(len, PROT_READ, MAP_SHARED, fd, off, &addr);
 	ft_expect_eqm(addr, mbuf, len);
 	ft_munmap(addr, len);
 	ft_close(fd);
@@ -610,7 +610,7 @@ static void test_mmap_private_(struct ft_env *fte, size_t mlen)
 
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_write(fd, data, mlen, &nwr);
-	ft_mmap_(nullptr, mlen, prot, flag, fd, 0, &addr);
+	ft_mmap(mlen, prot, flag, fd, 0, &addr);
 	dptr = (uint8_t *)addr;
 	ft_expect_eqm(dptr, data, mlen);
 	ft_munmap(addr, mlen);
@@ -783,6 +783,73 @@ static void test_mmap_vlarge(struct ft_env *fte)
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
+/*
+ * Test mmap(2) + ftrucate zeros end-of-file byte.
+ */
+static void test_mmap_eof_(struct ft_env *fte, off_t off, size_t len)
+{
+	constexpr ssize_t step = SILOFS_PAGE_SIZE_MIN;
+	const char *path       = ft_new_path_unique(fte);
+	void *addr             = nullptr;
+	uint8_t *mdat          = nullptr;
+	const off_t end        = ft_off_end(off, len);
+	int fd                 = -1;
+
+	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
+	ft_ftruncate(fd, end);
+	ft_mmap(len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
+
+	mdat = addr;
+	memset(mdat, 1, len);
+	ft_expect_eq(mdat[0], 1);
+	ft_expect_eq(mdat[len - 1], 1);
+
+	ft_ftruncate(fd, end - 1);
+	ft_expect_eq(mdat[len - 2], 1);
+
+	ft_ftruncate(fd, end);
+	ft_expect_eq(mdat[len - 2], 1);
+	ft_expect_eq(mdat[len - 1], 0);
+
+	ft_ftruncate(fd, end - step + 1);
+	ft_expect_eq(mdat[len - step + 1], 0);
+	ft_expect_eq(mdat[len - step], 1);
+
+	ft_ftruncate(fd, end - step);
+	ft_expect_eq(mdat[len - step - 1], 1);
+
+	ft_ftruncate(fd, end);
+	ft_expect_eq(mdat[len - step], 0);
+
+	memset(mdat, 2, len);
+	ft_expect_eq(mdat[0], 2);
+	ft_expect_eq(mdat[len - 1], 2);
+
+	ft_ftruncate(fd, off);
+	ft_ftruncate(fd, end);
+	ft_expect_eq(mdat[0], 0);
+	ft_expect_eq(mdat[len - 1], 0);
+
+	ft_munmap(addr, len);
+	ft_close(fd);
+	ft_unlink(path);
+}
+
+static void test_mmap_eof(struct ft_env *fte)
+{
+	const struct ft_range ranges[] = {
+		FT_MKRANGE(0, FT_64K),                                  //
+		FT_MKRANGE(FT_64K, FT_64K),                             //
+		FT_MKRANGE(FT_1M, 2 * FT_64K),                          //
+		FT_MKRANGE(FT_1G, FT_1M),                               //
+		FT_MKRANGE(FT_1T, FT_1M),                               //
+		FT_MKRANGE(FT_FILESIZE_ALIGNED_MAX - FT_1G, 8 * FT_1M), //
+	};
+
+	ft_exec_with_ranges(fte, test_mmap_eof_, ranges);
+}
+
+/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mmap_basic),
@@ -803,6 +870,7 @@ static const struct ft_tdef ft_local_tests[] = {
 	FT_DEFTEST(test_mmap_madvise_simple),
 	FT_DEFTEST(test_mmap_madvise_dontneed),
 	FT_DEFTEST(test_mmap_vlarge),
+	FT_DEFTEST(test_mmap_eof),
 };
 
 const struct ft_tests ft_test_mmap = FT_DEFTESTS(ft_local_tests);

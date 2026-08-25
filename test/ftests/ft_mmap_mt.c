@@ -18,7 +18,7 @@
 #include "ftests.h"
 #include <sys/mman.h>
 
-struct ft_mmap_mt_ctx {
+struct ft_mmap__mt_ctx {
 	struct silofs_thread th;
 	struct ft_env *fte;
 	uint8_t *addr;
@@ -29,7 +29,7 @@ struct ft_mmap_mt_ctx {
 };
 
 static void
-ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc, silofs_threadexec_fn exec)
+ft_mmtc_exec_thread(struct ft_mmap__mt_ctx *mmtc, silofs_threadexec_fn exec)
 {
 	int err;
 
@@ -37,7 +37,7 @@ ft_mmtc_exec_thread(struct ft_mmap_mt_ctx *mmtc, silofs_threadexec_fn exec)
 	ft_expect_ok(err);
 }
 
-static void ft_mmtc_join_thread(struct ft_mmap_mt_ctx *mmtc)
+static void ft_mmtc_join_thread(struct ft_mmap__mt_ctx *mmtc)
 {
 	int err;
 
@@ -48,7 +48,7 @@ static void ft_mmtc_join_thread(struct ft_mmap_mt_ctx *mmtc)
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
 
 static void
-test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap_mt_ctx *mmtc)
+test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap__mt_ctx *mmtc)
 {
 	const size_t indx  = mmtc->indx;
 	const size_t nsegs = mmtc->size / mmtc->sgsz;
@@ -79,7 +79,7 @@ test_mmap_mt_seq_at_(struct ft_env *fte, const struct ft_mmap_mt_ctx *mmtc)
 
 static int start_test_mmap_mt_seq(struct silofs_thread *th)
 {
-	const struct ft_mmap_mt_ctx *mmtc = th->arg;
+	const struct ft_mmap__mt_ctx *mmtc = th->arg;
 
 	test_mmap_mt_seq_at_(mmtc->fte, mmtc);
 	return 0;
@@ -88,7 +88,7 @@ static int start_test_mmap_mt_seq(struct silofs_thread *th)
 static void
 test_mmap_mt_seq_(struct ft_env *fte, off_t off, size_t msz, size_t sgsz)
 {
-	struct ft_mmap_mt_ctx mmt_ctx[16];
+	struct ft_mmap__mt_ctx mmt_ctx[16];
 	const char *path = ft_new_path_unique(fte);
 	void *addr       = nullptr;
 	int fd           = -1;
@@ -96,8 +96,7 @@ test_mmap_mt_seq_(struct ft_env *fte, off_t off, size_t msz, size_t sgsz)
 	memset(mmt_ctx, 0, sizeof(mmt_ctx));
 	ft_open(path, O_CREAT | O_RDWR, 0600, &fd);
 	ft_ftruncate(fd, off + (long)msz);
-	ft_mmap(nullptr, msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off,
-	        &addr);
+	ft_mmap(msz, PROT_READ | PROT_WRITE, MAP_SHARED, fd, off, &addr);
 	for (size_t i = 0; i < FT_ARRAY_SIZE(mmt_ctx); ++i) {
 		mmt_ctx[i].fte  = fte;
 		mmt_ctx[i].addr = addr;

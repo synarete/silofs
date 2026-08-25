@@ -497,8 +497,11 @@ void ft_do_ioctl_syncfs(int fd, const char *fl, int ln);
 #define ft_access_err(path_, mode_, err_) \
 	ft_do_access_err(path_, mode_, err_, FT_FL_LN_)
 
-#define ft_mmap(addr_, len_, prot_, flags_, fd_, offset_, out_) \
+#define ft_mmap_(addr_, len_, prot_, flags_, fd_, offset_, out_) \
 	ft_do_mmap(addr_, len_, prot_, flags_, fd_, offset_, out_, FT_FL_LN_)
+
+#define ft_mmap(len_, prot_, flags_, fd_, offset_, out_) \
+	ft_mmap_(nullptr, len_, prot_, flags_, fd_, offset_, out_)
 
 #define ft_munmap(addr_, len_) ft_do_munmap(addr_, len_, FT_FL_LN_)
 

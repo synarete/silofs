@@ -18,179 +18,75 @@
 #include <sys/mount.h>
 #include <silofs/pstor.h>
 
-static void usd_blobid(const struct silofs_uspace_desc *usd,
+static void usn_blobid(const struct silofs_uspace_node *usn,
                        struct silofs_blobid *out_blobid)
 {
-	silofs_blobid48b_xtoh(&usd->usd_blobid, out_blobid);
+	silofs_blobid48b_xtoh(&usn->us_blobid, out_blobid);
 }
 
-static void usd_set_blobid(struct silofs_uspace_desc *usd,
+static void usn_set_blobid(struct silofs_uspace_node *usn,
                            const struct silofs_blobid *blobid)
 {
-	silofs_blobid48b_htox(&usd->usd_blobid, blobid);
+	silofs_blobid48b_htox(&usn->us_blobid, blobid);
 }
 
-static bool usd_has_blobid(const struct silofs_uspace_desc *usd,
-                           const struct silofs_blobid *blobid)
+static bool usn_has_blobid(const struct silofs_uspace_node *usn,
+                           const struct silofs_blobid *blobid2)
 {
-	struct silofs_blobid ublobid;
+	struct silofs_blobid blobid;
 
-	usd_blobid(usd, &ublobid);
-	return silofs_blobid_isequal(blobid, &ublobid);
-}
-
-static void usd_reset_blobid(struct silofs_uspace_desc *usd)
-{
-	usd_set_blobid(usd, silofs_blobid_none());
+	usn_blobid(usn, &blobid);
+	return silofs_blobid_isequal(&blobid, blobid2);
 }
 
 static void
-usd_set_btime(struct silofs_uspace_desc *usd, const struct timespec *ts)
+usn_set_btime(struct silofs_uspace_node *usn, const struct timespec *ts)
 {
-	silofs_cpu_to_ts(ts, &usd->usd_btime);
+	silofs_cpu_to_ts(ts, &usn->us_btime);
 }
 
 static void
-usd_set_ctime(struct silofs_uspace_desc *usd, const struct timespec *ts)
+usn_set_ctime(struct silofs_uspace_node *usn, const struct timespec *ts)
 {
-	silofs_cpu_to_ts(ts, &usd->usd_ctime);
+	silofs_cpu_to_ts(ts, &usn->us_ctime);
 }
 
-static off_t usd_baseoff(const struct silofs_uspace_desc *usd)
+static off_t usn_baseoff(const struct silofs_uspace_node *usn)
 {
-	return silofs_off_to_cpu(usd->usd_baseoff);
+	return silofs_off_to_cpu(usn->us_baseoff);
 }
 
-static void usd_set_baseoff(struct silofs_uspace_desc *usd, off_t off)
+static void usn_set_baseoff(struct silofs_uspace_node *usn, off_t off)
 {
 	silofs_assert_ge(off, 0);
 	silofs_assert_lt(off, INT32_MAX / 2);
-	usd->usd_baseoff = silofs_cpu_to_off(off);
+	usn->us_baseoff = silofs_cpu_to_off(off);
 }
 
-static size_t usd_count(const struct silofs_uspace_desc *usd)
+static size_t usn_count(const struct silofs_uspace_node *usn)
 {
-	return silofs_le64_to_cpu(usd->usd_count);
+	return silofs_le32_to_cpu(usn->us_count);
 }
 
-static void usd_set_count(struct silofs_uspace_desc *usd, size_t count)
+static size_t usn_count_max(const struct silofs_uspace_node *usn)
 {
-	silofs_assert_lt(count, UINT32_MAX / 2);
-	usd->usd_count = silofs_cpu_to_le64(count);
+	return (64 * ARRAY_SIZE(usn->us_state));
 }
 
-static void usd_inc_count(struct silofs_uspace_desc *usd)
+static void usn_set_count(struct silofs_uspace_node *usn, size_t count)
 {
-	usd_set_count(usd, usd_count(usd) + 1);
+	silofs_assert_le(count, usn_count_max(usn));
+	usn->us_count = silofs_cpu_to_le32((uint32_t)count);
 }
 
-static size_t usd_usage(const struct silofs_uspace_desc *usd)
+static void usn_inc_count(struct silofs_uspace_node *usn)
 {
-	return silofs_le64_to_cpu(usd->usd_usage);
+	usn_set_count(usn, usn_count(usn) + 1);
 }
 
-static void usd_set_usage(struct silofs_uspace_desc *usd, size_t usage)
+static void usn_dec_count(struct silofs_uspace_node *usn)
 {
-	silofs_assert_lt(usage, UINT32_MAX / 2);
-
-	usd->usd_usage = silofs_cpu_to_le64(usage);
-}
-
-static void usd_inc_usage(struct silofs_uspace_desc *usd)
-{
-	usd_set_usage(usd, usd_usage(usd) + 1);
-}
-
-static void usd_dec_usage(struct silofs_uspace_desc *usd)
-{
-	usd_set_usage(usd, usd_usage(usd) - 1);
-}
-
-static void usd_reset(struct silofs_uspace_desc *usd)
-{
-	usd_reset_blobid(usd);
-	usd_set_baseoff(usd, 0);
-	usd_set_count(usd, 0);
-	usd_set_usage(usd, 0);
-}
-
-static void
-usd_setup(struct silofs_uspace_desc *usd, const struct silofs_blobid *blobid,
-          const struct timespec *ts)
-{
-	usd_set_blobid(usd, blobid);
-	usd_set_baseoff(usd, SILOFS_PBK_SIZE);
-	usd_set_count(usd, 0);
-	usd_set_usage(usd, 0);
-	usd_set_btime(usd, ts);
-	usd_set_ctime(usd, ts);
-}
-
-static void usd_apex_paddr(const struct silofs_uspace_desc *usd,
-                           struct silofs_paddr *out_paddr)
-{
-	struct silofs_blobid blobid;
-	size_t ssz, nth;
-	off_t pos;
-
-	usd_blobid(usd, &blobid);
-	ssz = silofs_blobid_slotsize(&blobid);
-	nth = usd_count(usd);
-	pos = usd_baseoff(usd) + (off_t)(nth * ssz);
-
-	silofs_paddr_init(out_paddr, &blobid, pos);
-}
-
-static void
-usd_grab_paddr(struct silofs_uspace_desc *usd, struct silofs_paddr *out_paddr)
-{
-	usd_apex_paddr(usd, out_paddr);
-	usd_inc_count(usd);
-	usd_inc_usage(usd);
-}
-
-static void usd_free_paddr(struct silofs_uspace_desc *usd)
-{
-	usd_dec_usage(usd);
-}
-
-/*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-
-static size_t usn_ndesc(const struct silofs_uspace_node *usn)
-{
-	return silofs_le32_to_cpu(usn->us_ndesc);
-}
-
-static void usn_set_ndesc(struct silofs_uspace_node *usn, size_t ndesc)
-{
-	silofs_assert_lt(ndesc, ARRAY_SIZE(usn->us_desc));
-	usn->us_ndesc = silofs_cpu_to_le32((uint32_t)ndesc);
-}
-
-static void usn_inc_ndesc(struct silofs_uspace_node *usn)
-{
-	usn_set_ndesc(usn, usn_ndesc(usn) + 1);
-}
-
-static bool usn_hasroom(const struct silofs_uspace_node *usn)
-{
-	const size_t ndesc = usn_ndesc(usn);
-
-	return (ndesc < ARRAY_SIZE(usn->us_desc));
-}
-
-static void usn_ref_stype(const struct silofs_uspace_node *usn,
-                          struct silofs_stype *out_stype)
-{
-	out_stype->ptype = (enum silofs_ptype)(usn->us_ref_ptype);
-	out_stype->ltype = (enum silofs_ltype)(usn->us_ref_ltype);
-}
-
-static void usn_set_ref_stype(struct silofs_uspace_node *usn,
-                              const struct silofs_stype *stype)
-{
-	usn->us_ref_ptype = (uint8_t)(stype->ptype);
-	usn->us_ref_ltype = (uint8_t)(stype->ltype);
+	usn_set_count(usn, usn_count(usn) - 1);
 }
 
 static void
@@ -204,73 +100,180 @@ static void usn_reset_prev(struct silofs_uspace_node *usn)
 	usn_set_prev(usn, silofs_pnptr_none());
 }
 
-static struct silofs_uspace_desc *
-usn_desc_at(struct silofs_uspace_node *usn, size_t slot)
+static uint64_t usn_state_at(const struct silofs_uspace_node *usn, size_t slot)
 {
-	silofs_assert_lt(slot, ARRAY_SIZE(usn->us_desc));
+	silofs_assert_lt(slot, ARRAY_SIZE(usn->us_state));
 
-	return &usn->us_desc[slot];
+	return silofs_le64_to_cpu(usn->us_state[slot]);
 }
 
-static void usn_setup_descs(struct silofs_uspace_node *usn)
+static void
+usn_set_state_at(struct silofs_uspace_node *usn, size_t slot, uint64_t state)
 {
-	struct silofs_uspace_desc *usd;
+	silofs_assert_lt(slot, ARRAY_SIZE(usn->us_state));
 
-	for (size_t slot = 0; slot < ARRAY_SIZE(usn->us_desc); ++slot) {
-		usd = usn_desc_at(usn, slot);
-		usd_reset(usd);
+	usn->us_state[slot] = silofs_cpu_to_le64(state);
+}
+
+static void usn_reset_state(struct silofs_uspace_node *usn)
+{
+	for (size_t slot = 0; slot < ARRAY_SIZE(usn->us_state); ++slot) {
+		usn_set_state_at(usn, slot, 0);
 	}
 }
 
 static void
-usn_setup(struct silofs_uspace_node *usn, const struct silofs_stype *ref_stype)
+usn_setup(struct silofs_uspace_node *usn, const struct silofs_blobid *blobid,
+          const struct timespec *ts)
 {
-	usn_set_ndesc(usn, 0);
-	usn_set_ref_stype(usn, ref_stype);
+	usn_set_blobid(usn, blobid);
+	usn_set_btime(usn, ts);
+	usn_set_ctime(usn, ts);
+	usn_set_baseoff(usn, SILOFS_PBK_SIZE);
+	usn_set_count(usn, 0);
 	usn_reset_prev(usn);
-	usn_setup_descs(usn);
+	usn_reset_state(usn);
 }
 
-static void
-usn_push_desc(struct silofs_uspace_node *usn,
-              const struct silofs_blobid *blobid, const struct timespec *ts)
+static uint32_t usn_index_max(const struct silofs_uspace_node *usn)
 {
-	struct silofs_uspace_desc *usd;
-	const size_t slot = usn_ndesc(usn);
-
-	usd = usn_desc_at(usn, slot);
-	usd_setup(usd, blobid, ts);
-
-	usn_inc_ndesc(usn);
+	return (uint32_t)usn_count_max(usn);
 }
 
-static struct silofs_uspace_desc *usn_apex_desc(struct silofs_uspace_node *usn)
+static size_t
+usn_index_to_slot(const struct silofs_uspace_node *usn, uint32_t idx)
 {
-	struct silofs_uspace_desc *usd = nullptr;
-	size_t ndesc;
+	const size_t slot = idx / 64;
 
-	ndesc = usn_ndesc(usn);
-	if (ndesc > 0) {
-		usd = usn_desc_at(usn, ndesc - 1);
-	}
-	return usd;
+	silofs_assert_lt(slot, ARRAY_SIZE(usn->us_state));
+	return slot;
 }
 
-static struct silofs_uspace_desc *
-usn_find_desc_of(struct silofs_uspace_node *usn,
-                 const struct silofs_blobid *blobid)
+static uint64_t
+usn_index_to_mask(const struct silofs_uspace_node *usn, uint32_t idx)
 {
-	struct silofs_uspace_desc *usd = nullptr;
-	size_t slot;
+	const uint64_t mask = 1UL << (idx % 64);
 
-	slot = usn_ndesc(usn);
-	while (slot-- > 0) {
-		usd = usn_desc_at(usn, slot);
-		if (usd_has_blobid(usd, blobid)) {
-			return usd;
+	silofs_unused(usn);
+	return mask;
+}
+
+static bool
+usn_isused_index(const struct silofs_uspace_node *usn, uint32_t idx)
+{
+	const size_t slot    = usn_index_to_slot(usn, idx);
+	const uint64_t mask  = usn_index_to_mask(usn, idx);
+	const uint64_t state = usn_state_at(usn, slot);
+
+	return ((state & mask) == mask);
+}
+
+static bool
+usn_isfree_index(const struct silofs_uspace_node *usn, uint32_t idx)
+{
+	return !usn_isused_index(usn, idx);
+}
+
+static void usn_set_used_index(struct silofs_uspace_node *usn, uint32_t idx)
+{
+	const size_t slot    = usn_index_to_slot(usn, idx);
+	const uint64_t mask  = usn_index_to_mask(usn, idx);
+	const uint64_t state = usn_state_at(usn, slot);
+
+	silofs_assert((state & mask) == 0);
+	usn_set_state_at(usn, slot, state | mask);
+}
+
+static void usn_set_free_index(struct silofs_uspace_node *usn, uint32_t idx)
+{
+	const size_t slot    = usn_index_to_slot(usn, idx);
+	const uint64_t mask  = usn_index_to_mask(usn, idx);
+	const uint64_t state = usn_state_at(usn, slot);
+
+	silofs_assert((state & mask) == mask);
+	usn_set_state_at(usn, slot, state & ~mask);
+}
+
+static uint32_t usn_find_free_index(const struct silofs_uspace_node *usn)
+{
+	const uint32_t idx_max = usn_index_max(usn);
+
+	for (uint32_t idx = 0; idx < idx_max; ++idx) {
+		if (usn_isfree_index(usn, idx)) {
+			return idx;
 		}
 	}
-	return nullptr;
+	return idx_max;
+}
+
+static bool usn_has_free(const struct silofs_uspace_node *usn)
+{
+	return (usn_count(usn) < usn_count_max(usn));
+}
+
+static uint32_t usn_take_free(struct silofs_uspace_node *usn)
+{
+	const uint32_t idx_max = usn_index_max(usn);
+	uint32_t idx;
+
+	if (!usn_has_free(usn)) {
+		return idx_max;
+	}
+	idx = usn_find_free_index(usn);
+	if (idx >= idx_max) {
+		return idx_max;
+	}
+	usn_set_used_index(usn, idx);
+	usn_inc_count(usn);
+	return idx;
+}
+
+static void usn_give_used(struct silofs_uspace_node *usn, uint32_t idx)
+{
+	usn_set_free_index(usn, idx);
+	usn_dec_count(usn);
+}
+
+static void usn_paddr_from_index(const struct silofs_uspace_node *usn,
+                                 uint32_t idx, struct silofs_paddr *out_paddr)
+{
+	struct silofs_blobid blobid;
+	size_t ssz;
+	off_t pos;
+
+	usn_blobid(usn, &blobid);
+	ssz = silofs_blobid_slotsize(&blobid);
+	pos = usn_baseoff(usn) + (off_t)(idx * ssz);
+
+	silofs_paddr_init(out_paddr, &blobid, pos);
+}
+
+static uint32_t usn_paddr_to_index(const struct silofs_uspace_node *usn,
+                                   const struct silofs_paddr *paddr)
+{
+	struct silofs_blobid blobid;
+	const uint32_t idx_max = usn_index_max(usn);
+	ssize_t ssz;
+	off_t off, pos;
+
+	usn_blobid(usn, &blobid);
+	ssz = (ssize_t)silofs_blobid_slotsize(&blobid);
+	if (ssz <= 0) {
+		return idx_max;
+	}
+
+	pos = paddr->pos;
+	off = usn_baseoff(usn);
+	if (pos < off) {
+		return idx_max;
+	}
+
+	pos = pos - off;
+	if ((pos % ssz) != 0) {
+		return idx_max;
+	}
+
+	return (uint32_t)(pos / ssz);
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -296,53 +299,27 @@ void silofs_usi_cleardirty(struct silofs_uspace_info *usi)
 }
 
 void silofs_usi_update_spawned(struct silofs_uspace_info *usi,
-                               const struct silofs_stype *ref_stype)
+                               const struct silofs_blobid *blobid)
 {
-	usn_setup(usi->usn, ref_stype);
+	struct timespec ts;
+
+	silofs_clock_gettime_real(&ts);
+	usn_setup(usi->usn, blobid, &ts);
 	silofs_usi_setdirty(usi);
-}
-
-static int usi_check_spark_blob(const struct silofs_uspace_info *usi,
-                                const struct silofs_blobid *blobid)
-{
-	struct silofs_stype ref_stype;
-
-	if (!usn_hasroom(usi->usn)) {
-		return -SILOFS_ENOSPC;
-	}
-	usn_ref_stype(usi->usn, &ref_stype);
-	if (!silofs_blobid_has_stype(blobid, &ref_stype)) {
-		return -SILOFS_EINVAL;
-	}
-	return 0;
-}
-
-int silofs_usi_spark_blob(struct silofs_uspace_info *usi,
-                          const struct silofs_blobid *blobid)
-{
-	struct timespec now;
-	int err;
-
-	err = usi_check_spark_blob(usi, blobid);
-	return_if_err(err);
-
-	silofs_clock_gettime_real(&now);
-	usn_push_desc(usi->usn, blobid, &now);
-
-	silofs_usi_setdirty(usi);
-	return 0;
 }
 
 int silofs_usi_grab_space(struct silofs_uspace_info *usi,
                           struct silofs_paddr *out_paddr)
 {
-	struct silofs_uspace_desc *usd;
+	const uint32_t idx_max = usn_index_max(usi->usn);
+	uint32_t idx;
 
-	usd = usn_apex_desc(usi->usn);
-	if (usd == nullptr) {
+	idx = usn_take_free(usi->usn);
+	if (idx >= idx_max) {
 		return -SILOFS_ENOSPC;
 	}
-	usd_grab_paddr(usd, out_paddr);
+
+	usn_paddr_from_index(usi->usn, idx, out_paddr);
 	silofs_usi_setdirty(usi);
 	return 0;
 }
@@ -350,13 +327,23 @@ int silofs_usi_grab_space(struct silofs_uspace_info *usi,
 int silofs_usi_drop_space(struct silofs_uspace_info *usi,
                           const struct silofs_paddr *paddr)
 {
-	struct silofs_uspace_desc *usd;
+	const uint32_t idx_max = usn_index_max(usi->usn);
+	uint32_t idx;
 
-	usd = usn_find_desc_of(usi->usn, &paddr->blobid);
-	if (usd == nullptr) {
+	if (!usn_has_blobid(usi->usn, &paddr->blobid)) {
 		return -SILOFS_ENOENT;
 	}
-	usd_free_paddr(usd);
+
+	idx = usn_paddr_to_index(usi->usn, paddr);
+	if (idx >= idx_max) {
+		return -SILOFS_EINVAL;
+	}
+
+	if (!usn_isused_index(usi->usn, idx)) {
+		return -SILOFS_ENOENT;
+	}
+
+	usn_give_used(usi->usn, idx);
 	silofs_usi_setdirty(usi);
 	return 0;
 }

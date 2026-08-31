@@ -502,27 +502,17 @@ struct silofs_uber_node {
 	struct silofs_uber_sub    ub_sub[15];
 } silofs_attr_aligned64;
 
-/* uber-space descriptor */
-struct silofs_uspace_desc {
-	struct silofs_blobid48b   usd_blobid;
-	struct silofs_timespec16b usd_btime;
-	struct silofs_timespec16b usd_ctime;
-	int64_t                   usd_baseoff;
-	uint64_t                  usd_count;
-	uint64_t                  usd_usage;
-	uint8_t                   usd_reserved2[24];
-} silofs_attr_aligned64;
-
 /* uber-space node */
 struct silofs_uspace_node {
 	struct silofs_header      us_hdr;
-	uint32_t                  us_ndesc;
-	uint8_t                   us_ref_ptype;
-	uint8_t                   us_ref_ltype;
-	uint8_t                   us_reserved1[2];
-	uint8_t                   us_reserved2[56];
+	struct silofs_blobid48b   us_blobid;
+	struct silofs_timespec16b us_btime;
+	struct silofs_timespec16b us_ctime;
+	int64_t                   us_baseoff;
+	uint32_t                  us_count;
+	uint8_t                   us_reserved[100];
 	struct silofs_pnptr256b   us_prev;
-	struct silofs_uspace_desc us_desc[61];
+	uint64_t                  us_state[960];
 } silofs_attr_aligned64;
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/

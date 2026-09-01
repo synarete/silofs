@@ -871,8 +871,8 @@ void silofs_pspools_init(struct silofs_pspools *pspools,
 	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->bn); ++slot) {
 		pspool_init(&pspools->bn[slot], alloc);
 	}
-	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->vn); ++slot) {
-		pspool_init(&pspools->vn[slot], alloc);
+	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->ln); ++slot) {
+		pspool_init(&pspools->ln[slot], alloc);
 	}
 }
 
@@ -881,8 +881,8 @@ void silofs_pspools_fini(struct silofs_pspools *pspools)
 	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->bn); ++slot) {
 		pspool_clear_fini(&pspools->bn[slot]);
 	}
-	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->vn); ++slot) {
-		pspool_clear_fini(&pspools->vn[slot]);
+	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->ln); ++slot) {
+		pspool_clear_fini(&pspools->ln[slot]);
 	}
 }
 
@@ -891,8 +891,8 @@ void silofs_pspools_drop(struct silofs_pspools *pspools)
 	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->bn); ++slot) {
 		pspool_clear(&pspools->bn[slot]);
 	}
-	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->vn); ++slot) {
-		pspool_clear(&pspools->vn[slot]);
+	for (size_t slot = 0; slot < ARRAY_SIZE(pspools->ln); ++slot) {
+		pspool_clear(&pspools->ln[slot]);
 	}
 }
 
@@ -914,8 +914,8 @@ static struct silofs_pspool *pspools_mut_sub(struct silofs_pspools *pspools,
 		}
 	} else if (stype->ptype == SILOFS_PTYPE_LNODE) {
 		slot = pspool_ltype_to_slot(stype->ltype);
-		if (slot < ARRAY_SIZE(pspools->vn)) {
-			pspool = &pspools->vn[slot];
+		if (slot < ARRAY_SIZE(pspools->ln)) {
+			pspool = &pspools->ln[slot];
 		}
 	}
 	return pspool;

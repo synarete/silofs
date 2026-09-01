@@ -81,7 +81,7 @@ struct silofs_pspool {
 
 struct silofs_pspools {
 	struct silofs_pspool bn[SILOFS_LTYPE_LAST - 1];
-	struct silofs_pspool vn[SILOFS_LTYPE_LAST - 1];
+	struct silofs_pspool ln[SILOFS_LTYPE_LAST - 1];
 };
 
 void silofs_pspools_init(struct silofs_pspools *pspools,

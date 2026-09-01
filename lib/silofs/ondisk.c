@@ -249,14 +249,17 @@ static void validate_ondisk_uber_node(void)
 
 static void validate_ondisk_uspace_node(void)
 {
+	REQUIRE_OFFSET64(struct silofs_uspace_desc, ud_blobid, 0);
+	REQUIRE_OFFSET64(struct silofs_uspace_desc, ud_btime, 48);
+	REQUIRE_OFFSET64(struct silofs_uspace_desc, ud_ctime, 64);
+	REQUIRE_OFFSET64(struct silofs_uspace_desc, ud_baseoff, 80);
+	REQUIRE_OFFSET64(struct silofs_uspace_desc, ud_count, 88);
+	REQUIRE_SIZEOF(struct silofs_uspace_desc, 128);
+
 	REQUIRE_OFFSET64(struct silofs_uspace_node, us_hdr, 0);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_blobid, 64);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_btime, 112);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_ctime, 128);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_baseoff, 144);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_count, 152);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_prev, 256);
-	REQUIRE_OFFSET64(struct silofs_uspace_node, us_state, 512);
+	REQUIRE_OFFSET64(struct silofs_uspace_node, us_ndescs, 64);
+	REQUIRE_OFFSET64(struct silofs_uspace_node, us_descs, 128);
+	REQUIRE_OFFSET64(struct silofs_uspace_node, us_prev, 7936);
 	REQUIRE_SIZEOF_8K(struct silofs_uspace_node);
 }
 

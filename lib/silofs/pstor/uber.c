@@ -65,7 +65,7 @@ static void usd_set_count(struct silofs_uspace_desc *usd, size_t count)
 	usd->ud_count = silofs_cpu_to_le64(count);
 }
 
-static inline void usd_inc_count(struct silofs_uspace_desc *usd)
+static void usd_inc_count(struct silofs_uspace_desc *usd)
 {
 	usd_set_count(usd, usd_count(usd) + 1);
 }
@@ -81,27 +81,54 @@ usd_setup(struct silofs_uspace_desc *usd, const struct silofs_blobid *blobid,
 	usd_set_count(usd, 0);
 }
 
+static size_t usd_slotsize(const struct silofs_uspace_desc *usd)
+{
+	struct silofs_blobid blobid;
+
+	usd_blobid(usd, &blobid);
+	return silofs_blobid_slotsize(&blobid);
+}
+
+static off_t usd_pos_at(const struct silofs_uspace_desc *usd, size_t slot)
+{
+	const size_t ssz = usd_slotsize(usd);
+
+	return (usd_baseoff(usd) + (off_t)(slot * ssz));
+}
+
 static void usd_paddr_at(const struct silofs_uspace_desc *usd, size_t slot,
                          struct silofs_paddr *out_paddr)
 {
 	struct silofs_blobid blobid;
-	size_t ssz;
-	off_t pos;
 
 	usd_blobid(usd, &blobid);
-	ssz = silofs_blobid_slotsize(&blobid);
-	pos = usd_baseoff(usd) + (off_t)(slot * ssz);
-
-	silofs_paddr_init(out_paddr, &blobid, pos);
+	silofs_paddr_init(out_paddr, &blobid, usd_pos_at(usd, slot));
 }
 
-static inline void
+static ssize_t usd_span_size(const struct silofs_uspace_desc *usd)
+{
+	return usd_pos_at(usd, usd_count(usd));
+}
+
+static bool usd_cap_grab(const struct silofs_uspace_desc *usd)
+{
+	constexpr ssize_t limit = SILOFS_BLOBSIZE_MAX;
+	const ssize_t span      = usd_span_size(usd);
+
+	return (span < limit);
+}
+
+static bool
 usd_grab_free(struct silofs_uspace_desc *usd, struct silofs_paddr *out_paddr)
 {
-	const size_t slot = usd_count(usd);
+	bool ret = false;
 
-	usd_paddr_at(usd, slot, out_paddr);
-	usd_inc_count(usd);
+	if (usd_cap_grab(usd)) {
+		usd_paddr_at(usd, usd_count(usd), out_paddr);
+		usd_inc_count(usd);
+		ret = true;
+	}
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -170,26 +197,23 @@ usn_push_desc(struct silofs_uspace_node *usn,
 	return true;
 }
 
-static void
-usn_setup(struct silofs_uspace_node *usn, const struct silofs_blobid *blobid,
-          const struct timespec *ts)
+static void usn_setup(struct silofs_uspace_node *usn)
 {
 	usn_set_ndescs(usn, 0);
 	usn_reset_prev(usn);
-	usn_push_desc(usn, blobid, ts);
 }
 
 static bool
 usn_grab_free(struct silofs_uspace_node *usn, struct silofs_paddr *out_paddr)
 {
 	struct silofs_uspace_desc *usd;
+	bool ret = false;
 
 	usd = usn_curr_desc(usn);
-	if (usd == nullptr) {
-		return false;
+	if (usd != nullptr) {
+		ret = usd_grab_free(usd, out_paddr);
 	}
-	usd_grab_free(usd, out_paddr);
-	return true;
+	return ret;
 }
 
 /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
@@ -214,14 +238,23 @@ void silofs_usi_cleardirty(struct silofs_uspace_info *usi)
 	silofs_pni_cleardirty(&usi->us_pni);
 }
 
-void silofs_usi_update_spawned(struct silofs_uspace_info *usi,
-                               const struct silofs_blobid *blobid)
+void silofs_usi_update_spawned(struct silofs_uspace_info *usi)
+{
+	usn_setup(usi->usn);
+	silofs_usi_setdirty(usi);
+}
+
+bool silofs_usi_spark_space(struct silofs_uspace_info *usi,
+                            const struct silofs_blobid *blobid)
 {
 	struct timespec ts;
 
 	silofs_clock_gettime_real(&ts);
-	usn_setup(usi->usn, blobid, &ts);
+	if (!usn_push_desc(usi->usn, blobid, &ts)) {
+		return false;
+	}
 	silofs_usi_setdirty(usi);
+	return true;
 }
 
 int silofs_usi_grab_space(struct silofs_uspace_info *usi,

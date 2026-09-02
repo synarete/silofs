@@ -74,6 +74,9 @@
 /* maximal file-system capacity, in bytes (64T) */
 #define SILOFS_CAPACITY_SIZE_MAX (64L * SILOFS_TERA)
 
+/* upper limit on single blob size */
+#define SILOFS_BLOBSIZE_MAX (32L * SILOFS_GIGA)
+
 /* small ("sector") meta-block size (1K) */
 #define SILOFS_KB_SIZE (1024)
 

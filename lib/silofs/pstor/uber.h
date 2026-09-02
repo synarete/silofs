@@ -42,8 +42,10 @@ void silofs_usi_setdirty(struct silofs_uspace_info *usi);
 
 void silofs_usi_cleardirty(struct silofs_uspace_info *usi);
 
-void silofs_usi_update_spawned(struct silofs_uspace_info  *usi,
-                               const struct silofs_blobid *blobid);
+void silofs_usi_update_spawned(struct silofs_uspace_info *usi);
+
+bool silofs_usi_spark_space(struct silofs_uspace_info  *usi,
+                            const struct silofs_blobid *blobid);
 
 int silofs_usi_grab_space(struct silofs_uspace_info *usi,
                           struct silofs_paddr       *out_paddr);
